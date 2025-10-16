@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Workout Tracker
 
-## Getting Started
+A modern web application to log, track, and manage your workouts and fitness progress. Built with Next.js, React, Supabase, and Tailwind CSS.
 
-First, run the development server:
+## 🚀 Features
+- **User Authentication:** Sign up, login, and protected routes using Supabase Auth.
+- **Dashboard:** Overview of your workout stats and quick navigation.
+- **Workout Management:** Add, edit, and delete workouts. Resume draft workouts.
+- **Exercise Management:** Search, add, and manage exercises for each workout.
+- **Workout History:** View detailed history of past workouts, including exercises, sets, and total volume.
+- **Profile:** Manage your user profile and sign out.
+- **Responsive UI:** Mobile-friendly design with a bottom navbar and modern card components.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🛠️ Tech Stack
+- [Next.js](https://nextjs.org/) (React framework)
+- [React](https://react.dev/)
+- [Supabase](https://supabase.com/) (Auth & Database)
+- [Tailwind CSS](https://tailwindcss.com/)
+- TypeScript
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 📁 Main Components
+- `Button`, `Navbar`, `ExerciseCard`, `ExerciseSearchModal`, `WorkoutExerciseCard`, `WorkoutHeader`, `WorkoutHistoryCard`, `ResumeDraftPrompt`, `ProtectedWrapper`
 
-You can start editing the page by modifying `app/not-found.tsx`. The page auto-updates as you edit the file.
+## 🎨 Assets
+Custom SVG icons for dashboard, exercises, history, profile, and workout are located in `public/assets/`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📋 TODO / Possible Improvements
+- Add more detailed error handling and user feedback
+- Implement analytics/statistics for workouts
+- Enhance mobile experience further
+- Add social/sharing features
+- Implement a visual chart to track exercise improvement over time
 
-## Learn More
+## 🏁 Getting Started
+1. Clone the repo
+2. Install dependencies with `pnpm install`
+3. Set up your Supabase project and add environment variables:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+4. Run the development server:
+   - `pnpm dev`
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Feel free to contribute or open issues for suggestions and improvements!
