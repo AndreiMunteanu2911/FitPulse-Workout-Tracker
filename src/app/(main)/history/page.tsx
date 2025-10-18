@@ -5,6 +5,7 @@ import ProtectedWrapper from "@/components/ProtectedWrapper";
 import supabase from "@/helper/supabaseClient";
 import WorkoutHistoryCard from "@/components/WorkoutHistoryCard";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import Link from "next/link";
 
 interface Exercise {
     exercise_id: string;
@@ -42,7 +43,6 @@ interface Workout {
 export default function HistoryPage() {
     const [workouts, setWorkouts] = useState<Workout[]>([]);
     const [loading, setLoading] = useState(true);
-    const [expandedWorkoutId, setExpandedWorkoutId] = useState<string | null>(null);
     const [errorMessages, setErrorMessages] = useState<{ general?: string }>({});
 
     useEffect(() => {
@@ -91,15 +91,10 @@ export default function HistoryPage() {
         }
     };
 
-    const toggleWorkoutExpansion = (workoutId: string) => {
-        setExpandedWorkoutId(expandedWorkoutId === workoutId ? null : workoutId);
-    };
-
     if (loading) {
         return (
             <ProtectedWrapper>
                 <div className="min-w-full p-4">
-                    <div className="text-3xl font-bold mb-6">Workout History</div>
                     <div className="flex items-center justify-center py-8">
                         <LoadingSpinner size={40} />
                     </div>
@@ -122,12 +117,9 @@ export default function HistoryPage() {
                 ) : (
                     <div className="space-y-4">
                         {workouts.map((workout) => (
-                            <WorkoutHistoryCard
-                                key={workout.id}
-                                workout={workout}
-                                isExpanded={expandedWorkoutId === workout.id}
-                                onToggle={() => toggleWorkoutExpansion(workout.id)}
-                            />
+                            <Link key={workout.id} href={`/history/${workout.id}`} style={{ display: 'block' }}>
+                                <WorkoutHistoryCard workout={workout} />
+                            </Link>
                         ))}
                     </div>
                 )}

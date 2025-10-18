@@ -19,7 +19,11 @@ export default function Navbar() {
         <>
             {/* Sidebar for desktop */}
             <nav className="hidden md:flex w-64 sticky top-0 h-screen p-6 flex-col bg-[var(--primary-700)] text-white">
-                <h1 className="text-4xl font-semibold mb-12">FitPulse</h1>
+
+                <div className="flex items-center flex-row justify-between mb-12">
+                    <h1 className="text-4xl font-semibold">FitPulse</h1>
+                    <img src="/assets/dumbbell-large.svg" alt="Dumbbell" width={40} height={40} className="invert" />
+                </div>
                 <ul className="flex flex-col gap-2">
                     {tabs.map((tab) => (
                         <li key={tab.name}>
