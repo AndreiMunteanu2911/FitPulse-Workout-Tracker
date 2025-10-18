@@ -6,6 +6,8 @@ import ProtectedWrapper from "@/components/ProtectedWrapper";
 import supabase from "@/helper/supabaseClient";
 import { Exercise } from "@/components/ExerciseCard";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import Link from "next/link";
+import IconButton from "@/components/IconButton";
 
 export default function ExerciseDetailsPage() {
     const { id } = useParams();
@@ -53,7 +55,10 @@ export default function ExerciseDetailsPage() {
     return (
         <ProtectedWrapper>
             <div className="p-4 mx-auto md:pl-12">
-                <h1 className="text-3xl text-gray-700 font-semibold mb-6">{capitalize(exercise.name)}</h1>
+                <div className="flex flex-row">
+                    <Link href="/exercises"><IconButton image="/assets/arrow-white.svg" variant="primary" className="mr-4"></IconButton></Link>
+                    <h1 className="text-3xl text-gray-700 font-semibold mb-6">{capitalize(exercise.name)}</h1>
+                </div>
                 <div className="flex flex-row items-start gap-8 mb-6">
                     {exercise.gif_url && (
                         <img src={exercise.gif_url} alt={exercise.name + ' demo'} style={{ height: '300px', width: '300px', objectFit: 'contain' }} />

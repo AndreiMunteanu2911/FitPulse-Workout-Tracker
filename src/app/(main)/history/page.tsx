@@ -116,7 +116,7 @@ export default function HistoryPage() {
                     <div className="mb-4 text-red-600">{errorMessages.general}</div>
                 )}
                 {workouts.length === 0 ? (
-                    <div className="text-gray-500 text-center py-8">
+                    <div className="text-[var(--primary-700)] text-center py-8">
                         No completed workouts yet. Start your first workout to see it here!
                     </div>
                 ) : (

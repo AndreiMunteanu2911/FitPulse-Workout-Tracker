@@ -481,46 +481,23 @@ export default function WorkoutPage() {
                     {!workoutStarted ? (
                         <Button onClick={startWorkout}>New Workout</Button>
                     ) : (
-                        <div className="flex gap-2">
-                            <Button onClick={cancelWorkout}>Cancel Workout</Button>
-                            <Button onClick={finishWorkout}>Finish Workout</Button>
-                        </div>
+                        <Button onClick={finishWorkout}>Finish Workout</Button>
                     )}
                 </div>
 
                 {workoutStarted && (
                     <div className="space-y-4 mt-4">
                         <div>
-                            <label className="block mb-1 text-sm font-medium">Workout Name</label>
+                            <label className="block mb-1 text-sm text-[var(--primary-800)] font-medium">Workout Name</label>
                             <input
                                 type="text"
                                 value={workoutName}
                                 onChange={(e) => setWorkoutName(e.target.value)}
-                                className="border rounded px-2 py-1 w-full"
+                                className="border rounded-sm px-2 py-1 w-full rounded-xs px-4 py-3 bg-white/10 placeholder-white/70 text-gray-700 border border-blue-700/80 focus:bg-white/20"
                             />
                         </div>
 
-                        <div>
-                            <Button onClick={() => setShowExerciseSearch(true)}>
-                                Add Exercise
-                            </Button>
-                        </div>
-
-                        <ExerciseSearchModal
-                            isOpen={showExerciseSearch}
-                            searchQuery={searchQuery}
-                            setSearchQuery={setSearchQuery}
-                            searchResults={searchResults}
-                            isSearching={isSearching}
-                            onClose={() => {
-                                setShowExerciseSearch(false);
-                                setSearchQuery("");
-                                setSearchResults([]);
-                                setErrorMessages((prev) => ({ ...prev, search: "" }));
-                            }}
-                            onSelectExercise={addExerciseToWorkout}
-                        />
-
+                        {/* Exercises list or no exercises message */}
                         {workoutExercises.length === 0 ? (
                             <div className="text-center text-gray-500 py-8">
                                 No exercises added yet. Click "Add Exercise" to start.
@@ -547,6 +524,33 @@ export default function WorkoutPage() {
                                 ))}
                             </div>
                         )}
+
+                        {/* Add Exercise button always below exercises, above Cancel */}
+                        <div className="flex justify-center">
+                            <Button onClick={() => setShowExerciseSearch(true)} className="py-2 px-6">
+                                Add Exercise
+                            </Button>
+                        </div>
+
+                        <ExerciseSearchModal
+                            isOpen={showExerciseSearch}
+                            searchQuery={searchQuery}
+                            setSearchQuery={setSearchQuery}
+                            searchResults={searchResults}
+                            isSearching={isSearching}
+                            onClose={() => {
+                                setShowExerciseSearch(false);
+                                setSearchQuery("");
+                                setSearchResults([]);
+                                setErrorMessages((prev) => ({ ...prev, search: "" }));
+                            }}
+                            onSelectExercise={addExerciseToWorkout}
+                        />
+
+                        {/* Cancel Workout button always at the bottom */}
+                        <div className="flex justify-center mt-8">
+                            <Button onClick={cancelWorkout} variant="textOnly">Cancel Workout</Button>
+                        </div>
                     </div>
                 )}
             </div>
