@@ -35,36 +35,43 @@ interface ExerciseCardProps {
     setErrorMessage: (message: string) => void;
 }
 
+function capitalizeFirstLetter(str: string) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
 export default function WorkoutExerciseCard({
-                                                workoutExercise,
-                                                exerciseIndex,
-                                                onAddSet,
-                                                onUpdateSet,
-                                                onDeleteSet,
-                                                onDeleteExercise,
-                                                errorMessage,
-                                                setErrorMessage,
-                                            }: ExerciseCardProps) {
+    workoutExercise,
+    exerciseIndex,
+    onAddSet,
+    onUpdateSet,
+    onDeleteSet,
+    onDeleteExercise,
+    errorMessage,
+    setErrorMessage,
+}: ExerciseCardProps) {
     return (
-        <div className="border-2 border-blue-100 rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-all">
-            <div className="flex justify-between items-start mb-3">
-                <h3 className="text-lg font-semibold text-gray-800">{workoutExercise.exercise.name}</h3>
-                <button
-                    onClick={() => onDeleteExercise(exerciseIndex)}
-                    className="text-red-500 hover:text-red-700 transition-colors p-1"
+        <div className="p-4 bg-white mb-6 rounded-xs border-b-2 border-[var(--primary-400)]/80">
+            <div className="flex items-center justify-between mb-2">
+                <h3 className="text-lg font-semibold text-xl text-[var(--primary-600)] m-0">
+                    {capitalizeFirstLetter(workoutExercise.exercise.name)}
+                </h3>
+                <Button
+                    variant="textOnly"
                     aria-label="Delete exercise"
-                />
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
+                    onClick={() => onDeleteExercise(exerciseIndex)}
+                    className="ml-2 text-red-500 hover:text-red-700 flex items-center gap-1"
+                >
+                    <span className="font-bold text-lg">×</span>
+                    <span className="text-base">Delete Exercise</span>
+                </Button>
             </div>
             {errorMessage && (
-                <div className="mb-3 p-2 bg-red-50 text-red-600 text-sm rounded-md">{errorMessage}</div>
+                <div className="text-red-600 text-base mb-2">{errorMessage}</div>
             )}
-            <div className="space-y-3 mb-4 border border-blue-200 rounded-md p-4">
+            <div>
                 {workoutExercise.sets.map((set, setIndex) => (
-                    <div key={set.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors">
-                        <span className="font-medium w-12 text-gray-600">Set {set.set_number}</span>
+                    <div key={set.id} className="flex items-center gap-4 mb-2">
+                        <span className="text-gray-700 text-lg font-normals min-w-[50px]">Set {set.set_number}</span>
                         <div className="flex items-center gap-1">
                             <input
                                 type="number"
@@ -75,10 +82,10 @@ export default function WorkoutExerciseCard({
                                     onUpdateSet(exerciseIndex, setIndex, "reps", value);
                                     setErrorMessage("");
                                 }}
-                                className="border border-gray-300 rounded px-2 py-1 w-16 text-center focus:ring-2 focus:ring-blue-200 focus:border-blue-500"
                                 min="0"
+                                className="px-2 py-1 text-base bg-gray-200 text-gray-800 border-none rounded"
                             />
-                            <span className="text-sm text-gray-500">reps</span>
+                            <span className="text-gray-500 text-md">reps</span>
                         </div>
                         <div className="flex items-center gap-1">
                             <input
@@ -90,36 +97,38 @@ export default function WorkoutExerciseCard({
                                     onUpdateSet(exerciseIndex, setIndex, "weight", value);
                                     setErrorMessage("");
                                 }}
-                                className="border border-gray-300 rounded px-2 py-1 w-20 text-center focus:ring-2 focus:ring-blue-200 focus:border-blue-500"
                                 min="0"
                                 step="0.5"
+                                className=" ml-2 px-2 py-1 text-base bg-gray-200 text-gray-800 border-none rounded"
                             />
-                            <span className="text-sm text-gray-500">kg</span>
+                            <span className="text-gray-500 text-md">kg</span>
                         </div>
-                        <button
-                            onClick={(e) => {
+                        <Button
+                            variant="textOnly"
+                            aria-label="Delete set"
+                            onClick={(e: React.MouseEvent) => {
                                 e.stopPropagation();
                                 onDeleteSet(exerciseIndex, setIndex);
                             }}
-                            className="ml-auto text-gray-400 hover:text-red-500 transition-colors p-1"
-                            aria-label="Delete set"
+                            className="ml-2 text-red-500 hover:text-red-700 font-bold text-2xl"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                            </svg>
-                        </button>
+                            × <span className="text-sm font-semibold ml-1">Delete set</span>
+                        </Button>
                     </div>
                 ))}
             </div>
-            <button
-                onClick={() => onAddSet(exerciseIndex)}
-                className="w-full py-2 px-4 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md font-medium text-sm flex items-center justify-center gap-2 transition-colors"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-                </svg>
-                Add Set
-            </button>
+            <div className="flex justify-center mt-2">
+                <Button
+                    variant="textOnly"
+                    onClick={() => onAddSet(exerciseIndex)}
+                    className="flex items-center gap-1 text-blue-600 hover:text-blue-800"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 20 20" fill="currentColor" className="mr-1 align-middle">
+                        <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+                    </svg>
+                    Add Set
+                </Button>
+            </div>
         </div>
     );
 }

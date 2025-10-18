@@ -7,6 +7,8 @@ import ExerciseCard from "@/components/WorkoutExerciseCard";
 import ExerciseSearchModal from "@/components/ExerciseSearchModal";
 import Button from "@/components/Button";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import CancelWorkoutModal from "@/components/CancelWorkoutModal";
+import FinishWorkoutModal from "@/components/FinishWorkoutModal";
 
 interface Exercise {
     exercise_id: string;
@@ -58,6 +60,8 @@ export default function WorkoutPage() {
     const [isSearching, setIsSearching] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [noDraftFound, setNoDraftFound] = useState(false);
+    const [showCancelModal, setShowCancelModal] = useState(false);
+    const [isFinishModalOpen, setIsFinishModalOpen] = useState(false);
 
     // Check for draft workout on mount
     useEffect(() => {
@@ -233,12 +237,12 @@ export default function WorkoutPage() {
     };
 
     // Cancel workout
-    const cancelWorkout = async () => {
+    const handleCancelWorkout = () => {
+        setShowCancelModal(true);
+    };
+
+    const confirmCancelWorkout = async () => {
         if (!workoutId) return;
-
-        const confirmed = confirm("Are you sure you want to cancel this workout? All data will be lost.");
-        if (!confirmed) return;
-
         try {
             const { error } = await supabase
                 .from("workouts")
@@ -255,6 +259,8 @@ export default function WorkoutPage() {
         } catch (error) {
             console.error("Error canceling workout:", error);
             setErrorMessages((prev) => ({ ...prev, general: "Failed to cancel workout." }));
+        } finally {
+            setShowCancelModal(false);
         }
     };
 
@@ -435,9 +441,17 @@ export default function WorkoutPage() {
                             {!workoutStarted ? (
                                 <Button onClick={startWorkout}>New Workout</Button>
                             ) : (
-                                <Button onClick={finishWorkout}>Finish Workout</Button>
+                                <Button onClick={() => setIsFinishModalOpen(true)}>Finish Workout</Button>
                             )}
                         </div>
+                        <FinishWorkoutModal
+                            isOpen={isFinishModalOpen}
+                            onClose={() => setIsFinishModalOpen(false)}
+                            onConfirm={() => {
+                                setIsFinishModalOpen(false);
+                                finishWorkout();
+                            }}
+                        />
                         {/* Message below header, only if no draft and not started */}
                         {noDraftFound && !workoutStarted && (
                             <div className="text-center text-[var(--primary-700)] text-xl mb-8">Start a new workout today!</div>
@@ -507,8 +521,13 @@ export default function WorkoutPage() {
 
                                 {/* Cancel Workout button always at the bottom */}
                                 <div className="flex justify-center mt-8">
-                                    <Button onClick={cancelWorkout} variant="textOnly">Cancel Workout</Button>
+                                    <Button onClick={handleCancelWorkout} variant="textOnly">Cancel Workout</Button>
                                 </div>
+                                <CancelWorkoutModal
+                                    isOpen={showCancelModal}
+                                    onClose={() => setShowCancelModal(false)}
+                                    onConfirm={confirmCancelWorkout}
+                                />
                             </div>
                         )}
                     </>
