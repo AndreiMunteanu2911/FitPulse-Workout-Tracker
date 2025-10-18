@@ -77,7 +77,7 @@ export default function DashboardPage() {
         <ProtectedWrapper>
             <div className="min-w-full p-4">
                 <div className="flex justify-between items-center mb-6">
-                    <div className="sticky top-0 py-4 bg-white z-10 text-3xl font-bold">Profile</div>
+                    <div className="sticky top-0 py-4 bg-white z-10 text-3xl font-semibold">Profile</div>
                     <Button onClick={signOut}>Sign Out</Button>
                 </div>
 

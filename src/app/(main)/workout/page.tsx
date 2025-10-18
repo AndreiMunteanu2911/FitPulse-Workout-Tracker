@@ -437,7 +437,7 @@ export default function WorkoutPage() {
                         )}
                         {/* Header always at the top */}
                         <div className="sticky top-0 py-4 bg-white z-10 flex justify-between items-center mb-6">
-                            <div className="text-3xl text-gray-700 font-bold">Workout</div>
+                            <div className="text-3xl text-gray-700 font-semibold">Workout</div>
                             {!workoutStarted ? (
                                 <Button onClick={startWorkout}>New Workout</Button>
                             ) : (

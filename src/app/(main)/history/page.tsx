@@ -106,7 +106,7 @@ export default function HistoryPage() {
     return (
         <ProtectedWrapper>
             <div className="min-w-full p-4">
-                <div className="text-3xl sticky top-0 py-4 bg-white z-10  text-gray-700 font-bold mb-6">History</div>
+                <div className="text-3xl sticky top-0 py-4 bg-white z-10  text-gray-700 font-semibold mb-6">History</div>
                 {errorMessages.general && (
                     <div className="mb-4 text-red-600">{errorMessages.general}</div>
                 )}
