@@ -5,8 +5,8 @@ import ProtectedWrapper from "@/components/ProtectedWrapper";
 import supabase from "@/helper/supabaseClient";
 import ExerciseCard from "@/components/WorkoutExerciseCard";
 import ExerciseSearchModal from "@/components/ExerciseSearchModal";
-import ResumeDraftPrompt from "@/components/ResumeDraftPrompt";
 import Button from "@/components/Button";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface Exercise {
     exercise_id: string;
@@ -50,32 +50,31 @@ export default function WorkoutPage() {
     const [workoutName, setWorkoutName] = useState("My Workout");
     const [workoutId, setWorkoutId] = useState<string | null>(null);
     const [workoutExercises, setWorkoutExercises] = useState<WorkoutExercise[]>([]);
-    const [showResumePrompt, setShowResumePrompt] = useState(false);
-    const [draftWorkout, setDraftWorkout] = useState<DraftWorkout | null>(null);
     const [errorMessages, setErrorMessages] = useState<{ [key: string]: string }>({});
 
     const [showExerciseSearch, setShowExerciseSearch] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState<Exercise[]>([]);
     const [isSearching, setIsSearching] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [noDraftFound, setNoDraftFound] = useState(false);
 
     // Check for draft workout on mount
     useEffect(() => {
         const checkForDraftWorkout = async () => {
+            setIsLoading(true);
+            setNoDraftFound(false);
             try {
                 const { data: { user } } = await supabase.auth.getUser();
-                if (!user) return;
+                if (!user) {
+                    setIsLoading(false);
+                    setNoDraftFound(true);
+                    return;
+                }
 
                 const { data, error } = await supabase
                     .from("workouts")
-                    .select(`
-                        *,
-                        workout_exercises (
-                            *,
-                            exercise:exercises (*),
-                            sets (*)
-                        )
-                    `)
+                    .select(`*,workout_exercises (*,exercise:exercises (*),sets (*))`)
                     .eq("user_id", user.id)
                     .eq("status", "draft")
                     .order("created_at", { ascending: false })
@@ -85,12 +84,28 @@ export default function WorkoutPage() {
                 if (error && error.code !== "PGRST116") throw error;
 
                 if (data) {
-                    setDraftWorkout(data);
-                    setShowResumePrompt(true);
+                    // Auto-load unfinished workout
+                    setWorkoutId(data.id);
+                    setWorkoutName(data.name);
+                    const exercises = (data.workout_exercises || []).map((we: any) => ({
+                        id: we.id,
+                        exercise_id: we.exercise_id,
+                        exercise: we.exercise,
+                        order_index: we.order_index,
+                        sets: (we.sets || []).sort((a: any, b: any) => a.set_number - b.set_number),
+                    }));
+                    setWorkoutExercises(exercises);
+                    setWorkoutStarted(true);
+                    setErrorMessages({});
+                } else {
+                    setNoDraftFound(true);
                 }
             } catch (error) {
                 console.error("Error checking for draft workout:", error);
                 setErrorMessages((prev) => ({ ...prev, general: "Failed to check for draft workout." }));
+                setNoDraftFound(true);
+            } finally {
+                setIsLoading(false);
             }
         };
 
@@ -240,65 +255,6 @@ export default function WorkoutPage() {
         } catch (error) {
             console.error("Error canceling workout:", error);
             setErrorMessages((prev) => ({ ...prev, general: "Failed to cancel workout." }));
-        }
-    };
-
-    // Resume draft workout
-    const resumeDraftWorkout = async () => {
-        if (!draftWorkout) return;
-
-        try {
-            const { data, error } = await supabase
-                .from("workouts")
-                .select("id")
-                .eq("id", draftWorkout.id)
-                .single();
-
-            if (error || !data) {
-                setErrorMessages((prev) => ({ ...prev, general: "Draft workout no longer exists." }));
-                setShowResumePrompt(false);
-                setDraftWorkout(null);
-                return;
-            }
-
-            setWorkoutId(draftWorkout.id);
-            setWorkoutName(draftWorkout.name);
-
-            const exercises = draftWorkout.workout_exercises.map((we) => ({
-                id: we.id,
-                exercise_id: we.exercise_id,
-                exercise: we.exercise,
-                order_index: we.order_index,
-                sets: we.sets.sort((a, b) => a.set_number - b.set_number),
-            }));
-
-            setWorkoutExercises(exercises);
-            setWorkoutStarted(true);
-            setShowResumePrompt(false);
-            setDraftWorkout(null);
-            setErrorMessages({});
-        } catch (error) {
-            console.error("Error resuming draft workout:", error);
-            setErrorMessages((prev) => ({ ...prev, general: "Failed to resume draft workout." }));
-        }
-    };
-
-    // Discard draft workout
-    const discardDraftWorkout = async () => {
-        if (!draftWorkout) return;
-
-        try {
-            await supabase
-                .from("workouts")
-                .delete()
-                .eq("id", draftWorkout.id);
-
-            setShowResumePrompt(false);
-            setDraftWorkout(null);
-            setErrorMessages({});
-        } catch (error) {
-            console.error("Error discarding draft workout:", error);
-            setErrorMessages((prev) => ({ ...prev, general: "Failed to discard draft workout." }));
         }
     };
 
@@ -464,94 +420,98 @@ export default function WorkoutPage() {
     return (
         <ProtectedWrapper>
             <div className="min-w-full p-4">
-                {errorMessages.general && (
-                    <div className="mb-4 text-red-600">{errorMessages.general}</div>
-                )}
-
-                <ResumeDraftPrompt
-                    show={showResumePrompt}
-                    draftWorkout={draftWorkout}
-                    onResume={resumeDraftWorkout}
-                    onDiscard={discardDraftWorkout}
-                />
-
-                {/* Move WorkoutHeader content here, remove WorkoutHeader import and usage */}
-                <div className="sticky top-0 py-4 bg-white z-10 flex justify-between items-center mb-6">
-                    <div className="text-3xl text-gray-700 font-bold">Workout</div>
-                    {!workoutStarted ? (
-                        <Button onClick={startWorkout}>New Workout</Button>
-                    ) : (
-                        <Button onClick={finishWorkout}>Finish Workout</Button>
-                    )}
-                </div>
-
-                {workoutStarted && (
-                    <div className="space-y-4 mt-4">
-                        <div>
-                            <label className="block mb-1 text-sm text-[var(--primary-800)] font-medium">Workout Name</label>
-                            <input
-                                type="text"
-                                value={workoutName}
-                                onChange={(e) => setWorkoutName(e.target.value)}
-                                className="border rounded-sm px-2 py-1 w-full rounded-xs px-4 py-3 bg-white/10 placeholder-white/70 text-gray-700 border border-blue-700/80 focus:bg-white/20"
-                            />
+                {isLoading ? (
+                    <div className="flex justify-center items-center h-[60vh]">
+                        <LoadingSpinner />
+                    </div>
+                ) : (
+                    <>
+                        {errorMessages.general && (
+                            <div className="mb-4 text-red-600">{errorMessages.general}</div>
+                        )}
+                        {/* Header always at the top */}
+                        <div className="sticky top-0 py-4 bg-white z-10 flex justify-between items-center mb-6">
+                            <div className="text-3xl text-gray-700 font-bold">Workout</div>
+                            {!workoutStarted ? (
+                                <Button onClick={startWorkout}>New Workout</Button>
+                            ) : (
+                                <Button onClick={finishWorkout}>Finish Workout</Button>
+                            )}
                         </div>
-
-                        {/* Exercises list or no exercises message */}
-                        {workoutExercises.length === 0 ? (
-                            <div className="text-center text-gray-500 py-8">
-                                No exercises added yet. Click "Add Exercise" to start.
-                            </div>
-                        ) : (
-                            <div className="space-y-6">
-                                {workoutExercises.map((workoutExercise, exerciseIndex) => (
-                                    <ExerciseCard
-                                        key={workoutExercise.id}
-                                        workoutExercise={workoutExercise}
-                                        exerciseIndex={exerciseIndex}
-                                        onAddSet={addSetToExercise}
-                                        onUpdateSet={updateSet}
-                                        onDeleteSet={deleteSet}
-                                        onDeleteExercise={deleteExercise}
-                                        errorMessage={errorMessages[`exercise-${exerciseIndex}`] || ""}
-                                        setErrorMessage={(message: string) =>
-                                            setErrorMessages((prev) => ({
-                                                ...prev,
-                                                [`exercise-${exerciseIndex}`]: message,
-                                            }))
-                                        }
+                        {/* Message below header, only if no draft and not started */}
+                        {noDraftFound && !workoutStarted && (
+                            <div className="text-center text-[var(--primary-700)] text-xl mb-8">Start a new workout today!</div>
+                        )}
+                        {/* Workout content */}
+                        {workoutStarted && (
+                            <div className="space-y-4 mt-4">
+                                <div>
+                                    <label className="block mb-1 text-sm text-[var(--primary-800)] font-medium">Workout Name</label>
+                                    <input
+                                        type="text"
+                                        value={workoutName}
+                                        onChange={(e) => setWorkoutName(e.target.value)}
+                                        className="border rounded-sm px-2 py-1 w-full rounded-xs px-4 py-3 bg-white/10 placeholder-white/70 text-gray-700 border border-blue-700/80 focus:bg-white/20"
                                     />
-                                ))}
+                                </div>
+
+                                {/* Exercises list or no exercises message */}
+                                {workoutExercises.length === 0 ? (
+                                    <div className="text-center text-[var(--primary-700)] py-8">
+                                        No exercises added yet. Click "Add Exercise" to start.
+                                    </div>
+                                ) : (
+                                    <div className="space-y-6">
+                                        {workoutExercises.map((workoutExercise, exerciseIndex) => (
+                                            <ExerciseCard
+                                                key={workoutExercise.id}
+                                                workoutExercise={workoutExercise}
+                                                exerciseIndex={exerciseIndex}
+                                                onAddSet={addSetToExercise}
+                                                onUpdateSet={updateSet}
+                                                onDeleteSet={deleteSet}
+                                                onDeleteExercise={deleteExercise}
+                                                errorMessage={errorMessages[`exercise-${exerciseIndex}`] || ""}
+                                                setErrorMessage={(message: string) =>
+                                                    setErrorMessages((prev) => ({
+                                                        ...prev,
+                                                        [`exercise-${exerciseIndex}`]: message,
+                                                    }))
+                                                }
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Add Exercise button always below exercises, above Cancel */}
+                                <div className="flex justify-center">
+                                    <Button onClick={() => setShowExerciseSearch(true)} className="py-2 px-6">
+                                        Add Exercise
+                                    </Button>
+                                </div>
+
+                                <ExerciseSearchModal
+                                    isOpen={showExerciseSearch}
+                                    searchQuery={searchQuery}
+                                    setSearchQuery={setSearchQuery}
+                                    searchResults={searchResults}
+                                    isSearching={isSearching}
+                                    onClose={() => {
+                                        setShowExerciseSearch(false);
+                                        setSearchQuery("");
+                                        setSearchResults([]);
+                                        setErrorMessages((prev) => ({ ...prev, search: "" }));
+                                    }}
+                                    onSelectExercise={addExerciseToWorkout}
+                                />
+
+                                {/* Cancel Workout button always at the bottom */}
+                                <div className="flex justify-center mt-8">
+                                    <Button onClick={cancelWorkout} variant="textOnly">Cancel Workout</Button>
+                                </div>
                             </div>
                         )}
-
-                        {/* Add Exercise button always below exercises, above Cancel */}
-                        <div className="flex justify-center">
-                            <Button onClick={() => setShowExerciseSearch(true)} className="py-2 px-6">
-                                Add Exercise
-                            </Button>
-                        </div>
-
-                        <ExerciseSearchModal
-                            isOpen={showExerciseSearch}
-                            searchQuery={searchQuery}
-                            setSearchQuery={setSearchQuery}
-                            searchResults={searchResults}
-                            isSearching={isSearching}
-                            onClose={() => {
-                                setShowExerciseSearch(false);
-                                setSearchQuery("");
-                                setSearchResults([]);
-                                setErrorMessages((prev) => ({ ...prev, search: "" }));
-                            }}
-                            onSelectExercise={addExerciseToWorkout}
-                        />
-
-                        {/* Cancel Workout button always at the bottom */}
-                        <div className="flex justify-center mt-8">
-                            <Button onClick={cancelWorkout} variant="textOnly">Cancel Workout</Button>
-                        </div>
-                    </div>
+                    </>
                 )}
             </div>
         </ProtectedWrapper>
