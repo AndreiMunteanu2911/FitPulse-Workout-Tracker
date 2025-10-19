@@ -1,17 +1,6 @@
 import type {Metadata} from "next";
-import {Geist, Geist_Mono} from "next/font/google";
 import "@/app/globals.css";
 import Navbar from "@/components/Navbar";
-
-const geistSans = Geist({
-    variable: "--font-geist-sans",
-    subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-    variable: "--font-geist-mono",
-    subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
     title: "Workout Tracker",
@@ -25,7 +14,7 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-       <body className={`[...your font variables] antialiased min-h-screen bg-[var(--color-background)] text-[var(--color-foreground)] overflow-x-hidden`}>
+       <body className={`antialiased min-h-screen bg-[var(--color-background)] text-[var(--color-foreground)] overflow-x-hidden`}>
          <div className="flex min-h-screen w-full">
              <Navbar />
             <main className="flex-1 min-h-screen p-4 md:p-8 page-shell bg-white text-[var(--color-foreground)] pb-16 md:pb-0">

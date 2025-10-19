@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import supabase from "@/helper/supabaseClient";
 import Button from "@/components/Button";
 import { useRouter } from "next/navigation";
@@ -9,11 +9,21 @@ import WeightHistoryChart from "@/components/WeightHistoryChart";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import AddWeightModal from "@/components/AddWeightModal";
 
+interface User {
+    id: string;
+    email: string;
+}
+interface WeightLog {
+    id: string;
+    log_date: string;
+    weight: number;
+}
+
 export default function DashboardPage() {
     const router = useRouter();
 
-    const [user, setUser] = useState<any>(null);
-    const [weights, setWeights] = useState<any[]>([]);
+    const [user, setUser] = useState<User | null>(null);
+    const [weights, setWeights] = useState<WeightLog[]>([]);
     const [newWeight, setNewWeight] = useState("");
     const [newDate, setNewDate] = useState(() => new Date().toISOString().split("T")[0]);
     const [loading, setLoading] = useState(true);
@@ -31,28 +41,28 @@ export default function DashboardPage() {
         const getUser = async () => {
             const { data, error } = await supabase.auth.getUser();
             if (error) console.error("Error fetching user:", error);
-            else setUser(data.user);
+            else if (data.user) setUser({ id: data.user.id ?? "", email: data.user.email ?? "" });
         };
         getUser();
     }, []);
 
     // Fetch weights
-    useEffect(() => {
-        if (user) fetchWeights();
-    }, [user]);
-
-    const fetchWeights = async () => {
+    const fetchWeights = useCallback(async () => {
         setLoading(true);
+        if (!user) return;
         const { data, error } = await supabase
             .from("weight_logs")
             .select("id, log_date, weight")
             .eq("user_id", user.id)
             .order("log_date", { ascending: true });
-
         if (error) console.error("Error fetching weights:", error);
-        else setWeights(data);
+        else setWeights(data || []);
         setLoading(false);
-    };
+    }, [user]);
+
+    useEffect(() => {
+        if (user) fetchWeights();
+    }, [user, fetchWeights]);
 
     return (
         <ProtectedWrapper>
@@ -87,7 +97,7 @@ export default function DashboardPage() {
                     show={showModal}
                     onClose={() => setShowModal(false)}
                     onSubmit={async (date, weight) => {
-                        if (!weight || !date) return;
+                        if (!weight || !date || !user) return;
                         const { error } = await supabase.from("weight_logs").insert([
                             {
                                 user_id: user.id,

@@ -8,6 +8,7 @@ import { Exercise } from "@/components/ExerciseCard";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import Link from "next/link";
 import IconButton from "@/components/IconButton";
+import Image from "next/image";
 
 export default function ExerciseDetailsPage() {
     const { id } = useParams();
@@ -66,9 +67,11 @@ export default function ExerciseDetailsPage() {
                 <div className="flex flex-col md:flex-row items-start gap-6 sm:gap-8 mb-6">
                     {exercise.gif_url && (
                         <div className="w-full md:w-auto flex justify-center md:block">
-                            <img
+                            <Image
                                 src={exercise.gif_url}
                                 alt={exercise.name + ' demo'}
+                                width={300}
+                                height={300}
                                 className="w-full h-auto max-w-xs sm:max-w-sm md:w-[300px] md:h-[300px] object-contain rounded-md"
                             />
                         </div>

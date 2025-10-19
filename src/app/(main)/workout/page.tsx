@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import supabase from "@/helper/supabaseClient";
 import ExerciseCard from "@/components/WorkoutExerciseCard";
@@ -34,19 +34,6 @@ interface Set {
     weight: number;
 }
 
-interface DraftWorkout {
-    id: string;
-    name: string;
-    workout_date: string;
-    workout_exercises: {
-        id: string;
-        exercise_id: string;
-        exercise: Exercise;
-        order_index: number;
-        sets: Set[];
-    }[];
-}
-
 export default function WorkoutPage() {
     const [workoutStarted, setWorkoutStarted] = useState(false);
     const [workoutName, setWorkoutName] = useState("My Workout");
@@ -57,7 +44,7 @@ export default function WorkoutPage() {
     const [showExerciseSearch, setShowExerciseSearch] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState<Exercise[]>([]);
-    const [isSearching, setIsSearching] = useState(false);
+    const [isSearching] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [noDraftFound, setNoDraftFound] = useState(false);
     const [showCancelModal, setShowCancelModal] = useState(false);
@@ -89,13 +76,16 @@ export default function WorkoutPage() {
                 if (data) {
                     setWorkoutId(data.id);
                     setWorkoutName(data.name);
-                    const exercises = (data.workout_exercises || []).map((we: any) => ({
-                        id: we.id,
-                        exercise_id: we.exercise_id,
-                        exercise: we.exercise,
-                        order_index: we.order_index,
-                        sets: (we.sets || []).sort((a: any, b: any) => a.set_number - b.set_number),
-                    }));
+                    const exercises = (data.workout_exercises || []).map((we: unknown) => {
+                        const workoutExercise = we as WorkoutExercise;
+                        return {
+                            id: workoutExercise.id,
+                            exercise_id: workoutExercise.exercise_id,
+                            exercise: workoutExercise.exercise,
+                            order_index: workoutExercise.order_index,
+                            sets: (workoutExercise.sets || []).sort((a: Set, b: Set) => a.set_number - b.set_number),
+                        };
+                    });
                     setWorkoutExercises(exercises);
                     setWorkoutStarted(true);
                     setErrorMessages({});
@@ -114,19 +104,8 @@ export default function WorkoutPage() {
         checkForDraftWorkout();
     }, []);
 
-    useEffect(() => {
-        if (!workoutStarted || !workoutId) return;
-
-        const autoSave = setTimeout(async () => {
-            await saveWorkoutToDB();
-        }, 2000);
-
-        return () => clearTimeout(autoSave);
-    }, [workoutExercises, workoutStarted, workoutId]);
-
-    const saveWorkoutToDB = async () => {
+    const saveWorkoutToDB = useCallback(async () => {
         if (!workoutId) return;
-
         try {
             await supabase
                 .from("workouts")
@@ -145,39 +124,20 @@ export default function WorkoutPage() {
                 }
             }
         } catch (error) {
-            console.error("Error auto-saving workout:", error);
-            setErrorMessages((prev) => ({ ...prev, general: "Failed to auto-save workout." }));
+            console.error("Error saving workout:", error);
         }
-    };
+    }, [workoutId, workoutName, workoutExercises]);
 
     useEffect(() => {
-        const searchExercises = async () => {
-            if (searchQuery.trim() === "") {
-                setSearchResults([]);
-                return;
-            }
+        if (!workoutStarted || !workoutId) return;
 
-            setIsSearching(true);
-            try {
-                const { data, error } = await supabase
-                    .from("exercises")
-                    .select("*")
-                    .ilike("name", `%${searchQuery}%`)
-                    .limit(10);
+        const autoSave = setTimeout(async () => {
+            await saveWorkoutToDB();
+        }, 2000);
 
-                if (error) throw error;
-                setSearchResults(data || []);
-            } catch (error) {
-                console.error("Error searching exercises:", error);
-                setErrorMessages((prev) => ({ ...prev, search: "Failed to search exercises." }));
-            } finally {
-                setIsSearching(false);
-            }
-        };
+        return () => clearTimeout(autoSave);
+    }, [workoutExercises, workoutStarted, workoutId, saveWorkoutToDB]);
 
-        const debounce = setTimeout(searchExercises, 300);
-        return () => clearTimeout(debounce);
-    }, [searchQuery]);
 
     const startWorkout = async () => {
         try {
@@ -458,7 +418,7 @@ export default function WorkoutPage() {
 
                                 {workoutExercises.length === 0 ? (
                                     <div className="text-center text-[var(--primary-700)] py-8 rounded-lg">
-                                        No exercises added yet. Click "Add Exercise" to start.
+                                        No exercises added yet. Click &quot;Add Exercise&quot; to start.
                                     </div>
                                 ) : (
                                     <div className="space-y-4 sm:space-y-6">

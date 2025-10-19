@@ -8,9 +8,6 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
         | "textOnly";
     ariaLabel?: string;
     block?: boolean;
-    disableHover?: boolean;
-    disableActive?: boolean;
-    disableFocus?: boolean;
 }
 
 export default function Button({
@@ -18,9 +15,6 @@ export default function Button({
                                    block,
                                    ariaLabel,
                                    disabled = false,
-                                   disableHover = false,
-                                   disableActive = false,
-                                   disableFocus = false,
                                    onClick,
                                    children,
                                    className = "",

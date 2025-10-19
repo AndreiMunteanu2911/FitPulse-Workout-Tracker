@@ -24,14 +24,13 @@ interface WorkoutExercise {
 
 interface WorkoutHistoryExerciseCardProps {
     workoutExercise: WorkoutExercise;
-    exerciseIndex: number;
 }
 
 function capitalize(str: string) {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-export default function WorkoutHistoryExerciseCard({ workoutExercise, exerciseIndex }: WorkoutHistoryExerciseCardProps) {
+export default function WorkoutHistoryExerciseCard({ workoutExercise }: WorkoutHistoryExerciseCardProps) {
     return (
         <div className="p-3 sm:p-4 bg-white mb-6 rounded-xs border-b-2 border-[var(--primary-400)]/80">
             <div className="flex items-center justify-between mb-2">

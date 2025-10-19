@@ -5,13 +5,14 @@ import supabase from "@/helper/supabaseClient"
 import Link from "next/link";
 import Button from "@/components/Button";
 import IconButton from "@/components/IconButton";
+import Image from "next/image";
 
 export default function SignUpPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [message, setMessage] = useState("");
 
-    const handleSubmit = async (event: any)=>{
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>)=>{
         event.preventDefault();
         setMessage("");
 
@@ -37,7 +38,7 @@ export default function SignUpPage() {
     return (
         <div className="w-full text-white min-h-screen flex flex-col m-0 p-0">
             <div className="flex flex-row items-center mb-32 pt-2">
-                <img src="/assets/dumbbell-large.svg" alt="Dumbbell" width={40} height={40} className="invert" />
+                <Image src="/assets/dumbbell-large.svg" alt="Dumbbell" width={40} height={40} className="invert" />
                 <span className="ml-2 text-lg font-bold tracking-wide">FitPulse</span>
             </div>
             <div className="flex-1 flex flex-col justify-start">

@@ -69,15 +69,17 @@ export default function HistoryPage() {
                 .order("workout_date", { ascending: false })
                 .order("created_at", { ascending: false });
 
-            if (error) throw error;
+            if (error) {
+                console.error(error);
+            }
 
             const processedWorkouts = data?.map((workout) => ({
                 ...workout,
                 workout_exercises: workout.workout_exercises
                     .sort((a: { order_index: number }, b: { order_index: number }) => a.order_index - b.order_index)
-                    .map((we: { sets: any[] }) => ({
+                    .map((we: { sets: unknown[] }) => ({
                         ...we,
-                        sets: we.sets.sort((a, b) => a.set_number - b.set_number),
+                        sets: (we.sets as Set[]).sort((a, b) => a.set_number - b.set_number),
                     })),
             })) || [];
 

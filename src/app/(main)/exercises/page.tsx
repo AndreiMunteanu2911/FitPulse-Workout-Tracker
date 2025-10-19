@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import ExerciseCard, { Exercise } from "@/components/ExerciseCard";
 import supabase from "@/helper/supabaseClient";
@@ -18,14 +18,14 @@ export default function ExercisesPage() {
     const isFetchingRef = useRef(false);
     const prevSearchQueryRef = useRef<string>("");
 
-    const fetchExercises = async (currentPage: number) => {
+    const fetchExercises = useCallback(async (currentPage: number) => {
         if (isFetchingRef.current) return;
 
         isFetchingRef.current = true;
         setLoading(true);
 
-        let data = [];
-        let error = null;
+        let data;
+        let error;
         if (searchQuery.trim() === "") {
             const res = await supabase
                 .from("exercises")
@@ -67,7 +67,7 @@ export default function ExercisesPage() {
 
         setLoading(false);
         isFetchingRef.current = false;
-    };
+    }, [searchQuery]);
 
     useEffect(() => {
         const isSearchMode = searchQuery.trim() !== "";
@@ -79,7 +79,7 @@ export default function ExercisesPage() {
         }
         fetchExercises(page);
         prevSearchQueryRef.current = searchQuery;
-    }, [page, searchQuery]);
+    }, [page, searchQuery, fetchExercises]);
 
     useEffect(() => {
         const currentLoader = loaderRef.current;

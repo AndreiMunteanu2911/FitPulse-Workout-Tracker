@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import supabase from "@/helper/supabaseClient";
@@ -50,12 +49,7 @@ export default function WorkoutDetailPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        if (!workoutId) return;
-        fetchWorkoutDetails();
-    }, [workoutId]);
-
-    const fetchWorkoutDetails = async () => {
+    const fetchWorkoutDetails = useCallback(async () => {
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
@@ -68,18 +62,23 @@ export default function WorkoutDetailPage() {
             if (error || !data) throw error || new Error("Workout not found");
             data.workout_exercises = data.workout_exercises
                 .sort((a: { order_index: number }, b: { order_index: number }) => a.order_index - b.order_index)
-                .map((we: { sets: any[] }) => ({
+                .map((we: { sets: unknown[] }) => ({
                     ...we,
-                    sets: we.sets.sort((a, b) => a.set_number - b.set_number),
+                    sets: (we.sets as Set[]).sort((a, b) => a.set_number - b.set_number),
                 }));
             setWorkout(data);
             setError(null);
-        } catch (err) {
+        } catch {
             setError("Failed to fetch workout details.");
         } finally {
             setLoading(false);
         }
-    };
+    }, [workoutId]);
+
+    useEffect(() => {
+        if (!workoutId) return;
+        fetchWorkoutDetails();
+    }, [workoutId, fetchWorkoutDetails]);
 
     if (loading) {
         return (
@@ -124,8 +123,8 @@ export default function WorkoutDetailPage() {
 
                 <div className="mb-4 sm:mb-6 text-gray-600 text-base sm:text-lg">{formatDate(workout.workout_date)}</div>
                 <div className="space-y-4 sm:space-y-6 mt-6">
-                    {workout.workout_exercises.map((we, idx) => (
-                        <WorkoutHistoryExerciseCard key={we.id} workoutExercise={we} exerciseIndex={idx} />
+                    {workout.workout_exercises.map((we) => (
+                        <WorkoutHistoryExerciseCard key={we.id} workoutExercise={we} />
                     ))}
                 </div>
             </div>
