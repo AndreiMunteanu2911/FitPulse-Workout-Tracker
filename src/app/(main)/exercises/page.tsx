@@ -13,8 +13,10 @@ export default function ExercisesPage() {
     const [loading, setLoading] = useState(false);
     const [hasMore, setHasMore] = useState(true);
     const [page, setPage] = useState(0);
+    const [searchQuery, setSearchQuery] = useState("");
     const loaderRef = useRef<HTMLDivElement>(null);
     const isFetchingRef = useRef(false); // Prevent concurrent fetches
+    const prevSearchQueryRef = useRef<string>("");
 
     // Fetch exercises batch
     const fetchExercises = async (currentPage: number) => {
@@ -23,10 +25,33 @@ export default function ExercisesPage() {
         isFetchingRef.current = true;
         setLoading(true);
 
-        const { data, error } = await supabase
-            .from("exercises")
-            .select("*")
-            .range(currentPage * BATCH_SIZE, (currentPage + 1) * BATCH_SIZE - 1);
+        let data = [];
+        let error = null;
+        if (searchQuery.trim() === "") {
+            // Default infinite scroll
+            const res = await supabase
+                .from("exercises")
+                .select("*")
+                .range(currentPage * BATCH_SIZE, (currentPage + 1) * BATCH_SIZE - 1);
+            data = res.data ?? [];
+            error = res.error;
+        } else {
+            // Multi-word search
+            const words = searchQuery.trim().toLowerCase().split(/\s+/);
+            // Fetch a large batch to ensure all matches (could be optimized with server-side logic)
+            const res = await supabase
+                .from("exercises")
+                .select("*");
+            data = res.data ?? [];
+            error = res.error;
+            // Filter client-side for all words present in name
+            data = data.filter(e => {
+                const name = (e.name || "").toLowerCase();
+                return words.every(word => name.includes(word));
+            });
+            // Paginate client-side
+            data = data.slice(currentPage * BATCH_SIZE, (currentPage + 1) * BATCH_SIZE);
+        }
 
         if (error) {
             console.error("Error fetching exercises:", error);
@@ -53,8 +78,17 @@ export default function ExercisesPage() {
     };
 
     useEffect(() => {
+        const isSearchMode = searchQuery.trim() !== "";
+        const wasSearchMode = prevSearchQueryRef.current.trim() !== "";
+        // Only reset when switching between search and default mode
+        if (isSearchMode !== wasSearchMode) {
+            setPage(0);
+            setExercises([]);
+            setHasMore(true);
+        }
         fetchExercises(page);
-    }, [page]);
+        prevSearchQueryRef.current = searchQuery;
+    }, [page, searchQuery]);
 
     // Infinite scroll observer
     useEffect(() => {
@@ -80,10 +114,26 @@ export default function ExercisesPage() {
         };
     }, [hasMore, loading]);
 
+    const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchQuery(e.target.value);
+        setPage(0);
+        setExercises([]);
+        setHasMore(true);
+    };
+
     return (
         <ProtectedWrapper>
             <div className="p-4">
-                <h1 className="sticky top-0 py-4 bg-white z-10 text-3xl font-semibold text-gray-700 mb-6">Exercises</h1>
+                <h1 className="sticky top-0 py-4 bg-white z-10 text-3xl font-semibold text-gray-700 mb-6 flex justify-between items-center">
+                    <span>Exercises</span>
+                    <input
+                        type="text"
+                        placeholder="Search exercises..."
+                        value={searchQuery}
+                        onChange={handleSearch}
+                        className="border rounded-md px-3 py-1 text-xl"
+                    />
+                </h1>
 
                     <div className="flex flex-col gap-2">
                         {exercises.map((exercise) => (

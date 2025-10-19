@@ -41,7 +41,7 @@ export default function ExerciseSearchModal({
                     placeholder="Type to search..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="border border-blue-700/80 rounded-sm w-full px-4 py-3 bg-white/10 placeholder-white/70 text-gray-700 focus:bg-white/20"
+                    className="border border-blue-700/80 rounded-sm w-full px-4 py-3 bg-white/10 placeholder-white/70 text-gray-700 focus:bg-white/20 mb-4"
                     autoFocus
                 />
                 {isSearching && <LoadingSpinner size={10} className="mx-auto my-4" />}

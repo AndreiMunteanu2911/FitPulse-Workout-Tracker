@@ -61,8 +61,8 @@ export default function WorkoutHistoryCard({ workout }: WorkoutHistoryCardProps)
     };
 
     return (
-        <div className="border-2 border-[var(--primary-200)] rounded-sm overflow-hidden cursor-pointer">
-            <div className="bg-white p-4 hover:bg-[var(--primary-100)] transition-colors">
+        <div className="border-2 border-[var(--primary-800)] rounded-sm overflow-hidden cursor-pointer">
+            <div className="bg-white p-4 hover:bg-[var(--primary-100)]/50 transition-colors">
                 <div className="flex justify-between items-start">
                     <div className="flex-1">
                         <h3 className="text-xl font-semibold mb-2 text-[var(--primary-800)]">{workout.name}</h3>
