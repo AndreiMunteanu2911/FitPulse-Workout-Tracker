@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 
 const tabs = [
-    { name: "Dashboard", href: "/dashboard", icon: "/assets/icon-dashboard.svg" },
+    /*{ name: "Dashboard", href: "/dashboard", icon: "/assets/icon-dashboard.svg" },*/
     { name: "History", href: "/history", icon: "/assets/icon-history.svg" },
     { name: "Workout", href: "/workout", icon: "/assets/icon-workout.svg" },
     { name: "Exercises", href: "/exercises", icon: "/assets/icon-exercises.svg" },

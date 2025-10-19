@@ -465,7 +465,7 @@ export default function WorkoutPage() {
                                         type="text"
                                         value={workoutName}
                                         onChange={(e) => setWorkoutName(e.target.value)}
-                                        className="border rounded-sm px-2 py-1 w-full rounded-xs px-4 py-3 bg-white/10 placeholder-white/70 text-gray-700 border border-blue-700/80 focus:bg-white/20"
+                                        className="w-full rounded-xs px-3 py-1.5 bg-white/10 placeholder-white/70 text-gray-700 border border-blue-700/80 focus:bg-white/20 text-xl"
                                     />
                                 </div>
 

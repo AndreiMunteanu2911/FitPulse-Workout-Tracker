@@ -5,8 +5,9 @@ import supabase from "@/helper/supabaseClient";
 import Button from "@/components/Button";
 import { useRouter } from "next/navigation";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
-import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import WeightHistoryChart from "@/components/WeightHistoryChart";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import AddWeightModal from "@/components/AddWeightModal";
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -16,6 +17,7 @@ export default function DashboardPage() {
     const [newWeight, setNewWeight] = useState("");
     const [newDate, setNewDate] = useState(() => new Date().toISOString().split("T")[0]);
     const [loading, setLoading] = useState(true);
+    const [showModal, setShowModal] = useState(false);
 
     // Sign out function
     const signOut = async () => {
@@ -52,78 +54,48 @@ export default function DashboardPage() {
         setLoading(false);
     };
 
-    // Add new weight entry
-    const handleAddWeight = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newWeight) return;
-
-        const { error } = await supabase.from("weight_logs").insert([
-            {
-                user_id: user.id,
-                log_date: newDate,
-                weight: parseFloat(newWeight),
-            },
-        ]);
-
-        if (error) console.error("Error inserting weight:", error);
-        else {
-            setNewWeight("");
-            setNewDate(new Date().toISOString().split("T")[0]);
-            fetchWeights();
-        }
-    };
-
     return (
         <ProtectedWrapper>
             <div className="min-w-full p-4">
                 <div className="flex justify-between items-center mb-6">
                     <div className="sticky top-0 py-4 bg-white z-10 text-3xl font-semibold">Profile</div>
-                    <Button onClick={signOut}>Sign Out</Button>
+                    <Button onClick={signOut} className="px-7.5">Sign Out</Button>
                 </div>
 
                 {/* Weight History Chart */}
                 <div className="mb-6">
-                    <h2 className="text-xl font-semibold mb-2">My Weight History</h2>
-                    {loading ? (
-                        <div className="flex justify-center items-center py-8"><LoadingSpinner size={8} /></div>
-                    ) : weights.length === 0 ? (
-                        <p>No weight logs yet.</p>
-                    ) : (
-                        <ResponsiveContainer width="100%" height={300}>
-                            <LineChart data={weights}>
-                                <CartesianGrid stroke="#ccc" />
-                                <XAxis dataKey="log_date" />
-                                <YAxis dataKey="weight" />
-                                <Tooltip />
-                                <Line type="monotone" dataKey="weight" stroke="#8884d8" />
-                            </LineChart>
-                        </ResponsiveContainer>
-                    )}
+                    <div className="flex items-center justify-between mb-2">
+                        <h2 className="text-xl font-semibold">My Weight History</h2>
+                        <Button onClick={() => setShowModal(true)} variant="primary">+ New Entry</Button>
+                    </div>
+                    <WeightHistoryChart weights={weights} loading={loading} />
                 </div>
 
-                {/* Add Weight Entry Form */}
-                <form onSubmit={handleAddWeight} className="space-y-2 max-w-sm">
-                    <div>
-                        <label className="block mb-1 text-sm">Date</label>
-                        <input
-                            type="date"
-                            value={newDate}
-                            onChange={(e) => setNewDate(e.target.value)}
-                            className="border rounded px-2 py-1 w-full"
-                        />
-                    </div>
-                    <div>
-                        <label className="block mb-1 text-sm">Weight (kg)</label>
-                        <input
-                            type="number"
-                            step="0.1"
-                            value={newWeight}
-                            onChange={(e) => setNewWeight(e.target.value)}
-                            className="border rounded px-2 py-1 w-full"
-                        />
-                    </div>
-                    <Button type="submit">Add Entry</Button>
-                </form>
+                {/* Modal for Add Weight Entry */}
+                <AddWeightModal
+                    show={showModal}
+                    onClose={() => setShowModal(false)}
+                    onSubmit={async (date, weight) => {
+                        if (!weight || !date) return;
+                        const { error } = await supabase.from("weight_logs").insert([
+                            {
+                                user_id: user.id,
+                                log_date: date,
+                                weight: parseFloat(weight),
+                            },
+                        ]);
+                        if (!error) {
+                            setNewWeight("");
+                            setNewDate(new Date().toISOString().split("T")[0]);
+                            fetchWeights();
+                            setShowModal(false);
+                        }
+                    }}
+                    initialDate={newDate}
+                    initialWeight={newWeight}
+                    setDate={setNewDate}
+                    setWeight={setNewWeight}
+                />
             </div>
         </ProtectedWrapper>
     );
