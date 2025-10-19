@@ -11,6 +11,7 @@ FitPulse is a web application for tracking workouts, exercises, and weight progr
 - [Assets & Styling](#assets--styling)
 - [Setup & Usage](#setup--usage)
 - [Improvements](#improvements)
+- [Database Structure (Supabase)](#database-structure-supabase)
 
 ## Features
 - User authentication (sign up, login, protected routes) via Supabase Auth
@@ -77,9 +78,61 @@ FitPulse is a web application for tracking workouts, exercises, and weight progr
 4. Start the development server: `pnpm dev`
 5. Access the app at `http://localhost:3000`
 
-## TODO
+## Improvements
 - Improve dashboard with user stats and summaries
 - Add analytics/statistics for workouts and exercises
 - Visual charts for exercise progress
 
----
+## Database Structure (Supabase)
+
+Below is an overview of the main tables used in Supabase for FitPulse:
+
+### exercises
+```sql
+exercise_id text PRIMARY KEY,
+name text NOT NULL,
+gif_url text,
+target_muscles text[],
+body_parts text[],
+equipments text[],
+secondary_muscles text[],
+instructions text[]
+```
+
+### sets
+```sql
+id uuid PRIMARY KEY,
+workout_exercise_id uuid REFERENCES workout_exercises(id) ON DELETE CASCADE,
+set_number integer NOT NULL,
+reps integer NOT NULL,
+weight numeric(5,2)
+```
+
+### weight_logs
+```sql
+id uuid PRIMARY KEY,
+user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+log_date date NOT NULL,
+weight numeric(5,2) NOT NULL,
+created_at timestamp DEFAULT now()
+```
+
+### workout_exercises
+```sql
+id uuid PRIMARY KEY,
+workout_id uuid REFERENCES workouts(id) ON DELETE CASCADE,
+exercise_id text REFERENCES exercises(exercise_id),
+order_index integer DEFAULT 0
+```
+
+### workouts
+```sql
+id uuid PRIMARY KEY,
+user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+workout_date date NOT NULL,
+created_at timestamp DEFAULT now(),
+name text DEFAULT 'My Workout',
+status text DEFAULT 'draft' CHECK (status IN ('draft', 'completed'))
+```
+
+> All foreign keys are enforced and cascade deletes are used for user and workout relationships
