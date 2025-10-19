@@ -1,5 +1,7 @@
 # FitPulse Workout Tracker
 
+[Visit Live Vercel Deployment](https://fitpulseam.vercel.app)
+
 FitPulse is a web application for tracking workouts, exercises, and weight progress. It is built with Next.js (App Router), React, Supabase, and Tailwind CSS. The app provides a responsive, modern interface for logging workouts, viewing history, and managing fitness data.
 
 ## Table of Contents
