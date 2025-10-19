@@ -36,12 +36,10 @@ export default function SignUpPage() {
 
     return (
         <div className="w-full text-white min-h-screen flex flex-col m-0 p-0">
-            {/* Top left logo and text (flush with top) */}
             <div className="flex flex-row items-center mb-32 pt-2">
                 <img src="/assets/dumbbell-large.svg" alt="Dumbbell" width={40} height={40} className="invert" />
                 <span className="ml-2 text-lg font-bold tracking-wide">FitPulse</span>
             </div>
-            {/* Main content below logo/text */}
             <div className="flex-1 flex flex-col justify-start">
                 <div className="flex flex-row">
                     <Link href="/"><IconButton image="/assets/arrow.svg" variant="secondary" className="mr-4"></IconButton></Link>

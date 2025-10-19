@@ -43,7 +43,6 @@ export default function LoginPage() {
                 <img src="/assets/dumbbell-large.svg" alt="Dumbbell" width={40} height={40} className="invert" />
                 <span className="ml-2 text-lg font-bold tracking-wide">FitPulse</span>
             </div>
-            {/* Main content below logo/text */}
             <div className="flex-1 flex flex-col justify-start">
                 <div className="flex flex-row">
 

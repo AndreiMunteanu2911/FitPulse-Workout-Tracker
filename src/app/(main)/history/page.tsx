@@ -94,10 +94,8 @@ export default function HistoryPage() {
     if (loading) {
         return (
             <ProtectedWrapper>
-                <div className="min-w-full p-4">
-                    <div className="flex items-center justify-center py-8">
-                        <LoadingSpinner size={40} />
-                    </div>
+                <div className="flex items-center justify-center h-[50vh] p-4">
+                    <LoadingSpinner size={40} />
                 </div>
             </ProtectedWrapper>
         );
@@ -105,19 +103,21 @@ export default function HistoryPage() {
 
     return (
         <ProtectedWrapper>
-            <div className="min-w-full p-4">
-                <div className="text-3xl sticky top-0 py-4 bg-white z-10  text-gray-700 font-semibold mb-6">History</div>
+            <div className="w-full p-4 md:p-8 mx-auto max-w-4xl">
+                <div className="text-2xl sm:text-3xl sticky top-0 py-4 bg-white/95 backdrop-blur-sm z-10 text-gray-700 font-semibold mb-6">
+                    History
+                </div>
                 {errorMessages.general && (
                     <div className="mb-4 text-red-600">{errorMessages.general}</div>
                 )}
                 {workouts.length === 0 ? (
-                    <div className="text-[var(--primary-700)] text-center py-8">
+                    <div className="text-[var(--primary-700)] text-center py-12 px-4 rounded-lg ">
                         No completed workouts yet. Start your first workout to see it here!
                     </div>
                 ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-4 max-w-full">
                         {workouts.map((workout) => (
-                            <Link key={workout.id} href={`/history/${workout.id}`} style={{ display: 'block' }}>
+                            <Link key={workout.id} href={`/history/${workout.id}`} className="block">
                                 <WorkoutHistoryCard workout={workout} />
                             </Link>
                         ))}

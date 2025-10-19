@@ -65,9 +65,9 @@ export default function WorkoutHistoryCard({ workout }: WorkoutHistoryCardProps)
             <div className="bg-white p-4 hover:bg-[var(--primary-100)]/50 transition-colors">
                 <div className="flex justify-between items-start">
                     <div className="flex-1">
-                        <h3 className="text-xl font-semibold mb-2 text-[var(--primary-800)]">{workout.name}</h3>
-                        <p className="text-sm text-gray-600 mb-4">{formatDate(workout.workout_date)}</p>
-                        <div className="flex gap-6 text-sm font-normal text-white">
+                        <div className="text-xl font-semibold mb-2 text-[var(--primary-800)]">{workout.name}</div>
+                        <div className="text-sm text-gray-600 mb-4">{formatDate(workout.workout_date)}</div>
+                        <div className="flex flex-col sm:flex-row gap-3 sm:gap-6 text-sm font-normal text-white items-start">
                             <span className="bg-[var(--primary-600)] rounded-full py-1 px-3">
                                 <strong>{workout.workout_exercises.length}</strong> exercises
                             </span>

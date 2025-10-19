@@ -30,12 +30,16 @@ export default function ProtectedWrapper({ children }: { children: React.ReactNo
     }, [loading, authenticated, router]);
 
     if (loading) {
-        return <div className="flex justify-center items-center h-full"><LoadingSpinner size={10} /></div>;
+        return (
+            <div className="flex justify-center items-center min-h-screen w-full text-center">
+                <LoadingSpinner size={10} />
+            </div>
+        );
     }
 
     if (!authenticated) {
         return null;
     }
 
-    return <div>{children}</div>;
+    return <div className="w-full">{children}</div>;
 }

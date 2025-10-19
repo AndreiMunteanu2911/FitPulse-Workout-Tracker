@@ -66,7 +66,6 @@ export default function WorkoutDetailPage() {
                 .eq("user_id", user.id)
                 .single();
             if (error || !data) throw error || new Error("Workout not found");
-            // Sort exercises and sets
             data.workout_exercises = data.workout_exercises
                 .sort((a: { order_index: number }, b: { order_index: number }) => a.order_index - b.order_index)
                 .map((we: { sets: any[] }) => ({
@@ -85,11 +84,8 @@ export default function WorkoutDetailPage() {
     if (loading) {
         return (
             <ProtectedWrapper>
-                <div className="min-w-full p-4">
-
-                    <div className="flex items-center justify-center py-8">
-                        <LoadingSpinner size={40} />
-                    </div>
+                <div className="flex items-center justify-center h-[50vh] p-4">
+                    <LoadingSpinner size={40} />
                 </div>
             </ProtectedWrapper>
         );
@@ -98,8 +94,8 @@ export default function WorkoutDetailPage() {
     if (error || !workout) {
         return (
             <ProtectedWrapper>
-                <div className="min-w-full p-4">
-                    <div className="text-gray-700 font-bold text-3xl mb-6">Workout Details</div>
+                <div className="w-full p-4 md:p-8 mx-auto max-w-4xl">
+                    <div className="text-gray-700 font-bold text-2xl sm:text-3xl mb-6">Workout Details</div>
                     <div className="text-red-600 py-8 text-center">{error || "Workout not found."}</div>
                 </div>
             </ProtectedWrapper>
@@ -118,13 +114,16 @@ export default function WorkoutDetailPage() {
 
     return (
         <ProtectedWrapper>
-            <div className="min-w-full p-4">
-                <div className="flex flex-row">
-                    <Link href="/history"><IconButton image="/assets/arrow-white.svg" variant="primary" className="mr-4"></IconButton></Link>
-                    <div className="text-gray-700 font-bold text-3xl mb-6">{workout.name}</div>
+            <div className="w-full p-4 md:p-8 mx-auto max-w-4xl">
+                <div className="flex items-center mb-4 pt-2">
+                    <Link href="/history" className="mr-3 sm:mr-4">
+                        <IconButton image="/assets/arrow-white.svg" variant="primary" className="p-2 sm:p-3" />
+                    </Link>
+                    <div className="text-gray-700 font-bold text-2xl sm:text-3xl">{workout.name}</div>
                 </div>
-                <div className="mb-2 text-gray-600">{formatDate(workout.workout_date)}</div>
-                <div className="space-y-6 mt-6">
+
+                <div className="mb-4 sm:mb-6 text-gray-600 text-base sm:text-lg">{formatDate(workout.workout_date)}</div>
+                <div className="space-y-4 sm:space-y-6 mt-6">
                     {workout.workout_exercises.map((we, idx) => (
                         <WorkoutHistoryExerciseCard key={we.id} workoutExercise={we} exerciseIndex={idx} />
                     ))}

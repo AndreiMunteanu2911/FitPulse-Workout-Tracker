@@ -63,7 +63,6 @@ export default function WorkoutPage() {
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [isFinishModalOpen, setIsFinishModalOpen] = useState(false);
 
-    // Check for draft workout on mount
     useEffect(() => {
         const checkForDraftWorkout = async () => {
             setIsLoading(true);
@@ -88,7 +87,6 @@ export default function WorkoutPage() {
                 if (error && error.code !== "PGRST116") throw error;
 
                 if (data) {
-                    // Auto-load unfinished workout
                     setWorkoutId(data.id);
                     setWorkoutName(data.name);
                     const exercises = (data.workout_exercises || []).map((we: any) => ({
@@ -116,7 +114,6 @@ export default function WorkoutPage() {
         checkForDraftWorkout();
     }, []);
 
-    // Auto-save workout data (debounced)
     useEffect(() => {
         if (!workoutStarted || !workoutId) return;
 
@@ -127,7 +124,6 @@ export default function WorkoutPage() {
         return () => clearTimeout(autoSave);
     }, [workoutExercises, workoutStarted, workoutId]);
 
-    // Save workout data to database
     const saveWorkoutToDB = async () => {
         if (!workoutId) return;
 
@@ -154,7 +150,6 @@ export default function WorkoutPage() {
         }
     };
 
-    // Search exercises as user types
     useEffect(() => {
         const searchExercises = async () => {
             if (searchQuery.trim() === "") {
@@ -184,7 +179,6 @@ export default function WorkoutPage() {
         return () => clearTimeout(debounce);
     }, [searchQuery]);
 
-    // Start a new workout
     const startWorkout = async () => {
         try {
             const { data: { user } } = await supabase.auth.getUser();
@@ -211,7 +205,6 @@ export default function WorkoutPage() {
         }
     };
 
-    // Finish workout
     const finishWorkout = async () => {
         if (!workoutId) return;
 
@@ -236,7 +229,6 @@ export default function WorkoutPage() {
         }
     };
 
-    // Cancel workout
     const handleCancelWorkout = () => {
         setShowCancelModal(true);
     };
@@ -256,6 +248,7 @@ export default function WorkoutPage() {
             setWorkoutExercises([]);
             setWorkoutName("My Workout");
             setErrorMessages({});
+            setNoDraftFound(true);
         } catch (error) {
             console.error("Error canceling workout:", error);
             setErrorMessages((prev) => ({ ...prev, general: "Failed to cancel workout." }));
@@ -264,7 +257,6 @@ export default function WorkoutPage() {
         }
     };
 
-    // Add exercise to workout
     const addExerciseToWorkout = async (exercise: Exercise) => {
         if (!workoutId) return;
 
@@ -315,7 +307,6 @@ export default function WorkoutPage() {
         }
     };
 
-    // Add set to specific exercise
     const addSetToExercise = async (exerciseIndex: number) => {
         const workoutExercise = workoutExercises[exerciseIndex];
         if (workoutExercise.sets.length >= 10) {
@@ -354,7 +345,6 @@ export default function WorkoutPage() {
         }
     };
 
-    // Update set values
     const updateSet = (exerciseIndex: number, setIndex: number, field: 'reps' | 'weight', value: number) => {
         const errorKey = `exercise-${exerciseIndex}-set-${setIndex}-${field}`;
         if (value < 0) {
@@ -374,7 +364,6 @@ export default function WorkoutPage() {
         setErrorMessages((prev) => ({ ...prev, [errorKey]: "" }));
     };
 
-    // Delete a specific set
     const deleteSet = async (exerciseIndex: number, setIndex: number) => {
         const set = workoutExercises[exerciseIndex].sets[setIndex];
 
@@ -401,7 +390,6 @@ export default function WorkoutPage() {
         }
     };
 
-    // Delete an entire exercise
     const deleteExercise = async (exerciseIndex: number) => {
         const workoutExercise = workoutExercises[exerciseIndex];
 
@@ -425,23 +413,22 @@ export default function WorkoutPage() {
 
     return (
         <ProtectedWrapper>
-            <div className="min-w-full p-4">
+            <div className="w-full p-4 md:p-8 mx-auto max-w-4xl">
                 {isLoading ? (
                     <div className="flex justify-center items-center h-[60vh]">
-                        <LoadingSpinner />
+                        <LoadingSpinner size={8} />
                     </div>
                 ) : (
                     <>
                         {errorMessages.general && (
                             <div className="mb-4 text-red-600">{errorMessages.general}</div>
                         )}
-                        {/* Header always at the top */}
-                        <div className="sticky top-0 py-4 bg-white z-10 flex justify-between items-center mb-6">
-                            <div className="text-3xl text-gray-700 font-semibold">Workout</div>
+                        <div className="sticky top-0 py-4 bg-white/95 backdrop-blur-sm z-10 flex justify-between items-center mb-6">
+                            <div className="text-2xl sm:text-3xl text-gray-700 font-semibold">Workout</div>
                             {!workoutStarted ? (
-                                <Button onClick={startWorkout}>New Workout</Button>
+                                <Button onClick={startWorkout} className="px-4 py-2 text-sm sm:text-base">Start New Workout</Button>
                             ) : (
-                                <Button onClick={() => setIsFinishModalOpen(true)}>Finish Workout</Button>
+                                <Button onClick={() => setIsFinishModalOpen(true)} className="px-4 py-2 text-sm sm:text-base">Finish Workout</Button>
                             )}
                         </div>
                         <FinishWorkoutModal
@@ -452,30 +439,29 @@ export default function WorkoutPage() {
                                 finishWorkout();
                             }}
                         />
-                        {/* Message below header, only if no draft and not started */}
                         {noDraftFound && !workoutStarted && (
-                            <div className="text-center text-[var(--primary-700)] text-xl mb-8">Start a new workout today!</div>
+                            <div className="text-center text-[var(--primary-700)] text-base sm:text-xl mb-8 py-4 rounded-lg">
+                                Start a new workout today!
+                            </div>
                         )}
-                        {/* Workout content */}
                         {workoutStarted && (
-                            <div className="space-y-4 mt-4">
-                                <div>
+                            <div className="space-y-6 sm:space-y-8 mt-4">
+                                <div className="p-2 border border-blue-700/80 rounded-md bg-white">
                                     <label className="block mb-1 text-sm text-[var(--primary-800)] font-medium">Workout Name</label>
                                     <input
                                         type="text"
                                         value={workoutName}
                                         onChange={(e) => setWorkoutName(e.target.value)}
-                                        className="w-full rounded-xs px-3 py-1.5 bg-white/10 placeholder-white/70 text-gray-700 border border-blue-700/80 focus:bg-white/20 text-xl"
+                                        className="w-full px-1 py-0.5 text-gray-700 text-lg sm:text-xl font-bold border-none focus:outline-none bg-transparent"
                                     />
                                 </div>
 
-                                {/* Exercises list or no exercises message */}
                                 {workoutExercises.length === 0 ? (
-                                    <div className="text-center text-[var(--primary-700)] py-8">
+                                    <div className="text-center text-[var(--primary-700)] py-8 rounded-lg">
                                         No exercises added yet. Click "Add Exercise" to start.
                                     </div>
                                 ) : (
-                                    <div className="space-y-6">
+                                    <div className="space-y-4 sm:space-y-6">
                                         {workoutExercises.map((workoutExercise, exerciseIndex) => (
                                             <ExerciseCard
                                                 key={workoutExercise.id}
@@ -497,9 +483,8 @@ export default function WorkoutPage() {
                                     </div>
                                 )}
 
-                                {/* Add Exercise button always below exercises, above Cancel */}
-                                <div className="flex justify-center">
-                                    <Button onClick={() => setShowExerciseSearch(true)} className="py-2 px-6">
+                                <div className="flex justify-center pt-2">
+                                    <Button onClick={() => setShowExerciseSearch(true)} className="py-2.5 px-8 text-base">
                                         Add Exercise
                                     </Button>
                                 </div>
@@ -519,9 +504,8 @@ export default function WorkoutPage() {
                                     onSelectExercise={addExerciseToWorkout}
                                 />
 
-                                {/* Cancel Workout button always at the bottom */}
-                                <div className="flex justify-center mt-8">
-                                    <Button onClick={handleCancelWorkout} variant="textOnly">Cancel Workout</Button>
+                                <div className="flex justify-center pt-4">
+                                    <Button onClick={handleCancelWorkout} variant="textOnly" className="text-sm">Cancel Workout</Button>
                                 </div>
                                 <CancelWorkoutModal
                                     isOpen={showCancelModal}

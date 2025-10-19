@@ -40,39 +40,43 @@ function capitalizeFirstLetter(str: string) {
 }
 
 export default function WorkoutExerciseCard({
-    workoutExercise,
-    exerciseIndex,
-    onAddSet,
-    onUpdateSet,
-    onDeleteSet,
-    onDeleteExercise,
-    errorMessage,
-    setErrorMessage,
-}: ExerciseCardProps) {
+                                                workoutExercise,
+                                                exerciseIndex,
+                                                onAddSet,
+                                                onUpdateSet,
+                                                onDeleteSet,
+                                                onDeleteExercise,
+                                                errorMessage,
+                                                setErrorMessage,
+                                            }: ExerciseCardProps) {
     return (
-        <div className="p-4 bg-white mb-6 rounded-xs border-b-2 border-[var(--primary-400)]/80">
+        <div className="p-3 sm:p-4 bg-white mb-6 rounded-xs border-b-2 border-[var(--primary-400)]/80">
             <div className="flex items-center justify-between mb-2">
-                <h3 className="text-lg font-semibold text-xl text-[var(--primary-600)] m-0">
+                <div className="text-lg sm:text-xl font-semibold text-[var(--primary-600)] m-0">
                     {capitalizeFirstLetter(workoutExercise.exercise.name)}
-                </h3>
+                </div>
                 <Button
                     variant="textOnly"
                     aria-label="Delete exercise"
                     onClick={() => onDeleteExercise(exerciseIndex)}
-                    className="ml-2 text-red-500 hover:text-red-700 flex items-center gap-1"
+                    className="ml-2 text-red-500 hover:text-red-700 flex items-center gap-0.5 sm:gap-1 p-0"
                 >
                     <span className="font-bold text-lg">×</span>
-                    <span className="text-base">Delete Exercise</span>
+                    <span className="text-xs sm:text-base whitespace-nowrap">Delete Exercise</span>
                 </Button>
             </div>
             {errorMessage && (
-                <div className="text-red-600 text-base mb-2">{errorMessage}</div>
+                <div className="text-red-600 text-sm sm:text-base mb-2">{errorMessage}</div>
             )}
             <div>
                 {workoutExercise.sets.map((set, setIndex) => (
-                    <div key={set.id} className="flex items-center gap-4 mb-2">
-                        <span className="text-gray-700 text-lg font-normals min-w-[50px]">Set {set.set_number}</span>
-                        <div className="flex items-center gap-1">
+                    <div
+                        key={set.id}
+                        className="flex items-center gap-2 sm:gap-4 mb-2"
+                    >
+                        <span className="text-gray-700 text-base sm:text-lg font-normals min-w-[35px] sm:min-w-[50px] whitespace-nowrap">Set {set.set_number}</span>
+
+                        <div className="flex items-center gap-0.5 sm:gap-1">
                             <input
                                 type="number"
                                 placeholder="Reps"
@@ -83,11 +87,12 @@ export default function WorkoutExerciseCard({
                                     setErrorMessage("");
                                 }}
                                 min="0"
-                                className="px-2 py-1 text-base bg-gray-200 text-gray-800 border-none rounded"
+                                className="w-12 sm:w-auto px-1 sm:px-2 py-1 text-sm sm:text-base bg-gray-200 text-gray-800 border-none rounded"
                             />
-                            <span className="text-gray-500 text-md">reps</span>
+                            <span className="text-gray-500 text-xs sm:text-md whitespace-nowrap">reps</span>
                         </div>
-                        <div className="flex items-center gap-1">
+
+                        <div className="flex items-center gap-0.5 sm:gap-1">
                             <input
                                 type="number"
                                 placeholder="Weight"
@@ -98,11 +103,12 @@ export default function WorkoutExerciseCard({
                                     setErrorMessage("");
                                 }}
                                 min="0"
-                                step="0.5"
-                                className=" ml-2 px-2 py-1 text-base bg-gray-200 text-gray-800 border-none rounded"
+                                step="1"
+                                className="px-1 sm:px-2 py-1 w-14 sm:w-auto text-sm sm:text-base bg-gray-200 text-gray-800 border-none rounded"
                             />
-                            <span className="text-gray-500 text-md">kg</span>
+                            <span className="text-gray-500 text-xs sm:text-md whitespace-nowrap">kg</span>
                         </div>
+
                         <Button
                             variant="textOnly"
                             aria-label="Delete set"
@@ -110,9 +116,9 @@ export default function WorkoutExerciseCard({
                                 e.stopPropagation();
                                 onDeleteSet(exerciseIndex, setIndex);
                             }}
-                            className="ml-2 text-red-500 hover:text-red-700 font-bold text-2xl"
+                            className="flex-shrink-0 ml-auto text-red-500 hover:text-red-700 font-bold text-xl sm:text-2xl p-0"
                         >
-                            × <span className="text-sm font-semibold ml-1">Delete set</span>
+                            × <span className="text-xs sm:text-sm font-semibold ml-0.5 sm:ml-1 whitespace-nowrap">Delete set</span>
                         </Button>
                     </div>
                 ))}

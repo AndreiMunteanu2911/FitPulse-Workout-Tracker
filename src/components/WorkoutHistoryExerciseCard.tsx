@@ -33,29 +33,38 @@ function capitalize(str: string) {
 
 export default function WorkoutHistoryExerciseCard({ workoutExercise, exerciseIndex }: WorkoutHistoryExerciseCardProps) {
     return (
-        <div className="p-4 bg-white mb-6 rounded-xs border-b-2 border-[var(--primary-400)]/80">
+        <div className="p-3 sm:p-4 bg-white mb-6 rounded-xs border-b-2 border-[var(--primary-400)]/80">
             <div className="flex items-center justify-between mb-2">
-                <h3 className="text-lg font-semibold text-xl text-[var(--primary-600)] m-0">
+                <h3 className="text-lg sm:text-xl font-semibold text-[var(--primary-600)] m-0">
                     {capitalize(workoutExercise.exercise.name)}
                 </h3>
             </div>
             <div className="flex gap-2 flex-wrap mb-2">
                 {workoutExercise.exercise.target_muscles?.length
                     ? workoutExercise.exercise.target_muscles.map((muscle, idx) => (
-                        <span key={idx} className="inline-block rounded-4xl bg-[color:var(--primary-500)] text-white px-3 py-1">
+                        <span key={idx} className="inline-block rounded-4xl bg-[color:var(--primary-500)] text-white px-3 py-1 text-sm sm:text-base">
                             {capitalize(muscle)}
-                        </span>
+                          </span>
                     ))
-                    : <span className="inline-block rounded-4xl bg-[color:var(--primary-500)] text-white px-3 py-1">—</span>
+                    : <span className="inline-block rounded-4xl bg-[color:var(--primary-500)] text-white px-3 py-1 text-sm sm:text-base">—</span>
                 }
             </div>
             <div>
                 {workoutExercise.sets.map((set) => (
-                    <div key={set.id} className="flex items-center mt-8 ml-2 gap-12 mb-2">
-                        <span className="text-gray-700 text-lg">Set {set.set_number}</span>
-                        <span className="text-[var(--primary-700)] text-xl">{set.reps} reps</span>
-                        <span className="text-[var(--primary-700)] text-xl">{set.weight} kg</span>
-                        <span className="text-gray-500 text-base">Volume: {(set.reps * set.weight).toFixed(1)} kg</span>
+                    <div
+                        key={set.id}
+                        className="grid grid-cols-2 gap-y-1 gap-x-4 md:flex md:items-center mt-6 md:mt-8 md:ml-2 md:gap-12 mb-2"
+                    >
+                        <span className="text-gray-700 text-base sm:text-lg">Set {set.set_number}</span>
+                        <span className="text-[var(--primary-700)] text-lg sm:text-xl">
+                            {set.reps} reps
+                        </span>
+                        <span className="text-[var(--primary-700)] text-lg sm:text-xl">
+                            {set.weight} kg
+                        </span>
+                        <span className="text-gray-500 text-sm sm:text-base md:ml-auto">
+                            Volume: {(set.reps * set.weight).toFixed(1)} kg
+                        </span>
                     </div>
                 ))}
             </div>

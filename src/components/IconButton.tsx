@@ -8,26 +8,26 @@ interface IconButtonProps {
     disabled?: boolean;
     className?: string;
     variant?: 'primary' | 'secondary';
-    image: string; // SVG path (string)
+    image: string;
     alt?: string;
-    size?: number; // diameter in px
+    size?: number;
 }
 
 const IconButton: React.FC<IconButtonProps> = ({
-    onClick,
-    type = 'button',
-    disabled = false,
-    className = '',
-    variant = 'primary',
-    image,
-    alt = 'icon',
-    size = 40
-}) => (
+                                                   onClick,
+                                                   type = 'button',
+                                                   disabled = false,
+                                                   className = '',
+                                                   variant = 'primary',
+                                                   image,
+                                                   alt = 'icon',
+                                                   size = 40
+                                               }) => (
     <button
         type={type}
         onClick={onClick}
         disabled={disabled}
-        className={`inline-flex items-center justify-center rounded-full p-0 font-semibold shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--ring] disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
+        className={`inline-flex items-center justify-center rounded-full p-0 font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--ring] disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
         style={{
             width: size,
             height: size,
@@ -50,6 +50,7 @@ const IconButton: React.FC<IconButtonProps> = ({
             alt={alt}
             width={size * 0.6}
             height={size * 0.6}
+            className={`w-[${size * 0.6}px] h-[${size * 0.6}px] max-w-[24px] max-h-[24px]`}
             style={{ width: size * 0.6, height: size * 0.6 }}
             aria-hidden="true"
         />

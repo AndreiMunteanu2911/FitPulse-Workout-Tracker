@@ -56,22 +56,33 @@ export default function DashboardPage() {
 
     return (
         <ProtectedWrapper>
-            <div className="min-w-full p-4">
+            <div className="w-full p-4 md:p-8 mx-auto max-w-4xl">
                 <div className="flex justify-between items-center mb-6">
-                    <div className="sticky top-0 py-4 bg-white z-10 text-3xl font-semibold">Profile</div>
-                    <Button onClick={signOut} className="px-7.5">Sign Out</Button>
+                    <div className="sticky top-0 py-4 bg-white/95 backdrop-blur-sm z-10 text-2xl sm:text-3xl font-semibold">Profile</div>
+                    <Button onClick={signOut} className="px-5 py-2.5 text-sm sm:text-base">Sign Out</Button>
                 </div>
 
-                {/* Weight History Chart */}
+                {loading && (
+                    <div className="flex justify-center items-center py-12">
+                        <LoadingSpinner size={8} />
+                    </div>
+                )}
+
                 <div className="mb-6">
                     <div className="flex items-center justify-between mb-2">
-                        <h2 className="text-xl font-semibold">My Weight History</h2>
-                        <Button onClick={() => setShowModal(true)} variant="primary">+ New Entry</Button>
+                        <div className="text-lg sm:text-xl font-semibold">My Weight History</div>
+                        <Button onClick={() => setShowModal(true)} variant="primary" className="px-3 py-1.5 text-sm sm:text-base">+ New Entry</Button>
                     </div>
-                    <WeightHistoryChart weights={weights} loading={loading} />
+                    <div className="w-full aspect-video sm:aspect-[16/9] lg:aspect-[3/1] bg-white rounded-lg p-3 sm:p-4">
+                        <WeightHistoryChart weights={weights} loading={loading} />
+                    </div>
                 </div>
 
-                {/* Modal for Add Weight Entry */}
+                <div className="py-4 mt-6 border-t border-gray-200">
+                    <h2 className="text-lg sm:text-xl font-semibold mb-2">Account Details</h2>
+                    <p className="text-gray-600">Email: {user?.email || "Loading..."}</p>
+                </div>
+
                 <AddWeightModal
                     show={showModal}
                     onClose={() => setShowModal(false)}
