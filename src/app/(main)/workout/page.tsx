@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import supabase from "@/helper/supabaseClient";
 import ExerciseCard from "@/components/WorkoutExerciseCard";
@@ -61,6 +61,21 @@ export default function WorkoutPage() {
                     return;
                 }
 
+                type SupabaseSet = Set;
+                type SupabaseExercise = Exercise;
+                type SupabaseWorkoutExercise = {
+                    id: string;
+                    exercise_id: string;
+                    exercise: SupabaseExercise;
+                    order_index: number;
+                    sets: SupabaseSet[];
+                };
+                type SupabaseWorkout = {
+                    id: string;
+                    name: string;
+                    workout_exercises: SupabaseWorkoutExercise[];
+                };
+
                 const { data, error } = await supabase
                     .from("workouts")
                     .select(`*,workout_exercises (*,exercise:exercises (*),sets (*))`)
@@ -68,19 +83,19 @@ export default function WorkoutPage() {
                     .eq("status", "draft")
                     .order("created_at", { ascending: false })
                     .limit(1)
-                    .single();
+                    .single<SupabaseWorkout>();
 
                 if (error && error.code !== "PGRST116") throw error;
 
                 if (data) {
                     setWorkoutId(data.id);
                     setWorkoutName(data.name);
-                    const exercises = (data.workout_exercises || []).map((we: any) => ({
+                    const exercises = (data.workout_exercises || []).map((we) => ({
                         id: we.id,
                         exercise_id: we.exercise_id,
                         exercise: we.exercise,
                         order_index: we.order_index,
-                        sets: (we.sets || []).sort((a: any, b: any) => a.set_number - b.set_number),
+                        sets: (we.sets || []).sort((a, b) => a.set_number - b.set_number),
                     }));
                     setWorkoutExercises(exercises);
                     setWorkoutStarted(true);
@@ -100,17 +115,8 @@ export default function WorkoutPage() {
         checkForDraftWorkout();
     }, []);
 
-    useEffect(() => {
-        if (!workoutStarted || !workoutId) return;
-
-        const autoSave = setTimeout(async () => {
-            await saveWorkoutToDB();
-        }, 2000);
-
-        return () => clearTimeout(autoSave);
-    }, [workoutExercises, workoutStarted, workoutId]);
-
-    const saveWorkoutToDB = async () => {
+    // Fix: useCallback for saveWorkoutToDB to avoid missing dependency
+    const saveWorkoutToDB = React.useCallback(async () => {
         if (!workoutId) return;
 
         try {
@@ -134,7 +140,17 @@ export default function WorkoutPage() {
             console.error("Error auto-saving workout:", error);
             setErrorMessages((prev) => ({ ...prev, general: "Failed to auto-save workout." }));
         }
-    };
+    }, [workoutId, workoutName, workoutExercises]);
+
+    useEffect(() => {
+        if (!workoutStarted || !workoutId) return;
+
+        const autoSave = setTimeout(async () => {
+            await saveWorkoutToDB();
+        }, 2000);
+
+        return () => clearTimeout(autoSave);
+    }, [workoutExercises, workoutStarted, workoutId, saveWorkoutToDB]);
 
     useEffect(() => {
         const searchExercises = async () => {
@@ -446,7 +462,7 @@ export default function WorkoutPage() {
 
                                 {workoutExercises.length === 0 ? (
                                     <div className="text-center text-[var(--primary-700)] py-8 rounded-lg">
-                                        No exercises added yet. Click "Add Exercise" to start.
+                                        No exercises added yet. Click &quot;Add Exercise&quot; to start.
                                     </div>
                                 ) : (
                                     <div className="space-y-4 sm:space-y-6">
