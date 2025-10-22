@@ -16,20 +16,23 @@ export default function SignUpPage() {
         event.preventDefault();
         setMessage("");
 
-        const {data,error} = await supabase.auth.signUp({
-            email:email,
-            password:password,
+        const {data, error} = await supabase.auth.signUp({
+            email: email,
+            password: password,
         });
 
-        if (error)
-        {
+        if (error) {
             setEmail("");
             setPassword("");
             setMessage(error.message);
             return;
         }
-        if (data){
-            setMessage("User account created");
+        if (data && data.user && !data.session) {
+            setMessage("Account created! Please check your email to verify your account before logging in.");
+        } else if (data && data.user && data.session) {
+            setMessage("User account created and logged in.");
+        } else {
+            setMessage("User account created.");
         }
         setEmail("");
         setPassword("");
