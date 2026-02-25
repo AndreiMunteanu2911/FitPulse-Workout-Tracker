@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
-import supabase from "@/helper/supabaseClient";
 import WorkoutHistoryCard from "@/components/WorkoutHistoryCard";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import Link from "next/link";
+import { useHistory } from "@/hooks/useHistory";
 
 interface Exercise {
     exercise_id: string;
@@ -44,46 +44,17 @@ export default function HistoryPage() {
     const [workouts, setWorkouts] = useState<Workout[]>([]);
     const [loading, setLoading] = useState(true);
     const [errorMessages, setErrorMessages] = useState<{ general?: string }>({});
+    const { fetchHistory } = useHistory();
 
     useEffect(() => {
         fetchWorkoutHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const fetchWorkoutHistory = async () => {
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-
-            const { data, error } = await supabase
-                .from("workouts")
-                .select(`
-                    *,
-                    workout_exercises (
-                        *,
-                        exercise:exercises (*),
-                        sets (*)
-                    )
-                `)
-                .eq("user_id", user.id)
-                .eq("status", "completed")
-                .order("workout_date", { ascending: false })
-                .order("created_at", { ascending: false });
-
-            if (error) {
-                console.error(error);
-            }
-
-            const processedWorkouts = data?.map((workout) => ({
-                ...workout,
-                workout_exercises: workout.workout_exercises
-                    .sort((a: { order_index: number }, b: { order_index: number }) => a.order_index - b.order_index)
-                    .map((we: { sets: unknown[] }) => ({
-                        ...we,
-                        sets: (we.sets as Set[]).sort((a, b) => a.set_number - b.set_number),
-                    })),
-            })) || [];
-
-            setWorkouts(processedWorkouts);
+            const data = await fetchHistory();
+            setWorkouts(data);
             setErrorMessages({});
         } catch (error) {
             console.error("Error fetching workout history:", error);

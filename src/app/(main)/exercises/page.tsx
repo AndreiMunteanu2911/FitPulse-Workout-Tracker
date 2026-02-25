@@ -3,8 +3,8 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import ExerciseCard, { Exercise } from "@/components/ExerciseCard";
-import supabase from "@/helper/supabaseClient";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { useExercises } from "@/hooks/useExercises";
 
 const BATCH_SIZE = 20;
 
@@ -17,57 +17,28 @@ export default function ExercisesPage() {
     const loaderRef = useRef<HTMLDivElement>(null);
     const isFetchingRef = useRef(false);
     const prevSearchQueryRef = useRef<string>("");
+    const { fetchExercises } = useExercises();
 
-    const fetchExercises = useCallback(async (currentPage: number) => {
+    const loadExercises = useCallback(async (currentPage: number) => {
         if (isFetchingRef.current) return;
-
         isFetchingRef.current = true;
         setLoading(true);
-
-        let data;
-        let error;
-        if (searchQuery.trim() === "") {
-            const res = await supabase
-                .from("exercises")
-                .select("*")
-                .range(currentPage * BATCH_SIZE, (currentPage + 1) * BATCH_SIZE - 1);
-            data = res.data ?? [];
-            error = res.error;
-        } else {
-            const words = searchQuery.trim().toLowerCase().split(/\s+/);
-            const res = await supabase
-                .from("exercises")
-                .select("*");
-            data = res.data ?? [];
-            error = res.error;
-            data = data.filter(e => {
-                const name = (e.name || "").toLowerCase();
-                return words.every(word => name.includes(word));
-            });
-            data = data.slice(currentPage * BATCH_SIZE, (currentPage + 1) * BATCH_SIZE);
-        }
-
-        if (error) {
-            console.error("Error fetching exercises:", error);
-        } else {
-            const processedData = (data ?? []).map(e => ({
-                ...e,
-                name: e.name ? e.name.charAt(0).toUpperCase() + e.name.slice(1) : e.name
-            }));
+        try {
+            const result = await fetchExercises(currentPage, searchQuery);
+            const data = result.exercises as Exercise[];
             setExercises((prev) => {
                 const existingIds = new Set(prev.map(e => e.exercise_id));
-                const newExercises = processedData.filter(e => !existingIds.has(e.exercise_id));
+                const newExercises = data.filter(e => !existingIds.has(e.exercise_id));
                 return [...prev, ...newExercises];
             });
-
-            if (!data || data.length < BATCH_SIZE) {
-                setHasMore(false);
-            }
+            if (data.length < BATCH_SIZE) setHasMore(false);
+        } catch (err) {
+            console.error("Error fetching exercises:", err);
+        } finally {
+            setLoading(false);
+            isFetchingRef.current = false;
         }
-
-        setLoading(false);
-        isFetchingRef.current = false;
-    }, [searchQuery]);
+    }, [searchQuery, fetchExercises]);
 
     useEffect(() => {
         const isSearchMode = searchQuery.trim() !== "";
@@ -77,9 +48,9 @@ export default function ExercisesPage() {
             setExercises([]);
             setHasMore(true);
         }
-        fetchExercises(page);
+        loadExercises(page);
         prevSearchQueryRef.current = searchQuery;
-    }, [page, searchQuery, fetchExercises]);
+    }, [page, searchQuery, loadExercises]);
 
     useEffect(() => {
         const currentLoader = loaderRef.current;

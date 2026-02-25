@@ -3,35 +3,32 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
-import supabase from "@/helper/supabaseClient";
 import { Exercise } from "@/components/ExerciseCard";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import Link from "next/link";
 import IconButton from "@/components/IconButton";
 import Image from "next/image";
+import { useExercises } from "@/hooks/useExercises";
 
 export default function ExerciseDetailsPage() {
     const { id } = useParams();
     const [exercise, setExercise] = useState<Exercise | null>(null);
     const [loading, setLoading] = useState(true);
+    const { fetchExercise } = useExercises();
 
     useEffect(() => {
-        const fetchExercise = async () => {
-            const { data, error } = await supabase
-                .from("exercises")
-                .select("*")
-                .eq("exercise_id", id)
-                .single();
-
-            if (error) {
-                console.error("Error fetching exercise:", error);
-            } else {
+        const loadExercise = async () => {
+            try {
+                const data = await fetchExercise(id as string);
                 setExercise(data);
+            } catch (error) {
+                console.error("Error fetching exercise:", error);
             }
             setLoading(false);
         };
 
-        fetchExercise();
+        loadExercise();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id]);
 
     if (loading) {
