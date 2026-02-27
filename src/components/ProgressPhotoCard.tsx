@@ -22,7 +22,7 @@ export default function ProgressPhotoCard({ photo, onDelete }: ProgressPhotoCard
   };
 
   return (
-    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg overflow-hidden hover:shadow-md transition-shadow group">
+    <div className="bg-[var(--surface)] border-2 border-[var(--primary-600)] dark:border-[var(--primary-500)] rounded-lg overflow-hidden hover:shadow-md transition-shadow group">
       <div className="relative aspect-square">
         <img
           src={photo.photo_url}
@@ -31,7 +31,7 @@ export default function ProgressPhotoCard({ photo, onDelete }: ProgressPhotoCard
         />
         <button
           onClick={() => onDelete(photo.id)}
-          className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700"
+          className="absolute top-2 right-2 p-2 bg-red-600 dark:bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700"
           aria-label="Delete photo"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

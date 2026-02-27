@@ -16,7 +16,7 @@ export default function StatCard({ title, value, subtitle, icon, trend }: StatCa
   };
 
   return (
-    <div className="bg-[var(--surface)] rounded-lg p-4 md:p-6 shadow-sm border border-[var(--border)] hover:shadow-md transition-shadow">
+    <div className="bg-[var(--surface)] rounded-lg p-4 md:p-6 shadow-sm border-2 border-[var(--primary-600)] dark:border-[var(--primary-500)] hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <p className="text-sm text-[var(--muted-foreground)] mb-1">{title}</p>
@@ -26,7 +26,7 @@ export default function StatCard({ title, value, subtitle, icon, trend }: StatCa
           )}
         </div>
         {icon && (
-          <div className="text-blue-600 bg-blue-50 p-2 rounded-lg">
+          <div className="text-[var(--primary-600)] dark:text-[var(--primary-400)] bg-[var(--primary-50)] dark:bg-[var(--primary-900)]/30 p-2 rounded-lg">
             {icon}
           </div>
         )}

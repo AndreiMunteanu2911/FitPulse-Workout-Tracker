@@ -61,20 +61,20 @@ export default function WorkoutHistoryCard({ workout }: WorkoutHistoryCardProps)
     };
 
     return (
-        <div className="border-2 border-[var(--primary-800)] rounded-sm overflow-hidden cursor-pointer">
-            <div className="bg-[var(--surface)] p-4 hover:bg-[var(--primary-100)]/50 transition-colors">
+        <div className="border-2 border-[var(--primary-700)] dark:border-[var(--primary-400)] rounded-sm overflow-hidden cursor-pointer">
+            <div className="bg-[var(--surface)] p-4 hover:bg-[var(--primary-100)]/50 dark:hover:bg-[var(--primary-900)]/30 transition-colors">
                 <div className="flex justify-between items-start">
                     <div className="flex-1">
-                        <div className="text-xl font-semibold mb-2 text-[var(--primary-800)]">{workout.name}</div>
-                        <div className="text-sm text-[var(--muted-foreground)] mb-4">{formatDate(workout.workout_date)}</div>
+                        <div className="text-xl font-semibold mb-2 text-[var(--primary-400)] dark:text-[var(--primary-400)]">{workout.name}</div>
+                        <div className="text-sm text-[var(--muted-foreground)] dark:text-[var(--foreground)] mb-4">{formatDate(workout.workout_date)}</div>
                         <div className="flex flex-col sm:flex-row gap-3 sm:gap-6 text-sm font-normal text-white items-start">
-                            <span className="bg-[var(--primary-600)] rounded-full py-1 px-3">
+                            <span className="bg-[var(--primary-600)] dark:bg-[var(--primary-500)] rounded-full py-1 px-3">
                                 <strong>{workout.workout_exercises.length}</strong> exercises
                             </span>
-                            <span className="bg-[var(--primary-600)] rounded-full py-1 px-3">
+                            <span className="bg-[var(--primary-600)] dark:bg-[var(--primary-500)] rounded-full py-1 px-3">
                                 <strong>{calculateTotalSets(workout)}</strong> sets
                             </span>
-                            <span className="bg-[var(--primary-600)] rounded-full py-1 px-3">
+                            <span className="bg-[var(--primary-600)] dark:bg-[var(--primary-500)] rounded-full py-1 px-3">
                                 <strong>{calculateTotalVolume(workout)}</strong> kg total volume
                             </span>
                         </div>

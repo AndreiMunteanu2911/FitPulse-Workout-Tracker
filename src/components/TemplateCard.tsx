@@ -18,7 +18,7 @@ export default function TemplateCard({ template, onEdit, onDelete }: TemplateCar
   const exerciseCount = template.template_exercises?.length || 0;
 
   return (
-    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4 hover:shadow-md transition-shadow group">
+    <div className="bg-[var(--surface)] border-2 border-[var(--primary-600)] dark:border-[var(--primary-500)] rounded-lg p-4 hover:shadow-md transition-shadow group">
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
           <h3 className="text-lg font-semibold text-[var(--foreground)]">{template.name}</h3>
@@ -31,7 +31,7 @@ export default function TemplateCard({ template, onEdit, onDelete }: TemplateCar
         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={onEdit}
-            className="p-2 text-[var(--primary-600)] hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-900)] rounded"
+            className="p-2 text-[var(--primary-600)] dark:text-[var(--primary-400)] hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-900)] rounded"
             aria-label="Edit template"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -40,7 +40,7 @@ export default function TemplateCard({ template, onEdit, onDelete }: TemplateCar
           </button>
           <button
             onClick={onDelete}
-            className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+            className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
             aria-label="Delete template"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

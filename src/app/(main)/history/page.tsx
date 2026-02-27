@@ -81,10 +81,10 @@ export default function HistoryPage() {
                     History
                 </div>
                 {errorMessages.general && (
-                    <div className="mb-4 text-red-600">{errorMessages.general}</div>
+                    <div className="mb-4 text-red-600 dark:text-red-400">{errorMessages.general}</div>
                 )}
                 {workouts.length === 0 ? (
-                    <div className="text-[var(--primary-700)] text-center py-12 px-4 rounded-lg ">
+                    <div className="text-[var(--foreground)] text-center py-12 px-4 rounded-lg bg-[var(--surface)]">
                         No completed workouts yet. Start your first workout to see it here!
                     </div>
                 ) : (

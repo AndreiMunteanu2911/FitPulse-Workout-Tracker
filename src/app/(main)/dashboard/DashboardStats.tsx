@@ -51,10 +51,10 @@ export default function DashboardStats() {
   if (!stats || stats.totalWorkouts === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-600 text-lg mb-4">No workouts yet. Start your fitness journey!</p>
+        <p className="text-[var(--muted-foreground)] text-lg mb-4">No workouts yet. Start your fitness journey!</p>
         <a
           href="/workout"
-          className="inline-block px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+          className="inline-block px-6 py-3 bg-[var(--primary-600)] dark:bg-[var(--primary-500)] text-white rounded-md hover:bg-[var(--primary-700)] dark:hover:bg-[var(--primary-400)] transition"
         >
           Start Workout
         </a>
