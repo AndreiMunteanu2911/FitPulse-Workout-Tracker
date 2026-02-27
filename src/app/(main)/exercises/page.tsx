@@ -96,13 +96,18 @@ export default function ExercisesPage() {
             <div className="w-full">
                 <div className="sticky top-0 py-4 z-10 text-2xl sm:text-3xl font-semibold text-[var(--foreground)] mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-6 bg-[var(--surface)]">
                     <span>Exercises</span>
-                    <input
-                        type="text"
-                        placeholder="Search exercises..."
-                        value={searchQuery}
-                        onChange={handleSearch}
-                        className="border rounded-md px-3 py-1 text-base md:text-xl w-full sm:w-auto text-[var(--foreground)] bg-[var(--surface)] border-[var(--border)]"
-                    />
+                    <div className="relative w-full sm:w-auto flex-1 max-w-md">
+                        <input
+                            type="text"
+                            placeholder="Search exercises..."
+                            value={searchQuery}
+                            onChange={handleSearch}
+                            className="w-full px-3 py-2 pl-8 text-[var(--foreground)] bg-[var(--surface)] border-b-2 border-[var(--border)] placeholder-[var(--muted-foreground)] focus:border-[var(--primary-500)] focus:outline-none rounded-none transition-colors text-base"
+                        />
+                        <svg className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 gap-3">

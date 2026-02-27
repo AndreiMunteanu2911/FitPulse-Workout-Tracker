@@ -124,6 +124,9 @@ export default function WorkoutPage() {
 
             for (const exercise of workoutExercises) {
                 for (const set of exercise.sets) {
+                    // Skip saving sets that have no reps or weight entered
+                    if (set.reps === 0 && set.weight === 0) continue;
+                    
                     await updateSetApi(set.id, { reps: set.reps, weight: set.weight });
                 }
             }
@@ -366,13 +369,13 @@ export default function WorkoutPage() {
                         )}
                         {workoutStarted && (
                             <div className="space-y-6 sm:space-y-8 mt-4">
-                                <div className="p-2 border border-blue-700/80 rounded-md bg-[var(--surface)]">
-                                    <label className="block mb-1 text-sm text-[var(--primary-800)] font-medium">Workout Name</label>
+                                <div className="pb-3 border-b-2 border-[var(--border)]">
                                     <input
                                         type="text"
                                         value={workoutName}
                                         onChange={(e) => setWorkoutName(e.target.value)}
-                                        className="w-full px-1 py-0.5 text-[var(--foreground)] text-lg sm:text-xl font-bold border-none focus:outline-none bg-transparent"
+                                        className="w-full px-0 py-2 text-[var(--foreground)] text-lg sm:text-xl font-bold border-none focus:outline-none bg-transparent placeholder-[var(--muted-foreground)]"
+                                        placeholder="Workout Name"
                                     />
                                 </div>
 

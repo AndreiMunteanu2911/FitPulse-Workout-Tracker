@@ -34,7 +34,7 @@ interface ProgressPhoto {
 export default function ProfilePage() {
     const router = useRouter();
     const { logout, getSession } = useAuth();
-    const { fetchWeights, addWeight } = useWeightLogs();
+    const { fetchWeights, addWeight, deleteWeight } = useWeightLogs();
     const { fetchProgressPhotos, addProgressPhoto, deleteProgressPhoto } = useProgressPhotos();
 
     const [user, setUser] = useState<User | null>(null);
@@ -108,6 +108,16 @@ export default function ProfilePage() {
         }
     };
 
+    const handleDeleteWeight = async (id: string) => {
+        if (!confirm("Are you sure you want to delete this weight entry?")) return;
+        try {
+            await deleteWeight(id);
+            await loadData();
+        } catch (error) {
+            console.error("Error deleting weight:", error);
+        }
+    };
+
     return (
         <ProtectedWrapper>
 
@@ -129,7 +139,7 @@ export default function ProfilePage() {
                         <Button onClick={() => setShowWeightModal(true)} variant="primary" className="px-3 py-1.5 text-sm sm:text-base">+ New Entry</Button>
                     </div>
                     <div className="w-full aspect-video sm:aspect-[16/9] lg:aspect-[3/1] bg-[var(--surface)] rounded-lg p-3 sm:p-4">
-                        <WeightHistoryChart weights={weights} loading={loading} />
+                        <WeightHistoryChart weights={weights} loading={loading} onDelete={handleDeleteWeight} />
                     </div>
                 </div>
 

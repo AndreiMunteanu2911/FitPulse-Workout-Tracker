@@ -21,13 +21,13 @@ export default function Button({
                                    ...props
                                }: ButtonProps) {
     const base =
-        "inline-flex items-center justify-center rounded-sm px-3 py-1.5 text-sm sm:px-4 sm:py-2 sm:text-base font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--ring] disabled:cursor-not-allowed disabled:opacity-60";
+        "inline-flex items-center justify-center rounded-sm px-3 py-1.5 text-sm sm:px-4 sm:py-2 sm:text-base font-semibold transition focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60 active:scale-95";
 
     const variants: Record<NonNullable<ButtonProps["variant"]>, string> = {
-        primary: "bg-[var(--primary-800)] text-white border border-transparent hover:bg-[var(--primary-900)] focus-visible:ring-2 focus-visible:ring-blue-500 active:scale-95",
-        secondary: "bg-[var(--surface)] text-[var(--foreground)] border border-[var(--border)] hover:bg-[var(--surface)]/80 focus-visible:ring-2 focus-visible:ring-blue-500 active:scale-95",
+        primary: "bg-[var(--primary-800)] dark:bg-[var(--primary-600)] text-white border border-transparent hover:bg-[var(--primary-900)] dark:hover:bg-[var(--primary-500)]",
+        secondary: "bg-[var(--surface)] text-[var(--foreground)] border border-[var(--border)] hover:bg-[var(--surface)]/80",
         textOnly:
-            "bg-transparent border-none shadow-none text-[var(--primary-400)] text-[var(--primary-800)] active:scale-95",
+            "bg-transparent border-none shadow-none text-[var(--primary-700)] dark:text-[var(--primary-300)]",
     };
 
     return (

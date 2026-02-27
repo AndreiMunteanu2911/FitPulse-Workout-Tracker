@@ -18,5 +18,13 @@ export function useWeightLogs() {
     if (!res.ok) throw new Error(data.error || "Failed to add weight");
   };
 
-  return { fetchWeights, addWeight };
+  const deleteWeight = async (id: string) => {
+    const res = await fetch(`/api/weight-logs?id=${id}`, {
+      method: "DELETE",
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to delete weight");
+  };
+
+  return { fetchWeights, addWeight, deleteWeight };
 }

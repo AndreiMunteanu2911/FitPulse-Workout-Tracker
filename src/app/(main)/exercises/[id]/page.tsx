@@ -7,10 +7,29 @@ import { Exercise } from "@/components/ExerciseCard";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import Link from "next/link";
 import IconButton from "@/components/IconButton";
-import Image from "next/image";
 import { useExercises } from "@/hooks/useExercises";
 import { usePersonalRecords } from "@/hooks/usePersonalRecords";
 import PersonalRecordCard from "@/components/PersonalRecordCard";
+
+function ImageWithSpinner({ src, alt }: { src: string; alt: string }) {
+    const [loaded, setLoaded] = useState(false);
+    
+    return (
+        <div className="relative w-full h-full bg-transparent">
+            {!loaded && (
+                <div className="absolute inset-0 flex items-center justify-center bg-transparent z-10">
+                    <LoadingSpinner size={5} variant="image" />
+                </div>
+            )}
+            <img
+                src={src}
+                alt={alt}
+                className={`w-full h-full object-cover ${loaded ? 'opacity-100' : 'opacity-0'}`}
+                onLoad={() => setLoaded(true)}
+            />
+        </div>
+    );
+}
 
 export default function ExerciseDetailsPage() {
     const { id } = useParams();
@@ -73,13 +92,9 @@ export default function ExerciseDetailsPage() {
                 <div className="flex flex-col md:flex-row items-start gap-6 sm:gap-8 mb-6">
                     {exercise.gif_url && (
                         <div className="w-full md:w-auto flex justify-center md:block">
-                            <Image
-                                src={exercise.gif_url}
-                                alt={exercise.name + ' demo'}
-                                width={300}
-                                height={300}
-                                className="w-full h-auto max-w-xs sm:max-w-sm md:w-[300px] md:h-[300px] object-contain rounded-md"
-                            />
+                            <div className="w-full h-auto max-w-xs sm:max-w-sm md:w-[300px] md:h-[300px] rounded-md overflow-hidden bg-transparent">
+                                <ImageWithSpinner src={exercise.gif_url} alt={exercise.name + ' demo'} />
+                            </div>
                         </div>
                     )}
 
