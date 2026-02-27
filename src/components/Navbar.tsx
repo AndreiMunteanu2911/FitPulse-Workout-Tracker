@@ -56,8 +56,8 @@ export default function Navbar() {
             <li key={tab.name} className="flex-1">
               <Link
                 href={tab.href}
-                className={"flex flex-col items-center justify-center py-3 text-xs sm:text-sm " +
-                  (pathname === tab.href ? " font-semibold text-white" : " opacity-75")}
+                className={"flex flex-col items-center justify-center py-2 px-1 text-xs sm:text-sm " +
+                  (pathname === tab.href ? " font-semibold text-white bg-white/10 rounded-md mx-1" : " opacity-75")}
               >
                 <Image
                   src={tab.icon}

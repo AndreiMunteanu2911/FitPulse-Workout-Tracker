@@ -20,9 +20,9 @@ export default function StatCard({ title, value, subtitle, icon, trend }: StatCa
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <p className="text-sm text-[var(--muted-foreground)] mb-1">{title}</p>
-          <p className="text-2xl md:text-3xl font-bold text-[var(--foreground)]">{value}</p>
+          <p className="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--foreground)]">{value}</p>
           {subtitle && (
-            <p className={"text-xs mt-1 " + trendColors[trend || "neutral"]}>{subtitle}</p>
+            <p className={"text-xs mt-1 px-2 py-0.5 rounded inline-block bg-[var(--primary-50)] dark:bg-[var(--primary-900)]/30 " + trendColors[trend || "neutral"]}>{subtitle}</p>
           )}
         </div>
         {icon && (

@@ -4,11 +4,12 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import WeightLogCard from "@/components/WeightLogCard";
 
 interface WeightHistoryChartProps {
-    weights: { log_date: string; weight: number }[];
+    weights: { log_date: string; weight: number; id?: string }[];
     loading: boolean;
+    onDelete?: (id: string) => void;
 }
 
-const WeightHistoryChart: React.FC<WeightHistoryChartProps> = ({ weights, loading }) => {
+const WeightHistoryChart: React.FC<WeightHistoryChartProps> = ({ weights, loading, onDelete }) => {
     const chartData = weights.map(w => ({ ...w, log_date: new Date(w.log_date).getTime() }));
 
     return (
@@ -68,7 +69,13 @@ const WeightHistoryChart: React.FC<WeightHistoryChartProps> = ({ weights, loadin
                             <div className="px-4 py-4 text-center text-[var(--foreground)]">No logs to display.</div>
                         ) : (
                             weights.map((log, idx) => (
-                                <WeightLogCard key={log.log_date + '-' + log.weight + '-' + idx} date={log.log_date} weight={log.weight} />
+                                <WeightLogCard 
+                                    key={log.id || log.log_date + '-' + log.weight + '-' + idx} 
+                                    date={log.log_date} 
+                                    weight={log.weight}
+                                    id={log.id}
+                                    onDelete={onDelete}
+                                />
                             ))
                         )}
                     </div>
