@@ -9,18 +9,27 @@ import Link from "next/link";
 import IconButton from "@/components/IconButton";
 import Image from "next/image";
 import { useExercises } from "@/hooks/useExercises";
+import { usePersonalRecords } from "@/hooks/usePersonalRecords";
+import PersonalRecordCard from "@/components/PersonalRecordCard";
 
 export default function ExerciseDetailsPage() {
     const { id } = useParams();
     const [exercise, setExercise] = useState<Exercise | null>(null);
+    const [personalRecord, setPersonalRecord] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);
     const { fetchExercise } = useExercises();
+    const { fetchPersonalRecords } = usePersonalRecords();
 
     useEffect(() => {
         const loadExercise = async () => {
             try {
                 const data = await fetchExercise(id as string);
                 setExercise(data);
+                
+                // Load personal records and find the one for this exercise
+                const allRecords = await fetchPersonalRecords();
+                const recordForExercise = allRecords.find(r => r.exercise_id === id);
+                setPersonalRecord(recordForExercise || null);
             } catch (error) {
                 console.error("Error fetching exercise:", error);
             }
@@ -58,7 +67,7 @@ export default function ExerciseDetailsPage() {
                     <Link href="/exercises" className="mr-3 sm:mr-4">
                         <IconButton image="/assets/arrow-white.svg" variant="primary" className="p-2 sm:p-3" />
                     </Link>
-                    <h1 className="text-2xl sm:text-3xl text-gray-700 font-semibold">{capitalize(exercise.name)}</h1>
+                    <h1 className="text-2xl sm:text-3xl text-[var(--foreground)] font-semibold">{capitalize(exercise.name)}</h1>
                 </div>
 
                 <div className="flex flex-col md:flex-row items-start gap-6 sm:gap-8 mb-6">
@@ -76,7 +85,7 @@ export default function ExerciseDetailsPage() {
 
                     <div className="flex flex-col gap-4 w-full">
                         <div>
-                            <h2 className="text-lg sm:text-xl text-gray-700 font-semibold mb-1">Target Muscles</h2>
+                            <h2 className="text-lg sm:text-xl text-[var(--foreground)] font-semibold mb-1">Target Muscles</h2>
                             <div className="flex flex-wrap gap-2">
                                 {exercise.target_muscles?.length
                                     ? exercise.target_muscles.map((muscle, idx) => (
@@ -90,7 +99,7 @@ export default function ExerciseDetailsPage() {
                         </div>
 
                         <div>
-                            <h2 className="text-lg sm:text-xl text-gray-700 font-semibold mb-1">Equipment</h2>
+                            <h2 className="text-lg sm:text-xl text-[var(--foreground)] font-semibold mb-1">Equipment</h2>
                             <div className="flex flex-wrap gap-2">
                                 {exercise.equipments?.length
                                     ? exercise.equipments.map((eq, idx) => (
@@ -105,7 +114,7 @@ export default function ExerciseDetailsPage() {
 
                         {exercise.secondary_muscles?.length ? (
                             <div>
-                                <h2 className="text-lg sm:text-xl text-gray-700 font-semibold mb-1">Secondary Muscles</h2>
+                                <h2 className="text-lg sm:text-xl text-[var(--foreground)] font-semibold mb-1">Secondary Muscles</h2>
                                 <div className="flex flex-wrap gap-2">
                                     {exercise.secondary_muscles.map((muscle, idx) => (
                                         <span key={idx} className="inline-block rounded-full bg-[color:var(--primary-500)] text-white text-sm px-3 py-1">
@@ -118,7 +127,7 @@ export default function ExerciseDetailsPage() {
 
                         {exercise.body_parts?.length ? (
                             <div>
-                                <h2 className="text-lg sm:text-xl text-gray-700 font-semibold mb-1">Body Parts</h2>
+                                <h2 className="text-lg sm:text-xl text-[var(--foreground)] font-semibold mb-1">Body Parts</h2>
                                 <div className="flex flex-wrap gap-2">
                                     {exercise.body_parts.map((part, idx) => (
                                         <span key={idx} className="inline-block rounded-full bg-[color:var(--primary-500)] text-white text-sm px-3 py-1">
@@ -133,16 +142,27 @@ export default function ExerciseDetailsPage() {
 
                 {exercise.instructions?.length ? (
                     <div className="mb-4">
-                        <h2 className="text-xl text-gray-700 font-semibold mb-2">Instructions</h2>
+                        <h2 className="text-xl text-[var(--foreground)] font-semibold mb-2">Instructions</h2>
                         <ol className="list-decimal list-inside space-y-2">
                             {exercise.instructions.map((step, idx) => (
-                                <li key={idx} className="text-gray-600">{step}</li>
+                                <li key={idx} className="text-[var(--muted-foreground)]">{step}</li>
                             ))}
                         </ol>
                     </div>
                 ) : (
-                    <p className="text-gray-600">No instructions available for this exercise.</p>
+                    <p className="text-[var(--muted-foreground)]">No instructions available for this exercise.</p>
                 )}
+
+                <div className="py-4 mt-6 border-t border-[var(--border)]">
+                    <h2 className="text-xl text-[var(--foreground)] font-semibold mb-4">Your Personal Record</h2>
+                    {personalRecord ? (
+                        <PersonalRecordCard record={personalRecord} />
+                    ) : (
+                        <div className="text-center text-[var(--muted-foreground)] py-8 bg-[var(--surface)] rounded-lg">
+                            No personal record yet. Log your first workout for this exercise to see your PR here!
+                        </div>
+                    )}
+                </div>
             </div>
         </ProtectedWrapper>
     );

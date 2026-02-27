@@ -50,7 +50,7 @@ export default function WorkoutExerciseCard({
                                                 setErrorMessage,
                                             }: ExerciseCardProps) {
     return (
-        <div className="p-3 sm:p-4 bg-white mb-6 rounded-xs border-b-2 border-[var(--primary-400)]/80">
+        <div className="p-3 sm:p-4 bg-[var(--surface)] mb-6 rounded-xs border-b-2 border-[var(--primary-400)]/80">
             <div className="flex items-center justify-between mb-2">
                 <div className="text-lg sm:text-xl font-semibold text-[var(--primary-600)] m-0">
                     {capitalizeFirstLetter(workoutExercise.exercise.name)}

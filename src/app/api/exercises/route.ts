@@ -11,18 +11,42 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const page = parseInt(searchParams.get("page") ?? "0");
   const search = searchParams.get("search") ?? "";
+  const bodyPart = searchParams.get("bodyPart") ?? "";
+  const muscle = searchParams.get("muscle") ?? "";
+  const equipment = searchParams.get("equipment") ?? "";
+  const favoritesOnly = searchParams.get("favorites") === "true";
+
+  // Get user favorite exercise IDs if filtering by favorites
+  let favoriteExerciseIds: string[] = [];
+  if (favoritesOnly) {
+    const { data: favs } = await supabase
+      .from("user_exercises")
+      .select("exercise_id")
+      .eq("user_id", user.id)
+      .eq("is_favorite", true);
+    favoriteExerciseIds = favs?.map(f => f.exercise_id) || [];
+  }
+
+  let query = supabase.from("exercises").select("*");
+
+  // Apply filters
+  if (bodyPart) query = query.ilike("body_parts", "%" + bodyPart + "%");
+  if (muscle) query = query.ilike("target_muscles", "%" + muscle + "%");
+  if (equipment) query = query.ilike("equipments", "%" + equipment + "%");
+  if (favoritesOnly && favoriteExerciseIds.length > 0) {
+    query = query.in("id", favoriteExerciseIds);
+  } else if (favoritesOnly) {
+    return NextResponse.json({ exercises: [], hasMore: false });
+  }
 
   let data, error;
   if (search.trim() === "") {
-    const res = await supabase
-      .from("exercises")
-      .select("*")
-      .range(page * BATCH_SIZE, (page + 1) * BATCH_SIZE - 1);
+    const res = await query.range(page * BATCH_SIZE, (page + 1) * BATCH_SIZE - 1);
     data = res.data ?? [];
     error = res.error;
   } else {
     const words = search.trim().toLowerCase().split(/\s+/);
-    const res = await supabase.from("exercises").select("*");
+    const res = await query;
     data = res.data ?? [];
     error = res.error;
     data = data.filter((e: { name?: string }) => {
@@ -39,5 +63,5 @@ export async function GET(req: NextRequest) {
     name: e.name ? e.name.charAt(0).toUpperCase() + e.name.slice(1) : e.name,
   }));
 
-  return NextResponse.json({ exercises: processed, hasMore: data.length === BATCH_SIZE });
+  return NextResponse.json({ exercises: processed, hasMore: processed.length === BATCH_SIZE });
 }

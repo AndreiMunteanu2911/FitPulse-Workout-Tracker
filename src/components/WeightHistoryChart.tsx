@@ -63,9 +63,9 @@ const WeightHistoryChart: React.FC<WeightHistoryChartProps> = ({ weights, loadin
                             />
                         </LineChart>
                     </ResponsiveContainer>
-                    <div className="mt-4 rounded-xs overflow-hidden bg-white gap-y-2 max-h-96 overflow-y-auto mx-auto w-full sm:max-w-lg">
+                    <div className="mt-4 rounded-xs overflow-hidden bg-[var(--surface)] gap-y-2 max-h-96 overflow-y-auto mx-auto w-full sm:max-w-lg">
                         {weights.length === 0 ? (
-                            <div className="px-4 py-4 text-center text-gray-700">No logs to display.</div>
+                            <div className="px-4 py-4 text-center text-[var(--foreground)]">No logs to display.</div>
                         ) : (
                             weights.map((log, idx) => (
                                 <WeightLogCard key={log.log_date + '-' + log.weight + '-' + idx} date={log.log_date} weight={log.weight} />
