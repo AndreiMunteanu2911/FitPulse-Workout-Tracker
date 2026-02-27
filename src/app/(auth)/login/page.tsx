@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import {useState} from "react";
 import Link from "next/link";
@@ -7,25 +7,41 @@ import { useRouter } from "next/navigation";
 import IconButton from "@/components/IconButton";
 import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
+import { loginSchema, LoginInput } from "@/lib/validations";
+import { ZodError } from "zod";
 
 export default function LoginPage() {
-
     const router = useRouter();
     const { login } = useAuth();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [errors, setErrors] = useState<Partial<Record<keyof LoginInput, string>>>({});
     const [message, setMessage] = useState("");
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setMessage("");
+        setErrors({});
+
         try {
+            loginSchema.parse({ email, password });
             await login(email, password);
             router.push("/dashboard");
         } catch (err: unknown) {
+            if (err instanceof ZodError) {
+                const fieldErrors: Partial<Record<keyof LoginInput, string>> = {};
+                err.issues.forEach((e) => {
+                    const field = e.path[0] as keyof LoginInput;
+                    if (field) fieldErrors[field] = e.message;
+                });
+                setErrors(fieldErrors);
+            } else if (err instanceof Error) {
+                setMessage(err.message);
+            } else {
+                setMessage("Login failed");
+            }
             setEmail("");
             setPassword("");
-            setMessage(err instanceof Error ? err.message : "Login failed");
         }
     };
 
@@ -37,27 +53,32 @@ export default function LoginPage() {
             </div>
             <div className="flex-1 flex flex-col justify-start">
                 <div className="flex flex-row">
-
                     <Link href="/"><IconButton image="/assets/arrow.svg" variant="secondary" className="mr-4"></IconButton></Link>
                     <h1 className="text-3xl font-semibold mb-6">Login</h1>
                 </div>
                 <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-                    <input
-                        onChange={(e) => setEmail(e.target.value)}
-                        value={email}
-                        type="email"
-                        placeholder="Email"
-                        required
-                        className="rounded-sm px-4 py-3 bg-white/10 placeholder-white/70 text-white border border-white/20 focus:bg-white/20"
-                    />
-                    <input
-                        onChange={(e) => setPassword(e.target.value)}
-                        value={password}
-                        type="password"
-                        placeholder="Password"
-                        required
-                        className="rounded-sm px-4 py-3 bg-white/10 placeholder-white/70 text-white border border-white/20 focus:bg-white/20"
-                    />
+                    <div>
+                        <input
+                            onChange={(e) => setEmail(e.target.value)}
+                            value={email}
+                            type="email"
+                            placeholder="Email"
+                            required
+                            className="rounded-sm px-4 py-3 bg-white/10 placeholder-white/70 text-white border border-white/20 focus:bg-white/20 w-full"
+                        />
+                        {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email}</p>}
+                    </div>
+                    <div>
+                        <input
+                            onChange={(e) => setPassword(e.target.value)}
+                            value={password}
+                            type="password"
+                            placeholder="Password"
+                            required
+                            className="rounded-sm px-4 py-3 bg-white/10 placeholder-white/70 text-white border border-white/20 focus:bg-white/20 w-full"
+                        />
+                        {errors.password && <p className="text-red-400 text-sm mt-1">{errors.password}</p>}
+                    </div>
                     <Button type="submit" className="mt-2" variant="secondary">Login</Button>
                 </form>
                 {message && <div className="mt-3 text-white/90">{message}</div>}
