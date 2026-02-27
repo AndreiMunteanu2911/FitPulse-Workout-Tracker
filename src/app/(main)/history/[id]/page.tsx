@@ -81,9 +81,9 @@ export default function WorkoutDetailPage() {
     if (error || !workout) {
         return (
             <ProtectedWrapper>
-                <div className="w-full p-4 md:p-8 mx-auto max-w-4xl">
-                    <div className="text-gray-700 font-bold text-2xl sm:text-3xl mb-6">Workout Details</div>
-                    <div className="text-red-600 py-8 text-center">{error || "Workout not found."}</div>
+                <div className="w-full mx-auto max-w-4xl">
+                    <div className="text-[var(--foreground)] font-bold text-2xl sm:text-3xl mb-6">Workout Details</div>
+                    <div className="text-red-600 dark:text-red-400 py-8 text-center">{error || "Workout not found."}</div>
                 </div>
             </ProtectedWrapper>
         );
@@ -101,15 +101,15 @@ export default function WorkoutDetailPage() {
 
     return (
         <ProtectedWrapper>
-            <div className="w-full p-4 md:p-8 mx-auto max-w-4xl">
+            <div className="w-full">
                 <div className="flex items-center mb-4 pt-2">
                     <Link href="/history" className="mr-3 sm:mr-4">
                         <IconButton image="/assets/arrow-white.svg" variant="primary" className="p-2 sm:p-3" />
                     </Link>
-                    <div className="text-gray-700 font-bold text-2xl sm:text-3xl">{workout.name}</div>
+                    <div className="text-[var(--foreground)] font-bold text-2xl sm:text-3xl">{workout.name}</div>
                 </div>
 
-                <div className="mb-4 sm:mb-6 text-gray-600 text-base sm:text-lg">{formatDate(workout.workout_date)}</div>
+                <div className="mb-4 sm:mb-6 text-[var(--muted-foreground)] text-base sm:text-lg">{formatDate(workout.workout_date)}</div>
                 <div className="space-y-4 sm:space-y-6 mt-6">
                     {workout.workout_exercises.map((we) => (
                         <WorkoutHistoryExerciseCard key={we.id} workoutExercise={we} />

@@ -76,8 +76,8 @@ export default function HistoryPage() {
 
     return (
         <ProtectedWrapper>
-            <div className="w-full p-4 md:p-8 mx-auto max-w-4xl">
-                <div className="text-2xl sm:text-3xl sticky top-0 py-4 z-10 text-[var(--foreground)] font-semibold mb-6 bg-[var(--surface)]">
+            <div className="w-full">
+                <div className="sticky top-0 py-4 z-10 text-2xl sm:text-3xl font-semibold text-[var(--foreground)] mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-6 bg-[var(--surface)]">
                     History
                 </div>
                 {errorMessages.general && (

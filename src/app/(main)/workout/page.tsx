@@ -332,7 +332,8 @@ export default function WorkoutPage() {
 
     return (
         <ProtectedWrapper>
-            <div className="w-full p-4 md:p-8 mx-auto max-w-4xl">
+            <div className="w-full">
+
                 {isLoading ? (
                     <div className="flex justify-center items-center h-[60vh]">
                         <LoadingSpinner size={8} />
@@ -342,8 +343,8 @@ export default function WorkoutPage() {
                         {errorMessages.general && (
                             <div className="mb-4 text-red-600">{errorMessages.general}</div>
                         )}
-                        <div className="sticky top-0 py-4 z-10 flex justify-between items-center mb-6 bg-[var(--surface)]">
-                            <div className="text-2xl sm:text-3xl text-[var(--foreground)] font-semibold">Workout</div>
+                        <div className="sticky top-0 py-4 z-10 text-2xl sm:text-3xl font-semibold text-[var(--foreground)] mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-6 bg-[var(--surface)]">
+                          <div className="text-2xl sm:text-3xl text-[var(--foreground)] font-semibold">Workout</div>
                             {!workoutStarted ? (
                                 <Button onClick={startWorkout} className="px-4 py-2 text-sm sm:text-base">Start New Workout</Button>
                             ) : (

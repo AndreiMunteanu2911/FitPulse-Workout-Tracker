@@ -13,9 +13,9 @@ export default function MainLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="flex min-h-screen w-full bg-[var(--surface)] text-[var(--foreground)] overflow-x-hidden">
+    <div className="flex min-h-screen w-full bg-[var(--surface)] text-[var(--foreground)]">
       <Navbar />
-      <main className="flex-1 min-h-screen p-4 md:p-8 page-shell pb-16 md:pb-0 md:ml-64">
+      <main className="flex-1 min-h-screen p-4 md:p-8 page-shell pb-24 md:pb-8 ml-0">
         {children}
       </main>
     </div>

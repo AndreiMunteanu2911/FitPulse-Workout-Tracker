@@ -19,7 +19,7 @@ export default function Navbar() {
   return (
     <>
       {/* Sidebar for desktop */}
-      <nav className="hidden md:flex w-64 fixed top-0 left-0 h-full p-6 flex-col bg-[var(--primary-800)] text-white z-20">
+      <nav className="hidden md:flex w-64 sticky top-0 h-screen p-6 flex-col bg-[var(--primary-800)] text-white z-20">
         <div className="flex items-center flex-row justify-between mb-12">
           <h1 className="text-4xl font-semibold">FitPulse</h1>
           <Image src="/assets/dumbbell-large.svg" alt="Dumbbell" width={40} height={40} className="invert" />
