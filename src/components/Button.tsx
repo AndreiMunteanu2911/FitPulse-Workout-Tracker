@@ -25,7 +25,7 @@ export default function Button({
 
     const variants: Record<NonNullable<ButtonProps["variant"]>, string> = {
         primary: "bg-[var(--primary-800)] text-white border border-transparent hover:bg-[var(--primary-900)] focus-visible:ring-2 focus-visible:ring-blue-500 active:scale-95",
-        secondary: "bg-white text-[var(--primary-700)] border border-[var(--primary-200)] hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-blue-500 active:scale-95",
+        secondary: "bg-[var(--surface)] text-[var(--foreground)] border border-[var(--border)] hover:bg-[var(--surface)]/80 focus-visible:ring-2 focus-visible:ring-blue-500 active:scale-95",
         textOnly:
             "bg-transparent border-none shadow-none text-[var(--primary-400)] text-[var(--primary-800)] active:scale-95",
     };

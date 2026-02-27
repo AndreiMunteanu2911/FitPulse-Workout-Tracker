@@ -94,14 +94,14 @@ export default function ExercisesPage() {
     return (
         <ProtectedWrapper>
             <div className="p-4 md:p-8 w-full">
-                <div className="sticky top-0 py-4 bg-white/95 backdrop-blur-sm z-10 text-2xl sm:text-3xl font-semibold text-gray-700 mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-6">
+                <div className="sticky top-0 py-4 z-10 text-2xl sm:text-3xl font-semibold text-[var(--foreground)] mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-6 bg-[var(--surface)]">
                     <span>Exercises</span>
                     <input
                         type="text"
                         placeholder="Search exercises..."
                         value={searchQuery}
                         onChange={handleSearch}
-                        className="border rounded-md px-3 py-1 text-base md:text-xl w-full sm:w-auto text-gray-900"
+                        className="border rounded-md px-3 py-1 text-base md:text-xl w-full sm:w-auto text-[var(--foreground)] bg-[var(--surface)] border-[var(--border)]"
                     />
                 </div>
 

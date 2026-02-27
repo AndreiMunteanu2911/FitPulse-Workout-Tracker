@@ -10,6 +10,9 @@ import CancelWorkoutModal from "@/components/CancelWorkoutModal";
 import FinishWorkoutModal from "@/components/FinishWorkoutModal";
 import { useWorkout } from "@/hooks/useWorkout";
 import { useExercises } from "@/hooks/useExercises";
+import { useWorkoutTemplates } from "@/hooks/useWorkoutTemplates";
+import TemplateCard from "@/components/TemplateCard";
+import CreateTemplateModal from "@/components/CreateTemplateModal";
 
 interface Exercise {
     exercise_id: string;
@@ -49,6 +52,19 @@ export default function WorkoutPage() {
     const [noDraftFound, setNoDraftFound] = useState(false);
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [isFinishModalOpen, setIsFinishModalOpen] = useState(false);
+    const [templates, setTemplates] = useState<any[]>([]);
+    const [showTemplates, setShowTemplates] = useState(false);
+    const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+    const { fetchTemplates, createTemplate } = useWorkoutTemplates();
+
+    const loadTemplates = async () => {
+        try {
+            const data = await fetchTemplates();
+            setTemplates(data);
+        } catch (error) {
+            console.error("Error loading templates:", error);
+        }
+    };
 
     const {
         getDraftWorkout,
@@ -326,8 +342,8 @@ export default function WorkoutPage() {
                         {errorMessages.general && (
                             <div className="mb-4 text-red-600">{errorMessages.general}</div>
                         )}
-                        <div className="sticky top-0 py-4 bg-white/95 backdrop-blur-sm z-10 flex justify-between items-center mb-6">
-                            <div className="text-2xl sm:text-3xl text-gray-700 font-semibold">Workout</div>
+                        <div className="sticky top-0 py-4 z-10 flex justify-between items-center mb-6 bg-[var(--surface)]">
+                            <div className="text-2xl sm:text-3xl text-[var(--foreground)] font-semibold">Workout</div>
                             {!workoutStarted ? (
                                 <Button onClick={startWorkout} className="px-4 py-2 text-sm sm:text-base">Start New Workout</Button>
                             ) : (
@@ -343,19 +359,19 @@ export default function WorkoutPage() {
                             }}
                         />
                         {noDraftFound && !workoutStarted && (
-                            <div className="text-center text-[var(--primary-700)] text-base sm:text-xl mb-8 py-4 rounded-lg">
+                            <div className="text-center text-[var(--primary-700)] dark:text-white text-base sm:text-xl mb-8 py-4 rounded-lg">
                                 Start a new workout today!
                             </div>
                         )}
                         {workoutStarted && (
                             <div className="space-y-6 sm:space-y-8 mt-4">
-                                <div className="p-2 border border-blue-700/80 rounded-md bg-white">
+                                <div className="p-2 border border-blue-700/80 rounded-md bg-[var(--surface)]">
                                     <label className="block mb-1 text-sm text-[var(--primary-800)] font-medium">Workout Name</label>
                                     <input
                                         type="text"
                                         value={workoutName}
                                         onChange={(e) => setWorkoutName(e.target.value)}
-                                        className="w-full px-1 py-0.5 text-gray-700 text-lg sm:text-xl font-bold border-none focus:outline-none bg-transparent"
+                                        className="w-full px-1 py-0.5 text-[var(--foreground)] text-lg sm:text-xl font-bold border-none focus:outline-none bg-transparent"
                                     />
                                 </div>
 
@@ -417,6 +433,43 @@ export default function WorkoutPage() {
                                 />
                             </div>
                         )}
+
+                        {/* Templates Section */}
+                        <div className="py-4 mt-6 border-t border-[var(--border)]">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-lg sm:text-xl font-semibold text-[var(--foreground)]">Workout Templates</h2>
+                                <Button onClick={() => setIsTemplateModalOpen(true)} variant="primary" className="px-3 py-1.5 text-sm sm:text-base">+ Create Template</Button>
+                            </div>
+                            {templates.length === 0 ? (
+                                <div className="text-center text-[var(--muted-foreground)] py-8 bg-[var(--surface)] rounded-lg">
+                                    No templates yet. Create a template to quickly start workouts!
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {templates.map((template) => (
+                                        <TemplateCard
+                                            key={template.id}
+                                            template={template}
+                                            onEdit={() => {}}
+                                            onDelete={async () => {
+                                                if (!confirm("Delete this template?")) return;
+                                                await loadTemplates();
+                                            }}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <CreateTemplateModal
+                            isOpen={isTemplateModalOpen}
+                            onClose={() => setIsTemplateModalOpen(false)}
+                            onSubmit={async (name, desc, exercises) => {
+                                await createTemplate({ name, description: desc, exercises: exercises.map(id => ({ exercise_id: id })) });
+                                setIsTemplateModalOpen(false);
+                                await loadTemplates();
+                            }}
+                        />
                     </>
                 )}
             </div>

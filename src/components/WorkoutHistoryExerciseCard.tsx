@@ -32,7 +32,7 @@ function capitalize(str: string) {
 
 export default function WorkoutHistoryExerciseCard({ workoutExercise }: WorkoutHistoryExerciseCardProps) {
     return (
-        <div className="p-3 sm:p-4 bg-white mb-6 rounded-xs border-b-2 border-[var(--primary-400)]/80">
+        <div className="p-3 sm:p-4 bg-[var(--surface)] mb-6 rounded-xs border-b-2 border-[var(--primary-400)]/80">
             <div className="flex items-center justify-between mb-2">
                 <h3 className="text-lg sm:text-xl font-semibold text-[var(--primary-600)] m-0">
                     {capitalize(workoutExercise.exercise.name)}

@@ -13,8 +13,8 @@ const WeightLogCard: React.FC<WeightLogCardProps> = ({ date, weight }) => {
     const formattedDate = `${day}/${month}/${year}`;
 
     return (
-        <div className="flex justify-between items-center px-3 py-1.5 sm:px-4 sm:py-2 bg-white w-full">
-            <span className="text-gray-700 font-semibold">{formattedDate}</span>
+        <div className="flex justify-between items-center px-3 py-1.5 sm:px-4 sm:py-2 bg-[var(--surface)] w-full border-b border-[var(--border)] last:border-b-0">
+            <span className="text-[var(--foreground)] font-semibold">{formattedDate}</span>
             <span className="text-[var(--primary-700)] font-semibold">{weight} kg</span>
         </div>
     );

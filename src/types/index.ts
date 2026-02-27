@@ -73,3 +73,53 @@ export interface AuthResponse {
   user?: User;
   error?: string;
 }
+
+export interface WorkoutTemplate {
+  id: string;
+  user_id: string;
+  name: string;
+  description?: string;
+  template_exercises?: TemplateExercise[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface TemplateExercise {
+  id: string;
+  template_id: string;
+  exercise_id: string;
+  order_index: number;
+  exercise?: Exercise;
+  created_at?: string;
+}
+
+export interface UserExercise {
+  id: string;
+  user_id: string;
+  exercise_id: string;
+  is_favorite: boolean;
+  exercise?: Exercise;
+  created_at?: string;
+}
+
+export interface ProgressPhoto {
+  id: string;
+  user_id: string;
+  photo_url: string;
+  log_date: string;
+  notes?: string;
+  body_part?: string;
+  created_at?: string;
+}
+
+export interface PersonalRecord {
+  id: string;
+  user_id: string;
+  exercise_id: string;
+  max_weight: number;
+  max_reps: number;
+  workout_date: string;
+  exercise?: Exercise;
+  created_at?: string;
+  updated_at?: string;
+}
