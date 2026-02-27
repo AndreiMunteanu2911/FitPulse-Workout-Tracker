@@ -93,7 +93,7 @@ export default function ExercisesPage() {
 
     return (
         <ProtectedWrapper>
-            <div className="p-4 md:p-8 w-full">
+            <div className="w-full">
                 <div className="sticky top-0 py-4 z-10 text-2xl sm:text-3xl font-semibold text-[var(--foreground)] mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-6 bg-[var(--surface)]">
                     <span>Exercises</span>
                     <input

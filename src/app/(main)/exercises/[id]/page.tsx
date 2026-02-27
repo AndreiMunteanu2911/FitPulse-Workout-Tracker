@@ -62,7 +62,7 @@ export default function ExerciseDetailsPage() {
 
     return (
         <ProtectedWrapper>
-            <div className="p-4 mx-auto max-w-4xl lg:max-w-6xl">
+            <div className="w-full">
                 <div className="flex items-center mb-6 pt-2">
                     <Link href="/exercises" className="mr-3 sm:mr-4">
                         <IconButton image="/assets/arrow-white.svg" variant="primary" className="p-2 sm:p-3" />
