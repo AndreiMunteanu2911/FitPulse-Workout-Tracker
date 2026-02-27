@@ -1,0 +1,75 @@
+export interface User {
+  id: string;
+  email: string;
+  created_at: string;
+}
+
+export interface Exercise {
+  id: string;
+  name: string;
+  description?: string;
+  gif_url?: string;
+  target_muscles?: string[];
+  body_parts?: string[];
+  equipments?: string[];
+  created_at?: string;
+}
+
+export interface Set {
+  id: string;
+  workout_exercise_id: string;
+  set_number: number;
+  reps: number;
+  weight: number;
+  created_at?: string;
+}
+
+export interface WorkoutExercise {
+  id: string;
+  workout_id: string;
+  exercise_id: string;
+  order_index: number;
+  exercise?: Exercise;
+  sets?: Set[];
+  created_at?: string;
+}
+
+export interface Workout {
+  id: string;
+  user_id: string;
+  name: string;
+  workout_date: string;
+  status: "draft" | "completed" | "cancelled";
+  workout_exercises?: WorkoutExercise[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface WeightLog {
+  id: string;
+  user_id: string;
+  weight: number;
+  log_date: string;
+  created_at?: string;
+}
+
+export interface WorkoutStats {
+  totalWorkouts: number;
+  workoutsThisWeek: number;
+  workoutsThisMonth: number;
+  totalVolume: number;
+  weekVolume: number;
+  currentStreak: number;
+  longestStreak: number;
+  prCount: number;
+}
+
+export interface APIResponse<T> {
+  data?: T;
+  error?: string;
+}
+
+export interface AuthResponse {
+  user?: User;
+  error?: string;
+}
