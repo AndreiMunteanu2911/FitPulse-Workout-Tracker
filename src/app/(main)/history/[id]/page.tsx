@@ -3,11 +3,11 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
-import supabase from "@/helper/supabaseClient";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import Link from "next/link";
 import IconButton from "@/components/IconButton";
 import WorkoutHistoryExerciseCard from "@/components/WorkoutHistoryExerciseCard";
+import { useHistory } from "@/hooks/useHistory";
 
 interface Exercise {
     exercise_id: string;
@@ -48,24 +48,11 @@ export default function WorkoutDetailPage() {
     const [workout, setWorkout] = useState<Workout | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const { fetchWorkoutDetail } = useHistory();
 
     const fetchWorkoutDetails = useCallback(async () => {
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-            const { data, error } = await supabase
-                .from("workouts")
-                .select(`*, workout_exercises (*, exercise:exercises (*), sets (*))`)
-                .eq("id", workoutId)
-                .eq("user_id", user.id)
-                .single();
-            if (error || !data) throw error || new Error("Workout not found");
-            data.workout_exercises = data.workout_exercises
-                .sort((a: { order_index: number }, b: { order_index: number }) => a.order_index - b.order_index)
-                .map((we: { sets: unknown[] }) => ({
-                    ...we,
-                    sets: (we.sets as Set[]).sort((a, b) => a.set_number - b.set_number),
-                }));
+            const data = await fetchWorkoutDetail(workoutId);
             setWorkout(data);
             setError(null);
         } catch {
@@ -73,6 +60,7 @@ export default function WorkoutDetailPage() {
         } finally {
             setLoading(false);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [workoutId]);
 
     useEffect(() => {

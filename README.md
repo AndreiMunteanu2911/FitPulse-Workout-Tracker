@@ -27,7 +27,11 @@ FitPulse is a web application for tracking workouts, exercises, and weight progr
 
 ## Architecture
 - **Next.js App Router**: All pages are in `src/app/` using layouts and nested routing
-- **Supabase**: Used for authentication and as the backend database
+- **Frontend / Backend split**:
+  - **Backend** — Next.js API routes (`src/app/api/`) handle all Supabase interactions server-side. Supabase credentials are kept in server-only environment variables and are never sent to the browser.
+  - **Frontend** — React components call the API routes via custom hooks (`src/hooks/`). No direct Supabase access from client code.
+  - **Session management** — `@supabase/ssr` is used for cookie-based authentication so the server can verify identity on every request.
+- **Supabase**: Used for authentication and as the backend database (accessed only from API routes)
 - **Tailwind CSS**: Utility-first styling
 - **Component-based**: All UI elements are modular React components in `src/components/`
 
@@ -61,10 +65,11 @@ FitPulse is a web application for tracking workouts, exercises, and weight progr
 - **FinishWorkoutModal**: Modal to confirm finishing a workout
 
 ## Authentication & Data
-- **Supabase** is initialized in `src/helper/supabaseClient.js` using environment variables
-- All protected pages/components use `ProtectedWrapper` to redirect unauthenticated users
-- Data is fetched and mutated using Supabase client methods (e.g., `.from('workouts')`, `.from('exercises')`)
-- Weight logs, workouts, and exercises are all stored in Supabase tables
+- **Session management**: `@supabase/ssr` manages auth sessions via HTTP-only cookies set by the server
+- **API routes** (`src/app/api/`): All Supabase interactions happen here, keeping credentials server-side only
+- **Custom hooks** (`src/hooks/`): `useAuth`, `useExercises`, `useWorkout`, `useHistory`, `useWeightLogs` wrap `fetch()` calls to the API routes
+- All protected pages/components use `ProtectedWrapper` to redirect unauthenticated users (checks `/api/auth/session`)
+- Supabase URL and keys are stored as server-only env vars (`SUPABASE_URL`, `SUPABASE_ANON_KEY`) — **not** prefixed with `NEXT_PUBLIC_`
 
 ## Assets & Styling
 - All SVG icons and images are in `public/assets/`
@@ -74,11 +79,13 @@ FitPulse is a web application for tracking workouts, exercises, and weight progr
 ## Setup & Usage
 1. Clone the repository
 2. Install dependencies: `pnpm install`
-3. Set up a Supabase project and add the following environment variables:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+3. Set up a Supabase project and add the following environment variables (copy `.env.example` to `.env.local`):
+   - `SUPABASE_URL` — your Supabase project URL
+   - `SUPABASE_ANON_KEY` — your Supabase anonymous/public key
 4. Start the development server: `pnpm dev`
 5. Access the app at `http://localhost:3000`
+
+> **Security note**: The Supabase credentials are stored as server-only variables (no `NEXT_PUBLIC_` prefix). They are only accessible inside Next.js API routes and are never sent to the browser.
 
 ## Improvements
 - Improve dashboard with user stats and summaries

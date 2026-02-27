@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import supabase from "@/helper/supabaseClient";
 import Button from "@/components/Button";
 import { useRouter } from "next/navigation";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import WeightHistoryChart from "@/components/WeightHistoryChart";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import AddWeightModal from "@/components/AddWeightModal";
+import { useAuth } from "@/hooks/useAuth";
+import { useWeightLogs } from "@/hooks/useWeightLogs";
 
 interface User {
     id: string;
@@ -21,6 +22,8 @@ interface WeightLog {
 
 export default function DashboardPage() {
     const router = useRouter();
+    const { logout, getSession } = useAuth();
+    const { fetchWeights, addWeight } = useWeightLogs();
 
     const [user, setUser] = useState<User | null>(null);
     const [weights, setWeights] = useState<WeightLog[]>([]);
@@ -31,38 +34,37 @@ export default function DashboardPage() {
 
     // Sign out function
     const signOut = async () => {
-        const { error } = await supabase.auth.signOut();
-        if (error) throw error;
+        await logout();
         router.push("/");
     };
 
     // Fetch current user
     useEffect(() => {
         const getUser = async () => {
-            const { data, error } = await supabase.auth.getUser();
-            if (error) console.error("Error fetching user:", error);
-            else if (data.user) setUser({ id: data.user.id ?? "", email: data.user.email ?? "" });
+            const userData = await getSession();
+            if (userData) setUser({ id: userData.id ?? "", email: userData.email ?? "" });
         };
         getUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Fetch weights
-    const fetchWeights = useCallback(async () => {
+    const loadWeights = useCallback(async () => {
         setLoading(true);
         if (!user) return;
-        const { data, error } = await supabase
-            .from("weight_logs")
-            .select("id, log_date, weight")
-            .eq("user_id", user.id)
-            .order("log_date", { ascending: true });
-        if (error) console.error("Error fetching weights:", error);
-        else setWeights(data || []);
+        try {
+            const data = await fetchWeights();
+            setWeights(data || []);
+        } catch (error) {
+            console.error("Error fetching weights:", error);
+        }
         setLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user]);
 
     useEffect(() => {
-        if (user) fetchWeights();
-    }, [user, fetchWeights]);
+        if (user) loadWeights();
+    }, [user, loadWeights]);
 
     return (
         <ProtectedWrapper>
@@ -98,18 +100,14 @@ export default function DashboardPage() {
                     onClose={() => setShowModal(false)}
                     onSubmit={async (date, weight) => {
                         if (!weight || !date || !user) return;
-                        const { error } = await supabase.from("weight_logs").insert([
-                            {
-                                user_id: user.id,
-                                log_date: date,
-                                weight: parseFloat(weight),
-                            },
-                        ]);
-                        if (!error) {
+                        try {
+                            await addWeight(date, weight);
                             setNewWeight("");
                             setNewDate(new Date().toISOString().split("T")[0]);
-                            fetchWeights();
+                            loadWeights();
                             setShowModal(false);
+                        } catch (error) {
+                            console.error("Error adding weight:", error);
                         }
                     }}
                     initialDate={newDate}

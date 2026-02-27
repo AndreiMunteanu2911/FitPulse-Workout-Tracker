@@ -1,41 +1,32 @@
 'use client'
 
 import {useState} from "react";
-import supabase from "@/helper/supabaseClient"
 import Link from "next/link";
 import Button from "@/components/Button";
 import { useRouter } from "next/navigation";
 import IconButton from "@/components/IconButton";
 import Image from "next/image";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function LoginPage() {
 
     const router = useRouter();
+    const { login } = useAuth();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [message, setMessage] = useState("");
 
-    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>)=>{
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setMessage("");
-
-        const {data,error} = await supabase.auth.signInWithPassword({
-            email:email,
-            password:password,
-        });
-
-        if (error)
-        {
+        try {
+            await login(email, password);
+            router.push("/dashboard");
+        } catch (err: unknown) {
             setEmail("");
             setPassword("");
-            setMessage(error.message);
-            return;
+            setMessage(err instanceof Error ? err.message : "Login failed");
         }
-        if (data){
-            router.push("/dashboard");
-        }
-        setEmail("");
-        setPassword("");
     };
 
     return (

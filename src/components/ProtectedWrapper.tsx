@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import supabase from "@/helper/supabaseClient";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 export default function ProtectedWrapper({ children }: { children: React.ReactNode }) {
@@ -11,16 +10,12 @@ export default function ProtectedWrapper({ children }: { children: React.ReactNo
     const router = useRouter();
 
     useEffect(() => {
-        const getSession = async () => {
-            const {
-                data: { session },
-            } = await supabase.auth.getSession();
-
-            setAuthenticated(!!session);
+        const checkSession = async () => {
+            const res = await fetch("/api/auth/session");
+            setAuthenticated(res.ok);
             setLoading(false);
         };
-
-        getSession();
+        checkSession();
     }, []);
 
     useEffect(() => {

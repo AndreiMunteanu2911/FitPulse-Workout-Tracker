@@ -1,38 +1,32 @@
 'use client'
 
 import {useState} from "react";
-import supabase from "@/helper/supabaseClient"
 import Link from "next/link";
 import Button from "@/components/Button";
 import IconButton from "@/components/IconButton";
 import Image from "next/image";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function SignUpPage() {
+    const { signup } = useAuth();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [message, setMessage] = useState("");
 
-    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>)=>{
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setMessage("");
-
-        const {data, error} = await supabase.auth.signUp({
-            email: email,
-            password: password,
-        });
-
-        if (error) {
-            setEmail("");
-            setPassword("");
-            setMessage(error.message);
-            return;
-        }
-        if (data && data.user && !data.session) {
-            setMessage("Account created! Please check your email to verify your account before logging in.");
-        } else if (data && data.user && data.session) {
-            setMessage("User account created and logged in.");
-        } else {
-            setMessage("User account created.");
+        try {
+            const data = await signup(email, password);
+            if (data.user && !data.session) {
+                setMessage("Account created! Please check your email to verify your account before logging in.");
+            } else if (data.user && data.session) {
+                setMessage("User account created and logged in.");
+            } else {
+                setMessage("User account created.");
+            }
+        } catch (err: unknown) {
+            setMessage(err instanceof Error ? err.message : "Signup failed");
         }
         setEmail("");
         setPassword("");

@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
-import supabase from "@/helper/supabaseClient";
 import ExerciseCard from "@/components/WorkoutExerciseCard";
 import ExerciseSearchModal from "@/components/ExerciseSearchModal";
 import Button from "@/components/Button";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import CancelWorkoutModal from "@/components/CancelWorkoutModal";
 import FinishWorkoutModal from "@/components/FinishWorkoutModal";
+import { useWorkout } from "@/hooks/useWorkout";
+import { useExercises } from "@/hooks/useExercises";
 
 interface Exercise {
     exercise_id: string;
@@ -49,53 +50,35 @@ export default function WorkoutPage() {
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [isFinishModalOpen, setIsFinishModalOpen] = useState(false);
 
+    const {
+        getDraftWorkout,
+        startWorkout: startWorkoutApi,
+        updateWorkout,
+        deleteWorkout,
+        addExerciseToWorkout: addExerciseApi,
+        deleteWorkoutExercise,
+        addSet: addSetApi,
+        updateSet: updateSetApi,
+        deleteSet: deleteSetApi,
+    } = useWorkout();
+    const { searchExercises } = useExercises();
+
     useEffect(() => {
         const checkForDraftWorkout = async () => {
             setIsLoading(true);
             setNoDraftFound(false);
             try {
-                const { data: { user } } = await supabase.auth.getUser();
-                if (!user) {
-                    setIsLoading(false);
-                    setNoDraftFound(true);
-                    return;
-                }
-
-                type SupabaseSet = Set;
-                type SupabaseExercise = Exercise;
-                type SupabaseWorkoutExercise = {
-                    id: string;
-                    exercise_id: string;
-                    exercise: SupabaseExercise;
-                    order_index: number;
-                    sets: SupabaseSet[];
-                };
-                type SupabaseWorkout = {
-                    id: string;
-                    name: string;
-                    workout_exercises: SupabaseWorkoutExercise[];
-                };
-
-                const { data, error } = await supabase
-                    .from("workouts")
-                    .select(`*,workout_exercises (*,exercise:exercises (*),sets (*))`)
-                    .eq("user_id", user.id)
-                    .eq("status", "draft")
-                    .order("created_at", { ascending: false })
-                    .limit(1)
-                    .single<SupabaseWorkout>();
-
-                if (error && error.code !== "PGRST116") throw error;
+                const data = await getDraftWorkout();
 
                 if (data) {
                     setWorkoutId(data.id);
                     setWorkoutName(data.name);
-                    const exercises = (data.workout_exercises || []).map((we) => ({
+                    const exercises = (data.workout_exercises || []).map((we: WorkoutExercise) => ({
                         id: we.id,
                         exercise_id: we.exercise_id,
                         exercise: we.exercise,
                         order_index: we.order_index,
-                        sets: (we.sets || []).sort((a, b) => a.set_number - b.set_number),
+                        sets: (we.sets || []).sort((a: Set, b: Set) => a.set_number - b.set_number),
                     }));
                     setWorkoutExercises(exercises);
                     setWorkoutStarted(true);
@@ -113,6 +96,7 @@ export default function WorkoutPage() {
         };
 
         checkForDraftWorkout();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Fix: useCallback for saveWorkoutToDB to avoid missing dependency
@@ -120,27 +104,18 @@ export default function WorkoutPage() {
         if (!workoutId) return;
 
         try {
-            await supabase
-                .from("workouts")
-                .update({ name: workoutName })
-                .eq("id", workoutId);
+            await updateWorkout(workoutId, { name: workoutName });
 
             for (const exercise of workoutExercises) {
                 for (const set of exercise.sets) {
-                    await supabase
-                        .from("sets")
-                        .update({
-                            reps: set.reps,
-                            weight: set.weight,
-                        })
-                        .eq("id", set.id);
+                    await updateSetApi(set.id, { reps: set.reps, weight: set.weight });
                 }
             }
         } catch (error) {
             console.error("Error auto-saving workout:", error);
             setErrorMessages((prev) => ({ ...prev, general: "Failed to auto-save workout." }));
         }
-    }, [workoutId, workoutName, workoutExercises]);
+    }, [workoutId, workoutName, workoutExercises, updateWorkout, updateSetApi]);
 
     useEffect(() => {
         if (!workoutStarted || !workoutId) return;
@@ -153,7 +128,7 @@ export default function WorkoutPage() {
     }, [workoutExercises, workoutStarted, workoutId, saveWorkoutToDB]);
 
     useEffect(() => {
-        const searchExercises = async () => {
+        const searchExercisesDebounced = async () => {
             if (searchQuery.trim() === "") {
                 setSearchResults([]);
                 return;
@@ -161,16 +136,8 @@ export default function WorkoutPage() {
 
             setIsSearching(true);
             try {
-                const words = searchQuery.trim().split(/\s+/).filter(Boolean);
-                let query = supabase.from("exercises").select("*");
-                words.forEach(word => {
-                    query = query.ilike("name", `%${word}%`);
-                });
-                query = query.limit(10);
-                const { data, error } = await query;
-
-                if (error) throw error;
-                setSearchResults(data || []);
+                const data = await searchExercises(searchQuery, 10);
+                setSearchResults(data as Exercise[]);
             } catch (error) {
                 console.error("Error searching exercises:", error);
                 setErrorMessages((prev) => ({ ...prev, search: "Failed to search exercises." }));
@@ -179,28 +146,13 @@ export default function WorkoutPage() {
             }
         };
 
-        const debounce = setTimeout(searchExercises, 300);
+        const debounce = setTimeout(searchExercisesDebounced, 300);
         return () => clearTimeout(debounce);
-    }, [searchQuery]);
+    }, [searchQuery, searchExercises]);
 
     const startWorkout = async () => {
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-
-            const { data, error } = await supabase
-                .from("workouts")
-                .insert({
-                    user_id: user.id,
-                    workout_date: new Date().toISOString().split('T')[0],
-                    name: workoutName,
-                    status: "draft",
-                })
-                .select()
-                .single();
-
-            if (error) throw error;
-
+            const data = await startWorkoutApi(workoutName);
             setWorkoutId(data.id);
             setWorkoutStarted(true);
         } catch (error) {
@@ -214,13 +166,7 @@ export default function WorkoutPage() {
 
         try {
             await saveWorkoutToDB();
-
-            const { error } = await supabase
-                .from("workouts")
-                .update({ status: "completed" })
-                .eq("id", workoutId);
-
-            if (error) throw error;
+            await updateWorkout(workoutId, { status: "completed" });
 
             setWorkoutStarted(false);
             setWorkoutId(null);
@@ -240,12 +186,7 @@ export default function WorkoutPage() {
     const confirmCancelWorkout = async () => {
         if (!workoutId) return;
         try {
-            const { error } = await supabase
-                .from("workouts")
-                .delete()
-                .eq("id", workoutId);
-
-            if (error) throw error;
+            await deleteWorkout(workoutId);
 
             setWorkoutStarted(false);
             setWorkoutId(null);
@@ -265,30 +206,9 @@ export default function WorkoutPage() {
         if (!workoutId) return;
 
         try {
-            const { data: workoutExerciseData, error: exerciseError } = await supabase
-                .from("workout_exercises")
-                .insert({
-                    workout_id: workoutId,
-                    exercise_id: exercise.exercise_id,
-                    order_index: workoutExercises.length,
-                })
-                .select()
-                .single();
-
-            if (exerciseError) throw exerciseError;
-
-            const { data: setData, error: setError } = await supabase
-                .from("sets")
-                .insert({
-                    workout_exercise_id: workoutExerciseData.id,
-                    set_number: 1,
-                    reps: 0,
-                    weight: 0,
-                })
-                .select()
-                .single();
-
-            if (setError) throw setError;
+            const result = await addExerciseApi(workoutId, exercise.exercise_id, workoutExercises.length);
+            const workoutExerciseData = result.workoutExercise as { id: string; order_index: number };
+            const setData = result.set as Set;
 
             setWorkoutExercises([
                 ...workoutExercises,
@@ -323,18 +243,7 @@ export default function WorkoutPage() {
 
         try {
             const setNumber = workoutExercise.sets.length + 1;
-            const { data, error } = await supabase
-                .from("sets")
-                .insert({
-                    workout_exercise_id: workoutExercise.id,
-                    set_number: setNumber,
-                    reps: 0,
-                    weight: 0,
-                })
-                .select()
-                .single();
-
-            if (error) throw error;
+            const data = await addSetApi(workoutExercise.id, setNumber);
 
             const updatedExercises = [...workoutExercises];
             updatedExercises[exerciseIndex] = {
@@ -372,12 +281,7 @@ export default function WorkoutPage() {
         const set = workoutExercises[exerciseIndex].sets[setIndex];
 
         try {
-            const { error } = await supabase
-                .from("sets")
-                .delete()
-                .eq("id", set.id);
-
-            if (error) throw error;
+            await deleteSetApi(set.id);
 
             const updatedExercises = [...workoutExercises];
             updatedExercises[exerciseIndex].sets.splice(setIndex, 1);
@@ -398,12 +302,7 @@ export default function WorkoutPage() {
         const workoutExercise = workoutExercises[exerciseIndex];
 
         try {
-            const { error } = await supabase
-                .from("workout_exercises")
-                .delete()
-                .eq("id", workoutExercise.id);
-
-            if (error) throw error;
+            await deleteWorkoutExercise(workoutExercise.id);
 
             const updatedExercises = [...workoutExercises];
             updatedExercises.splice(exerciseIndex, 1);
