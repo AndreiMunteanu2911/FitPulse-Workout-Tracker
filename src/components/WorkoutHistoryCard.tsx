@@ -9,14 +9,6 @@ function capitalize(str: string) {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-/** Epley formula: weight × (1 + reps/30). Returns null for reps=0 or weight=0. */
-function calcEpley1RM(weight: number, reps: number): number | null {
-    if (weight <= 0 || reps <= 0) return null;
-    // For 1 rep the multiplier is exactly 1 (no extrapolation needed)
-    if (reps === 1) return weight;
-    return weight * (1 + reps / 30);
-}
-
 export default function WorkoutHistoryCard({ workout, prCount }: WorkoutHistoryCardProps) {
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
@@ -113,30 +105,20 @@ export default function WorkoutHistoryCard({ workout, prCount }: WorkoutHistoryC
                         )}
                     </div>
 
-                    {/* Exercise list with best-set and 1RM */}
+                    {/* Exercise list */}
                     {workout.workout_exercises.length > 0 && (
                         <div className="space-y-0.5 border-t border-[var(--border)] pt-2 mt-1">
                             {exercises.map((we) => {
                                 const best = getBestSet(we.sets);
-                                const orm = best ? calcEpley1RM(best.weight, best.reps) : null;
                                 return (
                                     <div key={we.id} className="flex items-baseline gap-1.5 text-xs">
-                                        {/* Set count */}
                                         <span className="font-semibold text-[var(--foreground)] tabular-nums w-5 text-right flex-shrink-0">
                                             {we.sets.length}×
                                         </span>
-                                        {/* Exercise name */}
                                         <span className="text-[var(--muted-foreground)] truncate flex-1">{capitalize(we.exercise.name)}</span>
-                                        {/* Best set */}
                                         {best && best.weight > 0 && (
-                                            <span className="flex-shrink-0 text-[var(--primary-600)] dark:text-[var(--primary-500)] font-semibold tabular-nums">
+                                            <span className="flex-shrink-0 text-[var(--primary-600)] dark:text-[var(--primary-500)] font-semibold">
                                                 {best.weight} kg × {best.reps}
-                                            </span>
-                                        )}
-                                        {/* 1RM estimate */}
-                                        {orm !== null && (
-                                            <span className="flex-shrink-0 text-[var(--muted-foreground)] tabular-nums">
-                                                ~{Math.round(orm)} kg 1RM
                                             </span>
                                         )}
                                     </div>
