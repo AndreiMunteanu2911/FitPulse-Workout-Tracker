@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import StatCard from "@/components/StatCard";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { WorkoutStats } from "@/types";
@@ -70,6 +71,8 @@ export default function DashboardStats() {
       </div>
     );
   }
+
+  const maxCount = Math.max(...(stats.weeklyHistogram ?? []).map((w) => w.count), 1);
 
   return (
     <div className="space-y-4">
@@ -143,6 +146,50 @@ export default function DashboardStats() {
           }
         />
       </div>
+
+      {/* Weekly workout histogram */}
+      {stats.weeklyHistogram && stats.weeklyHistogram.length > 0 && (
+        <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4 sm:p-5">
+          <h3 className="text-sm font-bold text-[var(--foreground)] mb-4">Workouts per Week <span className="font-normal text-[var(--muted-foreground)]">(last 12 weeks)</span></h3>
+          <ResponsiveContainer width="100%" height={160}>
+            <BarChart data={stats.weeklyHistogram} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
+              <XAxis
+                dataKey="weekLabel"
+                tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+                tickLine={false}
+                axisLine={false}
+                interval={1}
+              />
+              <YAxis
+                allowDecimals={false}
+                tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+                tickLine={false}
+                axisLine={false}
+                domain={[0, maxCount + 1]}
+              />
+              <Tooltip
+                cursor={{ fill: "var(--surface-raised)", radius: 4 }}
+                contentStyle={{
+                  background: "var(--surface)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "8px",
+                  fontSize: "12px",
+                  color: "var(--foreground)",
+                }}
+                formatter={(value: number) => [value, "workouts"]}
+              />
+              <Bar dataKey="count" radius={[4, 4, 0, 0]} maxBarSize={32}>
+                {stats.weeklyHistogram.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={entry.count > 0 ? "var(--primary-500)" : "var(--surface-raised)"}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
     </div>
   );
 }

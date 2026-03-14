@@ -15,10 +15,20 @@ import { useWorkoutTemplates } from "@/hooks/useWorkoutTemplates";
 import TemplateCard from "@/components/TemplateCard";
 import CreateTemplateModal from "@/components/CreateTemplateModal";
 import type { Exercise, WorkoutExercise, Set as WorkoutSet } from "@/types";
+function formatElapsed(seconds: number): string {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
 export default function WorkoutPage() {
     const [workoutStarted, setWorkoutStarted] = useState(false);
     const [workoutName, setWorkoutName] = useState("My Workout");
     const [workoutId, setWorkoutId] = useState<string | null>(null);
+    const [workoutCreatedAt, setWorkoutCreatedAt] = useState<string | null>(null);
+    const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const [workoutExercises, setWorkoutExercises] = useState<WorkoutExercise[]>([]);
     const [errorMessages, setErrorMessages] = useState<{ [key: string]: string }>({});
     const [confirmedSetIds, setConfirmedSetIds] = useState<Set<string>>(new Set());
@@ -70,6 +80,7 @@ export default function WorkoutPage() {
                 if (data) {
                     setWorkoutId(data.id);
                     setWorkoutName(data.name);
+                    setWorkoutCreatedAt(data.created_at ?? null);
                     const exercises = (data.workout_exercises || []).map((we: WorkoutExercise) => ({
                         id: we.id,
                         exercise_id: we.exercise_id,
@@ -137,6 +148,16 @@ export default function WorkoutPage() {
         return () => clearTimeout(autoSave);
     }, [workoutExercises, workoutStarted, workoutId, saveWorkoutToDB]);
 
+    // Live timer: tick every second while workout is in progress
+    useEffect(() => {
+        if (!workoutStarted || !workoutCreatedAt) return;
+        const start = new Date(workoutCreatedAt).getTime();
+        const tick = () => setElapsedSeconds(Math.floor((Date.now() - start) / 1000));
+        tick();
+        const interval = setInterval(tick, 1000);
+        return () => clearInterval(interval);
+    }, [workoutStarted, workoutCreatedAt]);
+
     useEffect(() => {
         const searchExercisesDebounced = async () => {
             if (searchQuery.trim() === "") {
@@ -164,6 +185,7 @@ export default function WorkoutPage() {
         try {
             const data = await startWorkoutApi(workoutName);
             setWorkoutId(data.id);
+            setWorkoutCreatedAt(data.created_at ?? null);
             setWorkoutStarted(true);
         } catch (error) {
             console.error("Error starting workout:", error);
@@ -184,6 +206,8 @@ export default function WorkoutPage() {
 
             setWorkoutStarted(false);
             setWorkoutId(null);
+            setWorkoutCreatedAt(null);
+            setElapsedSeconds(0);
             setWorkoutExercises([]);
             setWorkoutName("My Workout");
             setConfirmedSetIds(new Set());
@@ -259,6 +283,8 @@ export default function WorkoutPage() {
 
             setWorkoutStarted(false);
             setWorkoutId(null);
+            setWorkoutCreatedAt(null);
+            setElapsedSeconds(0);
             setWorkoutExercises([]);
             setWorkoutName("My Workout");
             setErrorMessages({});
@@ -429,7 +455,11 @@ export default function WorkoutPage() {
                           <div>
                             <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight">Workout</h1>
                             <p className="text-sm text-[var(--muted-foreground)] mt-0.5">
-                              {workoutStarted ? "In progress" : "Ready when you are"}
+                              {workoutStarted ? (
+                                <span className="font-mono font-semibold text-[var(--primary-600)] dark:text-[var(--primary-500)]">
+                                    {formatElapsed(elapsedSeconds)}
+                                </span>
+                              ) : "Ready when you are"}
                             </p>
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">

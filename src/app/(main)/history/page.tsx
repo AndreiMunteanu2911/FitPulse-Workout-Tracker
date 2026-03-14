@@ -10,18 +10,39 @@ import Button from "@/components/Button";
 import { useHistory } from "@/hooks/useHistory";
 import type { Workout } from "@/types";
 
+function computePrCountsPerWorkout(workouts: Workout[]): Map<string, number> {
+    const sorted = [...workouts].sort(
+        (a, b) => new Date(a.workout_date).getTime() - new Date(b.workout_date).getTime()
+    );
+    const runningMax = new Map<string, number>();
+    const prCounts = new Map<string, number>();
+
+    for (const w of sorted) {
+        let prCount = 0;
+        for (const we of w.workout_exercises) {
+            const maxWeight = we.sets.reduce((m, s) => Math.max(m, s.weight), 0);
+            const prev = runningMax.get(we.exercise_id) ?? 0;
+            if (maxWeight > 0 && maxWeight > prev) {
+                prCount++;
+                runningMax.set(we.exercise_id, maxWeight);
+            }
+        }
+        prCounts.set(w.id, prCount);
+    }
+    return prCounts;
+}
+
 export default function HistoryPage() {
     const router = useRouter();
     const [workouts, setWorkouts] = useState<Workout[]>([]);
     const [loading, setLoading] = useState(true);
     const [errorMessages, setErrorMessages] = useState<{ general?: string }>({});
+    const [prCounts, setPrCounts] = useState<Map<string, number>>(new Map());
 
-    // Rename state
     const [renameTarget, setRenameTarget] = useState<Workout | null>(null);
     const [renameValue, setRenameValue] = useState("");
     const [renaming, setRenaming] = useState(false);
 
-    // Delete state
     const [deleteTarget, setDeleteTarget] = useState<Workout | null>(null);
     const [deleting, setDeleting] = useState(false);
 
@@ -43,6 +64,7 @@ export default function HistoryPage() {
         try {
             const data = await fetchHistory();
             setWorkouts(data);
+            setPrCounts(computePrCountsPerWorkout(data));
             setErrorMessages({});
         } catch (error) {
             console.error("Error fetching workout history:", error);
@@ -122,9 +144,8 @@ export default function HistoryPage() {
                                     className="flex-1 text-left min-w-0"
                                     onClick={() => router.push(`/history/${workout.id}`)}
                                 >
-                                    <WorkoutHistoryCard workout={workout} />
+                                    <WorkoutHistoryCard workout={workout} prCount={prCounts.get(workout.id)} />
                                 </button>
-                                {/* Action buttons */}
                                 <div className="flex flex-col gap-1 justify-center flex-shrink-0">
                                     <button
                                         aria-label="Rename workout"
@@ -151,7 +172,6 @@ export default function HistoryPage() {
                 )}
             </div>
 
-            {/* Rename modal */}
             <ModalWrapper isOpen={!!renameTarget} onClose={() => setRenameTarget(null)} containerClassName="max-w-sm p-4">
                 <h3 className="text-base font-bold text-[var(--foreground)] mb-3">Rename Workout</h3>
                 <input
@@ -171,7 +191,6 @@ export default function HistoryPage() {
                 </div>
             </ModalWrapper>
 
-            {/* Delete modal */}
             <ModalWrapper isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} containerClassName="max-w-sm p-4">
                 <h3 className="text-base font-bold text-[var(--foreground)] mb-1">Delete Workout?</h3>
                 <p className="text-sm text-[var(--muted-foreground)] mb-4">

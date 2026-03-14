@@ -10,6 +10,7 @@ import AddWeightModal from "@/components/AddWeightModal";
 import ProgressPhotoCard from "@/components/ProgressPhotoCard";
 import AddPhotoModal from "@/components/AddPhotoModal";
 import DarkModeToggle from "@/components/DarkModeToggle";
+import WorkoutCalendar from "@/components/WorkoutCalendar";
 import { useAuth } from "@/hooks/useAuth";
 import { useWeightLogs } from "@/hooks/useWeightLogs";
 import { useProgressPhotos } from "@/hooks/useProgressPhotos";
@@ -24,6 +25,7 @@ export default function ProfilePage() {
     const [user, setUser] = useState<User | null>(null);
     const [weights, setWeights] = useState<WeightLog[]>([]);
     const [photos, setPhotos] = useState<ProgressPhoto[]>([]);
+    const [workoutDates, setWorkoutDates] = useState<string[]>([]);
     const [newWeight, setNewWeight] = useState("");
     const [newDate, setNewDate] = useState(() => new Date().toISOString().split("T")[0]);
     const [loading, setLoading] = useState(true);
@@ -48,12 +50,17 @@ export default function ProfilePage() {
         setLoading(true);
         if (!user) return;
         try {
-            const [weightData, photoData] = await Promise.all([
+            const [weightData, photoData, datesRes] = await Promise.all([
                 fetchWeights(),
                 fetchProgressPhotos(),
+                fetch("/api/workouts/dates"),
             ]);
             setWeights(weightData || []);
             setPhotos(photoData || []);
+            if (datesRes.ok) {
+                const datesJson = await datesRes.json();
+                setWorkoutDates(datesJson.dates ?? []);
+            }
         } catch (error) {
             console.error("Error fetching data:", error);
         }
@@ -129,6 +136,12 @@ export default function ProfilePage() {
                     <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4 w-full">
                         <WeightHistoryChart weights={weights} loading={loading} onDelete={handleDeleteWeight} />
                     </div>
+                </div>
+
+                {/* Workout Calendar */}
+                <div className="mb-6">
+                    <h2 className="text-base font-bold text-[var(--foreground)] mb-3">Workout Calendar</h2>
+                    <WorkoutCalendar workoutDates={workoutDates} />
                 </div>
 
                 {/* Progress Photos */}
