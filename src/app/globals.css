@@ -110,10 +110,10 @@ html, body {
   height: 100%;
 }
 
-/* On mobile the TopBar is 3rem (48px) tall; offset sticky page headers below it */
+/* On mobile the TopBar is 2.75rem (44px) tall; offset sticky page headers below it */
 @media (max-width: 767px) {
   :root {
-    --ph-top: 3rem;
+    --ph-top: 2.75rem;
   }
 }
 
