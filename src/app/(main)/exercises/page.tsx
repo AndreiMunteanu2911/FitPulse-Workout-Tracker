@@ -77,7 +77,7 @@ export default function ExercisesPage() {
         <ProtectedWrapper>
             <div className="w-full">
                 <div className="page-header mb-4">
-                    <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight mb-3">Exercises</h1>
+                    <h1 className="hidden md:block text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight mb-3">Exercises</h1>
                     {/* Search */}
                     <div className="relative">
                         <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">

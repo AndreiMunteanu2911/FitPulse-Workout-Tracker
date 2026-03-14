@@ -84,7 +84,7 @@ export default function WorkoutHistoryExerciseCard({ workoutExercise }: WorkoutH
                                 <span className="text-sm font-semibold text-[var(--primary-600)] dark:text-[var(--primary-500)] text-right">{set.weight} kg</span>
                                 <span className="text-xs text-[var(--muted-foreground)] text-right self-center">{(set.reps * set.weight).toFixed(0)}</span>
                                 <span className="text-xs text-[var(--muted-foreground)] text-right self-center tabular-nums">
-                                    {orm !== null ? `~${Math.round(orm)} kg` : "—"}
+                                    {orm !== null ? `${Math.round(orm)} kg` : "—"}
                                 </span>
                             </div>
                         );

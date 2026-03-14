@@ -450,7 +450,7 @@ export default function WorkoutPage() {
                         )}
                         <div className="page-header mb-6 flex items-center justify-between gap-3">
                           <div>
-                            <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight">Workout</h1>
+                            <h1 className="hidden md:block text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight">Workout</h1>
                             <p className="text-sm text-[var(--muted-foreground)] mt-0.5">
                               {workoutStarted ? (
                                 <span className="font-mono font-semibold text-[var(--primary-600)] dark:text-[var(--primary-500)]">
