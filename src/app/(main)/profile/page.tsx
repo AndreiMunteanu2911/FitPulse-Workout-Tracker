@@ -108,7 +108,7 @@ export default function ProfilePage() {
                 {/* Page header */}
                 <div className="page-header mb-6 flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight">Profile</h1>
+                        <h1 className="hidden md:block text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight">Profile</h1>
                         {user && <p className="text-sm text-[var(--muted-foreground)] mt-0.5 truncate max-w-[200px]">{user.email}</p>}
                     </div>
                     <div className="flex items-center gap-2">

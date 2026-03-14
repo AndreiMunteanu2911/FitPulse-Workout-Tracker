@@ -80,7 +80,7 @@ export default function ExerciseDetailsPage() {
         <ProtectedWrapper>
             <div className="w-full">
                 {/* Back header */}
-                <div className="page-header mb-4 flex items-center gap-3">
+                <div className="page-header mb-4 flex items-center gap-3" style={{ top: 0 }}>
                     <Link
                         href="/exercises"
                         className="w-9 h-9 rounded-[var(--radius-lg)] flex items-center justify-center bg-[var(--surface)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow)] transition-shadow flex-shrink-0"

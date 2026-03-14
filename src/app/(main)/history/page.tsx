@@ -118,7 +118,7 @@ export default function HistoryPage() {
         <ProtectedWrapper>
             <div className="w-full">
                 <div className="page-header mb-6">
-                    <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight">History</h1>
+                    <h1 className="hidden md:block text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight">History</h1>
                     <p className="text-sm text-[var(--muted-foreground)] mt-0.5">{workouts.length} completed workout{workouts.length !== 1 ? "s" : ""}</p>
                 </div>
 

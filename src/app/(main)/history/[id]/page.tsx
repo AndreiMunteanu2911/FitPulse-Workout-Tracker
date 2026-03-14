@@ -290,7 +290,7 @@ export default function WorkoutDetailPage() {
         return (
             <ProtectedWrapper>
                 <div className="w-full">
-                    <div className="page-header mb-6">
+                    <div className="page-header mb-6" style={{ top: 0 }}>
                         <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--foreground)]">Workout Details</h1>
                     </div>
                     <div className="p-6 rounded-[var(--radius-xl)] bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] text-center font-medium">
@@ -319,7 +319,7 @@ export default function WorkoutDetailPage() {
         <ProtectedWrapper>
             <div className="w-full">
                 {/* Header */}
-                <div className="page-header mb-4 flex items-center gap-3">
+                <div className="page-header mb-4 flex items-center gap-3" style={{ top: 0 }}>
                     <Link
                         href="/history"
                         className="w-9 h-9 rounded-[var(--radius-lg)] flex items-center justify-center bg-[var(--surface)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow)] transition-shadow flex-shrink-0"
