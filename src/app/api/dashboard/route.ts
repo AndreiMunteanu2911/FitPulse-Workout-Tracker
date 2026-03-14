@@ -113,7 +113,7 @@ export async function GET() {
       const d = new Date(w.workout_date);
       return d >= weekStart && d < weekEnd;
     }).length;
-    // Label: "Mar 8" style for the week-start date
+    // Label is the week-start date in "Mar 8" format for the x-axis
     const label = weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" });
     weeklyHistogram.push({ weekLabel: label, count });
   }

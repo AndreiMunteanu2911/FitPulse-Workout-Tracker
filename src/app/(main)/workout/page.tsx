@@ -218,10 +218,9 @@ export default function WorkoutPage() {
         }
     };
 
-    const handleFinishClick = () => {
-        // A set is "valid" if it is confirmed AND has at least reps > 0 or weight > 0
-        const isValidSet = (s: WorkoutSet) => confirmedSetIds.has(s.id) && (s.reps > 0 || s.weight > 0);
+    const isValidSet = (s: WorkoutSet) => confirmedSetIds.has(s.id) && (s.reps > 0 || s.weight > 0);
 
+    const handleFinishClick = () => {
         // Count incomplete sets: unconfirmed OR both reps and weight are 0
         let incompleteSetCount = 0;
         let emptyExerciseCount = 0;
@@ -246,8 +245,6 @@ export default function WorkoutPage() {
     const discardAndFinish = async () => {
         if (!workoutId) return;
         setShowDiscardSetsModal(false);
-
-        const isValidSet = (s: WorkoutSet) => confirmedSetIds.has(s.id) && (s.reps > 0 || s.weight > 0);
 
         try {
             // Delete invalid sets (unconfirmed or both 0/0) and empty exercises
