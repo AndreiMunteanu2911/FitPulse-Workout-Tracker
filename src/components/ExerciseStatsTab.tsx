@@ -11,6 +11,7 @@ import {
     ResponsiveContainer,
 } from "recharts";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { BarChart2 } from "lucide-react";
 
 interface ExerciseStat {
     workout_date: string;
@@ -132,19 +133,7 @@ export default function ExerciseStatsTab({ exerciseId }: ExerciseStatsTabProps) 
         return (
             <div className="text-center py-14 bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)]">
                 <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
-                    <svg
-                        className="w-7 h-7 text-[var(--primary-600)] dark:text-[var(--primary-700)]"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={1.5}
-                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                        />
-                    </svg>
+                    <BarChart2 className="w-7 h-7 text-[var(--primary-600)] dark:text-[var(--primary-700)]" />
                 </div>
                 <p className="text-sm text-[var(--muted-foreground)]">
                     No workout data yet. Log this exercise to see your progress!

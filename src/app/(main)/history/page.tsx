@@ -9,6 +9,7 @@ import ModalWrapper from "@/components/ModalWrapper";
 import Button from "@/components/Button";
 import { useHistory } from "@/hooks/useHistory";
 import type { Workout } from "@/types";
+import { Clock, PenSquare, Trash2 } from "lucide-react";
 
 function computePrCountsPerWorkout(workouts: Workout[]): Map<string, number> {
     const sorted = [...workouts].sort(
@@ -129,9 +130,7 @@ export default function HistoryPage() {
                 {workouts.length === 0 ? (
                     <div className="text-center py-16 bg-[var(--surface)] rounded-[var(--radius-2xl)] shadow-[var(--shadow)]">
                         <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
-                            <svg className="w-8 h-8 text-[var(--primary-600)] dark:text-[var(--primary-700)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                            <Clock className="w-8 h-8 text-[var(--primary-600)] dark:text-[var(--primary-700)]" />
                         </div>
                         <h3 className="text-lg font-bold text-[var(--foreground)] mb-2">No workouts yet</h3>
                         <p className="text-sm text-[var(--muted-foreground)]">Complete your first workout to see it here.</p>
@@ -152,18 +151,14 @@ export default function HistoryPage() {
                                         onClick={() => { setRenameTarget(workout); setRenameValue(workout.name); }}
                                         className="w-8 h-8 rounded-[var(--radius-md)] flex items-center justify-center bg-[var(--surface)] shadow-[var(--shadow-sm)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:shadow-[var(--shadow)] transition-all"
                                     >
-                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                        </svg>
+                                        <PenSquare className="w-3.5 h-3.5" />
                                     </button>
                                     <button
                                         aria-label="Delete workout"
                                         onClick={() => setDeleteTarget(workout)}
                                         className="w-8 h-8 rounded-[var(--radius-md)] flex items-center justify-center bg-[var(--surface)] shadow-[var(--shadow-sm)] text-[var(--muted-foreground)] hover:text-[var(--color-destructive)] hover:shadow-[var(--shadow)] transition-all"
                                     >
-                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
+                                        <Trash2 className="w-3.5 h-3.5" />
                                     </button>
                                 </div>
                             </div>

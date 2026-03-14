@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import { Dumbbell } from "lucide-react";
 
 export default function LandingPage() {
     return (
@@ -7,7 +7,7 @@ export default function LandingPage() {
             {/* Logo */}
             <div className="flex items-center gap-2.5 pt-6 pb-2">
                 <div className="w-9 h-9 rounded-[12px] bg-white/15 flex items-center justify-center">
-                    <Image src="/assets/dumbbell-large.svg" alt="Dumbbell" width={20} height={20} className="brightness-0 invert" />
+                    <Dumbbell className="w-5 h-5 text-white" />
                 </div>
                 <span className="text-lg font-extrabold tracking-tight">FitPulse</span>
             </div>
