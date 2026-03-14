@@ -84,7 +84,7 @@ export default function WorkoutPage() {
                     const preConfirmed = new Set<string>();
                     for (const we of data.workout_exercises || []) {
                         for (const s of we.sets || []) {
-                            if ((s.reps > 0) || (s.weight > 0)) {
+                            if (s.reps > 0 || s.weight > 0) {
                                 preConfirmed.add(s.id);
                             }
                         }
@@ -195,17 +195,16 @@ export default function WorkoutPage() {
     };
 
     const handleFinishClick = () => {
+        // A set is "valid" if it is confirmed AND has at least reps > 0 or weight > 0
+        const isValidSet = (s: WorkoutSet) => confirmedSetIds.has(s.id) && (s.reps > 0 || s.weight > 0);
+
         // Count incomplete sets: unconfirmed OR both reps and weight are 0
         let incompleteSetCount = 0;
         let emptyExerciseCount = 0;
 
         for (const exercise of workoutExercises) {
-            const validSets = exercise.sets.filter(
-                (s) => confirmedSetIds.has(s.id) && (s.reps > 0 || s.weight > 0)
-            );
-            const badSets = exercise.sets.filter(
-                (s) => !confirmedSetIds.has(s.id) || (s.reps === 0 && s.weight === 0)
-            );
+            const validSets = exercise.sets.filter(isValidSet);
+            const badSets = exercise.sets.filter((s) => !isValidSet(s));
             incompleteSetCount += badSets.length;
             if (validSets.length === 0) {
                 emptyExerciseCount += 1;
@@ -224,16 +223,14 @@ export default function WorkoutPage() {
         if (!workoutId) return;
         setShowDiscardSetsModal(false);
 
+        const isValidSet = (s: WorkoutSet) => confirmedSetIds.has(s.id) && (s.reps > 0 || s.weight > 0);
+
         try {
             // Delete invalid sets (unconfirmed or both 0/0) and empty exercises
             const exercisesToDelete: string[] = [];
             for (const exercise of workoutExercises) {
-                const validSets = exercise.sets.filter(
-                    (s) => confirmedSetIds.has(s.id) && (s.reps > 0 || s.weight > 0)
-                );
-                const badSets = exercise.sets.filter(
-                    (s) => !confirmedSetIds.has(s.id) || (s.reps === 0 && s.weight === 0)
-                );
+                const validSets = exercise.sets.filter(isValidSet);
+                const badSets = exercise.sets.filter((s) => !isValidSet(s));
                 for (const s of badSets) {
                     await deleteSetApi(s.id);
                 }
@@ -280,7 +277,36 @@ export default function WorkoutPage() {
         try {
             const result = await addExerciseApi(workoutId, exercise.exercise_id, workoutExercises.length);
             const workoutExerciseData = result.workoutExercise as { id: string; order_index: number };
-            const setData = result.set as WorkoutSet;
+            const firstSet = result.set as WorkoutSet;
+
+            // Fetch last session sets for this exercise to pre-fill
+            let prefillSets: { reps: number; weight: number }[] = [];
+            try {
+                const lastRes = await fetch(`/api/exercises/${exercise.exercise_id}/last-session`);
+                if (lastRes.ok) {
+                    const lastData = await lastRes.json();
+                    prefillSets = lastData.sets ?? [];
+                }
+            } catch {
+                // silently ignore – we'll just use blank sets
+            }
+
+            let sets: WorkoutSet[] = [];
+
+            if (prefillSets.length > 0) {
+                // Update the first (already-created) set with the first prefill values
+                await updateSetApi(firstSet.id, { reps: prefillSets[0].reps, weight: prefillSets[0].weight });
+                sets.push({ ...firstSet, reps: prefillSets[0].reps, weight: prefillSets[0].weight });
+
+                // Create additional sets for the rest
+                for (let i = 1; i < prefillSets.length; i++) {
+                    const newSet = await addSetApi(workoutExerciseData.id, i + 1);
+                    await updateSetApi(newSet.id, { reps: prefillSets[i].reps, weight: prefillSets[i].weight });
+                    sets.push({ ...newSet, reps: prefillSets[i].reps, weight: prefillSets[i].weight });
+                }
+            } else {
+                sets = [firstSet];
+            }
 
             setWorkoutExercises([
                 ...workoutExercises,
@@ -289,7 +315,7 @@ export default function WorkoutPage() {
                     exercise_id: exercise.exercise_id,
                     exercise: exercise,
                     order_index: workoutExerciseData.order_index,
-                    sets: [setData],
+                    sets,
                 },
             ]);
 

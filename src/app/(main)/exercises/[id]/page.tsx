@@ -92,63 +92,6 @@ export default function ExerciseDetailsPage() {
                     <h1 className="text-xl sm:text-2xl font-extrabold text-[var(--foreground)] truncate">{capitalize(exercise.name)}</h1>
                 </div>
 
-                {/* Hero section */}
-                <div className="flex flex-col md:flex-row gap-5 mb-6">
-                    {exercise.gif_url && (
-                        <div className="w-full md:w-64 flex-shrink-0">
-                            <div className="rounded-[var(--radius-xl)] overflow-hidden shadow-[var(--shadow)] bg-[var(--surface)] aspect-square md:w-64 md:h-64 mx-auto">
-                                <ImageWithSpinner src={exercise.gif_url} alt={exercise.name + " demo"} />
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="flex-1 bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4 sm:p-5 space-y-4">
-                        {exercise.target_muscles?.length ? (
-                            <div>
-                                <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-2">Target Muscles</h2>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {exercise.target_muscles.map((m, i) => (
-                                        <span key={i} className="px-3 py-1 rounded-full text-xs font-semibold bg-[var(--primary-500)] text-white capitalize">{capitalize(m)}</span>
-                                    ))}
-                                </div>
-                            </div>
-                        ) : null}
-
-                        {exercise.secondary_muscles?.length ? (
-                            <div>
-                                <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-2">Secondary Muscles</h2>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {exercise.secondary_muscles.map((m, i) => (
-                                        <span key={i} className="px-3 py-1 rounded-full text-xs font-semibold bg-[var(--primary-50)] dark:bg-[var(--primary-100)] text-[var(--primary-700)] dark:text-[var(--primary-700)] capitalize">{capitalize(m)}</span>
-                                    ))}
-                                </div>
-                            </div>
-                        ) : null}
-
-                        {exercise.equipments?.length ? (
-                            <div>
-                                <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-2">Equipment</h2>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {exercise.equipments.map((e, i) => (
-                                        <span key={i} className="px-3 py-1 rounded-full text-xs font-semibold bg-[var(--surface-raised)] text-[var(--foreground)] border border-[var(--border)] capitalize">{capitalize(e)}</span>
-                                    ))}
-                                </div>
-                            </div>
-                        ) : null}
-
-                        {exercise.body_parts?.length ? (
-                            <div>
-                                <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-2">Body Parts</h2>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {exercise.body_parts.map((p, i) => (
-                                        <span key={i} className="px-3 py-1 rounded-full text-xs font-semibold bg-[var(--surface-raised)] text-[var(--foreground)] border border-[var(--border)] capitalize">{capitalize(p)}</span>
-                                    ))}
-                                </div>
-                            </div>
-                        ) : null}
-                    </div>
-                </div>
-
                 {/* Tabs */}
                 <div className="flex gap-1 p-1 bg-[var(--surface-raised)] rounded-[var(--radius-lg)] mb-5 w-fit">
                     <button
@@ -176,6 +119,63 @@ export default function ExerciseDetailsPage() {
                 {/* Tab Content */}
                 {activeTab === "description" ? (
                     <>
+                        {/* Hero section */}
+                        <div className="flex flex-col md:flex-row gap-5 mb-5">
+                            {exercise.gif_url && (
+                                <div className="w-full md:w-56 flex-shrink-0">
+                                    <div className="rounded-[var(--radius-xl)] overflow-hidden shadow-[var(--shadow)] bg-[var(--surface)] aspect-square md:w-56 md:h-56 mx-auto">
+                                        <ImageWithSpinner src={exercise.gif_url} alt={exercise.name + " demo"} />
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="flex-1 bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4 sm:p-5 space-y-4">
+                                {exercise.target_muscles?.length ? (
+                                    <div>
+                                        <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-2">Target Muscles</h2>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {exercise.target_muscles.map((m, i) => (
+                                                <span key={i} className="px-3 py-1 rounded-full text-xs font-semibold bg-[var(--primary-500)] text-white capitalize">{capitalize(m)}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : null}
+
+                                {exercise.secondary_muscles?.length ? (
+                                    <div>
+                                        <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-2">Secondary Muscles</h2>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {exercise.secondary_muscles.map((m, i) => (
+                                                <span key={i} className="px-3 py-1 rounded-full text-xs font-semibold bg-[var(--primary-50)] dark:bg-[var(--primary-100)] text-[var(--primary-700)] dark:text-[var(--primary-700)] capitalize">{capitalize(m)}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : null}
+
+                                {exercise.equipments?.length ? (
+                                    <div>
+                                        <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-2">Equipment</h2>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {exercise.equipments.map((e, i) => (
+                                                <span key={i} className="px-3 py-1 rounded-full text-xs font-semibold bg-[var(--surface-raised)] text-[var(--foreground)] border border-[var(--border)] capitalize">{capitalize(e)}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : null}
+
+                                {exercise.body_parts?.length ? (
+                                    <div>
+                                        <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-2">Body Parts</h2>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {exercise.body_parts.map((p, i) => (
+                                                <span key={i} className="px-3 py-1 rounded-full text-xs font-semibold bg-[var(--surface-raised)] text-[var(--foreground)] border border-[var(--border)] capitalize">{capitalize(p)}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : null}
+                            </div>
+                        </div>
+
                         {/* Instructions */}
                         {exercise.instructions?.length ? (
                             <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4 sm:p-5 mb-6">
