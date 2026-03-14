@@ -1,6 +1,7 @@
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useState } from "react";
 import type { WorkoutExercise } from "@/types";
+import { Trash2, Check, X, Plus } from "lucide-react";
 
 interface ExerciseCardProps {
     workoutExercise: WorkoutExercise;
@@ -79,9 +80,7 @@ export default function WorkoutExerciseCard({
                         onClick={() => onDeleteExercise(exerciseIndex)}
                         className="flex-shrink-0 w-8 h-8 rounded-[var(--radius-md)] flex items-center justify-center text-[var(--muted-foreground)] hover:bg-[var(--color-destructive-bg)] hover:text-[var(--color-destructive)] transition-colors"
                     >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
+                        <Trash2 className="w-4 h-4" />
                     </button>
                 </div>
 
@@ -151,9 +150,7 @@ export default function WorkoutExerciseCard({
                                                 : "text-[var(--muted-foreground)] hover:bg-[var(--color-success-bg)] hover:text-[var(--color-success)]"
                                         }`}
                                     >
-                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                                        </svg>
+                                        <Check className="w-3.5 h-3.5" />
                                     </button>
                                     <button
                                         aria-label="Delete set"
@@ -163,9 +160,7 @@ export default function WorkoutExerciseCard({
                                         }}
                                         className="w-6 h-6 rounded-full flex items-center justify-center text-[var(--muted-foreground)] hover:bg-[var(--color-destructive-bg)] hover:text-[var(--color-destructive)] transition-colors"
                                     >
-                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
+                                        <X className="w-3.5 h-3.5" />
                                     </button>
                                 </div>
                             </div>
@@ -178,9 +173,7 @@ export default function WorkoutExerciseCard({
                     onClick={() => onAddSet(exerciseIndex)}
                     className="w-full py-2.5 flex items-center justify-center gap-2 text-sm font-semibold text-[var(--primary-600)] dark:text-[var(--primary-500)] bg-[var(--primary-50)] dark:bg-[var(--primary-100)] rounded-[var(--radius-lg)] hover:brightness-95 transition-all"
                 >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-                    </svg>
+                    <Plus className="w-4 h-4" />
                     Add Set
                 </button>
             </div>

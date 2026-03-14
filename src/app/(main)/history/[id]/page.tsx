@@ -14,6 +14,7 @@ import { useHistory } from "@/hooks/useHistory";
 import { useWorkout } from "@/hooks/useWorkout";
 import { useExercises } from "@/hooks/useExercises";
 import type { Workout, WorkoutExercise, Exercise, Set as WorkoutSet } from "@/types";
+import { ChevronLeft, Pencil, PenSquare, Trash2 } from "lucide-react";
 
 export default function WorkoutDetailPage() {
     const params = useParams();
@@ -324,9 +325,7 @@ export default function WorkoutDetailPage() {
                         href="/history"
                         className="w-9 h-9 rounded-[var(--radius-lg)] flex items-center justify-center bg-[var(--surface)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow)] transition-shadow flex-shrink-0"
                     >
-                        <svg className="w-4 h-4 text-[var(--foreground)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-                        </svg>
+                        <ChevronLeft className="w-4 h-4 text-[var(--foreground)]" />
                     </Link>
                     <div className="min-w-0 flex-1">
                         <h1 className="text-xl sm:text-2xl font-extrabold text-[var(--foreground)] truncate">{workout.name}</h1>
@@ -348,27 +347,21 @@ export default function WorkoutDetailPage() {
                                 onClick={enterEditMode}
                                 className="w-9 h-9 rounded-[var(--radius-lg)] flex items-center justify-center bg-[var(--surface)] shadow-[var(--shadow-sm)] text-[var(--primary-600)] dark:text-[var(--primary-500)] hover:shadow-[var(--shadow)] transition-all flex-shrink-0"
                             >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
+                                <PenSquare className="w-4 h-4" />
                             </button>
                             <button
                                 aria-label="Rename workout"
                                 onClick={() => { setRenameValue(workout.name); setShowRenameModal(true); }}
                                 className="w-9 h-9 rounded-[var(--radius-lg)] flex items-center justify-center bg-[var(--surface)] shadow-[var(--shadow-sm)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:shadow-[var(--shadow)] transition-all flex-shrink-0"
                             >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                </svg>
+                                <Pencil className="w-4 h-4" />
                             </button>
                             <button
                                 aria-label="Delete workout"
                                 onClick={() => setShowDeleteModal(true)}
                                 className="w-9 h-9 rounded-[var(--radius-lg)] flex items-center justify-center bg-[var(--surface)] shadow-[var(--shadow-sm)] text-[var(--muted-foreground)] hover:text-[var(--color-destructive)] hover:shadow-[var(--shadow)] transition-all flex-shrink-0"
                             >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
+                                <Trash2 className="w-4 h-4" />
                             </button>
                         </>
                     )}

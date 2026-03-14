@@ -10,6 +10,7 @@ import { usePersonalRecords } from "@/hooks/usePersonalRecords";
 import PersonalRecordCard from "@/components/PersonalRecordCard";
 import ExerciseStatsTab from "@/components/ExerciseStatsTab";
 import type { Exercise, PersonalRecord } from "@/types";
+import { ChevronLeft, Sparkles } from "lucide-react";
 
 function ImageWithSpinner({ src, alt }: { src: string; alt: string }) {
     const [loaded, setLoaded] = useState(false);
@@ -85,9 +86,7 @@ export default function ExerciseDetailsPage() {
                         href="/exercises"
                         className="w-9 h-9 rounded-[var(--radius-lg)] flex items-center justify-center bg-[var(--surface)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow)] transition-shadow flex-shrink-0"
                     >
-                        <svg className="w-4 h-4 text-[var(--foreground)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-                        </svg>
+                        <ChevronLeft className="w-4 h-4 text-[var(--foreground)]" />
                     </Link>
                     <h1 className="text-xl sm:text-2xl font-extrabold text-[var(--foreground)] truncate">{capitalize(exercise.name)}</h1>
                 </div>
@@ -201,9 +200,7 @@ export default function ExerciseDetailsPage() {
                             ) : (
                                 <div className="text-center py-10 bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)]">
                                     <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
-                                        <svg className="w-6 h-6 text-[var(--primary-600)] dark:text-[var(--primary-700)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                                        </svg>
+                                        <Sparkles className="w-6 h-6 text-[var(--primary-600)] dark:text-[var(--primary-700)]" />
                                     </div>
                                     <p className="text-sm text-[var(--muted-foreground)]">No personal record yet. Log this exercise to see your PR!</p>
                                 </div>

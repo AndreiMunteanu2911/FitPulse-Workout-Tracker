@@ -1,4 +1,5 @@
 import type { Workout } from "@/types";
+import { ChevronRight, Zap, Clock, Sparkles } from "lucide-react";
 
 interface WorkoutHistoryCardProps {
     workout: Workout;
@@ -68,9 +69,7 @@ export default function WorkoutHistoryCard({ workout, prCount }: WorkoutHistoryC
                     {/* Title row */}
                     <div className="flex items-start justify-between gap-2 mb-0.5">
                         <h3 className="text-base sm:text-lg font-bold text-[var(--foreground)] leading-snug">{workout.name}</h3>
-                        <svg className="w-4 h-4 flex-shrink-0 mt-0.5 text-[var(--muted-foreground)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
+                        <ChevronRight className="w-4 h-4 flex-shrink-0 mt-0.5 text-[var(--muted-foreground)]" />
                     </div>
 
                     {/* Date – plain subtitle, no duration here */}
@@ -80,16 +79,14 @@ export default function WorkoutHistoryCard({ workout, prCount }: WorkoutHistoryC
                     <div className="flex flex-wrap gap-2 mb-3">
                         {/* Volume */}
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[var(--primary-50)] dark:bg-[var(--primary-100)] text-[var(--primary-700)] dark:text-[var(--primary-700)]">
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                            <Zap className="w-3 h-3" />
                             {calculateTotalVolume(workout)} kg
                         </span>
 
-                        {/* Duration badge – same style as the volume pill */}
+                        {/* Duration badge */}
                         {duration && (
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[var(--primary-50)] dark:bg-[var(--primary-100)] text-[var(--primary-700)] dark:text-[var(--primary-700)]">
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
+                                <Clock className="w-3 h-3" />
                                 {duration}
                             </span>
                         )}
@@ -97,9 +94,7 @@ export default function WorkoutHistoryCard({ workout, prCount }: WorkoutHistoryC
                         {/* PR count badge */}
                         {typeof prCount === "number" && prCount > 0 && (
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[var(--color-success-bg)] text-[var(--color-success)]">
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                                </svg>
+                                <Sparkles className="w-3 h-3" />
                                 {prCount} PR{prCount !== 1 ? "s" : ""}
                             </span>
                         )}

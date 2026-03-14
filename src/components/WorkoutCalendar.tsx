@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface WorkoutCalendarProps {
     workoutDates: string[]; // YYYY-MM-DD format
@@ -47,9 +48,7 @@ export default function WorkoutCalendar({ workoutDates }: WorkoutCalendarProps) 
                     aria-label="Previous month"
                     className="w-8 h-8 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--surface-raised)] transition-colors"
                 >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-                    </svg>
+                    <ChevronLeft className="w-4 h-4" />
                 </button>
                 <span className="text-sm font-bold text-[var(--foreground)]">
                     {MONTH_NAMES[month]} {year}
@@ -59,9 +58,7 @@ export default function WorkoutCalendar({ workoutDates }: WorkoutCalendarProps) 
                     aria-label="Next month"
                     className="w-8 h-8 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--surface-raised)] transition-colors"
                 >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                    </svg>
+                    <ChevronRight className="w-4 h-4" />
                 </button>
             </div>
 

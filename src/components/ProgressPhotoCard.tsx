@@ -1,4 +1,5 @@
 import type { ProgressPhoto } from "@/types";
+import { Trash2 } from "lucide-react";
 
 interface ProgressPhotoCardProps {
   photo: ProgressPhoto;
@@ -27,9 +28,7 @@ export default function ProgressPhotoCard({ photo, onDelete }: ProgressPhotoCard
           className="absolute top-2 right-2 p-1.5 bg-black/60 backdrop-blur-sm text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600"
           aria-label="Delete photo"
         >
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <Trash2 className="w-3.5 h-3.5" />
         </button>
       </div>
       <div className="p-3">

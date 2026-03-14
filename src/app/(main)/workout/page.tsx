@@ -15,6 +15,7 @@ import { useWorkoutTemplates } from "@/hooks/useWorkoutTemplates";
 import TemplateCard from "@/components/TemplateCard";
 import CreateTemplateModal from "@/components/CreateTemplateModal";
 import type { Exercise, WorkoutExercise, Set as WorkoutSet } from "@/types";
+import { Zap, Plus } from "lucide-react";
 function formatElapsed(seconds: number): string {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
@@ -493,9 +494,7 @@ export default function WorkoutPage() {
                         {noDraftFound && !workoutStarted && (
                             <div className="text-center py-16 bg-[var(--surface)] rounded-[var(--radius-2xl)] shadow-[var(--shadow)] mb-6">
                                 <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
-                                    <svg className="w-10 h-10 text-[var(--primary-600)] dark:text-[var(--primary-700)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                    </svg>
+                                    <Zap className="w-10 h-10 text-[var(--primary-600)] dark:text-[var(--primary-700)]" />
                                 </div>
                                 <h3 className="text-xl font-bold text-[var(--foreground)] mb-1">Ready to train?</h3>
                                 <p className="text-sm text-[var(--muted-foreground)] mb-6">Start a new workout or use a template.</p>
@@ -516,9 +515,7 @@ export default function WorkoutPage() {
                                 {workoutExercises.length === 0 ? (
                                     <div className="text-center py-12 bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)]">
                                         <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
-                                            <svg className="w-6 h-6 text-[var(--primary-600)] dark:text-[var(--primary-700)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                            </svg>
+                                            <Plus className="w-6 h-6 text-[var(--primary-600)] dark:text-[var(--primary-700)]" />
                                         </div>
                                         <p className="text-sm text-[var(--muted-foreground)]">No exercises yet. Tap &quot;Add Exercise&quot; to begin.</p>
                                     </div>
