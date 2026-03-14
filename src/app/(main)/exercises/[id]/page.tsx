@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useExercises } from "@/hooks/useExercises";
 import { usePersonalRecords } from "@/hooks/usePersonalRecords";
 import PersonalRecordCard from "@/components/PersonalRecordCard";
+import ExerciseStatsTab from "@/components/ExerciseStatsTab";
 import type { Exercise, PersonalRecord } from "@/types";
 
 function ImageWithSpinner({ src, alt }: { src: string; alt: string }) {
@@ -36,6 +37,7 @@ export default function ExerciseDetailsPage() {
     const [exercise, setExercise] = useState<Exercise | null>(null);
     const [personalRecord, setPersonalRecord] = useState<PersonalRecord | null>(null);
     const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState<"description" | "stats">("description");
     const { fetchExercise } = useExercises();
     const { fetchPersonalRecords } = usePersonalRecords();
 
@@ -147,39 +149,72 @@ export default function ExerciseDetailsPage() {
                     </div>
                 </div>
 
-                {/* Instructions */}
-                {exercise.instructions?.length ? (
-                    <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4 sm:p-5 mb-6">
-                        <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-3">Instructions</h2>
-                        <ol className="space-y-2.5">
-                            {exercise.instructions.map((step, i) => (
-                                <li key={i} className="flex gap-3 text-sm text-[var(--foreground)]">
-                                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center text-[10px] font-bold text-[var(--primary-600)] dark:text-[var(--primary-700)]">{i + 1}</span>
-                                    <span className="leading-relaxed">{step}</span>
-                                </li>
-                            ))}
-                        </ol>
-                    </div>
-                ) : (
-                    <div className="text-sm text-[var(--muted-foreground)] mb-6">No instructions available for this exercise.</div>
-                )}
-
-                {/* Personal Record */}
-                <div className="mb-8">
-                    <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-3">Your Personal Record</h2>
-                    {personalRecord ? (
-                        <PersonalRecordCard record={personalRecord} />
-                    ) : (
-                        <div className="text-center py-10 bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)]">
-                            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
-                                <svg className="w-6 h-6 text-[var(--primary-600)] dark:text-[var(--primary-700)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                                </svg>
-                            </div>
-                            <p className="text-sm text-[var(--muted-foreground)]">No personal record yet. Log this exercise to see your PR!</p>
-                        </div>
-                    )}
+                {/* Tabs */}
+                <div className="flex gap-1 p-1 bg-[var(--surface-raised)] rounded-[var(--radius-lg)] mb-5 w-fit">
+                    <button
+                        onClick={() => setActiveTab("description")}
+                        className={`px-4 py-1.5 rounded-[var(--radius-md)] text-sm font-semibold transition-all ${
+                            activeTab === "description"
+                                ? "bg-[var(--surface)] shadow-[var(--shadow-xs)] text-[var(--foreground)]"
+                                : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                        }`}
+                    >
+                        Description
+                    </button>
+                    <button
+                        onClick={() => setActiveTab("stats")}
+                        className={`px-4 py-1.5 rounded-[var(--radius-md)] text-sm font-semibold transition-all ${
+                            activeTab === "stats"
+                                ? "bg-[var(--surface)] shadow-[var(--shadow-xs)] text-[var(--foreground)]"
+                                : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                        }`}
+                    >
+                        Stats
+                    </button>
                 </div>
+
+                {/* Tab Content */}
+                {activeTab === "description" ? (
+                    <>
+                        {/* Instructions */}
+                        {exercise.instructions?.length ? (
+                            <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4 sm:p-5 mb-6">
+                                <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-3">Instructions</h2>
+                                <ol className="space-y-2.5">
+                                    {exercise.instructions.map((step, i) => (
+                                        <li key={i} className="flex gap-3 text-sm text-[var(--foreground)]">
+                                            <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center text-[10px] font-bold text-[var(--primary-600)] dark:text-[var(--primary-700)]">{i + 1}</span>
+                                            <span className="leading-relaxed">{step}</span>
+                                        </li>
+                                    ))}
+                                </ol>
+                            </div>
+                        ) : (
+                            <div className="text-sm text-[var(--muted-foreground)] mb-6">No instructions available for this exercise.</div>
+                        )}
+
+                        {/* Personal Record */}
+                        <div className="mb-8">
+                            <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-3">Your Personal Record</h2>
+                            {personalRecord ? (
+                                <PersonalRecordCard record={personalRecord} />
+                            ) : (
+                                <div className="text-center py-10 bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)]">
+                                    <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
+                                        <svg className="w-6 h-6 text-[var(--primary-600)] dark:text-[var(--primary-700)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                                        </svg>
+                                    </div>
+                                    <p className="text-sm text-[var(--muted-foreground)]">No personal record yet. Log this exercise to see your PR!</p>
+                                </div>
+                            )}
+                        </div>
+                    </>
+                ) : (
+                    <div className="mb-8">
+                        <ExerciseStatsTab exerciseId={id as string} />
+                    </div>
+                )}
             </div>
         </ProtectedWrapper>
     );

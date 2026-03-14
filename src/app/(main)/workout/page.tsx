@@ -8,18 +8,20 @@ import Button from "@/components/Button";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import CancelWorkoutModal from "@/components/CancelWorkoutModal";
 import FinishWorkoutModal from "@/components/FinishWorkoutModal";
+import DiscardSetsModal from "@/components/DiscardSetsModal";
 import { useWorkout } from "@/hooks/useWorkout";
 import { useExercises } from "@/hooks/useExercises";
 import { useWorkoutTemplates } from "@/hooks/useWorkoutTemplates";
 import TemplateCard from "@/components/TemplateCard";
 import CreateTemplateModal from "@/components/CreateTemplateModal";
-import type { Exercise, WorkoutExercise, Set } from "@/types";
+import type { Exercise, WorkoutExercise, Set as WorkoutSet } from "@/types";
 export default function WorkoutPage() {
     const [workoutStarted, setWorkoutStarted] = useState(false);
     const [workoutName, setWorkoutName] = useState("My Workout");
     const [workoutId, setWorkoutId] = useState<string | null>(null);
     const [workoutExercises, setWorkoutExercises] = useState<WorkoutExercise[]>([]);
     const [errorMessages, setErrorMessages] = useState<{ [key: string]: string }>({});
+    const [confirmedSetIds, setConfirmedSetIds] = useState<Set<string>>(new Set());
 
     const [showExerciseSearch, setShowExerciseSearch] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -29,6 +31,8 @@ export default function WorkoutPage() {
     const [noDraftFound, setNoDraftFound] = useState(false);
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [isFinishModalOpen, setIsFinishModalOpen] = useState(false);
+    const [showDiscardSetsModal, setShowDiscardSetsModal] = useState(false);
+    const [discardInfo, setDiscardInfo] = useState({ incompleteSetCount: 0, emptyExerciseCount: 0 });
     const [templates, setTemplates] = useState<any[]>([]);
     const [showTemplates, setShowTemplates] = useState(false);
     const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
@@ -71,11 +75,21 @@ export default function WorkoutPage() {
                         exercise_id: we.exercise_id,
                         exercise: we.exercise,
                         order_index: we.order_index,
-                        sets: (we.sets || []).sort((a: Set, b: Set) => a.set_number - b.set_number),
+                        sets: (we.sets || []).sort((a: WorkoutSet, b: WorkoutSet) => a.set_number - b.set_number),
                     }));
                     setWorkoutExercises(exercises);
                     setWorkoutStarted(true);
                     setErrorMessages({});
+                    // Auto-confirm sets that already have valid values from a previous session
+                    const preConfirmed = new Set<string>();
+                    for (const we of data.workout_exercises || []) {
+                        for (const s of we.sets || []) {
+                            if ((s.reps > 0) || (s.weight > 0)) {
+                                preConfirmed.add(s.id);
+                            }
+                        }
+                    }
+                    setConfirmedSetIds(preConfirmed);
                 } else {
                     setNoDraftFound(true);
                 }
@@ -157,6 +171,10 @@ export default function WorkoutPage() {
         }
     };
 
+    const handleConfirmSet = (setId: string) => {
+        setConfirmedSetIds((prev) => new Set([...prev, setId]));
+    };
+
     const finishWorkout = async () => {
         if (!workoutId) return;
 
@@ -168,11 +186,69 @@ export default function WorkoutPage() {
             setWorkoutId(null);
             setWorkoutExercises([]);
             setWorkoutName("My Workout");
+            setConfirmedSetIds(new Set());
             setErrorMessages({});
         } catch (error) {
             console.error("Error finishing workout:", error);
             setErrorMessages((prev) => ({ ...prev, general: "Failed to finish workout." }));
         }
+    };
+
+    const handleFinishClick = () => {
+        // Count incomplete sets: unconfirmed OR both reps and weight are 0
+        let incompleteSetCount = 0;
+        let emptyExerciseCount = 0;
+
+        for (const exercise of workoutExercises) {
+            const validSets = exercise.sets.filter(
+                (s) => confirmedSetIds.has(s.id) && (s.reps > 0 || s.weight > 0)
+            );
+            const badSets = exercise.sets.filter(
+                (s) => !confirmedSetIds.has(s.id) || (s.reps === 0 && s.weight === 0)
+            );
+            incompleteSetCount += badSets.length;
+            if (validSets.length === 0) {
+                emptyExerciseCount += 1;
+            }
+        }
+
+        if (incompleteSetCount > 0) {
+            setDiscardInfo({ incompleteSetCount, emptyExerciseCount });
+            setShowDiscardSetsModal(true);
+        } else {
+            setIsFinishModalOpen(true);
+        }
+    };
+
+    const discardAndFinish = async () => {
+        if (!workoutId) return;
+        setShowDiscardSetsModal(false);
+
+        try {
+            // Delete invalid sets (unconfirmed or both 0/0) and empty exercises
+            const exercisesToDelete: string[] = [];
+            for (const exercise of workoutExercises) {
+                const validSets = exercise.sets.filter(
+                    (s) => confirmedSetIds.has(s.id) && (s.reps > 0 || s.weight > 0)
+                );
+                const badSets = exercise.sets.filter(
+                    (s) => !confirmedSetIds.has(s.id) || (s.reps === 0 && s.weight === 0)
+                );
+                for (const s of badSets) {
+                    await deleteSetApi(s.id);
+                }
+                if (validSets.length === 0) {
+                    exercisesToDelete.push(exercise.id);
+                }
+            }
+            for (const exId of exercisesToDelete) {
+                await deleteWorkoutExercise(exId);
+            }
+        } catch (error) {
+            console.error("Error discarding sets:", error);
+        }
+
+        await finishWorkout();
     };
 
     const handleCancelWorkout = () => {
@@ -204,7 +280,7 @@ export default function WorkoutPage() {
         try {
             const result = await addExerciseApi(workoutId, exercise.exercise_id, workoutExercises.length);
             const workoutExerciseData = result.workoutExercise as { id: string; order_index: number };
-            const setData = result.set as Set;
+            const setData = result.set as WorkoutSet;
 
             setWorkoutExercises([
                 ...workoutExercises,
@@ -335,8 +411,8 @@ export default function WorkoutPage() {
                                 <Button onClick={startWorkout} className="px-4 py-2 text-sm sm:text-base">Start Workout</Button>
                             ) : (
                                 <>
-                                    <Button onClick={handleCancelWorkout} variant="secondary" className="px-3 py-2 text-sm">Cancel</Button>
-                                    <Button onClick={() => setIsFinishModalOpen(true)} className="px-4 py-2 text-sm sm:text-base">Finish</Button>
+                                     <Button onClick={handleCancelWorkout} variant="secondary" className="px-3 py-2 text-sm">Cancel</Button>
+                                    <Button onClick={handleFinishClick} className="px-4 py-2 text-sm sm:text-base">Finish</Button>
                                 </>
                             )}
                           </div>
@@ -353,6 +429,13 @@ export default function WorkoutPage() {
                                 setIsFinishModalOpen(false);
                                 finishWorkout();
                             }}
+                        />
+                        <DiscardSetsModal
+                            isOpen={showDiscardSetsModal}
+                            onClose={() => setShowDiscardSetsModal(false)}
+                            onConfirm={discardAndFinish}
+                            incompleteSetCount={discardInfo.incompleteSetCount}
+                            emptyExerciseCount={discardInfo.emptyExerciseCount}
                         />
                         {noDraftFound && !workoutStarted && (
                             <div className="text-center py-16 bg-[var(--surface)] rounded-[var(--radius-2xl)] shadow-[var(--shadow)] mb-6">
@@ -397,6 +480,8 @@ export default function WorkoutPage() {
                                                 onUpdateSet={updateSet}
                                                 onDeleteSet={deleteSet}
                                                 onDeleteExercise={deleteExercise}
+                                                onConfirmSet={handleConfirmSet}
+                                                confirmedSetIds={confirmedSetIds}
                                                 errorMessage={errorMessages[`exercise-${exerciseIndex}`] || ""}
                                                 setErrorMessage={(message: string) =>
                                                     setErrorMessages((prev) => ({
