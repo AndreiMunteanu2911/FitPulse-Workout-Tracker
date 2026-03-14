@@ -9,6 +9,8 @@ interface ExerciseCardProps {
     onUpdateSet: (exerciseIndex: number, setIndex: number, field: 'reps' | 'weight', value: number) => void;
     onDeleteSet: (exerciseIndex: number, setIndex: number) => void;
     onDeleteExercise: (exerciseIndex: number) => void;
+    onConfirmSet: (setId: string) => void;
+    confirmedSetIds: Set<string>;
     errorMessage: string;
     setErrorMessage: (message: string) => void;
 }
@@ -44,6 +46,8 @@ export default function WorkoutExerciseCard({
     onUpdateSet,
     onDeleteSet,
     onDeleteExercise,
+    onConfirmSet,
+    confirmedSetIds,
     errorMessage,
     setErrorMessage,
 }: ExerciseCardProps) {
@@ -88,7 +92,7 @@ export default function WorkoutExerciseCard({
                 )}
 
                 {/* Column headers */}
-                <div className="grid grid-cols-[3rem_1fr_1fr_2rem] gap-2 px-1 mb-2">
+                <div className="grid grid-cols-[3rem_1fr_1fr_5rem] gap-2 px-1 mb-2">
                     <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Set</span>
                     <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] text-center">Reps</span>
                     <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] text-center">kg</span>
@@ -97,51 +101,76 @@ export default function WorkoutExerciseCard({
 
                 {/* Sets */}
                 <div className="space-y-1.5 mb-4">
-                    {workoutExercise.sets.map((set, setIndex) => (
-                        <div
-                            key={set.id}
-                            className="grid grid-cols-[3rem_1fr_1fr_2rem] items-center gap-2 px-1 py-1.5 rounded-[var(--radius-md)] hover:bg-[var(--surface-raised)] transition-colors"
-                        >
-                            <span className="text-sm font-semibold text-[var(--muted-foreground)]">
-                                {set.set_number}
-                            </span>
-                            <input
-                                type="number"
-                                placeholder="0"
-                                value={set.reps || ""}
-                                onChange={(e) => {
-                                    onUpdateSet(exerciseIndex, setIndex, "reps", parseInt(e.target.value) || 0);
-                                    setErrorMessage("");
-                                }}
-                                min="0"
-                                className="w-full px-2 py-1.5 text-center bg-[var(--surface-raised)] rounded-[var(--radius-sm)] text-[var(--foreground)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] placeholder-[var(--muted-foreground)]"
-                            />
-                            <input
-                                type="number"
-                                placeholder="0"
-                                value={set.weight || ""}
-                                onChange={(e) => {
-                                    onUpdateSet(exerciseIndex, setIndex, "weight", parseFloat(e.target.value) || 0);
-                                    setErrorMessage("");
-                                }}
-                                min="0"
-                                step="0.5"
-                                className="w-full px-2 py-1.5 text-center bg-[var(--surface-raised)] rounded-[var(--radius-sm)] text-[var(--foreground)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] placeholder-[var(--muted-foreground)]"
-                            />
-                            <button
-                                aria-label="Delete set"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onDeleteSet(exerciseIndex, setIndex);
-                                }}
-                                className="w-6 h-6 rounded-full flex items-center justify-center text-[var(--muted-foreground)] hover:bg-[var(--color-destructive-bg)] hover:text-[var(--color-destructive)] transition-colors"
+                    {workoutExercise.sets.map((set, setIndex) => {
+                        const isConfirmed = confirmedSetIds.has(set.id);
+                        return (
+                            <div
+                                key={set.id}
+                                className={`grid grid-cols-[3rem_1fr_1fr_5rem] items-center gap-2 px-1 py-1.5 rounded-[var(--radius-md)] transition-colors ${
+                                    isConfirmed
+                                        ? "bg-[var(--color-success-bg)]"
+                                        : "hover:bg-[var(--surface-raised)]"
+                                }`}
                             >
-                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-                    ))}
+                                <span className={`text-sm font-semibold ${isConfirmed ? "text-[var(--color-success)]" : "text-[var(--muted-foreground)]"}`}>
+                                    {set.set_number}
+                                </span>
+                                <input
+                                    type="number"
+                                    placeholder="0"
+                                    value={set.reps || ""}
+                                    onChange={(e) => {
+                                        onUpdateSet(exerciseIndex, setIndex, "reps", parseInt(e.target.value) || 0);
+                                        setErrorMessage("");
+                                    }}
+                                    min="0"
+                                    className="w-full px-2 py-1.5 text-center bg-[var(--surface-raised)] rounded-[var(--radius-sm)] text-[var(--foreground)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] placeholder-[var(--muted-foreground)]"
+                                />
+                                <input
+                                    type="number"
+                                    placeholder="0"
+                                    value={set.weight || ""}
+                                    onChange={(e) => {
+                                        onUpdateSet(exerciseIndex, setIndex, "weight", parseFloat(e.target.value) || 0);
+                                        setErrorMessage("");
+                                    }}
+                                    min="0"
+                                    step="0.5"
+                                    className="w-full px-2 py-1.5 text-center bg-[var(--surface-raised)] rounded-[var(--radius-sm)] text-[var(--foreground)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] placeholder-[var(--muted-foreground)]"
+                                />
+                                <div className="flex items-center gap-1 justify-end">
+                                    <button
+                                        aria-label="Confirm set"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onConfirmSet(set.id);
+                                        }}
+                                        className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
+                                            isConfirmed
+                                                ? "bg-[var(--color-success)] text-white"
+                                                : "text-[var(--muted-foreground)] hover:bg-[var(--color-success-bg)] hover:text-[var(--color-success)]"
+                                        }`}
+                                    >
+                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </button>
+                                    <button
+                                        aria-label="Delete set"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onDeleteSet(exerciseIndex, setIndex);
+                                        }}
+                                        className="w-6 h-6 rounded-full flex items-center justify-center text-[var(--muted-foreground)] hover:bg-[var(--color-destructive-bg)] hover:text-[var(--color-destructive)] transition-colors"
+                                    >
+                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
 
                 {/* Add Set */}
