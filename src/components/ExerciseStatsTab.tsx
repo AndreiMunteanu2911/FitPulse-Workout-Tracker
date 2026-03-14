@@ -166,6 +166,15 @@ export default function ExerciseStatsTab({ exerciseId }: ExerciseStatsTabProps) 
     const allTimeReps = Math.max(...stats.map((s) => s.max_reps));
     const allTimeVolume = Math.max(...stats.map((s) => s.volume));
 
+    const bestWeightDate = stats.find((s) => s.max_weight === allTimeWeight)?.workout_date;
+    const bestRepsDate = stats.find((s) => s.max_reps === allTimeReps)?.workout_date;
+    const bestVolumeDate = stats.find((s) => s.volume === allTimeVolume)?.workout_date;
+
+    const fmtShortDate = (d?: string) => {
+        if (!d) return "";
+        return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    };
+
     return (
         <div className="space-y-4">
             {/* Summary row */}
@@ -178,6 +187,9 @@ export default function ExerciseStatsTab({ exerciseId }: ExerciseStatsTabProps) 
                         {allTimeWeight}
                     </p>
                     <p className="text-[10px] text-[var(--muted-foreground)] mt-0.5">kg</p>
+                    {bestWeightDate && (
+                        <p className="text-[9px] text-[var(--muted-foreground)] mt-1 leading-none">{fmtShortDate(bestWeightDate)}</p>
+                    )}
                 </div>
                 <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-3 text-center">
                     <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-1">
@@ -187,6 +199,9 @@ export default function ExerciseStatsTab({ exerciseId }: ExerciseStatsTabProps) 
                         {allTimeReps}
                     </p>
                     <p className="text-[10px] text-[var(--muted-foreground)] mt-0.5">reps</p>
+                    {bestRepsDate && (
+                        <p className="text-[9px] text-[var(--muted-foreground)] mt-1 leading-none">{fmtShortDate(bestRepsDate)}</p>
+                    )}
                 </div>
                 <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-3 text-center">
                     <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-1">
@@ -196,6 +211,9 @@ export default function ExerciseStatsTab({ exerciseId }: ExerciseStatsTabProps) 
                         {allTimeVolume}
                     </p>
                     <p className="text-[10px] text-[var(--muted-foreground)] mt-0.5">kg·reps</p>
+                    {bestVolumeDate && (
+                        <p className="text-[9px] text-[var(--muted-foreground)] mt-1 leading-none">{fmtShortDate(bestVolumeDate)}</p>
+                    )}
                 </div>
             </div>
 
@@ -220,7 +238,7 @@ export default function ExerciseStatsTab({ exerciseId }: ExerciseStatsTabProps) 
             <StatsChart
                 data={chartData}
                 dataKey="volume"
-                label="Volume (kg · reps)"
+                label="Volume (kg·reps)"
                 color="var(--color-success)"
                 unit="kg·reps"
             />
