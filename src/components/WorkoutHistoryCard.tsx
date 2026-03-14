@@ -9,6 +9,14 @@ function capitalize(str: string) {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+/** Epley formula: weight × (1 + reps/30). Returns null for reps=0 or weight=0. */
+function calcEpley1RM(weight: number, reps: number): number | null {
+    if (weight <= 0 || reps <= 0) return null;
+    // For 1 rep the multiplier is exactly 1 (no extrapolation needed)
+    if (reps === 1) return weight;
+    return weight * (1 + reps / 30);
+}
+
 export default function WorkoutHistoryCard({ workout, prCount }: WorkoutHistoryCardProps) {
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
@@ -73,23 +81,28 @@ export default function WorkoutHistoryCard({ workout, prCount }: WorkoutHistoryC
                         </svg>
                     </div>
 
-                    {/* Date + duration */}
-                    <div className="flex items-center gap-2 mb-3">
-                        <p className="text-xs text-[var(--muted-foreground)]">{formatDate(workout.workout_date)}</p>
-                        {duration && (
-                            <>
-                                <span className="text-[var(--muted-foreground)] text-xs">·</span>
-                                <p className="text-xs text-[var(--muted-foreground)]">{duration}</p>
-                            </>
-                        )}
-                    </div>
+                    {/* Date – plain subtitle, no duration here */}
+                    <p className="text-xs text-[var(--muted-foreground)] mb-3">{formatDate(workout.workout_date)}</p>
 
-                    {/* Stats badges */}
+                    {/* Stats badges: volume · duration · PRs */}
                     <div className="flex flex-wrap gap-2 mb-3">
+                        {/* Volume */}
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[var(--primary-50)] dark:bg-[var(--primary-100)] text-[var(--primary-700)] dark:text-[var(--primary-700)]">
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                             {calculateTotalVolume(workout)} kg
                         </span>
+
+                        {/* Duration badge – same style as the volume pill */}
+                        {duration && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[var(--primary-50)] dark:bg-[var(--primary-100)] text-[var(--primary-700)] dark:text-[var(--primary-700)]">
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                {duration}
+                            </span>
+                        )}
+
+                        {/* PR count badge */}
                         {typeof prCount === "number" && prCount > 0 && (
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[var(--color-success-bg)] text-[var(--color-success)]">
                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -100,20 +113,30 @@ export default function WorkoutHistoryCard({ workout, prCount }: WorkoutHistoryC
                         )}
                     </div>
 
-                    {/* Exercise list */}
+                    {/* Exercise list with best-set and 1RM */}
                     {workout.workout_exercises.length > 0 && (
                         <div className="space-y-0.5 border-t border-[var(--border)] pt-2 mt-1">
                             {exercises.map((we) => {
                                 const best = getBestSet(we.sets);
+                                const orm = best ? calcEpley1RM(best.weight, best.reps) : null;
                                 return (
                                     <div key={we.id} className="flex items-baseline gap-1.5 text-xs">
+                                        {/* Set count */}
                                         <span className="font-semibold text-[var(--foreground)] tabular-nums w-5 text-right flex-shrink-0">
                                             {we.sets.length}×
                                         </span>
+                                        {/* Exercise name */}
                                         <span className="text-[var(--muted-foreground)] truncate flex-1">{capitalize(we.exercise.name)}</span>
+                                        {/* Best set */}
                                         {best && best.weight > 0 && (
-                                            <span className="flex-shrink-0 text-[var(--primary-600)] dark:text-[var(--primary-500)] font-semibold">
+                                            <span className="flex-shrink-0 text-[var(--primary-600)] dark:text-[var(--primary-500)] font-semibold tabular-nums">
                                                 {best.weight} kg × {best.reps}
+                                            </span>
+                                        )}
+                                        {/* 1RM estimate */}
+                                        {orm !== null && (
+                                            <span className="flex-shrink-0 text-[var(--muted-foreground)] tabular-nums">
+                                                ~{Math.round(orm)} kg 1RM
                                             </span>
                                         )}
                                     </div>
