@@ -5,42 +5,9 @@ import { useParams } from "next/navigation";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import Link from "next/link";
-import IconButton from "@/components/IconButton";
 import WorkoutHistoryExerciseCard from "@/components/WorkoutHistoryExerciseCard";
 import { useHistory } from "@/hooks/useHistory";
-
-interface Exercise {
-    exercise_id: string;
-    name: string;
-    gif_url?: string;
-    target_muscles?: string[];
-    body_parts?: string[];
-    equipments?: string[];
-}
-
-interface Set {
-    id: string;
-    set_number: number;
-    reps: number;
-    weight: number;
-}
-
-interface WorkoutExercise {
-    id: string;
-    exercise_id: string;
-    exercise: Exercise;
-    order_index: number;
-    sets: Set[];
-}
-
-interface Workout {
-    id: string;
-    name: string;
-    workout_date: string;
-    created_at: string;
-    status: string;
-    workout_exercises: WorkoutExercise[];
-}
+import type { Workout } from "@/types";
 
 export default function WorkoutDetailPage() {
     const params = useParams();
@@ -71,7 +38,7 @@ export default function WorkoutDetailPage() {
     if (loading) {
         return (
             <ProtectedWrapper>
-                <div className="flex items-center justify-center h-[50vh] p-4">
+                <div className="flex items-center justify-center h-[50vh]">
                     <LoadingSpinner size={40} />
                 </div>
             </ProtectedWrapper>
@@ -81,17 +48,20 @@ export default function WorkoutDetailPage() {
     if (error || !workout) {
         return (
             <ProtectedWrapper>
-                <div className="w-full mx-auto max-w-4xl">
-                    <div className="text-[var(--foreground)] font-bold text-2xl sm:text-3xl mb-6">Workout Details</div>
-                    <div className="text-red-600 dark:text-red-400 py-8 text-center">{error || "Workout not found."}</div>
+                <div className="w-full">
+                    <div className="page-header mb-6">
+                        <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--foreground)]">Workout Details</h1>
+                    </div>
+                    <div className="p-6 rounded-[var(--radius-xl)] bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] text-center font-medium">
+                        {error || "Workout not found."}
+                    </div>
                 </div>
             </ProtectedWrapper>
         );
     }
 
     const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString("en-US", {
+        return new Date(dateString).toLocaleDateString("en-US", {
             weekday: "long",
             year: "numeric",
             month: "long",
@@ -99,18 +69,47 @@ export default function WorkoutDetailPage() {
         });
     };
 
+    const totalVolume = workout.workout_exercises.reduce((sum, we) => {
+        return sum + we.sets.reduce((s, set) => s + set.reps * set.weight, 0);
+    }, 0);
+
+    const totalSets = workout.workout_exercises.reduce((sum, we) => sum + we.sets.length, 0);
+
     return (
         <ProtectedWrapper>
             <div className="w-full">
-                <div className="flex items-center mb-4 pt-2">
-                    <Link href="/history" className="mr-3 sm:mr-4">
-                        <IconButton image="/assets/arrow-white.svg" variant="primary" className="p-2 sm:p-3" />
+                {/* Header with back button */}
+                <div className="page-header mb-4 flex items-center gap-3">
+                    <Link
+                        href="/history"
+                        className="w-9 h-9 rounded-[var(--radius-lg)] flex items-center justify-center bg-[var(--surface)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow)] transition-shadow flex-shrink-0"
+                    >
+                        <svg className="w-4 h-4 text-[var(--foreground)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                        </svg>
                     </Link>
-                    <div className="text-[var(--foreground)] font-bold text-2xl sm:text-3xl">{workout.name}</div>
+                    <div className="min-w-0">
+                        <h1 className="text-xl sm:text-2xl font-extrabold text-[var(--foreground)] truncate">{workout.name}</h1>
+                        <p className="text-xs text-[var(--muted-foreground)] mt-0.5">{formatDate(workout.workout_date)}</p>
+                    </div>
                 </div>
 
-                <div className="mb-4 sm:mb-6 text-[var(--muted-foreground)] text-base sm:text-lg">{formatDate(workout.workout_date)}</div>
-                <div className="space-y-4 sm:space-y-6 mt-6">
+                {/* Summary stats */}
+                <div className="grid grid-cols-3 gap-3 mb-6">
+                    {[
+                        { label: "Exercises", value: workout.workout_exercises.length },
+                        { label: "Sets", value: totalSets },
+                        { label: "Volume", value: `${totalVolume.toFixed(0)} kg` },
+                    ].map(({ label, value }) => (
+                        <div key={label} className="bg-[var(--surface)] rounded-[var(--radius-xl)] p-3 sm:p-4 shadow-[var(--shadow)] text-center">
+                            <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-1">{label}</p>
+                            <p className="text-xl sm:text-2xl font-extrabold text-[var(--foreground)] leading-none">{value}</p>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Exercise cards */}
+                <div className="space-y-4">
                     {workout.workout_exercises.map((we) => (
                         <WorkoutHistoryExerciseCard key={we.id} workoutExercise={we} />
                     ))}

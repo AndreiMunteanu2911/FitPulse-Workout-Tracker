@@ -1,11 +1,13 @@
 import ProtectedWrapper from "@/components/ProtectedWrapper";
-import DashboardStats from "./DashboardStats";
+import DashboardStats from "@/components/DashboardStats";
 
 export default function DashboardPage() {
   return (
     <ProtectedWrapper>
-        <div className="w-full">
-            <div className="sticky top-0 py-4 z-10 text-2xl sm:text-3xl font-semibold text-[var(--foreground)] mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-6 bg-[var(--surface)]"> Dashboard
+      <div className="w-full">
+        <div className="page-header mb-6">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight">Dashboard</h1>
+          <p className="text-sm text-[var(--muted-foreground)] mt-0.5">Your fitness overview</p>
         </div>
         <DashboardStats />
       </div>

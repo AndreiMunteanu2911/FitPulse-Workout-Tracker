@@ -9,27 +9,11 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import AddWeightModal from "@/components/AddWeightModal";
 import ProgressPhotoCard from "@/components/ProgressPhotoCard";
 import AddPhotoModal from "@/components/AddPhotoModal";
+import DarkModeToggle from "@/components/DarkModeToggle";
 import { useAuth } from "@/hooks/useAuth";
 import { useWeightLogs } from "@/hooks/useWeightLogs";
 import { useProgressPhotos } from "@/hooks/useProgressPhotos";
-
-interface User {
-    id: string;
-    email: string;
-}
-interface WeightLog {
-    id: string;
-    log_date: string;
-    weight: number;
-}
-interface ProgressPhoto {
-    id: string;
-    user_id: string;
-    photo_url: string;
-    log_date: string;
-    notes?: string;
-    created_at: string;
-}
+import type { User, WeightLog, ProgressPhoto } from "@/types";
 
 export default function ProfilePage() {
     const router = useRouter();
@@ -46,13 +30,11 @@ export default function ProfilePage() {
     const [showWeightModal, setShowWeightModal] = useState(false);
     const [showPhotoModal, setShowPhotoModal] = useState(false);
 
-    // Sign out function
     const signOut = async () => {
         await logout();
         router.push("/");
     };
 
-    // Fetch current user
     useEffect(() => {
         const getUser = async () => {
             const userData = await getSession();
@@ -62,7 +44,6 @@ export default function ProfilePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Fetch weights and photos
     const loadData = useCallback(async () => {
         setLoading(true);
         if (!user) return;
@@ -86,11 +67,7 @@ export default function ProfilePage() {
 
     const handleAddPhoto = async (photo: File, logDate: string, notes: string) => {
         try {
-            await addProgressPhoto({
-                photo,
-                log_date: logDate,
-                notes: notes || undefined,
-            });
+            await addProgressPhoto({ photo, log_date: logDate, notes: notes || undefined });
             setShowPhotoModal(false);
             await loadData();
         } catch (error) {
@@ -99,7 +76,7 @@ export default function ProfilePage() {
     };
 
     const handleDeletePhoto = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this photo?")) return;
+        if (!confirm("Delete this photo?")) return;
         try {
             await deleteProgressPhoto(id);
             await loadData();
@@ -109,7 +86,7 @@ export default function ProfilePage() {
     };
 
     const handleDeleteWeight = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this weight entry?")) return;
+        if (!confirm("Delete this weight entry?")) return;
         try {
             await deleteWeight(id);
             await loadData();
@@ -120,11 +97,20 @@ export default function ProfilePage() {
 
     return (
         <ProtectedWrapper>
-
             <div className="w-full">
-                <div className="flex justify-between items-center mb-6">
-                    <div className="sticky top-0 py-4 z-10 text-2xl sm:text-3xl font-semibold text-[var(--foreground)] mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-6 bg-[var(--surface)]">Profile</div>
-                    <Button onClick={signOut} className="px-5 py-2.5 text-sm sm:text-base">Sign Out</Button>
+                {/* Page header */}
+                <div className="page-header mb-6 flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight">Profile</h1>
+                        {user && <p className="text-sm text-[var(--muted-foreground)] mt-0.5 truncate max-w-[200px]">{user.email}</p>}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        {/* Dark mode toggle — visible on mobile only (desktop has it in the sidebar) */}
+                        <div className="md:hidden">
+                            <DarkModeToggle />
+                        </div>
+                        <Button onClick={signOut} variant="secondary" className="text-sm shrink-0">Sign Out</Button>
+                    </div>
                 </div>
 
                 {loading && (
@@ -133,41 +119,51 @@ export default function ProfilePage() {
                     </div>
                 )}
 
+                {/* Weight Section */}
                 <div className="mb-6">
-                    <div className="flex items-center justify-between mb-2">
-                        <div className="text-lg sm:text-xl font-semibold text-[var(--foreground)]">My Weight History</div>
-                        <Button onClick={() => setShowWeightModal(true)} variant="primary" className="px-3 py-1.5 text-sm sm:text-base">+ New Entry</Button>
+                    <div className="flex items-center justify-between mb-3">
+                        <h2 className="text-base font-bold text-[var(--foreground)]">Weight History</h2>
+                        <Button onClick={() => setShowWeightModal(true)} variant="primary" className="px-3 py-1.5 text-xs sm:text-sm">+ Log Weight</Button>
                     </div>
-                    <div className="w-full aspect-video sm:aspect-[16/9] lg:aspect-[3/1] bg-[var(--surface)] rounded-lg p-3 sm:p-4">
+                    {/* Borderless card — chart fills full width on mobile */}
+                    <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4 w-full">
                         <WeightHistoryChart weights={weights} loading={loading} onDelete={handleDeleteWeight} />
                     </div>
                 </div>
 
-                <div className="py-4 mt-6 border-t border-[var(--border)]">
-                    <h2 className="text-lg sm:text-xl font-semibold text-[var(--foreground)] mb-2">Account Details</h2>
-                    <p className="text-[var(--muted-foreground)]">Email: {user?.email || "Loading..."}</p>
-                </div>
-
-                <div className="py-4 mt-6 border-t border-[var(--border)]">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg sm:text-xl font-semibold text-[var(--foreground)]">Progress Photos</h2>
-                        <Button onClick={() => setShowPhotoModal(true)} variant="primary" className="px-3 py-1.5 text-sm sm:text-base">+ Add Photo</Button>
+                {/* Progress Photos */}
+                <div className="mb-6">
+                    <div className="flex items-center justify-between mb-3">
+                        <h2 className="text-base font-bold text-[var(--foreground)]">Progress Photos</h2>
+                        <Button onClick={() => setShowPhotoModal(true)} variant="primary" className="px-3 py-1.5 text-xs sm:text-sm">+ Add Photo</Button>
                     </div>
                     {photos.length === 0 ? (
-                        <div className="text-center text-[var(--muted-foreground)] py-8 bg-[var(--surface)] rounded-lg">
-                            No progress photos yet. Add your first photo to track your visual progress!
+                        <div className="text-center py-12 bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)]">
+                            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
+                                <svg className="w-6 h-6 text-[var(--primary-600)] dark:text-[var(--primary-700)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            <p className="text-sm text-[var(--muted-foreground)]">No photos yet. Add your first progress photo!</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             {photos.map((photo) => (
-                                <ProgressPhotoCard
-                                    key={photo.id}
-                                    photo={photo}
-                                    onDelete={handleDeletePhoto}
-                                />
+                                <ProgressPhotoCard key={photo.id} photo={photo} onDelete={handleDeletePhoto} />
                             ))}
                         </div>
                     )}
+                </div>
+
+                {/* Account */}
+                <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4 sm:p-5 mb-8">
+                    <h2 className="text-sm font-bold text-[var(--foreground)] mb-3">Account Details</h2>
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)] flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                            {user?.email?.[0]?.toUpperCase() ?? "?"}
+                        </div>
+                        <span className="text-sm text-[var(--muted-foreground)] truncate">{user?.email || "Loading..."}</span>
+                    </div>
                 </div>
 
                 <AddWeightModal

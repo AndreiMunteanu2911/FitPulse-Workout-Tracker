@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import "@/app/globals.css";
 import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
@@ -13,9 +12,9 @@ export default function MainLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="flex min-h-screen w-full bg-[var(--surface)] text-[var(--foreground)]">
+    <div className="flex min-h-screen w-full bg-[var(--background)] text-[var(--foreground)]">
       <Navbar />
-      <main className="flex-1 min-h-screen p-4 md:p-8 page-shell pb-24 md:pb-8 ml-0">
+      <main className="flex-1 min-w-0 overflow-x-hidden min-h-screen px-4 pt-4 pb-24 md:px-8 md:pt-6 md:pb-8 max-w-5xl mx-auto">
         {children}
       </main>
     </div>

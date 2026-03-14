@@ -1,20 +1,4 @@
-interface PersonalRecord {
-  id: string;
-  user_id: string;
-  exercise_id: string;
-  max_weight: number;
-  max_reps: number;
-  workout_date: string;
-  created_at: string;
-  updated_at: string;
-  exercise?: {
-    exercise_id: string;
-    name: string;
-    gif_url?: string;
-    target_muscles?: string[];
-    body_parts?: string[];
-  };
-}
+import type { PersonalRecord } from "@/types";
 
 interface PersonalRecordCardProps {
   record: PersonalRecord;
@@ -31,49 +15,60 @@ export default function PersonalRecordCard({ record }: PersonalRecordCardProps) 
 
   const exerciseName = record.exercise?.name || "Unknown Exercise";
   const targetMuscles = record.exercise?.target_muscles?.[0] || "Unknown";
+  const estimated1RM = record.max_weight > 0 && record.max_reps > 0
+    ? Math.round(record.max_weight * (1 + record.max_reps / 30))
+    : null;
 
   return (
-    <div className="bg-[var(--surface)] border-2 border-[var(--primary-600)] dark:border-[var(--primary-500)] rounded-lg p-4 hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex-1">
-          <h3 className="text-lg font-semibold text-[var(--foreground)]">{exerciseName}</h3>
-          <p className="text-sm text-[var(--muted-foreground)] capitalize">{targetMuscles}</p>
+    <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] overflow-hidden hover:shadow-[var(--shadow-md)] transition-shadow">
+      {/* Trophy bar */}
+      <div className="h-1 bg-gradient-to-r from-[var(--color-warning)] via-yellow-400 to-amber-400" />
+
+      <div className="p-4 sm:p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-base sm:text-lg font-bold text-[var(--foreground)] capitalize truncate">{exerciseName}</h3>
+            <p className="text-xs text-[var(--muted-foreground)] capitalize mt-0.5">{targetMuscles}</p>
+          </div>
+          {record.exercise?.gif_url && (
+            <img
+              src={record.exercise.gif_url}
+              alt={exerciseName}
+              className="w-14 h-14 object-contain rounded-[var(--radius-md)] bg-[var(--surface-raised)] ml-3 flex-shrink-0"
+            />
+          )}
         </div>
-        {record.exercise?.gif_url && (
-          <img
-            src={record.exercise.gif_url}
-            alt={exerciseName}
-            className="w-16 h-16 object-contain rounded"
-          />
+
+        <div className="grid grid-cols-3 gap-2">
+          <div className="stat-block">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-1">Max Weight</p>
+            <p className="text-xl font-extrabold text-[var(--primary-600)] dark:text-[var(--primary-500)] leading-none">
+              {record.max_weight > 0 ? record.max_weight : "—"}
+            </p>
+            {record.max_weight > 0 && <p className="text-[10px] text-[var(--muted-foreground)] mt-0.5">kg</p>}
+          </div>
+          <div className="stat-block">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-1">Max Reps</p>
+            <p className="text-xl font-extrabold text-[var(--primary-600)] dark:text-[var(--primary-500)] leading-none">
+              {record.max_reps > 0 ? record.max_reps : "—"}
+            </p>
+            {record.max_reps > 0 && <p className="text-[10px] text-[var(--muted-foreground)] mt-0.5">reps</p>}
+          </div>
+          <div className="stat-block">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-1">Date</p>
+            <p className="text-sm font-bold text-[var(--foreground)] leading-tight">
+              {formatDate(record.workout_date)}
+            </p>
+          </div>
+        </div>
+
+        {estimated1RM !== null && (
+          <div className="mt-3 flex items-center justify-center gap-2 py-2 px-4 rounded-[var(--radius-lg)] bg-gradient-to-r from-[var(--primary-50)] to-purple-50 dark:from-[var(--primary-100)] dark:to-purple-900/20">
+            <span className="text-sm text-[var(--muted-foreground)]">Est. 1RM</span>
+            <span className="text-base font-extrabold text-[var(--primary-600)] dark:text-[var(--primary-500)]">{estimated1RM} kg</span>
+          </div>
         )}
       </div>
-
-      <div className="grid grid-cols-3 gap-2 text-center">
-        <div className="bg-[var(--primary-50)] dark:bg-[var(--primary-900)]/40 rounded-lg p-3">
-          <p className="text-xs text-[var(--muted-foreground)]">Max Weight</p>
-          <p className="text-xl font-bold text-[var(--primary-600)] dark:text-[var(--primary-300)]">
-            {record.max_weight > 0 ? `${record.max_weight} kg` : "--"}
-          </p>
-        </div>
-        <div className="bg-[var(--primary-50)] dark:bg-[var(--primary-900)]/40 rounded-lg p-3">
-          <p className="text-xs text-[var(--muted-foreground)]">Max Reps</p>
-          <p className="text-xl font-bold text-[var(--primary-600)] dark:text-[var(--primary-300)]">
-            {record.max_reps > 0 ? record.max_reps : "--"}
-          </p>
-        </div>
-        <div className="bg-[var(--primary-50)] dark:bg-[var(--primary-900)]/40 rounded-lg p-3">
-          <p className="text-xs text-[var(--muted-foreground)]">Date</p>
-          <p className="text-sm font-semibold text-[var(--primary-600)] dark:text-[var(--primary-300)]">
-            {formatDate(record.workout_date)}
-          </p>
-        </div>
-      </div>
-
-      {record.max_weight > 0 && record.max_reps > 0 && (
-        <div className="mt-3 text-center text-sm text-[var(--muted-foreground)]">
-          Est. 1RM: <span className="font-semibold text-[var(--primary-600)] dark:text-[var(--primary-400)]">{Math.round(record.max_weight * (1 + record.max_reps / 30))} kg</span>
-        </div>
-      )}
     </div>
   );
 }

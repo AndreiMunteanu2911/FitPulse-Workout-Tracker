@@ -4,31 +4,7 @@ import { useState, useEffect } from "react";
 import ModalWrapper from "./ModalWrapper";
 import Button from "./Button";
 import { useExercises } from "@/hooks/useExercises";
-
-export interface WorkoutTemplate {
-  id: string;
-  user_id: string;
-  name: string;
-  description?: string;
-  created_at: string;
-  updated_at: string;
-  template_exercises?: TemplateExercise[];
-}
-
-export interface TemplateExercise {
-  id: string;
-  template_id: string;
-  exercise_id: string;
-  order_index: number;
-  created_at: string;
-  exercise?: {
-    exercise_id: string;
-    name: string;
-    gif_url?: string;
-    target_muscles?: string[];
-    body_parts?: string[];
-  };
-}
+import type { WorkoutTemplate } from "@/types";
 
 interface CreateTemplateModalProps {
   isOpen: boolean;
@@ -172,10 +148,10 @@ export default function CreateTemplateModal({
                   <div
                     key={exercise.exercise_id}
                     onClick={() => toggleExercise(exercise.exercise_id)}
-                    className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition ${
+                    className={`flex items-center gap-3 p-3 rounded-[var(--radius-md)] cursor-pointer transition ${
                       isSelected
-                        ? "bg-[var(--primary-100)] dark:bg-[var(--primary-900)] border-2 border-[var(--primary-500)]"
-                        : "bg-[var(--surface)] border-2 border-transparent hover:border-[var(--border)]"
+                        ? "bg-[var(--primary-50)] border border-[var(--primary-500)]"
+                        : "bg-[var(--surface)] border border-[var(--border)] hover:border-[var(--primary-300)]"
                     }`}
                   >
                     <div

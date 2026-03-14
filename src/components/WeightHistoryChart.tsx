@@ -13,71 +13,63 @@ const WeightHistoryChart: React.FC<WeightHistoryChartProps> = ({ weights, loadin
     const chartData = weights.map(w => ({ ...w, log_date: new Date(w.log_date).getTime() }));
 
     return (
-        <div className="mb-4 mt-2 sm:mb-6 sm:mt-4">
+        <div className="w-full">
             {loading ? (
-                <div className="flex justify-center items-center py-8">
+                <div className="flex justify-center items-center py-12">
                     <LoadingSpinner size={10} />
                 </div>
             ) : chartData.length === 0 ? (
-                <p>No weight logs yet.</p>
+                <p className="text-center text-[var(--muted-foreground)] py-8">No weight logs yet.</p>
             ) : (
                 <>
-                    <ResponsiveContainer width="100%" height={250} className="sm:h-[300px] overflow-x-hidden">
-                        <LineChart data={chartData} style={{ overflow: 'visible' }} margin={{ left: 5, right: 5, top: 5, bottom: 5 }}>
-                            <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
-                            <XAxis
-                                dataKey="log_date"
-                                scale="time"
-                                type="number"
-                                domain={['auto', 'auto']}
-                                tickFormatter={(dateStrOrNum) => {
-                                    const d = new Date(dateStrOrNum);
-                                    if (isNaN(d.getTime())) return '';
-                                    const day = String(d.getDate()).padStart(2, '0');
-                                    const month = String(d.getMonth() + 1).padStart(2, '0');
-                                    if (window.innerWidth < 640) return `${month}/${day}`;
-                                    const year = d.getFullYear();
-                                    return `${day}/${month}/${year}`;
-                                }}
-                                stroke="#334155"
-                                tick={{ fill: '#334155', fontSize: 10 }}
-                                axisLine={{ stroke: '#cbd5e1' }}
-                                tickLine={{ stroke: '#cbd5e1' }}
-                            />
-                            <YAxis
-                                dataKey="weight"
-                                stroke="#334155"
-                                tick={{ fill: '#334155', fontSize: 10 }}
-                                axisLine={{ stroke: '#cbd5e1' }}
-                                tickLine={{ stroke: '#cbd5e1' }}
-                            />
-                            <Tooltip
-                                wrapperStyle={{ display: 'none' }}
-                            />
-                            <Line
-                                type="linear"
-                                dataKey="weight"
-                                stroke="#0ea5e9"
-                                strokeWidth={3}
-                                dot={{ r: 5, stroke: '#0ea5e9', strokeWidth: 2, fill: '#fff' }}
-                                activeDot={{ r: 7, stroke: '#0ea5e9', strokeWidth: 3, fill: '#fff' }}
-                            />
-                        </LineChart>
-                    </ResponsiveContainer>
-                    <div className="mt-4 rounded-xs overflow-hidden bg-[var(--surface)] gap-y-2 max-h-96 overflow-y-auto mx-auto w-full sm:max-w-lg">
-                        {weights.length === 0 ? (
-                            <div className="px-4 py-4 text-center text-[var(--foreground)]">No logs to display.</div>
-                        ) : (
-                            weights.map((log, idx) => (
-                                <WeightLogCard 
-                                    key={log.id || log.log_date + '-' + log.weight + '-' + idx} 
-                                    date={log.log_date} 
-                                    weight={log.weight}
-                                    id={log.id}
-                                    onDelete={onDelete}
+                    <div className="w-full">
+                        <ResponsiveContainer width="100%" height={220}>
+                            <LineChart data={chartData} margin={{ left: 0, right: 10, top: 8, bottom: 8 }}>
+                                <CartesianGrid stroke="var(--border)" strokeDasharray="4 4" />
+                                <XAxis
+                                    dataKey="log_date"
+                                    scale="time"
+                                    type="number"
+                                    domain={['auto', 'auto']}
+                                    tickFormatter={(val) => {
+                                        const d = new Date(val);
+                                        if (isNaN(d.getTime())) return '';
+                                        return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+                                    }}
+                                    tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
+                                    axisLine={{ stroke: 'var(--border)' }}
+                                    tickLine={false}
                                 />
-                            ))
-                        )}
+                                <YAxis
+                                    dataKey="weight"
+                                    tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
+                                    axisLine={{ stroke: 'var(--border)' }}
+                                    tickLine={false}
+                                    width={40}
+                                />
+                                <Tooltip wrapperStyle={{ display: 'none' }} />
+                                <Line
+                                    type="monotone"
+                                    dataKey="weight"
+                                    stroke="var(--primary-500)"
+                                    strokeWidth={2.5}
+                                    dot={{ r: 4, stroke: 'var(--primary-500)', strokeWidth: 2, fill: 'var(--surface)' }}
+                                    activeDot={{ r: 6, stroke: 'var(--primary-500)', strokeWidth: 2, fill: 'var(--surface)' }}
+                                />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
+
+                    <div className="mt-4 bg-[var(--surface-raised)] rounded-[var(--radius-lg)] overflow-hidden max-h-72 overflow-y-auto">
+                        {weights.map((log, idx) => (
+                            <WeightLogCard
+                                key={log.id || `${log.log_date}-${log.weight}-${idx}`}
+                                date={log.log_date}
+                                weight={log.weight}
+                                id={log.id}
+                                onDelete={onDelete}
+                            />
+                        ))}
                     </div>
                 </>
             )}

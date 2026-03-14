@@ -29,7 +29,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
     const newWorkoutExercise: WorkoutExercise = {
       id: crypto.randomUUID(),
       workout_id: current.id,
-      exercise_id: exercise.id,
+      exercise_id: exercise.exercise_id,
       order_index: (current.workout_exercises || []).length,
       exercise: exercise,
       sets: [{ id: crypto.randomUUID(), workout_exercise_id: "", set_number: 1, reps: 0, weight: 0 }],

@@ -6,39 +6,7 @@ import WorkoutHistoryCard from "@/components/WorkoutHistoryCard";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import Link from "next/link";
 import { useHistory } from "@/hooks/useHistory";
-
-interface Exercise {
-    exercise_id: string;
-    name: string;
-    gif_url?: string;
-    target_muscles?: string[];
-    body_parts?: string[];
-    equipments?: string[];
-}
-
-interface Set {
-    id: string;
-    set_number: number;
-    reps: number;
-    weight: number;
-}
-
-interface WorkoutExercise {
-    id: string;
-    exercise_id: string;
-    exercise: Exercise;
-    order_index: number;
-    sets: Set[];
-}
-
-interface Workout {
-    id: string;
-    name: string;
-    workout_date: string;
-    created_at: string;
-    status: string;
-    workout_exercises: WorkoutExercise[];
-}
+import type { Workout } from "@/types";
 
 export default function HistoryPage() {
     const [workouts, setWorkouts] = useState<Workout[]>([]);
@@ -67,7 +35,7 @@ export default function HistoryPage() {
     if (loading) {
         return (
             <ProtectedWrapper>
-                <div className="flex items-center justify-center h-[50vh] p-4">
+                <div className="flex items-center justify-center h-[50vh]">
                     <LoadingSpinner size={40} />
                 </div>
             </ProtectedWrapper>
@@ -77,18 +45,27 @@ export default function HistoryPage() {
     return (
         <ProtectedWrapper>
             <div className="w-full">
-                <div className="sticky top-0 py-4 z-10 text-2xl sm:text-3xl font-semibold text-[var(--foreground)] mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-6 bg-[var(--surface)]">
-                    History
+                <div className="page-header mb-6">
+                    <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight">History</h1>
+                    <p className="text-sm text-[var(--muted-foreground)] mt-0.5">{workouts.length} completed workout{workouts.length !== 1 ? "s" : ""}</p>
                 </div>
+
                 {errorMessages.general && (
-                    <div className="mb-4 text-red-600 dark:text-red-400">{errorMessages.general}</div>
+                    <div className="mb-4 p-4 rounded-[var(--radius-lg)] bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] text-sm font-medium">{errorMessages.general}</div>
                 )}
+
                 {workouts.length === 0 ? (
-                    <div className="text-[var(--foreground)] text-center py-12 px-4 rounded-lg bg-[var(--surface)]">
-                        No completed workouts yet. Start your first workout to see it here!
+                    <div className="text-center py-16 bg-[var(--surface)] rounded-[var(--radius-2xl)] shadow-[var(--shadow)]">
+                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
+                            <svg className="w-8 h-8 text-[var(--primary-600)] dark:text-[var(--primary-700)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <h3 className="text-lg font-bold text-[var(--foreground)] mb-2">No workouts yet</h3>
+                        <p className="text-sm text-[var(--muted-foreground)]">Complete your first workout to see it here.</p>
                     </div>
                 ) : (
-                    <div className="space-y-4 max-w-full">
+                    <div className="space-y-3">
                         {workouts.map((workout) => (
                             <Link key={workout.id} href={`/history/${workout.id}`} className="block">
                                 <WorkoutHistoryCard workout={workout} />

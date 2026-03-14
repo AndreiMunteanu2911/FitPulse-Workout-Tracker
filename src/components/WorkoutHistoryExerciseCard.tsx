@@ -1,29 +1,6 @@
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useState } from "react";
-
-interface Exercise {
-    exercise_id: string;
-    name: string;
-    gif_url?: string;
-    target_muscles?: string[];
-    body_parts?: string[];
-    equipments?: string[];
-}
-
-interface Set {
-    id: string;
-    set_number: number;
-    reps: number;
-    weight: number;
-}
-
-interface WorkoutExercise {
-    id: string;
-    exercise_id: string;
-    exercise: Exercise;
-    order_index: number;
-    sets: Set[];
-}
+import type { WorkoutExercise } from "@/types";
 
 interface WorkoutHistoryExerciseCardProps {
     workoutExercise: WorkoutExercise;
@@ -37,16 +14,16 @@ function ImageWithSpinner({ src, alt }: { src: string; alt: string }) {
     const [loaded, setLoaded] = useState(false);
     
     return (
-        <div className="relative w-full h-full bg-transparent">
+        <div className="relative w-full h-full">
             {!loaded && (
-                <div className="absolute inset-0 flex items-center justify-center bg-transparent z-10">
+                <div className="absolute inset-0 flex items-center justify-center z-10">
                     <LoadingSpinner size={3} variant="image" />
                 </div>
             )}
             <img
                 src={src}
                 alt={alt}
-                className={`w-full h-full object-cover ${loaded ? 'opacity-100' : 'opacity-0'}`}
+                className={`w-full h-full object-cover transition-opacity duration-200 ${loaded ? "opacity-100" : "opacity-0"}`}
                 onLoad={() => setLoaded(true)}
             />
         </div>
@@ -55,57 +32,50 @@ function ImageWithSpinner({ src, alt }: { src: string; alt: string }) {
 
 export default function WorkoutHistoryExerciseCard({ workoutExercise }: WorkoutHistoryExerciseCardProps) {
     return (
-        <div className="bg-[var(--surface)] rounded-lg p-4 mb-4 border-2 border-[var(--primary-600)] dark:border-[var(--primary-500)] shadow-sm">
-            {/* Header with exercise name and image */}
-            <div className="flex items-center gap-3 mb-4 pb-3 border-b border-[var(--border)]">
+        <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center gap-3 p-4 pb-3">
                 {workoutExercise.exercise.gif_url && (
-                    <div className="flex-shrink-0 w-14 h-14 rounded-sm overflow-hidden bg-transparent">
+                    <div className="flex-shrink-0 w-14 h-14 rounded-[var(--radius-md)] overflow-hidden bg-[var(--surface-raised)]">
                         <ImageWithSpinner src={workoutExercise.exercise.gif_url} alt={workoutExercise.exercise.name} />
                     </div>
                 )}
                 <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-[var(--foreground)] truncate">
+                    <h3 className="text-base sm:text-lg font-bold text-[var(--foreground)] truncate">
                         {capitalize(workoutExercise.exercise.name)}
                     </h3>
-                    {workoutExercise.exercise.target_muscles?.[0] && (
-                        <p className="text-xs text-[var(--muted-foreground)] capitalize">
-                            {workoutExercise.exercise.target_muscles[0]}
-                        </p>
-                    )}
+                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                        {workoutExercise.exercise.target_muscles?.slice(0, 2).map((muscle, idx) => (
+                            <span key={idx} className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[var(--primary-50)] dark:bg-[var(--primary-100)] text-[var(--primary-700)] dark:text-[var(--primary-700)] capitalize">
+                                {capitalize(muscle)}
+                            </span>
+                        ))}
+                    </div>
                 </div>
             </div>
 
-            {/* Target muscles tags */}
-            <div className="flex gap-2 flex-wrap mb-4">
-                {workoutExercise.exercise.target_muscles?.length
-                    ? workoutExercise.exercise.target_muscles.map((muscle, idx) => (
-                        <span key={idx} className="inline-block rounded-full bg-[var(--primary-500)] dark:bg-[var(--primary-600)] text-white px-3 py-1 text-xs font-medium">
-                            {capitalize(muscle)}
-                        </span>
-                    ))
-                    : <span className="inline-block rounded-full bg-[var(--primary-500)] dark:bg-[var(--primary-600)] text-white px-3 py-1 text-xs font-medium">—</span>
-                }
-            </div>
-
-            {/* Sets */}
-            <div className="space-y-2">
-                {workoutExercise.sets.map((set) => (
-                    <div
-                        key={set.id}
-                        className="grid grid-cols-2 gap-y-1 gap-x-4 md:flex md:items-center mt-4 md:mt-2 md:ml-2 md:gap-12"
-                    >
-                        <span className="text-[var(--foreground)] text-sm font-medium">Set {set.set_number}</span>
-                        <span className="text-[var(--primary-600)] dark:text-[var(--primary-400)] text-sm font-semibold">
-                            {set.reps} reps
-                        </span>
-                        <span className="text-[var(--primary-600)] dark:text-[var(--primary-400)] text-sm font-semibold">
-                            {set.weight} kg
-                        </span>
-                        <span className="text-[var(--muted-foreground)] text-xs md:ml-auto">
-                            Volume: {(set.reps * set.weight).toFixed(1)} kg
-                        </span>
+            {/* Sets table */}
+            <div className="px-4 pb-4">
+                <div className="bg-[var(--surface-raised)] rounded-[var(--radius-lg)] overflow-hidden overflow-x-auto">
+                    {/* Column headers */}
+                    <div className="grid grid-cols-4 gap-2 px-4 py-2 border-b border-[var(--border)] min-w-[240px]">
+                        <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Set</span>
+                        <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] text-right">Reps</span>
+                        <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] text-right">Weight</span>
+                        <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] text-right">Vol.</span>
                     </div>
-                ))}
+                    {workoutExercise.sets.map((set, idx) => (
+                        <div
+                            key={set.id}
+                            className={`grid grid-cols-4 gap-2 px-4 py-2.5 min-w-[240px] ${idx < workoutExercise.sets.length - 1 ? "border-b border-[var(--border)]" : ""}`}
+                        >
+                            <span className="text-sm font-semibold text-[var(--foreground)]">{set.set_number}</span>
+                            <span className="text-sm font-semibold text-[var(--primary-600)] dark:text-[var(--primary-500)] text-right">{set.reps}</span>
+                            <span className="text-sm font-semibold text-[var(--primary-600)] dark:text-[var(--primary-500)] text-right">{set.weight} kg</span>
+                            <span className="text-xs text-[var(--muted-foreground)] text-right self-center">{(set.reps * set.weight).toFixed(0)}</span>
+                        </div>
+                    ))}
+                </div>
             </div>
         </div>
     );

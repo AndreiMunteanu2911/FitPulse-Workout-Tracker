@@ -1,14 +1,13 @@
 "use client";
 
-import {useState} from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Button from "@/components/Button";
-import { useRouter } from "next/navigation";
-import IconButton from "@/components/IconButton";
 import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
 import { loginSchema, LoginInput } from "@/lib/validations";
 import { ZodError } from "zod";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -17,11 +16,13 @@ export default function LoginPage() {
     const [password, setPassword] = useState("");
     const [errors, setErrors] = useState<Partial<Record<keyof LoginInput, string>>>({});
     const [message, setMessage] = useState("");
+    const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setMessage("");
         setErrors({});
+        setLoading(true);
 
         try {
             loginSchema.parse({ email, password });
@@ -42,52 +43,78 @@ export default function LoginPage() {
             }
             setEmail("");
             setPassword("");
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
-        <div className="w-full text-white min-h-screen flex flex-col m-0 p-0">
-            <div className="flex flex-row items-center mb-32 pt-2">
-                <Image src="/assets/dumbbell-large.svg" alt="Dumbbell" width={40} height={40} className="invert" />
-                <span className="ml-2 text-lg font-bold tracking-wide">FitPulse</span>
-            </div>
-            <div className="flex-1 flex flex-col justify-start">
-                <div className="flex flex-row">
-                    <Link href="/"><IconButton image="/assets/arrow.svg" variant="secondary" className="mr-4"></IconButton></Link>
-                    <h1 className="text-3xl font-semibold mb-6">Login</h1>
+        <div className="w-full min-h-screen flex flex-col text-white">
+            {/* Logo */}
+            <div className="flex items-center gap-2.5 pt-6 pb-2">
+                <div className="w-9 h-9 rounded-[12px] bg-white/15 flex items-center justify-center">
+                    <Image src="/assets/dumbbell-large.svg" alt="Dumbbell" width={20} height={20} className="brightness-0 invert" />
                 </div>
-                <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+                <span className="text-lg font-extrabold tracking-tight">FitPulse</span>
+            </div>
+
+            <div className="flex-1 flex flex-col justify-center max-w-sm w-full py-8">
+                <div className="mb-8">
+                    <Link href="/" className="inline-flex items-center gap-1.5 text-white/70 hover:text-white text-sm mb-6 transition-colors">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                        Back
+                    </Link>
+                    <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-1">Welcome back</h1>
+                    <p className="text-white/60 text-sm">Log in to continue your journey</p>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
+                        <label className="block text-xs font-semibold uppercase tracking-widest text-white/60 mb-1.5">Email</label>
                         <input
                             onChange={(e) => setEmail(e.target.value)}
                             value={email}
                             type="email"
-                            placeholder="Email"
+                            placeholder="you@email.com"
                             required
-                            className="rounded-sm px-4 py-3 bg-white/10 placeholder-white/70 text-white border border-white/20 focus:bg-white/20 w-full"
+                            className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-white placeholder-white/40 focus:bg-white/15 focus:border-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 transition"
                         />
-                        {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email}</p>}
+                        {errors.email && <p className="text-red-300 text-xs mt-1 font-medium">{errors.email}</p>}
                     </div>
                     <div>
+                        <label className="block text-xs font-semibold uppercase tracking-widest text-white/60 mb-1.5">Password</label>
                         <input
                             onChange={(e) => setPassword(e.target.value)}
                             value={password}
                             type="password"
-                            placeholder="Password"
+                            placeholder="••••••••"
                             required
-                            className="rounded-sm px-4 py-3 bg-white/10 placeholder-white/70 text-white border border-white/20 focus:bg-white/20 w-full"
+                            className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-white placeholder-white/40 focus:bg-white/15 focus:border-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 transition"
                         />
-                        {errors.password && <p className="text-red-400 text-sm mt-1">{errors.password}</p>}
+                        {errors.password && <p className="text-red-300 text-xs mt-1 font-medium">{errors.password}</p>}
                     </div>
-                    <Button type="submit" className="mt-2" variant="secondary">Login</Button>
-                </form>
-                {message && <div className="mt-3 text-white/90">{message}</div>}
 
-                <div className="mt-6">
-                    <Link href="/signup">
-                        <Button className="w-full" variant="primary">Don&apos;t have an account?</Button>
+                    {message && (
+                        <div className="p-3 rounded-xl bg-white/10 border border-white/15 text-sm text-white/90">{message}</div>
+                    )}
+
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full py-3 rounded-xl bg-white text-[var(--primary-700)] font-bold text-base shadow-[0_2px_12px_rgba(0,0,0,0.25)] hover:bg-white/90 transition disabled:opacity-60 active:scale-[0.98]"
+                    >
+                        {loading ? "Logging in..." : "Log In"}
+                    </button>
+                </form>
+
+                <p className="text-center text-white/60 text-sm mt-6">
+                    Don&apos;t have an account?{" "}
+                    <Link href="/signup" className="text-white font-semibold hover:text-white/80 transition">
+                        Sign up
                     </Link>
-                </div>
+                </p>
             </div>
         </div>
     );

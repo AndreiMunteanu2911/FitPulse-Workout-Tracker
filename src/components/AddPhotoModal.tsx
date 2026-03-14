@@ -23,9 +23,7 @@ export default function AddPhotoModal({ isOpen, onClose, onAdd }: AddPhotoModalP
     if (file) {
       setSelectedFile(file);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result as string);
-      };
+      reader.onloadend = () => setPreview(reader.result as string);
       reader.readAsDataURL(file);
     }
   };
@@ -33,7 +31,6 @@ export default function AddPhotoModal({ isOpen, onClose, onAdd }: AddPhotoModalP
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedFile) return;
-
     setSubmitting(true);
     try {
       await onAdd(selectedFile, logDate, notes);
@@ -50,9 +47,7 @@ export default function AddPhotoModal({ isOpen, onClose, onAdd }: AddPhotoModalP
     setPreview(null);
     setLogDate(new Date().toISOString().split("T")[0]);
     setNotes("");
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleClose = () => {
@@ -62,67 +57,54 @@ export default function AddPhotoModal({ isOpen, onClose, onAdd }: AddPhotoModalP
 
   return (
     <ModalWrapper isOpen={isOpen} onClose={handleClose} containerClassName="max-w-md p-6">
-      <h2 className="text-xl font-bold mb-4 text-[var(--foreground)]">Add Progress Photo</h2>
+      <h2 className="text-lg font-bold text-[var(--foreground)] mb-5">Add Progress Photo</h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block mb-2 text-sm text-[var(--foreground)]">Photo</label>
+          <label className="block mb-1.5 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Photo</label>
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-[var(--border)] rounded-lg p-4 text-center cursor-pointer hover:border-[var(--primary-500)] transition"
+            className="relative rounded-[var(--radius-lg)] overflow-hidden cursor-pointer border-2 border-dashed border-[var(--border)] hover:border-[var(--primary-400)] transition-colors"
           >
             {preview ? (
-              <img src={preview} alt="Preview" className="max-h-48 mx-auto rounded" />
+              <img src={preview} alt="Preview" className="w-full max-h-52 object-cover" />
             ) : (
-              <div className="py-8">
-                <svg className="w-12 h-12 mx-auto text-[var(--muted-foreground)] mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              <div className="py-10 flex flex-col items-center gap-2 text-[var(--muted-foreground)]">
+                <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <p className="text-sm text-[var(--muted-foreground)]">Click to select a photo</p>
+                <p className="text-sm font-medium">Tap to select a photo</p>
               </div>
             )}
           </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
+          <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
         </div>
 
         <div>
-          <label className="block mb-1 text-sm text-[var(--foreground)]">Date</label>
+          <label className="block mb-1.5 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Date</label>
           <input
             type="date"
             value={logDate}
             onChange={(e) => setLogDate(e.target.value)}
-            className="w-full px-3 py-2 border border-[var(--border)] rounded-lg bg-[var(--surface)] text-[var(--foreground)]"
+            className="input"
             required
           />
         </div>
 
         <div>
-          <label className="block mb-1 text-sm text-[var(--foreground)]">Notes (optional)</label>
+          <label className="block mb-1.5 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Notes <span className="font-normal normal-case tracking-normal">(optional)</span></label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Add any notes about your progress..."
             rows={3}
-            className="w-full px-3 py-2 border border-[var(--border)] rounded-lg bg-[var(--surface)] text-[var(--foreground)] resize-none"
+            className="input resize-none"
           />
         </div>
 
-        <div className="flex gap-3 pt-4">
-          <Button type="button" onClick={handleClose} variant="secondary" className="flex-1">
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            className="flex-1"
-            disabled={!selectedFile || submitting}
-          >
+        <div className="flex gap-3 pt-2">
+          <Button type="button" onClick={handleClose} variant="secondary" className="flex-1">Cancel</Button>
+          <Button type="submit" variant="primary" className="flex-1" disabled={!selectedFile || submitting}>
             {submitting ? "Adding..." : "Add Photo"}
           </Button>
         </div>

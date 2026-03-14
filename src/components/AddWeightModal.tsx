@@ -22,15 +22,20 @@ const AddWeightModal: React.FC<AddWeightModalProps> = ({
     setWeight,
 }) => {
     return (
-        <ModalWrapper isOpen={show} onClose={onClose} containerClassName="max-w-xs sm:max-w-sm p-6">
+        <ModalWrapper isOpen={show} onClose={onClose} containerClassName="max-w-sm p-6">
             <button
-                className="absolute top-2 right-2 text-xl font-bold text-[var(--foreground)] hover:opacity-70"
+                className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center text-[var(--muted-foreground)] hover:bg-[var(--surface-raised)] transition-colors"
                 onClick={onClose}
                 aria-label="Close"
                 type="button"
             >
-                ×
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
             </button>
+
+            <h2 className="text-lg font-bold text-[var(--foreground)] mb-5">Log Weight</h2>
+
             <form
                 onSubmit={async (e) => {
                     e.preventDefault();
@@ -39,24 +44,27 @@ const AddWeightModal: React.FC<AddWeightModalProps> = ({
                 className="space-y-4"
             >
                 <div>
-                    <label className="block mb-1 text-sm text-[var(--foreground)]">Date</label>
+                    <label className="block mb-1.5 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Date</label>
                     <input
                         type="date"
                         value={initialDate}
                         onChange={(e) => setDate(e.target.value)}
-                        className="border border-[var(--border)] rounded px-2 py-1 w-full bg-[var(--surface)] text-[var(--foreground)]"
+                        className="input"
                     />
                 </div>
                 <div>
-                    <label className="block mb-1 text-sm text-[var(--foreground)]">Weight (kg)</label>
+                    <label className="block mb-1.5 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Weight (kg)</label>
                     <input
                         type="number"
                         value={initialWeight}
                         onChange={(e) => setWeight(e.target.value)}
-                        className="border border-[var(--border)] rounded px-2 py-1 w-full bg-[var(--surface)] text-[var(--foreground)]"
+                        className="input"
+                        placeholder="70.5"
+                        step="0.1"
+                        min="0"
                     />
                 </div>
-                <Button type="submit" variant="primary" className="w-full">Add Entry</Button>
+                <Button type="submit" variant="primary" block>Save Entry</Button>
             </form>
         </ModalWrapper>
     );

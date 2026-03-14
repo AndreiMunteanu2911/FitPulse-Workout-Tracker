@@ -13,30 +13,7 @@ import { useExercises } from "@/hooks/useExercises";
 import { useWorkoutTemplates } from "@/hooks/useWorkoutTemplates";
 import TemplateCard from "@/components/TemplateCard";
 import CreateTemplateModal from "@/components/CreateTemplateModal";
-
-interface Exercise {
-    exercise_id: string;
-    name: string;
-    gif_url?: string;
-    target_muscles?: string[];
-    body_parts?: string[];
-    equipments?: string[];
-}
-
-interface WorkoutExercise {
-    id: string;
-    exercise_id: string;
-    exercise: Exercise;
-    order_index: number;
-    sets: Set[];
-}
-
-interface Set {
-    id: string;
-    set_number: number;
-    reps: number;
-    weight: number;
-}
+import type { Exercise, WorkoutExercise, Set } from "@/types";
 export default function WorkoutPage() {
     const [workoutStarted, setWorkoutStarted] = useState(false);
     const [workoutName, setWorkoutName] = useState("My Workout");
@@ -346,14 +323,29 @@ export default function WorkoutPage() {
                         {errorMessages.general && (
                             <div className="mb-4 text-red-600">{errorMessages.general}</div>
                         )}
-                        <div className="sticky top-0 py-4 z-10 text-2xl sm:text-3xl font-semibold text-[var(--foreground)] mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-6 bg-[var(--surface)]">
-                          <div className="text-2xl sm:text-3xl text-[var(--foreground)] font-semibold">Workout</div>
+                        <div className="page-header mb-6 flex items-center justify-between gap-3">
+                          <div>
+                            <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight">Workout</h1>
+                            <p className="text-sm text-[var(--muted-foreground)] mt-0.5">
+                              {workoutStarted ? "In progress" : "Ready when you are"}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
                             {!workoutStarted ? (
-                                <Button onClick={startWorkout} className="px-4 py-2 text-sm sm:text-base">Start New Workout</Button>
+                                <Button onClick={startWorkout} className="px-4 py-2 text-sm sm:text-base">Start Workout</Button>
                             ) : (
-                                <Button onClick={() => setIsFinishModalOpen(true)} className="px-4 py-2 text-sm sm:text-base">Finish Workout</Button>
+                                <>
+                                    <Button onClick={handleCancelWorkout} variant="secondary" className="px-3 py-2 text-sm">Cancel</Button>
+                                    <Button onClick={() => setIsFinishModalOpen(true)} className="px-4 py-2 text-sm sm:text-base">Finish</Button>
+                                </>
                             )}
+                          </div>
                         </div>
+                        <CancelWorkoutModal
+                            isOpen={showCancelModal}
+                            onClose={() => setShowCancelModal(false)}
+                            onConfirm={confirmCancelWorkout}
+                        />
                         <FinishWorkoutModal
                             isOpen={isFinishModalOpen}
                             onClose={() => setIsFinishModalOpen(false)}
@@ -363,25 +355,36 @@ export default function WorkoutPage() {
                             }}
                         />
                         {noDraftFound && !workoutStarted && (
-                            <div className="text-center text-[var(--primary-700)] dark:text-white text-base sm:text-xl mb-8 py-4 rounded-lg">
-                                Start a new workout today!
+                            <div className="text-center py-16 bg-[var(--surface)] rounded-[var(--radius-2xl)] shadow-[var(--shadow)] mb-6">
+                                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
+                                    <svg className="w-10 h-10 text-[var(--primary-600)] dark:text-[var(--primary-700)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                </div>
+                                <h3 className="text-xl font-bold text-[var(--foreground)] mb-1">Ready to train?</h3>
+                                <p className="text-sm text-[var(--muted-foreground)] mb-6">Start a new workout or use a template.</p>
                             </div>
                         )}
                         {workoutStarted && (
                             <div className="space-y-6 sm:space-y-8 mt-4">
-                                <div className="pb-3 border-b-2 border-[var(--border)]">
+                                <div className="pb-4 mb-2">
                                     <input
                                         type="text"
                                         value={workoutName}
                                         onChange={(e) => setWorkoutName(e.target.value)}
-                                        className="w-full px-0 py-2 text-[var(--foreground)] text-lg sm:text-xl font-bold border-none focus:outline-none bg-transparent placeholder-[var(--muted-foreground)]"
+                                        className="w-full px-0 py-2 text-[var(--foreground)] text-xl sm:text-2xl font-extrabold border-none focus:outline-none bg-transparent placeholder-[var(--muted-foreground)] tracking-tight"
                                         placeholder="Workout Name"
                                     />
                                 </div>
 
                                 {workoutExercises.length === 0 ? (
-                                    <div className="text-center text-[var(--primary-700)] py-8 rounded-lg">
-                                        No exercises added yet. Click &quot;Add Exercise&quot; to start.
+                                    <div className="text-center py-12 bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)]">
+                                        <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
+                                            <svg className="w-6 h-6 text-[var(--primary-600)] dark:text-[var(--primary-700)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                            </svg>
+                                        </div>
+                                        <p className="text-sm text-[var(--muted-foreground)]">No exercises yet. Tap &quot;Add Exercise&quot; to begin.</p>
                                     </div>
                                 ) : (
                                     <div className="space-y-4 sm:space-y-6">
@@ -426,27 +429,18 @@ export default function WorkoutPage() {
                                     }}
                                     onSelectExercise={addExerciseToWorkout}
                                 />
-
-                                <div className="flex justify-center pt-4">
-                                    <Button onClick={handleCancelWorkout} variant="textOnly" className="text-sm">Cancel Workout</Button>
-                                </div>
-                                <CancelWorkoutModal
-                                    isOpen={showCancelModal}
-                                    onClose={() => setShowCancelModal(false)}
-                                    onConfirm={confirmCancelWorkout}
-                                />
                             </div>
                         )}
 
                         {/* Templates Section */}
-                        <div className="py-4 mt-6 border-t border-[var(--border)]">
+                        <div className="mt-8">
                             <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-lg sm:text-xl font-semibold text-[var(--foreground)]">Workout Templates</h2>
-                                <Button onClick={() => setIsTemplateModalOpen(true)} variant="primary" className="px-3 py-1.5 text-sm sm:text-base">+ Create Template</Button>
+                                <h2 className="text-base sm:text-lg font-bold text-[var(--foreground)]">Templates</h2>
+                                <Button onClick={() => setIsTemplateModalOpen(true)} variant="secondary" className="px-3 py-1.5 text-xs sm:text-sm">+ Create</Button>
                             </div>
                             {templates.length === 0 ? (
-                                <div className="text-center text-[var(--muted-foreground)] py-8 bg-[var(--surface)] rounded-lg">
-                                    No templates yet. Create a template to quickly start workouts!
+                                <div className="text-center text-sm text-[var(--muted-foreground)] py-8 bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)]">
+                                    No templates yet. Create one to quickly start workouts!
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
