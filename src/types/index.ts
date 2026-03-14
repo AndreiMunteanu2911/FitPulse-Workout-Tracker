@@ -1,23 +1,25 @@
 export interface User {
   id: string;
   email: string;
-  created_at: string;
+  created_at?: string;
 }
 
 export interface Exercise {
-  id: string;
+  exercise_id: string;
   name: string;
+  gif_url?: string | null;
+  target_muscles?: string[] | null;
+  secondary_muscles?: string[] | null;
+  body_parts?: string[] | null;
+  equipments?: string[] | null;
+  instructions?: string[] | null;
   description?: string;
-  gif_url?: string;
-  target_muscles?: string[];
-  body_parts?: string[];
-  equipments?: string[];
   created_at?: string;
 }
 
 export interface Set {
   id: string;
-  workout_exercise_id: string;
+  workout_exercise_id?: string;
   set_number: number;
   reps: number;
   weight: number;
@@ -26,21 +28,21 @@ export interface Set {
 
 export interface WorkoutExercise {
   id: string;
-  workout_id: string;
+  workout_id?: string;
   exercise_id: string;
   order_index: number;
-  exercise?: Exercise;
-  sets?: Set[];
+  exercise: Exercise;
+  sets: Set[];
   created_at?: string;
 }
 
 export interface Workout {
   id: string;
-  user_id: string;
+  user_id?: string;
   name: string;
   workout_date: string;
   status: "draft" | "completed" | "cancelled";
-  workout_exercises?: WorkoutExercise[];
+  workout_exercises: WorkoutExercise[];
   created_at?: string;
   updated_at?: string;
 }

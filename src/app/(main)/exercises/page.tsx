@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
-import ExerciseCard, { Exercise } from "@/components/ExerciseCard";
+import ExerciseCard from "@/components/ExerciseCard";
+import type { Exercise } from "@/types";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useExercises } from "@/hooks/useExercises";
 
@@ -14,40 +15,31 @@ export default function ExercisesPage() {
     const [hasMore, setHasMore] = useState(true);
     const [page, setPage] = useState(0);
     const [searchQuery, setSearchQuery] = useState("");
-    // Add a state for the "debounced" version of the search
     const [debouncedSearch, setDebouncedSearch] = useState("");
 
     const loaderRef = useRef<HTMLDivElement>(null);
     const isFetchingRef = useRef(false);
     const { fetchExercises } = useExercises();
 
-    // 1. Handle Debouncing logic
     useEffect(() => {
         const handler = setTimeout(() => {
             setDebouncedSearch(searchQuery);
-        }, 500); // 500ms delay
-
+        }, 500);
         return () => clearTimeout(handler);
     }, [searchQuery]);
 
-    // 2. Fetching Logic
     const loadExercises = useCallback(async (currentPage: number, query: string) => {
         if (isFetchingRef.current) return;
-
         isFetchingRef.current = true;
         setLoading(true);
-
         try {
             const result = await fetchExercises(currentPage, query);
             const data = result.exercises as Exercise[];
-
             setExercises((prev) => {
                 if (currentPage === 0) return data;
                 const existingIds = new Set(prev.map(e => e.exercise_id));
-                const newExercises = data.filter(e => !existingIds.has(e.exercise_id));
-                return [...prev, ...newExercises];
+                return [...prev, ...data.filter(e => !existingIds.has(e.exercise_id))];
             });
-
             setHasMore(data.length === BATCH_SIZE);
         } catch (err) {
             console.error("Error fetching exercises:", err);
@@ -57,27 +49,18 @@ export default function ExercisesPage() {
         }
     }, [fetchExercises]);
 
-    // 3. Reset when search changes
     useEffect(() => {
         setPage(0);
         setHasMore(true);
-        // Note: setting page to 0 will trigger the effect below
     }, [debouncedSearch]);
 
-    // 4. Trigger fetch when page or debounced search changes
     useEffect(() => {
         loadExercises(page, debouncedSearch);
     }, [page, debouncedSearch, loadExercises]);
 
-    const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchQuery(e.target.value);
-    };
-
-    // ... IntersectionObserver code for infinite scroll (unchanged)
     useEffect(() => {
         const currentLoader = loaderRef.current;
         if (!currentLoader || !hasMore || loading) return;
-
         const observer = new IntersectionObserver(
             (entries) => {
                 if (entries[0].isIntersecting && !isFetchingRef.current) {
@@ -86,7 +69,6 @@ export default function ExercisesPage() {
             },
             { rootMargin: "200px" }
         );
-
         observer.observe(currentLoader);
         return () => observer.disconnect();
     }, [hasMore, loading]);
@@ -94,31 +76,48 @@ export default function ExercisesPage() {
     return (
         <ProtectedWrapper>
             <div className="w-full">
-                <div className="sticky top-0 py-4 z-10 text-2xl sm:text-3xl font-semibold text-[var(--foreground)] mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-6 bg-[var(--surface)]">
-                    <span>Exercises</span>
-                    <div className="relative w-full sm:w-auto flex-1 max-w-md">
+                <div className="page-header mb-4">
+                    <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight mb-3">Exercises</h1>
+                    {/* Search */}
+                    <div className="relative">
+                        <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
                         <input
                             type="text"
                             placeholder="Search exercises..."
                             value={searchQuery}
-                            onChange={handleSearch}
-                            className="w-full px-3 py-2 pl-8 text-[var(--foreground)] bg-[var(--surface)] border-b-2 border-[var(--border)] placeholder-[var(--muted-foreground)] focus:border-[var(--primary-500)] focus:outline-none rounded-none transition-colors text-base"
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2.5 bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow-sm)] text-[var(--foreground)] text-sm font-medium placeholder-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] transition"
                         />
-                        <svg className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
+                        {searchQuery && (
+                            <button
+                                onClick={() => setSearchQuery("")}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full flex items-center justify-center text-[var(--muted-foreground)] hover:bg-[var(--surface-raised)]"
+                            >
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        )}
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                     {exercises.map((exercise) => (
                         <ExerciseCard key={exercise.exercise_id} exercise={exercise} />
                     ))}
                 </div>
 
                 <div ref={loaderRef} className="h-10" />
-                {loading && <div className="flex justify-center items-center py-4"><LoadingSpinner size={8} /></div>}
-                {!hasMore && exercises.length > 0 && <div className="text-center mt-4 text-gray-500">No more exercises.</div>}
+                {loading && (
+                    <div className="flex justify-center py-6">
+                        <LoadingSpinner size={8} />
+                    </div>
+                )}
+                {!hasMore && exercises.length > 0 && (
+                    <p className="text-center text-xs text-[var(--muted-foreground)] py-4">All exercises loaded</p>
+                )}
             </div>
         </ProtectedWrapper>
     );

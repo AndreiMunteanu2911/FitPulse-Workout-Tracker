@@ -1,11 +1,4 @@
-interface ProgressPhoto {
-  id: string;
-  user_id: string;
-  photo_url: string;
-  log_date: string;
-  notes?: string;
-  created_at: string;
-}
+import type { ProgressPhoto } from "@/types";
 
 interface ProgressPhotoCardProps {
   photo: ProgressPhoto;
@@ -22,7 +15,7 @@ export default function ProgressPhotoCard({ photo, onDelete }: ProgressPhotoCard
   };
 
   return (
-    <div className="bg-[var(--surface)] border-2 border-[var(--primary-600)] dark:border-[var(--primary-500)] rounded-lg overflow-hidden hover:shadow-md transition-shadow group">
+    <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] overflow-hidden hover:shadow-[var(--shadow-md)] hover:-translate-y-0.5 transition-all duration-200 group">
       <div className="relative aspect-square">
         <img
           src={photo.photo_url}
@@ -31,20 +24,18 @@ export default function ProgressPhotoCard({ photo, onDelete }: ProgressPhotoCard
         />
         <button
           onClick={() => onDelete(photo.id)}
-          className="absolute top-2 right-2 p-2 bg-red-600 dark:bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700"
+          className="absolute top-2 right-2 p-1.5 bg-black/60 backdrop-blur-sm text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600"
           aria-label="Delete photo"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </div>
-      <div className="p-4">
-        <span className="text-sm font-semibold text-[var(--foreground)]">
-          {formatDate(photo.log_date)}
-        </span>
+      <div className="p-3">
+        <span className="text-sm font-semibold text-[var(--foreground)]">{formatDate(photo.log_date)}</span>
         {photo.notes && (
-          <p className="text-sm text-[var(--muted-foreground)] line-clamp-2 mt-1">{photo.notes}</p>
+          <p className="text-xs text-[var(--muted-foreground)] line-clamp-2 mt-0.5">{photo.notes}</p>
         )}
       </div>
     </div>
