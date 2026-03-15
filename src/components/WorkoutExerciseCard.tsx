@@ -10,7 +10,7 @@ interface ExerciseCardProps {
     onUpdateSet: (exerciseIndex: number, setIndex: number, field: 'reps' | 'weight', value: number) => void;
     onDeleteSet: (exerciseIndex: number, setIndex: number) => void;
     onDeleteExercise: (exerciseIndex: number) => void;
-    onConfirmSet: (setId: string) => void;
+    onConfirmSet: (setId: string, exercise: WorkoutExercise["exercise"]) => void;
     confirmedSetIds: Set<string>;
     errorMessage: string;
     setErrorMessage: (message: string) => void;
@@ -142,7 +142,7 @@ export default function WorkoutExerciseCard({
                                         aria-label="Confirm set"
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            onConfirmSet(set.id);
+                                            onConfirmSet(set.id, workoutExercise.exercise);
                                         }}
                                         className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
                                             isConfirmed

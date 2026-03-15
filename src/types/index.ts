@@ -127,3 +127,36 @@ export interface PersonalRecord {
   created_at?: string;
   updated_at?: string;
 }
+
+// ── Gamification ──────────────────────────────────────────────────────────────
+
+export interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  xpReward: number;
+  category: "workouts" | "streaks" | "records" | "volume";
+  unlockedAt?: string | null;
+}
+
+export interface GamificationStats {
+  totalXP: number;
+  level: number;
+  xpForCurrentLevel: number;
+  xpForNextLevel: number;
+  xpProgress: number; // 0–100 %
+  achievements: Achievement[];
+}
+
+// ── Rest Timer ─────────────────────────────────────────────────────────────────
+
+export type ExerciseType = "compound" | "isolation";
+
+export interface RestTimerState {
+  active: boolean;
+  duration: number;        // total seconds
+  remaining: number;       // seconds left
+  exerciseName: string;
+  exerciseType: ExerciseType;
+}

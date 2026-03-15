@@ -9,13 +9,15 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import CancelWorkoutModal from "@/components/CancelWorkoutModal";
 import FinishWorkoutModal from "@/components/FinishWorkoutModal";
 import DiscardSetsModal from "@/components/DiscardSetsModal";
+import RestTimer from "@/components/RestTimer";
 import { useWorkout } from "@/hooks/useWorkout";
 import { useExercises } from "@/hooks/useExercises";
 import { useWorkoutTemplates } from "@/hooks/useWorkoutTemplates";
 import TemplateCard from "@/components/TemplateCard";
 import CreateTemplateModal from "@/components/CreateTemplateModal";
 import DeleteTemplateModal from "@/components/DeleteTemplateModal";
-import type { Exercise, WorkoutExercise, Set as WorkoutSet, WorkoutTemplate } from "@/types";
+import type { Exercise, WorkoutExercise, Set as WorkoutSet, WorkoutTemplate, RestTimerState } from "@/types";
+import { detectExerciseType, REST_DURATIONS } from "@/lib/gamification";
 import { Zap, Plus } from "lucide-react";
 function formatElapsed(seconds: number): string {
     const h = Math.floor(seconds / 3600);
@@ -34,6 +36,15 @@ export default function WorkoutPage() {
     const [workoutExercises, setWorkoutExercises] = useState<WorkoutExercise[]>([]);
     const [errorMessages, setErrorMessages] = useState<{ [key: string]: string }>({});
     const [confirmedSetIds, setConfirmedSetIds] = useState<Set<string>>(new Set());
+
+    // ── Rest Timer ──────────────────────────────────────────────────────────
+    const [restTimer, setRestTimer] = useState<RestTimerState>({
+        active: false,
+        duration: 0,
+        remaining: 0,
+        exerciseName: "",
+        exerciseType: "isolation",
+    });
 
     const [showExerciseSearch, setShowExerciseSearch] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -265,8 +276,19 @@ export default function WorkoutPage() {
         }
     };
 
-    const handleConfirmSet = (setId: string) => {
+    const handleConfirmSet = (setId: string, exercise: WorkoutExercise["exercise"]) => {
         setConfirmedSetIds((prev) => new Set([...prev, setId]));
+
+        // Auto-start rest timer
+        const exerciseType = detectExerciseType(exercise);
+        const duration = REST_DURATIONS[exerciseType];
+        setRestTimer({
+            active: true,
+            duration,
+            remaining: duration,
+            exerciseName: exercise.name,
+            exerciseType,
+        });
     };
 
     const finishWorkout = async () => {
@@ -706,6 +728,20 @@ export default function WorkoutPage() {
                     </>
                 )}
             </div>
+
+            {/* Smart Rest Timer — floats above the bottom nav */}
+            <RestTimer
+                timer={restTimer}
+                onTick={(remaining) =>
+                    setRestTimer((prev) => ({ ...prev, remaining }))
+                }
+                onSkip={() =>
+                    setRestTimer((prev) => ({ ...prev, active: false, remaining: 0 }))
+                }
+                onDismiss={() =>
+                    setRestTimer((prev) => ({ ...prev, active: false }))
+                }
+            />
         </ProtectedWrapper>
     );
 }
