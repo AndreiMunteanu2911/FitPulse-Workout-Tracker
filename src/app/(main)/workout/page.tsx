@@ -14,6 +14,7 @@ import { useExercises } from "@/hooks/useExercises";
 import { useWorkoutTemplates } from "@/hooks/useWorkoutTemplates";
 import TemplateCard from "@/components/TemplateCard";
 import CreateTemplateModal from "@/components/CreateTemplateModal";
+import DeleteTemplateModal from "@/components/DeleteTemplateModal";
 import type { Exercise, WorkoutExercise, Set as WorkoutSet, WorkoutTemplate } from "@/types";
 import { Zap, Plus } from "lucide-react";
 function formatElapsed(seconds: number): string {
@@ -48,6 +49,7 @@ export default function WorkoutPage() {
     const [showTemplates, setShowTemplates] = useState(false);
     const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
     const [editingTemplate, setEditingTemplate] = useState<WorkoutTemplate | null>(null);
+    const [templateToDelete, setTemplateToDelete] = useState<WorkoutTemplate | null>(null);
     const { fetchTemplates, createTemplate, updateTemplate, deleteTemplate } = useWorkoutTemplates();
 
     const loadTemplates = async () => {
@@ -656,15 +658,7 @@ export default function WorkoutPage() {
                                                 setEditingTemplate(template);
                                                 setIsTemplateModalOpen(true);
                                             }}
-                                            onDelete={async () => {
-                                                if (!confirm("Delete this template?")) return;
-                                                try {
-                                                    await deleteTemplate(template.id);
-                                                    await loadTemplates();
-                                                } catch (error) {
-                                                    console.error("Error deleting template:", error);
-                                                }
-                                            }}
+                                            onDelete={() => setTemplateToDelete(template)}
                                             onStart={() => startWorkoutFromTemplate(template)}
                                         />
                                     ))}
@@ -693,6 +687,20 @@ export default function WorkoutPage() {
                                 setIsTemplateModalOpen(false);
                                 setEditingTemplate(null);
                                 await loadTemplates();
+                            }}
+                        />
+                        <DeleteTemplateModal
+                            isOpen={templateToDelete !== null}
+                            onClose={() => setTemplateToDelete(null)}
+                            templateName={templateToDelete?.name ?? ""}
+                            onConfirm={async () => {
+                                if (!templateToDelete) return;
+                                try {
+                                    await deleteTemplate(templateToDelete.id);
+                                    await loadTemplates();
+                                } catch (error) {
+                                    console.error("Error deleting template:", error);
+                                }
                             }}
                         />
                     </>
