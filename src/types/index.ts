@@ -127,3 +127,42 @@ export interface PersonalRecord {
   created_at?: string;
   updated_at?: string;
 }
+
+// ── Gamification ──────────────────────────────────────────────────────────────
+
+export interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  /** Lucide icon component name, e.g. "Trophy", "Flame" */
+  icon: string;
+  xpReward: number;
+  category: "workouts" | "streaks" | "records" | "volume";
+  /** Non-null when workout conditions are met */
+  unlockedAt?: string | null;
+  /** Non-null when the user has clicked "Claim" and the XP has been banked */
+  claimedAt?: string | null;
+}
+
+export interface GamificationStats {
+  totalXP: number;
+  level: number;
+  xpForCurrentLevel: number;
+  xpForNextLevel: number;
+  xpProgress: number; // 0–100 %
+  achievements: Achievement[];
+  currentStreak: number;
+}
+
+// ── Rest Timer ─────────────────────────────────────────────────────────────────
+
+export type ExerciseType = "compound" | "isolation";
+
+export interface RestTimerState {
+  active: boolean;
+  duration: number;        // total seconds
+  remaining: number;       // seconds left
+  exerciseName: string;
+  exerciseType: ExerciseType;
+  workoutExerciseId?: string; // which exercise triggered this timer
+}
