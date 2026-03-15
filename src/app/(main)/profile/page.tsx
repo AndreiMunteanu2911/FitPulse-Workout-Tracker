@@ -10,10 +10,12 @@ import AddWeightModal from "@/components/AddWeightModal";
 import ProgressPhotoCard from "@/components/ProgressPhotoCard";
 import AddPhotoModal from "@/components/AddPhotoModal";
 import DarkModeToggle from "@/components/DarkModeToggle";
+import WorkoutCalendar from "@/components/WorkoutCalendar";
 import { useAuth } from "@/hooks/useAuth";
 import { useWeightLogs } from "@/hooks/useWeightLogs";
 import { useProgressPhotos } from "@/hooks/useProgressPhotos";
 import type { User, WeightLog, ProgressPhoto } from "@/types";
+import { ImageIcon } from "lucide-react";
 
 export default function ProfilePage() {
     const router = useRouter();
@@ -24,6 +26,7 @@ export default function ProfilePage() {
     const [user, setUser] = useState<User | null>(null);
     const [weights, setWeights] = useState<WeightLog[]>([]);
     const [photos, setPhotos] = useState<ProgressPhoto[]>([]);
+    const [workoutDates, setWorkoutDates] = useState<string[]>([]);
     const [newWeight, setNewWeight] = useState("");
     const [newDate, setNewDate] = useState(() => new Date().toISOString().split("T")[0]);
     const [loading, setLoading] = useState(true);
@@ -48,12 +51,17 @@ export default function ProfilePage() {
         setLoading(true);
         if (!user) return;
         try {
-            const [weightData, photoData] = await Promise.all([
+            const [weightData, photoData, datesRes] = await Promise.all([
                 fetchWeights(),
                 fetchProgressPhotos(),
+                fetch("/api/workouts/dates"),
             ]);
             setWeights(weightData || []);
             setPhotos(photoData || []);
+            if (datesRes.ok) {
+                const datesJson = await datesRes.json();
+                setWorkoutDates(datesJson.dates ?? []);
+            }
         } catch (error) {
             console.error("Error fetching data:", error);
         }
@@ -101,7 +109,7 @@ export default function ProfilePage() {
                 {/* Page header */}
                 <div className="page-header mb-6 flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight">Profile</h1>
+                        <h1 className="hidden md:block text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight">Profile</h1>
                         {user && <p className="text-sm text-[var(--muted-foreground)] mt-0.5 truncate max-w-[200px]">{user.email}</p>}
                     </div>
                     <div className="flex items-center gap-2">
@@ -131,6 +139,12 @@ export default function ProfilePage() {
                     </div>
                 </div>
 
+                {/* Workout Calendar */}
+                <div className="mb-6">
+                    <h2 className="text-base font-bold text-[var(--foreground)] mb-3">Workout Calendar</h2>
+                    <WorkoutCalendar workoutDates={workoutDates} />
+                </div>
+
                 {/* Progress Photos */}
                 <div className="mb-6">
                     <div className="flex items-center justify-between mb-3">
@@ -140,9 +154,7 @@ export default function ProfilePage() {
                     {photos.length === 0 ? (
                         <div className="text-center py-12 bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)]">
                             <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
-                                <svg className="w-6 h-6 text-[var(--primary-600)] dark:text-[var(--primary-700)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
+                                <ImageIcon className="w-6 h-6 text-[var(--primary-600)] dark:text-[var(--primary-700)]" />
                             </div>
                             <p className="text-sm text-[var(--muted-foreground)]">No photos yet. Add your first progress photo!</p>
                         </div>

@@ -2,6 +2,13 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { useState } from "react";
 import type { WorkoutExercise } from "@/types";
 
+/** Epley formula: weight × (1 + reps/30). Returns null for invalid inputs (zero/negative weight or reps). */
+function calcEpley1RM(weight: number, reps: number): number | null {
+    if (weight <= 0 || reps <= 0) return null;
+    if (reps === 1) return weight;
+    return weight * (1 + reps / 30);
+}
+
 interface WorkoutHistoryExerciseCardProps {
     workoutExercise: WorkoutExercise;
 }
@@ -58,23 +65,30 @@ export default function WorkoutHistoryExerciseCard({ workoutExercise }: WorkoutH
             <div className="px-4 pb-4">
                 <div className="bg-[var(--surface-raised)] rounded-[var(--radius-lg)] overflow-hidden overflow-x-auto">
                     {/* Column headers */}
-                    <div className="grid grid-cols-4 gap-2 px-4 py-2 border-b border-[var(--border)] min-w-[240px]">
+                    <div className="grid grid-cols-5 gap-2 px-4 py-2 border-b border-[var(--border)] min-w-[300px]">
                         <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Set</span>
                         <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] text-right">Reps</span>
                         <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] text-right">Weight</span>
                         <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] text-right">Vol.</span>
+                        <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] text-right">1RM</span>
                     </div>
-                    {workoutExercise.sets.map((set, idx) => (
-                        <div
-                            key={set.id}
-                            className={`grid grid-cols-4 gap-2 px-4 py-2.5 min-w-[240px] ${idx < workoutExercise.sets.length - 1 ? "border-b border-[var(--border)]" : ""}`}
-                        >
-                            <span className="text-sm font-semibold text-[var(--foreground)]">{set.set_number}</span>
-                            <span className="text-sm font-semibold text-[var(--primary-600)] dark:text-[var(--primary-500)] text-right">{set.reps}</span>
-                            <span className="text-sm font-semibold text-[var(--primary-600)] dark:text-[var(--primary-500)] text-right">{set.weight} kg</span>
-                            <span className="text-xs text-[var(--muted-foreground)] text-right self-center">{(set.reps * set.weight).toFixed(0)}</span>
-                        </div>
-                    ))}
+                    {workoutExercise.sets.map((set, idx) => {
+                        const orm = calcEpley1RM(set.weight, set.reps);
+                        return (
+                            <div
+                                key={set.id}
+                                className={`grid grid-cols-5 gap-2 px-4 py-2.5 min-w-[300px] ${idx < workoutExercise.sets.length - 1 ? "border-b border-[var(--border)]" : ""}`}
+                            >
+                                <span className="text-sm font-semibold text-[var(--foreground)]">{set.set_number}</span>
+                                <span className="text-sm font-semibold text-[var(--primary-600)] dark:text-[var(--primary-500)] text-right">{set.reps}</span>
+                                <span className="text-sm font-semibold text-[var(--primary-600)] dark:text-[var(--primary-500)] text-right">{set.weight} kg</span>
+                                <span className="text-xs text-[var(--muted-foreground)] text-right self-center">{(set.reps * set.weight).toFixed(0)}</span>
+                                <span className="text-xs text-[var(--muted-foreground)] text-right self-center tabular-nums">
+                                    {orm !== null ? `${Math.round(orm)} kg` : "—"}
+                                </span>
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
         </div>

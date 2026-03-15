@@ -8,18 +8,31 @@ import Button from "@/components/Button";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import CancelWorkoutModal from "@/components/CancelWorkoutModal";
 import FinishWorkoutModal from "@/components/FinishWorkoutModal";
+import DiscardSetsModal from "@/components/DiscardSetsModal";
 import { useWorkout } from "@/hooks/useWorkout";
 import { useExercises } from "@/hooks/useExercises";
 import { useWorkoutTemplates } from "@/hooks/useWorkoutTemplates";
 import TemplateCard from "@/components/TemplateCard";
 import CreateTemplateModal from "@/components/CreateTemplateModal";
-import type { Exercise, WorkoutExercise, Set } from "@/types";
+import type { Exercise, WorkoutExercise, Set as WorkoutSet } from "@/types";
+import { Zap, Plus } from "lucide-react";
+function formatElapsed(seconds: number): string {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
 export default function WorkoutPage() {
     const [workoutStarted, setWorkoutStarted] = useState(false);
     const [workoutName, setWorkoutName] = useState("My Workout");
     const [workoutId, setWorkoutId] = useState<string | null>(null);
+    const [workoutCreatedAt, setWorkoutCreatedAt] = useState<string | null>(null);
+    const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const [workoutExercises, setWorkoutExercises] = useState<WorkoutExercise[]>([]);
     const [errorMessages, setErrorMessages] = useState<{ [key: string]: string }>({});
+    const [confirmedSetIds, setConfirmedSetIds] = useState<Set<string>>(new Set());
 
     const [showExerciseSearch, setShowExerciseSearch] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -29,6 +42,8 @@ export default function WorkoutPage() {
     const [noDraftFound, setNoDraftFound] = useState(false);
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [isFinishModalOpen, setIsFinishModalOpen] = useState(false);
+    const [showDiscardSetsModal, setShowDiscardSetsModal] = useState(false);
+    const [discardInfo, setDiscardInfo] = useState({ incompleteSetCount: 0, emptyExerciseCount: 0 });
     const [templates, setTemplates] = useState<any[]>([]);
     const [showTemplates, setShowTemplates] = useState(false);
     const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
@@ -66,16 +81,27 @@ export default function WorkoutPage() {
                 if (data) {
                     setWorkoutId(data.id);
                     setWorkoutName(data.name);
+                    setWorkoutCreatedAt(data.created_at ?? null);
                     const exercises = (data.workout_exercises || []).map((we: WorkoutExercise) => ({
                         id: we.id,
                         exercise_id: we.exercise_id,
                         exercise: we.exercise,
                         order_index: we.order_index,
-                        sets: (we.sets || []).sort((a: Set, b: Set) => a.set_number - b.set_number),
+                        sets: (we.sets || []).sort((a: WorkoutSet, b: WorkoutSet) => a.set_number - b.set_number),
                     }));
                     setWorkoutExercises(exercises);
                     setWorkoutStarted(true);
                     setErrorMessages({});
+                    // Auto-confirm sets that already have valid values from a previous session
+                    const preConfirmed = new Set<string>();
+                    for (const we of data.workout_exercises || []) {
+                        for (const s of we.sets || []) {
+                            if (s.reps > 0 || s.weight > 0) {
+                                preConfirmed.add(s.id);
+                            }
+                        }
+                    }
+                    setConfirmedSetIds(preConfirmed);
                 } else {
                     setNoDraftFound(true);
                 }
@@ -123,6 +149,16 @@ export default function WorkoutPage() {
         return () => clearTimeout(autoSave);
     }, [workoutExercises, workoutStarted, workoutId, saveWorkoutToDB]);
 
+    // Live timer: tick every second while workout is in progress
+    useEffect(() => {
+        if (!workoutStarted || !workoutCreatedAt) return;
+        const start = new Date(workoutCreatedAt).getTime();
+        const tick = () => setElapsedSeconds(Math.floor((Date.now() - start) / 1000));
+        tick();
+        const interval = setInterval(tick, 1000);
+        return () => clearInterval(interval);
+    }, [workoutStarted, workoutCreatedAt]);
+
     useEffect(() => {
         const searchExercisesDebounced = async () => {
             if (searchQuery.trim() === "") {
@@ -150,11 +186,16 @@ export default function WorkoutPage() {
         try {
             const data = await startWorkoutApi(workoutName);
             setWorkoutId(data.id);
+            setWorkoutCreatedAt(data.created_at ?? null);
             setWorkoutStarted(true);
         } catch (error) {
             console.error("Error starting workout:", error);
             setErrorMessages((prev) => ({ ...prev, general: "Failed to start workout." }));
         }
+    };
+
+    const handleConfirmSet = (setId: string) => {
+        setConfirmedSetIds((prev) => new Set([...prev, setId]));
     };
 
     const finishWorkout = async () => {
@@ -166,13 +207,67 @@ export default function WorkoutPage() {
 
             setWorkoutStarted(false);
             setWorkoutId(null);
+            setWorkoutCreatedAt(null);
+            setElapsedSeconds(0);
             setWorkoutExercises([]);
             setWorkoutName("My Workout");
+            setConfirmedSetIds(new Set());
             setErrorMessages({});
         } catch (error) {
             console.error("Error finishing workout:", error);
             setErrorMessages((prev) => ({ ...prev, general: "Failed to finish workout." }));
         }
+    };
+
+    const isValidSet = (s: WorkoutSet) => confirmedSetIds.has(s.id) && (s.reps > 0 || s.weight > 0);
+
+    const handleFinishClick = () => {
+        // Count incomplete sets: unconfirmed OR both reps and weight are 0
+        let incompleteSetCount = 0;
+        let emptyExerciseCount = 0;
+
+        for (const exercise of workoutExercises) {
+            const validSets = exercise.sets.filter(isValidSet);
+            const badSets = exercise.sets.filter((s) => !isValidSet(s));
+            incompleteSetCount += badSets.length;
+            if (validSets.length === 0) {
+                emptyExerciseCount += 1;
+            }
+        }
+
+        if (incompleteSetCount > 0) {
+            setDiscardInfo({ incompleteSetCount, emptyExerciseCount });
+            setShowDiscardSetsModal(true);
+        } else {
+            setIsFinishModalOpen(true);
+        }
+    };
+
+    const discardAndFinish = async () => {
+        if (!workoutId) return;
+        setShowDiscardSetsModal(false);
+
+        try {
+            // Delete invalid sets (unconfirmed or both 0/0) and empty exercises
+            const exercisesToDelete: string[] = [];
+            for (const exercise of workoutExercises) {
+                const validSets = exercise.sets.filter(isValidSet);
+                const badSets = exercise.sets.filter((s) => !isValidSet(s));
+                for (const s of badSets) {
+                    await deleteSetApi(s.id);
+                }
+                if (validSets.length === 0) {
+                    exercisesToDelete.push(exercise.id);
+                }
+            }
+            for (const exId of exercisesToDelete) {
+                await deleteWorkoutExercise(exId);
+            }
+        } catch (error) {
+            console.error("Error discarding sets:", error);
+        }
+
+        await finishWorkout();
     };
 
     const handleCancelWorkout = () => {
@@ -186,6 +281,8 @@ export default function WorkoutPage() {
 
             setWorkoutStarted(false);
             setWorkoutId(null);
+            setWorkoutCreatedAt(null);
+            setElapsedSeconds(0);
             setWorkoutExercises([]);
             setWorkoutName("My Workout");
             setErrorMessages({});
@@ -204,7 +301,36 @@ export default function WorkoutPage() {
         try {
             const result = await addExerciseApi(workoutId, exercise.exercise_id, workoutExercises.length);
             const workoutExerciseData = result.workoutExercise as { id: string; order_index: number };
-            const setData = result.set as Set;
+            const firstSet = result.set as WorkoutSet;
+
+            // Fetch last session sets for this exercise to pre-fill
+            let prefillSets: { reps: number; weight: number }[] = [];
+            try {
+                const lastRes = await fetch(`/api/exercises/${exercise.exercise_id}/last-session`);
+                if (lastRes.ok) {
+                    const lastData = await lastRes.json();
+                    prefillSets = lastData.sets ?? [];
+                }
+            } catch {
+                // silently ignore – we'll just use blank sets
+            }
+
+            let sets: WorkoutSet[] = [];
+
+            if (prefillSets.length > 0) {
+                // Update the first (already-created) set with the first prefill values
+                await updateSetApi(firstSet.id, { reps: prefillSets[0].reps, weight: prefillSets[0].weight });
+                sets.push({ ...firstSet, reps: prefillSets[0].reps, weight: prefillSets[0].weight });
+
+                // Create additional sets for the rest
+                for (let i = 1; i < prefillSets.length; i++) {
+                    const newSet = await addSetApi(workoutExerciseData.id, i + 1);
+                    await updateSetApi(newSet.id, { reps: prefillSets[i].reps, weight: prefillSets[i].weight });
+                    sets.push({ ...newSet, reps: prefillSets[i].reps, weight: prefillSets[i].weight });
+                }
+            } else {
+                sets = [firstSet];
+            }
 
             setWorkoutExercises([
                 ...workoutExercises,
@@ -213,7 +339,7 @@ export default function WorkoutPage() {
                     exercise_id: exercise.exercise_id,
                     exercise: exercise,
                     order_index: workoutExerciseData.order_index,
-                    sets: [setData],
+                    sets,
                 },
             ]);
 
@@ -325,9 +451,13 @@ export default function WorkoutPage() {
                         )}
                         <div className="page-header mb-6 flex items-center justify-between gap-3">
                           <div>
-                            <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight">Workout</h1>
+                            <h1 className="hidden md:block text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight">Workout</h1>
                             <p className="text-sm text-[var(--muted-foreground)] mt-0.5">
-                              {workoutStarted ? "In progress" : "Ready when you are"}
+                              {workoutStarted ? (
+                                <span className="font-mono font-semibold text-[var(--primary-600)] dark:text-[var(--primary-500)]">
+                                    {formatElapsed(elapsedSeconds)}
+                                </span>
+                              ) : "Ready when you are"}
                             </p>
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
@@ -335,8 +465,8 @@ export default function WorkoutPage() {
                                 <Button onClick={startWorkout} className="px-4 py-2 text-sm sm:text-base">Start Workout</Button>
                             ) : (
                                 <>
-                                    <Button onClick={handleCancelWorkout} variant="secondary" className="px-3 py-2 text-sm">Cancel</Button>
-                                    <Button onClick={() => setIsFinishModalOpen(true)} className="px-4 py-2 text-sm sm:text-base">Finish</Button>
+                                     <Button onClick={handleCancelWorkout} variant="secondary" className="px-3 py-2 text-sm">Cancel</Button>
+                                    <Button onClick={handleFinishClick} className="px-4 py-2 text-sm sm:text-base">Finish</Button>
                                 </>
                             )}
                           </div>
@@ -354,12 +484,17 @@ export default function WorkoutPage() {
                                 finishWorkout();
                             }}
                         />
+                        <DiscardSetsModal
+                            isOpen={showDiscardSetsModal}
+                            onClose={() => setShowDiscardSetsModal(false)}
+                            onConfirm={discardAndFinish}
+                            incompleteSetCount={discardInfo.incompleteSetCount}
+                            emptyExerciseCount={discardInfo.emptyExerciseCount}
+                        />
                         {noDraftFound && !workoutStarted && (
                             <div className="text-center py-16 bg-[var(--surface)] rounded-[var(--radius-2xl)] shadow-[var(--shadow)] mb-6">
                                 <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
-                                    <svg className="w-10 h-10 text-[var(--primary-600)] dark:text-[var(--primary-700)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                    </svg>
+                                    <Zap className="w-10 h-10 text-[var(--primary-600)] dark:text-[var(--primary-700)]" />
                                 </div>
                                 <h3 className="text-xl font-bold text-[var(--foreground)] mb-1">Ready to train?</h3>
                                 <p className="text-sm text-[var(--muted-foreground)] mb-6">Start a new workout or use a template.</p>
@@ -380,9 +515,7 @@ export default function WorkoutPage() {
                                 {workoutExercises.length === 0 ? (
                                     <div className="text-center py-12 bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)]">
                                         <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
-                                            <svg className="w-6 h-6 text-[var(--primary-600)] dark:text-[var(--primary-700)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                            </svg>
+                                            <Plus className="w-6 h-6 text-[var(--primary-600)] dark:text-[var(--primary-700)]" />
                                         </div>
                                         <p className="text-sm text-[var(--muted-foreground)]">No exercises yet. Tap &quot;Add Exercise&quot; to begin.</p>
                                     </div>
@@ -397,6 +530,8 @@ export default function WorkoutPage() {
                                                 onUpdateSet={updateSet}
                                                 onDeleteSet={deleteSet}
                                                 onDeleteExercise={deleteExercise}
+                                                onConfirmSet={handleConfirmSet}
+                                                confirmedSetIds={confirmedSetIds}
                                                 errorMessage={errorMessages[`exercise-${exerciseIndex}`] || ""}
                                                 setErrorMessage={(message: string) =>
                                                     setErrorMessages((prev) => ({

@@ -1,6 +1,7 @@
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useState } from "react";
 import type { WorkoutExercise } from "@/types";
+import { Trash2, Check, X, Plus } from "lucide-react";
 
 interface ExerciseCardProps {
     workoutExercise: WorkoutExercise;
@@ -9,6 +10,8 @@ interface ExerciseCardProps {
     onUpdateSet: (exerciseIndex: number, setIndex: number, field: 'reps' | 'weight', value: number) => void;
     onDeleteSet: (exerciseIndex: number, setIndex: number) => void;
     onDeleteExercise: (exerciseIndex: number) => void;
+    onConfirmSet: (setId: string) => void;
+    confirmedSetIds: Set<string>;
     errorMessage: string;
     setErrorMessage: (message: string) => void;
 }
@@ -44,6 +47,8 @@ export default function WorkoutExerciseCard({
     onUpdateSet,
     onDeleteSet,
     onDeleteExercise,
+    onConfirmSet,
+    confirmedSetIds,
     errorMessage,
     setErrorMessage,
 }: ExerciseCardProps) {
@@ -75,9 +80,7 @@ export default function WorkoutExerciseCard({
                         onClick={() => onDeleteExercise(exerciseIndex)}
                         className="flex-shrink-0 w-8 h-8 rounded-[var(--radius-md)] flex items-center justify-center text-[var(--muted-foreground)] hover:bg-[var(--color-destructive-bg)] hover:text-[var(--color-destructive)] transition-colors"
                     >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
+                        <Trash2 className="w-4 h-4" />
                     </button>
                 </div>
 
@@ -88,7 +91,7 @@ export default function WorkoutExerciseCard({
                 )}
 
                 {/* Column headers */}
-                <div className="grid grid-cols-[3rem_1fr_1fr_2rem] gap-2 px-1 mb-2">
+                <div className="grid grid-cols-[3rem_1fr_1fr_5rem] gap-2 px-1 mb-2">
                     <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Set</span>
                     <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] text-center">Reps</span>
                     <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] text-center">kg</span>
@@ -97,51 +100,72 @@ export default function WorkoutExerciseCard({
 
                 {/* Sets */}
                 <div className="space-y-1.5 mb-4">
-                    {workoutExercise.sets.map((set, setIndex) => (
-                        <div
-                            key={set.id}
-                            className="grid grid-cols-[3rem_1fr_1fr_2rem] items-center gap-2 px-1 py-1.5 rounded-[var(--radius-md)] hover:bg-[var(--surface-raised)] transition-colors"
-                        >
-                            <span className="text-sm font-semibold text-[var(--muted-foreground)]">
-                                {set.set_number}
-                            </span>
-                            <input
-                                type="number"
-                                placeholder="0"
-                                value={set.reps || ""}
-                                onChange={(e) => {
-                                    onUpdateSet(exerciseIndex, setIndex, "reps", parseInt(e.target.value) || 0);
-                                    setErrorMessage("");
-                                }}
-                                min="0"
-                                className="w-full px-2 py-1.5 text-center bg-[var(--surface-raised)] rounded-[var(--radius-sm)] text-[var(--foreground)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] placeholder-[var(--muted-foreground)]"
-                            />
-                            <input
-                                type="number"
-                                placeholder="0"
-                                value={set.weight || ""}
-                                onChange={(e) => {
-                                    onUpdateSet(exerciseIndex, setIndex, "weight", parseFloat(e.target.value) || 0);
-                                    setErrorMessage("");
-                                }}
-                                min="0"
-                                step="0.5"
-                                className="w-full px-2 py-1.5 text-center bg-[var(--surface-raised)] rounded-[var(--radius-sm)] text-[var(--foreground)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] placeholder-[var(--muted-foreground)]"
-                            />
-                            <button
-                                aria-label="Delete set"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onDeleteSet(exerciseIndex, setIndex);
-                                }}
-                                className="w-6 h-6 rounded-full flex items-center justify-center text-[var(--muted-foreground)] hover:bg-[var(--color-destructive-bg)] hover:text-[var(--color-destructive)] transition-colors"
+                    {workoutExercise.sets.map((set, setIndex) => {
+                        const isConfirmed = confirmedSetIds.has(set.id);
+                        return (
+                            <div
+                                key={set.id}
+                                className={`grid grid-cols-[3rem_1fr_1fr_5rem] items-center gap-2 px-1 py-1.5 rounded-[var(--radius-md)] transition-colors ${
+                                    isConfirmed
+                                        ? "bg-[var(--color-success-bg)]"
+                                        : "hover:bg-[var(--surface-raised)]"
+                                }`}
                             >
-                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-                    ))}
+                                <span className={`text-sm font-semibold ${isConfirmed ? "text-[var(--color-success)]" : "text-[var(--muted-foreground)]"}`}>
+                                    {set.set_number}
+                                </span>
+                                <input
+                                    type="number"
+                                    placeholder="0"
+                                    value={set.reps || ""}
+                                    onChange={(e) => {
+                                        onUpdateSet(exerciseIndex, setIndex, "reps", parseInt(e.target.value) || 0);
+                                        setErrorMessage("");
+                                    }}
+                                    min="0"
+                                    className="w-full px-2 py-1.5 text-center bg-[var(--surface-raised)] rounded-[var(--radius-sm)] text-[var(--foreground)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] placeholder-[var(--muted-foreground)]"
+                                />
+                                <input
+                                    type="number"
+                                    placeholder="0"
+                                    value={set.weight || ""}
+                                    onChange={(e) => {
+                                        onUpdateSet(exerciseIndex, setIndex, "weight", parseFloat(e.target.value) || 0);
+                                        setErrorMessage("");
+                                    }}
+                                    min="0"
+                                    step="0.5"
+                                    className="w-full px-2 py-1.5 text-center bg-[var(--surface-raised)] rounded-[var(--radius-sm)] text-[var(--foreground)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] placeholder-[var(--muted-foreground)]"
+                                />
+                                <div className="flex items-center gap-1 justify-end">
+                                    <button
+                                        aria-label="Confirm set"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onConfirmSet(set.id);
+                                        }}
+                                        className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
+                                            isConfirmed
+                                                ? "bg-[var(--color-success)] text-white"
+                                                : "text-[var(--muted-foreground)] hover:bg-[var(--color-success-bg)] hover:text-[var(--color-success)]"
+                                        }`}
+                                    >
+                                        <Check className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                        aria-label="Delete set"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onDeleteSet(exerciseIndex, setIndex);
+                                        }}
+                                        className="w-6 h-6 rounded-full flex items-center justify-center text-[var(--muted-foreground)] hover:bg-[var(--color-destructive-bg)] hover:text-[var(--color-destructive)] transition-colors"
+                                    >
+                                        <X className="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
 
                 {/* Add Set */}
@@ -149,9 +173,7 @@ export default function WorkoutExerciseCard({
                     onClick={() => onAddSet(exerciseIndex)}
                     className="w-full py-2.5 flex items-center justify-center gap-2 text-sm font-semibold text-[var(--primary-600)] dark:text-[var(--primary-500)] bg-[var(--primary-50)] dark:bg-[var(--primary-100)] rounded-[var(--radius-lg)] hover:brightness-95 transition-all"
                 >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-                    </svg>
+                    <Plus className="w-4 h-4" />
                     Add Set
                 </button>
             </div>

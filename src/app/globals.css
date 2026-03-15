@@ -110,6 +110,13 @@ html, body {
   height: 100%;
 }
 
+/* On mobile the TopBar is 2.75rem (44px) tall; offset sticky page headers below it */
+@media (max-width: 767px) {
+  :root {
+    --ph-top: 2.75rem;
+  }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -158,7 +165,7 @@ body {
 /* Sticky page header with backdrop blur */
 .page-header {
   position: sticky;
-  top: 0;
+  top: var(--ph-top, 0px);
   z-index: 10;
   padding: 1rem 0;
   background: color-mix(in srgb, var(--background) 82%, transparent);

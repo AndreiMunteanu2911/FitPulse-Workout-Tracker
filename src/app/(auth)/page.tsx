@@ -7,7 +7,7 @@ export default function LandingPage() {
             {/* Logo */}
             <div className="flex items-center gap-2.5 pt-6 pb-2">
                 <div className="w-9 h-9 rounded-[12px] bg-white/15 flex items-center justify-center">
-                    <Image src="/assets/dumbbell-large.svg" alt="Dumbbell" width={20} height={20} className="brightness-0 invert" />
+                    <Image src="/assets/dumbbell-large.svg" alt="FitPulse" width={20} height={20} className="brightness-0 invert" />
                 </div>
                 <span className="text-lg font-extrabold tracking-tight">FitPulse</span>
             </div>

@@ -8,7 +8,9 @@ import Link from "next/link";
 import { useExercises } from "@/hooks/useExercises";
 import { usePersonalRecords } from "@/hooks/usePersonalRecords";
 import PersonalRecordCard from "@/components/PersonalRecordCard";
+import ExerciseStatsTab from "@/components/ExerciseStatsTab";
 import type { Exercise, PersonalRecord } from "@/types";
+import { ChevronLeft, Sparkles } from "lucide-react";
 
 function ImageWithSpinner({ src, alt }: { src: string; alt: string }) {
     const [loaded, setLoaded] = useState(false);
@@ -36,6 +38,7 @@ export default function ExerciseDetailsPage() {
     const [exercise, setExercise] = useState<Exercise | null>(null);
     const [personalRecord, setPersonalRecord] = useState<PersonalRecord | null>(null);
     const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState<"description" | "stats">("description");
     const { fetchExercise } = useExercises();
     const { fetchPersonalRecords } = usePersonalRecords();
 
@@ -78,108 +81,137 @@ export default function ExerciseDetailsPage() {
         <ProtectedWrapper>
             <div className="w-full">
                 {/* Back header */}
-                <div className="page-header mb-4 flex items-center gap-3">
+                <div className="page-header mb-4 flex items-center gap-3" style={{ top: 0 }}>
                     <Link
                         href="/exercises"
                         className="w-9 h-9 rounded-[var(--radius-lg)] flex items-center justify-center bg-[var(--surface)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow)] transition-shadow flex-shrink-0"
                     >
-                        <svg className="w-4 h-4 text-[var(--foreground)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-                        </svg>
+                        <ChevronLeft className="w-4 h-4 text-[var(--foreground)]" />
                     </Link>
                     <h1 className="text-xl sm:text-2xl font-extrabold text-[var(--foreground)] truncate">{capitalize(exercise.name)}</h1>
                 </div>
 
-                {/* Hero section */}
-                <div className="flex flex-col md:flex-row gap-5 mb-6">
-                    {exercise.gif_url && (
-                        <div className="w-full md:w-64 flex-shrink-0">
-                            <div className="rounded-[var(--radius-xl)] overflow-hidden shadow-[var(--shadow)] bg-[var(--surface)] aspect-square md:w-64 md:h-64 mx-auto">
-                                <ImageWithSpinner src={exercise.gif_url} alt={exercise.name + " demo"} />
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="flex-1 bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4 sm:p-5 space-y-4">
-                        {exercise.target_muscles?.length ? (
-                            <div>
-                                <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-2">Target Muscles</h2>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {exercise.target_muscles.map((m, i) => (
-                                        <span key={i} className="px-3 py-1 rounded-full text-xs font-semibold bg-[var(--primary-500)] text-white capitalize">{capitalize(m)}</span>
-                                    ))}
-                                </div>
-                            </div>
-                        ) : null}
-
-                        {exercise.secondary_muscles?.length ? (
-                            <div>
-                                <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-2">Secondary Muscles</h2>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {exercise.secondary_muscles.map((m, i) => (
-                                        <span key={i} className="px-3 py-1 rounded-full text-xs font-semibold bg-[var(--primary-50)] dark:bg-[var(--primary-100)] text-[var(--primary-700)] dark:text-[var(--primary-700)] capitalize">{capitalize(m)}</span>
-                                    ))}
-                                </div>
-                            </div>
-                        ) : null}
-
-                        {exercise.equipments?.length ? (
-                            <div>
-                                <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-2">Equipment</h2>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {exercise.equipments.map((e, i) => (
-                                        <span key={i} className="px-3 py-1 rounded-full text-xs font-semibold bg-[var(--surface-raised)] text-[var(--foreground)] border border-[var(--border)] capitalize">{capitalize(e)}</span>
-                                    ))}
-                                </div>
-                            </div>
-                        ) : null}
-
-                        {exercise.body_parts?.length ? (
-                            <div>
-                                <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-2">Body Parts</h2>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {exercise.body_parts.map((p, i) => (
-                                        <span key={i} className="px-3 py-1 rounded-full text-xs font-semibold bg-[var(--surface-raised)] text-[var(--foreground)] border border-[var(--border)] capitalize">{capitalize(p)}</span>
-                                    ))}
-                                </div>
-                            </div>
-                        ) : null}
-                    </div>
+                {/* Tabs */}
+                <div className="flex gap-1 p-1 bg-[var(--surface-raised)] rounded-[var(--radius-lg)] mb-5 w-fit">
+                    <button
+                        onClick={() => setActiveTab("description")}
+                        className={`px-4 py-1.5 rounded-[var(--radius-md)] text-sm font-semibold transition-all ${
+                            activeTab === "description"
+                                ? "bg-[var(--surface)] shadow-[var(--shadow-xs)] text-[var(--foreground)]"
+                                : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                        }`}
+                    >
+                        Description
+                    </button>
+                    <button
+                        onClick={() => setActiveTab("stats")}
+                        className={`px-4 py-1.5 rounded-[var(--radius-md)] text-sm font-semibold transition-all ${
+                            activeTab === "stats"
+                                ? "bg-[var(--surface)] shadow-[var(--shadow-xs)] text-[var(--foreground)]"
+                                : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                        }`}
+                    >
+                        Stats
+                    </button>
                 </div>
 
-                {/* Instructions */}
-                {exercise.instructions?.length ? (
-                    <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4 sm:p-5 mb-6">
-                        <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-3">Instructions</h2>
-                        <ol className="space-y-2.5">
-                            {exercise.instructions.map((step, i) => (
-                                <li key={i} className="flex gap-3 text-sm text-[var(--foreground)]">
-                                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center text-[10px] font-bold text-[var(--primary-600)] dark:text-[var(--primary-700)]">{i + 1}</span>
-                                    <span className="leading-relaxed">{step}</span>
-                                </li>
-                            ))}
-                        </ol>
-                    </div>
+                {/* Tab Content */}
+                {activeTab === "description" ? (
+                    <>
+                        {/* Hero section */}
+                        <div className="flex flex-col md:flex-row gap-5 mb-5">
+                            {exercise.gif_url && (
+                                <div className="w-full md:w-56 flex-shrink-0">
+                                    <div className="rounded-[var(--radius-xl)] overflow-hidden shadow-[var(--shadow)] bg-[var(--surface)] aspect-square md:w-56 md:h-56 mx-auto">
+                                        <ImageWithSpinner src={exercise.gif_url} alt={exercise.name + " demo"} />
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="flex-1 bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4 sm:p-5 space-y-4">
+                                {exercise.target_muscles?.length ? (
+                                    <div>
+                                        <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-2">Target Muscles</h2>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {exercise.target_muscles.map((m, i) => (
+                                                <span key={i} className="px-3 py-1 rounded-full text-xs font-semibold bg-[var(--primary-500)] text-white capitalize">{capitalize(m)}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : null}
+
+                                {exercise.secondary_muscles?.length ? (
+                                    <div>
+                                        <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-2">Secondary Muscles</h2>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {exercise.secondary_muscles.map((m, i) => (
+                                                <span key={i} className="px-3 py-1 rounded-full text-xs font-semibold bg-[var(--primary-50)] dark:bg-[var(--primary-100)] text-[var(--primary-700)] dark:text-[var(--primary-700)] capitalize">{capitalize(m)}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : null}
+
+                                {exercise.equipments?.length ? (
+                                    <div>
+                                        <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-2">Equipment</h2>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {exercise.equipments.map((e, i) => (
+                                                <span key={i} className="px-3 py-1 rounded-full text-xs font-semibold bg-[var(--surface-raised)] text-[var(--foreground)] border border-[var(--border)] capitalize">{capitalize(e)}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : null}
+
+                                {exercise.body_parts?.length ? (
+                                    <div>
+                                        <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-2">Body Parts</h2>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {exercise.body_parts.map((p, i) => (
+                                                <span key={i} className="px-3 py-1 rounded-full text-xs font-semibold bg-[var(--surface-raised)] text-[var(--foreground)] border border-[var(--border)] capitalize">{capitalize(p)}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : null}
+                            </div>
+                        </div>
+
+                        {/* Instructions */}
+                        {exercise.instructions?.length ? (
+                            <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4 sm:p-5 mb-6">
+                                <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-3">Instructions</h2>
+                                <ol className="space-y-2.5">
+                                    {exercise.instructions.map((step, i) => (
+                                        <li key={i} className="flex gap-3 text-sm text-[var(--foreground)]">
+                                            <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center text-[10px] font-bold text-[var(--primary-600)] dark:text-[var(--primary-700)]">{i + 1}</span>
+                                            <span className="leading-relaxed">{step}</span>
+                                        </li>
+                                    ))}
+                                </ol>
+                            </div>
+                        ) : (
+                            <div className="text-sm text-[var(--muted-foreground)] mb-6">No instructions available for this exercise.</div>
+                        )}
+
+                        {/* Personal Record */}
+                        <div className="mb-8">
+                            <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-3">Your Personal Record</h2>
+                            {personalRecord ? (
+                                <PersonalRecordCard record={personalRecord} />
+                            ) : (
+                                <div className="text-center py-10 bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)]">
+                                    <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
+                                        <Sparkles className="w-6 h-6 text-[var(--primary-600)] dark:text-[var(--primary-700)]" />
+                                    </div>
+                                    <p className="text-sm text-[var(--muted-foreground)]">No personal record yet. Log this exercise to see your PR!</p>
+                                </div>
+                            )}
+                        </div>
+                    </>
                 ) : (
-                    <div className="text-sm text-[var(--muted-foreground)] mb-6">No instructions available for this exercise.</div>
+                    <div className="mb-8">
+                        <ExerciseStatsTab exerciseId={id as string} />
+                    </div>
                 )}
-
-                {/* Personal Record */}
-                <div className="mb-8">
-                    <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-3">Your Personal Record</h2>
-                    {personalRecord ? (
-                        <PersonalRecordCard record={personalRecord} />
-                    ) : (
-                        <div className="text-center py-10 bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)]">
-                            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
-                                <svg className="w-6 h-6 text-[var(--primary-600)] dark:text-[var(--primary-700)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                                </svg>
-                            </div>
-                            <p className="text-sm text-[var(--muted-foreground)]">No personal record yet. Log this exercise to see your PR!</p>
-                        </div>
-                    )}
-                </div>
             </div>
         </ProtectedWrapper>
     );

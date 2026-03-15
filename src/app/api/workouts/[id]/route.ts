@@ -39,9 +39,14 @@ export async function PATCH(
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
-  const updates: { name?: string; status?: string } = {};
+  const updates: { name?: string; status?: string; finished_at?: string } = {};
   if (body.name !== undefined) updates.name = body.name;
-  if (body.status !== undefined) updates.status = body.status;
+  if (body.status !== undefined) {
+    updates.status = body.status;
+    if (body.status === "completed") {
+      updates.finished_at = new Date().toISOString();
+    }
+  }
 
   const { error } = await supabase
     .from("workouts")

@@ -3,11 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import Button from "@/components/Button";
-import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
 import { loginSchema, LoginInput } from "@/lib/validations";
 import { ZodError } from "zod";
 import { useRouter } from "next/navigation";
+import { ChevronLeft } from "lucide-react";
+import Image from "next/image";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -53,7 +54,7 @@ export default function LoginPage() {
             {/* Logo */}
             <div className="flex items-center gap-2.5 pt-6 pb-2">
                 <div className="w-9 h-9 rounded-[12px] bg-white/15 flex items-center justify-center">
-                    <Image src="/assets/dumbbell-large.svg" alt="Dumbbell" width={20} height={20} className="brightness-0 invert" />
+                    <Image src="/assets/dumbbell-large.svg" alt="FitPulse" width={20} height={20} className="brightness-0 invert" />
                 </div>
                 <span className="text-lg font-extrabold tracking-tight">FitPulse</span>
             </div>
@@ -61,9 +62,7 @@ export default function LoginPage() {
             <div className="flex-1 flex flex-col justify-center max-w-sm w-full py-8">
                 <div className="mb-8">
                     <Link href="/" className="inline-flex items-center gap-1.5 text-white/70 hover:text-white text-sm mb-6 transition-colors">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
+                        <ChevronLeft className="w-4 h-4" />
                         Back
                     </Link>
                     <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-1">Welcome back</h1>

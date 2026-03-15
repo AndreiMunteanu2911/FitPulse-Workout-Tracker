@@ -104,6 +104,20 @@ export async function GET() {
   });
   const prCount = exerciseMaxWeights.size;
 
+  // Build weekly histogram (last 12 weeks)
+  const weeklyHistogram: { weekLabel: string; count: number }[] = [];
+  for (let i = 11; i >= 0; i--) {
+    const weekStart = new Date(today.getTime() - (i + 1) * 7 * 24 * 60 * 60 * 1000);
+    const weekEnd   = new Date(today.getTime() - i       * 7 * 24 * 60 * 60 * 1000);
+    const count = workouts.filter(w => {
+      const d = new Date(w.workout_date);
+      return d >= weekStart && d < weekEnd;
+    }).length;
+    // Label is the week-start date in "Mar 8" format for the x-axis
+    const label = weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    weeklyHistogram.push({ weekLabel: label, count });
+  }
+
   return NextResponse.json({
     stats: {
       totalWorkouts,
@@ -114,6 +128,7 @@ export async function GET() {
       currentStreak,
       longestStreak,
       prCount,
+      weeklyHistogram,
     }
   });
 }

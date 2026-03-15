@@ -45,6 +45,7 @@ export interface Workout {
   workout_exercises: WorkoutExercise[];
   created_at?: string;
   updated_at?: string;
+  finished_at?: string;
 }
 
 export interface WeightLog {
@@ -64,6 +65,7 @@ export interface WorkoutStats {
   currentStreak: number;
   longestStreak: number;
   prCount: number;
+  weeklyHistogram: { weekLabel: string; count: number }[];
 }
 
 export interface APIResponse<T> {
