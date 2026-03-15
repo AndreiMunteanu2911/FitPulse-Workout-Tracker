@@ -1,24 +1,31 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/helper/supabaseServer";
-import { ACHIEVEMENT_DEFINITIONS } from "@/lib/gamification";
+import {
+  ACHIEVEMENT_DEFINITIONS,
+  checkUnlockCondition,
+  levelFromXP,
+  xpForLevel,
+  xpProgress,
+} from "@/lib/gamification";
+
+interface SetRow { weight: number; reps: number }
+interface WorkoutExerciseRow { exercise_id?: string; sets?: SetRow[] }
+interface WorkoutRow { workout_date: string; workout_exercises?: WorkoutExerciseRow[] }
+interface UserStatsRow { total_xp: number }
 
 /**
  * POST /api/achievements
  * Body: { achievementId: string }
  *
- * Marks an already-unlocked achievement as claimed:
- *  1. Validates the achievement ID
- *  2. Verifies user_achievements row has status='unlocked' (DB is source of truth)
- *  3. Updates status → 'claimed'
- *  4. Atomically increments user_stats.achievement_xp by the XP reward
- *  5. Returns xpEarned + new achievementXP total so the page can
- *     update in-place without a full reload
+ * Claims an achievement:
+ *  1. Validates the achievement ID and verifies conditions are met
+ *  2. Inserts a row into user_achievements (unique constraint prevents double-claim)
+ *  3. Reads current user_stats.total_xp then upserts with total_xp += xp_reward
+ *  4. Returns the full updated XP stats so the page can update in-place
  */
 export async function POST(request: Request) {
   const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   let achievementId: string;
@@ -33,63 +40,97 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unknown achievement" }, { status: 404 });
   }
 
-  // Verify the row exists and is claimable (status='unlocked')
-  const { data: row, error: fetchError } = await supabase
-    .from("user_achievements")
-    .select("id, status")
+  // ── 1. Verify unlock conditions are currently met ─────────────────────────
+  const { data: workouts, error: wErr } = await supabase
+    .from("workouts")
+    .select("workout_date, workout_exercises (exercise_id, sets (weight, reps))")
     .eq("user_id", user.id)
-    .eq("achievement_id", achievementId)
-    .single();
+    .eq("status", "completed");
 
-  if (fetchError || !row) {
-    return NextResponse.json(
-      { error: "Achievement not yet unlocked — complete the required activity first" },
-      { status: 403 },
-    );
-  }
+  if (wErr) return NextResponse.json({ error: wErr.message }, { status: 500 });
 
-  const achievementRow = row as { id: string; status: string };
+  const rows = (workouts ?? []) as WorkoutRow[];
+  let totalVolume = 0;
+  const exerciseMaxWeights = new Map<string, number>();
+  const MS_PER_DAY = 86_400_000;
 
-  if (achievementRow.status === "claimed") {
-    return NextResponse.json({ error: "Achievement already claimed" }, { status: 409 });
-  }
-
-  // Mark as claimed
-  const claimedAt = new Date().toISOString();
-  const { error: updateError } = await supabase
-    .from("user_achievements")
-    .update({ status: "claimed", claimed_at: claimedAt })
-    .eq("id", achievementRow.id);
-
-  if (updateError) {
-    return NextResponse.json({ error: updateError.message }, { status: 500 });
-  }
-
-  // Atomically add XP to user_stats (persistent bank, survives achievement row deletions)
-  const { error: rpcError } = await supabase.rpc("increment_achievement_xp", {
-    p_user_id: user.id,
-    p_amount: definition.xpReward,
+  rows.forEach((w) => {
+    (w.workout_exercises ?? []).forEach((we) => {
+      (we.sets ?? []).forEach((s) => {
+        totalVolume += s.weight * s.reps;
+        if (we.exercise_id) {
+          const prev = exerciseMaxWeights.get(we.exercise_id) ?? 0;
+          if (s.weight > prev) exerciseMaxWeights.set(we.exercise_id, s.weight);
+        }
+      });
+    });
   });
 
-  if (rpcError) {
-    return NextResponse.json({ error: rpcError.message }, { status: 500 });
+  const uniqueDates = [
+    ...new Set(rows.map((w) => w.workout_date)),
+  ].sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+
+  let longestStreak = 0;
+  if (uniqueDates.length > 0) {
+    let temp = 1;
+    for (let i = 1; i < uniqueDates.length; i++) {
+      const diff = (new Date(uniqueDates[i - 1]).getTime() - new Date(uniqueDates[i]).getTime()) / MS_PER_DAY;
+      if (diff === 1) { temp++; } else { longestStreak = Math.max(longestStreak, temp); temp = 1; }
+    }
+    longestStreak = Math.max(longestStreak, temp);
   }
 
-  // Return achievement_xp total so page can recompute totalXP without a full reload
+  const summary = { totalWorkouts: rows.length, prCount: exerciseMaxWeights.size, longestStreak, totalVolume };
+
+  if (!checkUnlockCondition(achievementId, summary)) {
+    return NextResponse.json({ error: "Achievement conditions not yet met" }, { status: 403 });
+  }
+
+  // ── 2. Insert into user_achievements (unique constraint blocks double-claim) ─
+  const unlockedAt = new Date().toISOString();
+  const { error: insertError } = await supabase
+    .from("user_achievements")
+    .insert({ user_id: user.id, achievement_id: achievementId, unlocked_at: unlockedAt });
+
+  if (insertError) {
+    // 23505 = unique_violation → already claimed
+    if (insertError.code === "23505") {
+      return NextResponse.json({ error: "Achievement already claimed" }, { status: 409 });
+    }
+    return NextResponse.json({ error: insertError.message }, { status: 500 });
+  }
+
+  // ── 3. Read current total_xp then upsert user_stats ──────────────────────
   const { data: statsRow } = await supabase
     .from("user_stats")
-    .select("achievement_xp")
+    .select("total_xp")
     .eq("user_id", user.id)
     .single();
 
-  const achievementXP: number =
-    (statsRow as { achievement_xp: number } | null)?.achievement_xp ?? definition.xpReward;
+  const currentXP  = (statsRow as UserStatsRow | null)?.total_xp ?? 0;
+  const newTotalXP = currentXP + definition.xpReward;
+  const newLevel   = levelFromXP(newTotalXP);
+
+  const { error: upsertError } = await supabase
+    .from("user_stats")
+    .upsert(
+      { user_id: user.id, total_xp: newTotalXP, level: newLevel },
+      { onConflict: "user_id" },
+    );
+
+  if (upsertError) {
+    return NextResponse.json({ error: upsertError.message }, { status: 500 });
+  }
 
   return NextResponse.json({
-    success: true,
+    success:          true,
     achievementId,
-    claimedAt,
-    xpEarned: definition.xpReward,
-    achievementXP,
+    claimedAt:        unlockedAt,
+    xpEarned:         definition.xpReward,
+    totalXP:          newTotalXP,
+    level:            newLevel,
+    xpForCurrentLevel: xpForLevel(newLevel),
+    xpForNextLevel:   xpForLevel(newLevel + 1),
+    xpProgress:       xpProgress(newTotalXP),
   });
 }
