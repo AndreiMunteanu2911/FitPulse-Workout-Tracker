@@ -134,10 +134,14 @@ export interface Achievement {
   id: string;
   name: string;
   description: string;
+  /** Lucide icon component name, e.g. "Trophy", "Flame" */
   icon: string;
   xpReward: number;
   category: "workouts" | "streaks" | "records" | "volume";
+  /** Non-null when workout conditions are met */
   unlockedAt?: string | null;
+  /** Non-null when the user has clicked "Claim" and the XP has been banked */
+  claimedAt?: string | null;
 }
 
 export interface GamificationStats {

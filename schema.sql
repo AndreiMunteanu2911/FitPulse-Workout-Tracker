@@ -155,6 +155,17 @@ create table if not exists template_exercises (
   created_at    timestamptz default now()
 );
 
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 11. USER_ACHIEVEMENTS  (tracks which achievements a user has claimed)
+-- ─────────────────────────────────────────────────────────────────────────────
+create table if not exists user_achievements (
+  id             uuid        primary key default gen_random_uuid(),
+  user_id        uuid        not null references auth.users(id) on delete cascade,
+  achievement_id text        not null,
+  claimed_at     timestamptz not null default now(),
+  unique (user_id, achievement_id)
+);
+
 -- =============================================================================
 -- ROW LEVEL SECURITY (RLS)
 -- =============================================================================
@@ -168,6 +179,7 @@ alter table progress_photos    enable row level security;
 alter table user_exercises     enable row level security;
 alter table workout_templates  enable row level security;
 alter table template_exercises enable row level security;
+alter table user_achievements  enable row level security;
 -- exercises table is public-read, no user-specific RLS needed
 
 -- ── workouts ─────────────────────────────────────────────────────────────────
@@ -245,6 +257,12 @@ alter table exercises enable row level security;
 create policy "Exercises are publicly readable"
   on exercises for select
   using (true);
+
+-- ── user_achievements ─────────────────────────────────────────────────────────
+create policy "Users manage own user_achievements"
+  on user_achievements for all
+  using  (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
 
 -- =============================================================================
 -- STORAGE BUCKET (progress photos)
