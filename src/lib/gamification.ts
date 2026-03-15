@@ -39,13 +39,14 @@ export const XP_REWARDS = {
 } as const;
 
 // ── Achievement definitions ───────────────────────────────────────────────────
-export const ACHIEVEMENT_DEFINITIONS: Omit<Achievement, "unlockedAt">[] = [
+// `icon` is a Lucide component name — rendered in the UI via a lookup map.
+export const ACHIEVEMENT_DEFINITIONS: Omit<Achievement, "unlockedAt" | "claimedAt">[] = [
   // Workout count
   {
     id: "first_workout",
     name: "First Step",
     description: "Complete your first workout",
-    icon: "🏋️",
+    icon: "Dumbbell",
     xpReward: 50,
     category: "workouts",
   },
@@ -53,7 +54,7 @@ export const ACHIEVEMENT_DEFINITIONS: Omit<Achievement, "unlockedAt">[] = [
     id: "workouts_5",
     name: "Warm Up",
     description: "Complete 5 workouts",
-    icon: "🔥",
+    icon: "Activity",
     xpReward: 100,
     category: "workouts",
   },
@@ -61,7 +62,7 @@ export const ACHIEVEMENT_DEFINITIONS: Omit<Achievement, "unlockedAt">[] = [
     id: "workouts_10",
     name: "Getting Serious",
     description: "Complete 10 workouts",
-    icon: "💪",
+    icon: "TrendingUp",
     xpReward: 200,
     category: "workouts",
   },
@@ -69,7 +70,7 @@ export const ACHIEVEMENT_DEFINITIONS: Omit<Achievement, "unlockedAt">[] = [
     id: "workouts_25",
     name: "Dedicated",
     description: "Complete 25 workouts",
-    icon: "🥇",
+    icon: "Star",
     xpReward: 300,
     category: "workouts",
   },
@@ -77,7 +78,7 @@ export const ACHIEVEMENT_DEFINITIONS: Omit<Achievement, "unlockedAt">[] = [
     id: "workouts_100",
     name: "Century Club",
     description: "Complete 100 workouts",
-    icon: "💯",
+    icon: "Award",
     xpReward: 1000,
     category: "workouts",
   },
@@ -86,7 +87,7 @@ export const ACHIEVEMENT_DEFINITIONS: Omit<Achievement, "unlockedAt">[] = [
     id: "streak_3",
     name: "Hat Trick",
     description: "Maintain a 3-day workout streak",
-    icon: "⚡",
+    icon: "Zap",
     xpReward: 75,
     category: "streaks",
   },
@@ -94,7 +95,7 @@ export const ACHIEVEMENT_DEFINITIONS: Omit<Achievement, "unlockedAt">[] = [
     id: "streak_7",
     name: "On Fire",
     description: "Maintain a 7-day workout streak",
-    icon: "🔥",
+    icon: "Flame",
     xpReward: 150,
     category: "streaks",
   },
@@ -102,7 +103,7 @@ export const ACHIEVEMENT_DEFINITIONS: Omit<Achievement, "unlockedAt">[] = [
     id: "streak_30",
     name: "Unstoppable",
     description: "Maintain a 30-day workout streak",
-    icon: "🚀",
+    icon: "Rocket",
     xpReward: 500,
     category: "streaks",
   },
@@ -111,7 +112,7 @@ export const ACHIEVEMENT_DEFINITIONS: Omit<Achievement, "unlockedAt">[] = [
     id: "pr_1",
     name: "Record Setter",
     description: "Set your first personal record",
-    icon: "🏆",
+    icon: "Trophy",
     xpReward: 75,
     category: "records",
   },
@@ -119,7 +120,7 @@ export const ACHIEVEMENT_DEFINITIONS: Omit<Achievement, "unlockedAt">[] = [
     id: "pr_5",
     name: "PR Crusher",
     description: "Set 5 personal records",
-    icon: "🥊",
+    icon: "Target",
     xpReward: 150,
     category: "records",
   },
@@ -127,7 +128,7 @@ export const ACHIEVEMENT_DEFINITIONS: Omit<Achievement, "unlockedAt">[] = [
     id: "pr_10",
     name: "Record Breaker",
     description: "Set 10 personal records",
-    icon: "💎",
+    icon: "Medal",
     xpReward: 300,
     category: "records",
   },
@@ -136,7 +137,7 @@ export const ACHIEVEMENT_DEFINITIONS: Omit<Achievement, "unlockedAt">[] = [
     id: "volume_10k",
     name: "Iron Starter",
     description: "Lift 10,000 kg total volume",
-    icon: "🦾",
+    icon: "BarChart2",
     xpReward: 100,
     category: "volume",
   },
@@ -144,7 +145,7 @@ export const ACHIEVEMENT_DEFINITIONS: Omit<Achievement, "unlockedAt">[] = [
     id: "volume_50k",
     name: "Heavy Lifter",
     description: "Lift 50,000 kg total volume",
-    icon: "🏋️‍♂️",
+    icon: "ChartBarIncreasing",
     xpReward: 250,
     category: "volume",
   },
@@ -152,7 +153,7 @@ export const ACHIEVEMENT_DEFINITIONS: Omit<Achievement, "unlockedAt">[] = [
     id: "volume_100k",
     name: "Volume King",
     description: "Lift 100,000 kg total volume",
-    icon: "👑",
+    icon: "Crown",
     xpReward: 500,
     category: "volume",
   },
@@ -167,7 +168,10 @@ export interface WorkoutSummary {
   totalVolume: number;
 }
 
-export function getUnlockedAchievements(summary: WorkoutSummary): Achievement[] {
+export function getUnlockedAchievements(
+  summary: WorkoutSummary,
+  claimedIds: string[] = [],
+): Achievement[] {
   const { totalWorkouts, prCount, longestStreak, totalVolume } = summary;
 
   return ACHIEVEMENT_DEFINITIONS.map((def) => {
@@ -190,12 +194,26 @@ export function getUnlockedAchievements(summary: WorkoutSummary): Achievement[] 
       case "volume_100k":     unlocked = totalVolume >= 100000; break;
     }
 
-    return { ...def, unlockedAt: unlocked ? "unlocked" : null };
+    const claimedAt = claimedIds.includes(def.id) ? "claimed" : null;
+
+    return {
+      ...def,
+      unlockedAt: unlocked ? "unlocked" : null,
+      claimedAt,
+    };
   });
 }
 
 // ── XP total calculation ──────────────────────────────────────────────────────
-export function calculateTotalXP(summary: WorkoutSummary): number {
+/**
+ * Base XP comes from activity (workouts, sets, PRs, streak days).
+ * Achievement XP bonuses are only added for *claimed* achievements so the
+ * user must consciously collect rewards.
+ */
+export function calculateTotalXP(
+  summary: WorkoutSummary,
+  claimedAchievementIds: string[] = [],
+): number {
   const { totalWorkouts, totalSets, prCount, longestStreak } = summary;
 
   const baseXP =
@@ -204,10 +222,9 @@ export function calculateTotalXP(summary: WorkoutSummary): number {
     prCount * XP_REWARDS.PER_PR +
     longestStreak * XP_REWARDS.PER_STREAK_DAY;
 
-  // Add achievement XP bonuses
-  const achievements = getUnlockedAchievements(summary);
-  const achievementXP = achievements
-    .filter((a) => a.unlockedAt)
+  // Only add XP for achievements the user has explicitly claimed
+  const achievementXP = ACHIEVEMENT_DEFINITIONS
+    .filter((a) => claimedAchievementIds.includes(a.id))
     .reduce((sum, a) => sum + a.xpReward, 0);
 
   return baseXP + achievementXP;

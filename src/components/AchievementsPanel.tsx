@@ -1,6 +1,18 @@
 "use client";
 
 import type { Achievement } from "@/types";
+import {
+  Trophy, Dumbbell, Activity, TrendingUp, Star, Award,
+  Zap, Flame, Rocket, Target, Medal, BarChart2, Crown,
+  type LucideIcon,
+} from "lucide-react";
+import { ChartBarIncreasing } from "lucide-react";
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  Dumbbell, Activity, TrendingUp, Star, Award,
+  Zap, Flame, Rocket, Trophy, Target, Medal,
+  BarChart2, ChartBarIncreasing, Crown,
+};
 
 interface AchievementsPanelProps {
   achievements: Achievement[];
@@ -15,6 +27,7 @@ const CATEGORY_LABELS: Record<Achievement["category"], string> = {
 
 function AchievementBadge({ achievement }: { achievement: Achievement }) {
   const unlocked = !!achievement.unlockedAt;
+  const Icon = ICON_MAP[achievement.icon] ?? Trophy;
 
   return (
     <div
@@ -26,11 +39,12 @@ function AchievementBadge({ achievement }: { achievement: Achievement }) {
       }`}
     >
       <span
-        className={`text-2xl leading-none ${unlocked ? "" : "filter grayscale"}`}
-        role="img"
-        aria-label={achievement.name}
+        className={`flex items-center justify-center w-8 h-8 rounded-full ${
+          unlocked ? "text-[var(--primary-500)] bg-[var(--primary-50)]" : "text-[var(--muted-foreground)]"
+        }`}
+        aria-hidden="true"
       >
-        {achievement.icon}
+        <Icon className="w-4 h-4" />
       </span>
       <span
         className={`text-[10px] font-semibold text-center leading-tight ${

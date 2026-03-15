@@ -53,7 +53,7 @@ export async function GET() {
   const exerciseMaxWeights = new Map<string, number>();
   (workouts as WorkoutRow[]).forEach((w) => {
     (w.workout_exercises ?? []).forEach((we) => {
-      // Skip exercises without a valid ID so they don't inflate the PR count
+      // Skip exercises without a valid ID to avoid counting them toward PR totals
       if (!we.exercise_id) return;
       (we.sets ?? []).forEach((s) => {
         const current = exerciseMaxWeights.get(we.exercise_id!) ?? 0;
@@ -104,7 +104,18 @@ export async function GET() {
   }
 
   const summary = { totalWorkouts, totalSets, prCount, longestStreak, totalVolume };
-  const totalXP = calculateTotalXP(summary);
+
+  // Fetch which achievements this user has already claimed
+  const { data: claimedRows } = await supabase
+    .from("user_achievements")
+    .select("achievement_id, claimed_at")
+    .eq("user_id", user.id);
+
+  const claimedIds: string[] = (claimedRows ?? []).map(
+    (r: { achievement_id: string }) => r.achievement_id,
+  );
+
+  const totalXP = calculateTotalXP(summary, claimedIds);
   const level = levelFromXP(totalXP);
 
   return NextResponse.json({
@@ -114,7 +125,7 @@ export async function GET() {
       xpForCurrentLevel: xpForLevel(level),
       xpForNextLevel: xpForLevel(level + 1),
       xpProgress: xpProgress(totalXP),
-      achievements: getUnlockedAchievements(summary),
+      achievements: getUnlockedAchievements(summary, claimedIds),
       currentStreak,
     },
   });
