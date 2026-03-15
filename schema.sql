@@ -156,14 +156,27 @@ create table if not exists template_exercises (
 );
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- 11. USER_ACHIEVEMENTS  (tracks which achievements a user has claimed)
+-- 11. USER_ACHIEVEMENTS  (DB is the source of truth for achievement state)
+--   status = 'unlocked'  → conditions met, reward not yet collected
+--   status = 'claimed'   → user clicked Claim; XP has been banked
 -- ─────────────────────────────────────────────────────────────────────────────
 create table if not exists user_achievements (
   id             uuid        primary key default gen_random_uuid(),
   user_id        uuid        not null references auth.users(id) on delete cascade,
   achievement_id text        not null,
-  claimed_at     timestamptz not null default now(),
+  status         text        not null default 'unlocked'
+                             check (status in ('unlocked', 'claimed')),
+  unlocked_at    timestamptz not null default now(),
+  claimed_at     timestamptz,                       -- null until user claims
   unique (user_id, achievement_id)
+);
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 12. USER_STATS  (persistent XP bank – survives achievement row deletions)
+-- ─────────────────────────────────────────────────────────────────────────────
+create table if not exists user_stats (
+  user_id        uuid    primary key references auth.users(id) on delete cascade,
+  achievement_xp integer not null default 0
 );
 
 -- =============================================================================
@@ -180,6 +193,7 @@ alter table user_exercises     enable row level security;
 alter table workout_templates  enable row level security;
 alter table template_exercises enable row level security;
 alter table user_achievements  enable row level security;
+alter table user_stats         enable row level security;
 -- exercises table is public-read, no user-specific RLS needed
 
 -- ── workouts ─────────────────────────────────────────────────────────────────
@@ -264,6 +278,23 @@ create policy "Users manage own user_achievements"
   using  (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
+-- ── user_stats ────────────────────────────────────────────────────────────────
+create policy "Users manage own user_stats"
+  on user_stats for all
+  using  (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- ── Helper function: atomically increment achievement_xp ──────────────────────
+create or replace function increment_achievement_xp(p_user_id uuid, p_amount integer)
+returns void language plpgsql security definer as $$
+begin
+  insert into user_stats (user_id, achievement_xp)
+  values (p_user_id, p_amount)
+  on conflict (user_id)
+  do update set achievement_xp = user_stats.achievement_xp + p_amount;
+end;
+$$;
+
 -- =============================================================================
 -- STORAGE BUCKET (progress photos)
 -- =============================================================================
@@ -284,3 +315,61 @@ create policy "Users manage own user_achievements"
 -- create policy "Users can delete their own photos"
 --   on storage.objects for delete
 --   using (auth.uid()::text = (storage.foldername(name))[1]);
+
+-- =============================================================================
+-- MIGRATION  (run this if you already have the old schema in your DB)
+-- =============================================================================
+-- If you are starting fresh, the CREATE TABLE statements above are sufficient.
+-- If you are upgrading an existing database, run the following instead:
+
+-- Step 1 – add new columns to user_achievements
+--   NOTE: default 'claimed' is only used to back-fill existing rows (they were
+--   all claimed under the old schema). The main schema default is 'unlocked'.
+-- alter table user_achievements
+--   add column if not exists status text not null default 'claimed'
+--     constraint user_achievements_status_check check (status in ('unlocked', 'claimed')),
+--   add column if not exists unlocked_at timestamptz;
+
+-- Step 2 – back-fill unlocked_at from claimed_at for existing rows
+-- update user_achievements
+--   set unlocked_at = claimed_at
+--   where unlocked_at is null;
+
+-- Step 3 – make unlocked_at NOT NULL now that it is populated
+-- alter table user_achievements
+--   alter column unlocked_at set not null;
+
+-- Step 4 – make claimed_at nullable (was NOT NULL in old schema)
+-- alter table user_achievements
+--   alter column claimed_at drop not null;
+
+-- Step 5 – create user_stats and its RLS policy
+-- create table if not exists user_stats (
+--   user_id        uuid    primary key references auth.users(id) on delete cascade,
+--   achievement_xp integer not null default 0
+-- );
+-- alter table user_stats enable row level security;
+-- create policy "Users manage own user_stats"
+--   on user_stats for all
+--   using  (auth.uid() = user_id)
+--   with check (auth.uid() = user_id);
+
+-- Step 6 – back-fill user_stats.achievement_xp from already-claimed achievements
+-- (This seeds the persistent XP bank so existing users keep their earned XP)
+-- insert into user_stats (user_id, achievement_xp)
+-- select
+--   ua.user_id,
+--   sum(ad.xp_reward)
+-- from user_achievements ua
+-- join (
+--   values
+--     ('first_workout', 50), ('workouts_5', 100), ('workouts_10', 200),
+--     ('workouts_25', 300), ('workouts_100', 1000),
+--     ('streak_3', 75),  ('streak_7', 150),  ('streak_30', 500),
+--     ('pr_1', 75),  ('pr_5', 150),  ('pr_10', 300),
+--     ('volume_10k', 100), ('volume_50k', 250), ('volume_100k', 500)
+-- ) as ad(id, xp_reward) on ua.achievement_id = ad.id
+-- where ua.status = 'claimed'
+-- group by ua.user_id
+-- on conflict (user_id) do update
+--   set achievement_xp = user_stats.achievement_xp + excluded.achievement_xp;

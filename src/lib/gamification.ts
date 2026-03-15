@@ -168,66 +168,41 @@ export interface WorkoutSummary {
   totalVolume: number;
 }
 
-export function getUnlockedAchievements(
-  summary: WorkoutSummary,
-  claimedIds: string[] = [],
-): Achievement[] {
+/** Returns true if the achievement's unlock conditions are currently met. */
+export function checkUnlockCondition(id: string, summary: WorkoutSummary): boolean {
   const { totalWorkouts, prCount, longestStreak, totalVolume } = summary;
-
-  return ACHIEVEMENT_DEFINITIONS.map((def) => {
-    let unlocked = false;
-
-    switch (def.id) {
-      case "first_workout":   unlocked = totalWorkouts >= 1; break;
-      case "workouts_5":      unlocked = totalWorkouts >= 5; break;
-      case "workouts_10":     unlocked = totalWorkouts >= 10; break;
-      case "workouts_25":     unlocked = totalWorkouts >= 25; break;
-      case "workouts_100":    unlocked = totalWorkouts >= 100; break;
-      case "streak_3":        unlocked = longestStreak >= 3; break;
-      case "streak_7":        unlocked = longestStreak >= 7; break;
-      case "streak_30":       unlocked = longestStreak >= 30; break;
-      case "pr_1":            unlocked = prCount >= 1; break;
-      case "pr_5":            unlocked = prCount >= 5; break;
-      case "pr_10":           unlocked = prCount >= 10; break;
-      case "volume_10k":      unlocked = totalVolume >= 10000; break;
-      case "volume_50k":      unlocked = totalVolume >= 50000; break;
-      case "volume_100k":     unlocked = totalVolume >= 100000; break;
-    }
-
-    const claimedAt = claimedIds.includes(def.id) ? "claimed" : null;
-
-    return {
-      ...def,
-      unlockedAt: unlocked ? "unlocked" : null,
-      claimedAt,
-    };
-  });
+  switch (id) {
+    case "first_workout":   return totalWorkouts >= 1;
+    case "workouts_5":      return totalWorkouts >= 5;
+    case "workouts_10":     return totalWorkouts >= 10;
+    case "workouts_25":     return totalWorkouts >= 25;
+    case "workouts_100":    return totalWorkouts >= 100;
+    case "streak_3":        return longestStreak >= 3;
+    case "streak_7":        return longestStreak >= 7;
+    case "streak_30":       return longestStreak >= 30;
+    case "pr_1":            return prCount >= 1;
+    case "pr_5":            return prCount >= 5;
+    case "pr_10":           return prCount >= 10;
+    case "volume_10k":      return totalVolume >= 10000;
+    case "volume_50k":      return totalVolume >= 50000;
+    case "volume_100k":     return totalVolume >= 100000;
+    default:                return false;
+  }
 }
 
-// ── XP total calculation ──────────────────────────────────────────────────────
+// ── XP calculation ────────────────────────────────────────────────────────────
 /**
- * Base XP comes from activity (workouts, sets, PRs, streak days).
- * Achievement XP bonuses are only added for *claimed* achievements so the
- * user must consciously collect rewards.
+ * Base XP earned from workout activity (workouts, sets, PRs, streak days).
+ * This is always recomputed from live workout data.
  */
-export function calculateTotalXP(
-  summary: WorkoutSummary,
-  claimedAchievementIds: string[] = [],
-): number {
+export function calculateBaseXP(summary: WorkoutSummary): number {
   const { totalWorkouts, totalSets, prCount, longestStreak } = summary;
-
-  const baseXP =
+  return (
     totalWorkouts * XP_REWARDS.PER_WORKOUT +
-    totalSets * XP_REWARDS.PER_SET +
-    prCount * XP_REWARDS.PER_PR +
-    longestStreak * XP_REWARDS.PER_STREAK_DAY;
-
-  // Only add XP for achievements the user has explicitly claimed
-  const achievementXP = ACHIEVEMENT_DEFINITIONS
-    .filter((a) => claimedAchievementIds.includes(a.id))
-    .reduce((sum, a) => sum + a.xpReward, 0);
-
-  return baseXP + achievementXP;
+    totalSets     * XP_REWARDS.PER_SET +
+    prCount       * XP_REWARDS.PER_PR +
+    longestStreak * XP_REWARDS.PER_STREAK_DAY
+  );
 }
 
 // ── Rest timer helpers ────────────────────────────────────────────────────────
