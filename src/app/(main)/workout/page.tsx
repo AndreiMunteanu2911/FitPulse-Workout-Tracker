@@ -636,8 +636,8 @@ export default function WorkoutPage() {
                             </div>
                         )}
 
-                        {/* Templates Section */}
-                        <div className="mt-8">
+                        {/* Templates Section – only shown when no workout is active */}
+                        {!workoutStarted && <div className="mt-8">
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="text-base sm:text-lg font-bold text-[var(--foreground)]">Templates</h2>
                                 <Button onClick={() => { setEditingTemplate(null); setIsTemplateModalOpen(true); }} variant="secondary" className="px-3 py-1.5 text-xs sm:text-sm">+ Create</Button>
@@ -665,12 +665,12 @@ export default function WorkoutPage() {
                                                     console.error("Error deleting template:", error);
                                                 }
                                             }}
-                                            onStart={!workoutStarted ? () => startWorkoutFromTemplate(template) : undefined}
+                                            onStart={() => startWorkoutFromTemplate(template)}
                                         />
                                     ))}
                                 </div>
                             )}
-                        </div>
+                        </div>}
 
                         <CreateTemplateModal
                             isOpen={isTemplateModalOpen}
