@@ -63,7 +63,7 @@ export default function Navbar() {
       </nav>
 
       {/* ── Mobile Bottom Tab Bar ────────────────────────── */}
-      <nav className="fixed bottom-0 left-0 right-0 md:hidden z-20 bg-[#1d4ed8] shadow-[0_-4px_20px_rgba(29,78,216,0.4)]">
+      <nav className="fixed bottom-0 left-0 right-0 md:hidden z-20 bg-[#1d4ed8] text-white shadow-[0_-4px_20px_rgba(29,78,216,0.4)]">
         <ul className="flex">
           {tabs.map(({ name, href, Icon }) => {
             const active = pathname === href;
