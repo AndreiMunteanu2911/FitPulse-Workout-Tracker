@@ -20,6 +20,12 @@ function formatTime(seconds: number): string {
 /** Inline rest-timer row rendered inside the exercise sets list. */
 export default function RestTimer({ timer, onTick, onSkip, onDismiss }: RestTimerRowProps) {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Keep stable refs so the interval effect does not need to list these as deps
+  const onTickRef = useRef(onTick);
+  const onSkipRef = useRef(onSkip);
+  useEffect(() => { onTickRef.current = onTick; });
+  useEffect(() => { onSkipRef.current = onSkip; });
+
   const { active, remaining } = timer;
 
   // Haptic feedback
@@ -38,19 +44,17 @@ export default function RestTimer({ timer, onTick, onSkip, onDismiss }: RestTime
     if (remaining <= 0) {
       if (intervalRef.current) clearInterval(intervalRef.current);
       // Auto-skip after a brief "Done!" moment
-      const t = setTimeout(onSkip, 1200);
+      const t = setTimeout(() => onSkipRef.current(), 1200);
       return () => clearTimeout(t);
     }
 
     intervalRef.current = setInterval(() => {
-      onTick(remaining - 1);
+      onTickRef.current(remaining - 1);
     }, 1000);
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-    // `onTick` and `onSkip` are stable callbacks; `remaining` drives re-runs correctly.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, remaining]);
 
   // Haptic when done
@@ -63,24 +67,14 @@ export default function RestTimer({ timer, onTick, onSkip, onDismiss }: RestTime
   const isDone = remaining === 0;
 
   return (
-    <div
-      className={`grid grid-cols-[3rem_1fr_1fr_5rem] items-center gap-2 px-1 py-2 rounded-[var(--radius-md)] transition-colors ${
-        isDone
-          ? "bg-[var(--primary-50)] dark:bg-[var(--primary-100)]"
-          : "bg-[var(--primary-50)] dark:bg-[var(--primary-100)]"
-      }`}
-    >
+    <div className="grid grid-cols-[3rem_1fr_1fr_5rem] items-center gap-2 px-1 py-2 rounded-[var(--radius-md)] bg-[var(--primary-50)] dark:bg-[var(--primary-100)]">
       {/* Timer icon */}
       <span className="flex items-center justify-center">
         <Timer className="w-4 h-4 text-[var(--primary-500)]" />
       </span>
 
       {/* Countdown */}
-      <span
-        className={`col-span-2 text-sm font-bold tabular-nums text-center ${
-          isDone ? "text-[var(--primary-600)]" : "text-[var(--primary-600)] dark:text-[var(--primary-500)]"
-        }`}
-      >
+      <span className="col-span-2 text-sm font-bold tabular-nums text-center text-[var(--primary-600)] dark:text-[var(--primary-500)]">
         {isDone ? "Rest done!" : `Rest  ${formatTime(remaining)}`}
       </span>
 

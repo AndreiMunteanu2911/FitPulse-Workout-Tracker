@@ -48,7 +48,8 @@ export default function XPLevelCard({ gamification }: XPLevelCardProps) {
         {currentStreak > 0 && (
           <span className="flex items-center gap-1 ml-2">
             <Flame className="w-3.5 h-3.5 text-[var(--primary-500)]" />
-            <span className="font-semibold text-[var(--foreground)]">{currentStreak}</span> day streak
+            <span className="font-semibold text-[var(--foreground)]">{currentStreak}</span>
+            {` day${currentStreak === 1 ? "" : "s"} streak`}
           </span>
         )}
 

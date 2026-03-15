@@ -64,6 +64,7 @@ export async function GET() {
   const prCount = exerciseMaxWeights.size;
 
   // Calculate streaks from unique workout dates (newest first)
+  const MS_PER_DAY = 24 * 60 * 60 * 1000;
   const uniqueDates = [
     ...new Set((workouts as WorkoutRow[]).map((w) => w.workout_date)),
   ].sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
@@ -74,13 +75,13 @@ export async function GET() {
   if (uniqueDates.length > 0) {
     // Current streak: must include today or yesterday to be active
     const todayStr = new Date().toISOString().split("T")[0];
-    const yesterdayStr = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+    const yesterdayStr = new Date(Date.now() - MS_PER_DAY).toISOString().split("T")[0];
     if (uniqueDates[0] === todayStr || uniqueDates[0] === yesterdayStr) {
       currentStreak = 1;
       for (let i = 1; i < uniqueDates.length; i++) {
         const prev = new Date(uniqueDates[i - 1]);
         const curr = new Date(uniqueDates[i]);
-        const diff = (prev.getTime() - curr.getTime()) / (24 * 60 * 60 * 1000);
+        const diff = (prev.getTime() - curr.getTime()) / MS_PER_DAY;
         if (diff === 1) currentStreak++;
         else break;
       }
@@ -91,7 +92,7 @@ export async function GET() {
     for (let i = 1; i < uniqueDates.length; i++) {
       const prev = new Date(uniqueDates[i - 1]);
       const curr = new Date(uniqueDates[i]);
-      const diff = (prev.getTime() - curr.getTime()) / (24 * 60 * 60 * 1000);
+      const diff = (prev.getTime() - curr.getTime()) / MS_PER_DAY;
       if (diff === 1) {
         tempStreak++;
       } else {
