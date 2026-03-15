@@ -1,13 +1,14 @@
 import type { WorkoutTemplate } from "@/types";
-import { PenSquare, Trash2, List } from "lucide-react";
+import { PenSquare, Trash2, List, Play } from "lucide-react";
 
 interface TemplateCardProps {
   template: WorkoutTemplate;
   onEdit: () => void;
   onDelete: () => void;
+  onStart?: () => void;
 }
 
-export default function TemplateCard({ template, onEdit, onDelete }: TemplateCardProps) {
+export default function TemplateCard({ template, onEdit, onDelete, onStart }: TemplateCardProps) {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
@@ -54,9 +55,21 @@ export default function TemplateCard({ template, onEdit, onDelete }: TemplateCar
             <List className="w-3 h-3" />
             {exerciseCount} {exerciseCount === 1 ? "exercise" : "exercises"}
           </span>
-          <span className="text-xs text-[var(--muted-foreground)]">
-            {template.updated_at ? formatDate(template.updated_at) : template.created_at ? formatDate(template.created_at) : ""}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-[var(--muted-foreground)]">
+              {template.updated_at ? formatDate(template.updated_at) : template.created_at ? formatDate(template.created_at) : ""}
+            </span>
+            {onStart && (
+              <button
+                onClick={onStart}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[var(--radius-md)] text-xs font-semibold bg-[var(--primary-500)] hover:bg-[var(--primary-600)] text-white transition-colors"
+                aria-label="Start workout from template"
+              >
+                <Play className="w-3 h-3" />
+                Start
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
