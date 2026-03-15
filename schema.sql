@@ -156,27 +156,61 @@ create table if not exists template_exercises (
 );
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- 11. USER_ACHIEVEMENTS  (DB is the source of truth for achievement state)
---   status = 'unlocked'  → conditions met, reward not yet collected
---   status = 'claimed'   → user clicked Claim; XP has been banked
+-- 11. ACHIEVEMENTS  (static catalogue – seeded once, referenced by FK)
+-- ─────────────────────────────────────────────────────────────────────────────
+create table if not exists achievements (
+  id          text    primary key,
+  name        text    not null,
+  description text    not null,
+  icon        text    not null,
+  xp_reward   integer not null default 0,
+  category    text    not null check (category in ('workouts','streaks','records','volume'))
+);
+
+insert into achievements (id, name, description, icon, xp_reward, category) values
+  ('first_workout', 'First Step',       'Complete your first workout',          'Dumbbell',         50,   'workouts'),
+  ('workouts_5',    'Warm Up',          'Complete 5 workouts',                  'Activity',        100,   'workouts'),
+  ('workouts_10',   'Getting Serious',  'Complete 10 workouts',                 'TrendingUp',      200,   'workouts'),
+  ('workouts_25',   'Dedicated',        'Complete 25 workouts',                 'Star',            300,   'workouts'),
+  ('workouts_100',  'Century Club',     'Complete 100 workouts',                'Award',          1000,   'workouts'),
+  ('streak_3',      'Hat Trick',        'Maintain a 3-day workout streak',      'Zap',              75,   'streaks'),
+  ('streak_7',      'On Fire',          'Maintain a 7-day workout streak',      'Flame',           150,   'streaks'),
+  ('streak_30',     'Unstoppable',      'Maintain a 30-day workout streak',     'Rocket',          500,   'streaks'),
+  ('pr_1',          'Record Setter',    'Set your first personal record',       'Trophy',           75,   'records'),
+  ('pr_5',          'PR Crusher',       'Set 5 personal records',               'Target',          150,   'records'),
+  ('pr_10',         'Record Breaker',   'Set 10 personal records',              'Medal',           300,   'records'),
+  ('volume_10k',    'Iron Starter',     'Lift 10,000 kg total volume',          'BarChart2',       100,   'volume'),
+  ('volume_50k',    'Heavy Lifter',     'Lift 50,000 kg total volume',          'ChartBarIncreasing', 250, 'volume'),
+  ('volume_100k',   'Volume King',      'Lift 100,000 kg total volume',         'Crown',           500,   'volume')
+on conflict (id) do nothing;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 12. USER_STATS  (XP bank – source of truth, survives workout/achievement deletions)
+-- ─────────────────────────────────────────────────────────────────────────────
+create table if not exists user_stats (
+  id                  uuid        primary key default gen_random_uuid(),
+  user_id             uuid        not null references auth.users(id) on delete cascade,
+  total_xp            integer     not null default 0,
+  level               integer     not null default 1,
+  streak_freeze_count integer     not null default 0,
+  created_at          timestamptz not null default now(),
+  updated_at          timestamptz not null default now(),
+  unique (user_id)
+);
+
+create trigger trg_user_stats_updated_at
+  before update on user_stats
+  for each row execute function update_updated_at();
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 13. USER_ACHIEVEMENTS  (unlock log – one row per claimed achievement)
 -- ─────────────────────────────────────────────────────────────────────────────
 create table if not exists user_achievements (
   id             uuid        primary key default gen_random_uuid(),
   user_id        uuid        not null references auth.users(id) on delete cascade,
-  achievement_id text        not null,
-  status         text        not null default 'unlocked'
-                             check (status in ('unlocked', 'claimed')),
+  achievement_id text        not null references achievements(id),
   unlocked_at    timestamptz not null default now(),
-  claimed_at     timestamptz,                       -- null until user claims
   unique (user_id, achievement_id)
-);
-
--- ─────────────────────────────────────────────────────────────────────────────
--- 12. USER_STATS  (persistent XP bank – survives achievement row deletions)
--- ─────────────────────────────────────────────────────────────────────────────
-create table if not exists user_stats (
-  user_id        uuid    primary key references auth.users(id) on delete cascade,
-  achievement_xp integer not null default 0
 );
 
 -- =============================================================================
@@ -192,8 +226,9 @@ alter table progress_photos    enable row level security;
 alter table user_exercises     enable row level security;
 alter table workout_templates  enable row level security;
 alter table template_exercises enable row level security;
-alter table user_achievements  enable row level security;
+alter table achievements       enable row level security;
 alter table user_stats         enable row level security;
+alter table user_achievements  enable row level security;
 -- exercises table is public-read, no user-specific RLS needed
 
 -- ── workouts ─────────────────────────────────────────────────────────────────
