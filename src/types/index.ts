@@ -147,6 +147,7 @@ export interface GamificationStats {
   xpForNextLevel: number;
   xpProgress: number; // 0–100 %
   achievements: Achievement[];
+  currentStreak: number;
 }
 
 // ── Rest Timer ─────────────────────────────────────────────────────────────────
@@ -159,4 +160,5 @@ export interface RestTimerState {
   remaining: number;       // seconds left
   exerciseName: string;
   exerciseType: ExerciseType;
+  workoutExerciseId?: string; // which exercise triggered this timer
 }

@@ -63,13 +63,30 @@ export async function GET() {
   });
   const prCount = exerciseMaxWeights.size;
 
-  // Calculate longest streak from unique workout dates
+  // Calculate streaks from unique workout dates (newest first)
   const uniqueDates = [
     ...new Set((workouts as WorkoutRow[]).map((w) => w.workout_date)),
   ].sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
 
   let longestStreak = 0;
+  let currentStreak = 0;
+
   if (uniqueDates.length > 0) {
+    // Current streak: must include today or yesterday to be active
+    const todayStr = new Date().toISOString().split("T")[0];
+    const yesterdayStr = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+    if (uniqueDates[0] === todayStr || uniqueDates[0] === yesterdayStr) {
+      currentStreak = 1;
+      for (let i = 1; i < uniqueDates.length; i++) {
+        const prev = new Date(uniqueDates[i - 1]);
+        const curr = new Date(uniqueDates[i]);
+        const diff = (prev.getTime() - curr.getTime()) / (24 * 60 * 60 * 1000);
+        if (diff === 1) currentStreak++;
+        else break;
+      }
+    }
+
+    // Longest streak
     let tempStreak = 1;
     for (let i = 1; i < uniqueDates.length; i++) {
       const prev = new Date(uniqueDates[i - 1]);
@@ -97,6 +114,7 @@ export async function GET() {
       xpForNextLevel: xpForLevel(level + 1),
       xpProgress: xpProgress(totalXP),
       achievements: getUnlockedAchievements(summary),
+      currentStreak,
     },
   });
 }

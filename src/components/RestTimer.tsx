@@ -2,65 +2,13 @@
 
 import { useEffect, useRef, useCallback } from "react";
 import type { RestTimerState } from "@/types";
-import { X, SkipForward } from "lucide-react";
+import { Check, X, Timer } from "lucide-react";
 
-interface RestTimerProps {
+interface RestTimerRowProps {
   timer: RestTimerState;
   onTick: (remaining: number) => void;
   onSkip: () => void;
   onDismiss: () => void;
-}
-
-function CircularProgress({
-  progress,
-  size = 72,
-  strokeWidth = 6,
-  children,
-}: {
-  progress: number; // 0–100
-  size?: number;
-  strokeWidth?: number;
-  children?: React.ReactNode;
-}) {
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference * (1 - progress / 100);
-
-  return (
-    <svg width={size} height={size} className="rotate-[-90deg]">
-      {/* Track */}
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        fill="none"
-        stroke="var(--surface-raised)"
-        strokeWidth={strokeWidth}
-      />
-      {/* Progress */}
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        fill="none"
-        stroke="var(--primary-500)"
-        strokeWidth={strokeWidth}
-        strokeDasharray={circumference}
-        strokeDashoffset={offset}
-        strokeLinecap="round"
-        style={{ transition: "stroke-dashoffset 0.9s linear" }}
-      />
-      {/* Centre text — rendered upright */}
-      <foreignObject x={0} y={0} width={size} height={size} className="rotate-90">
-        <div
-          style={{ width: size, height: size }}
-          className="flex items-center justify-center"
-        >
-          {children}
-        </div>
-      </foreignObject>
-    </svg>
-  );
 }
 
 function formatTime(seconds: number): string {
@@ -69,29 +17,29 @@ function formatTime(seconds: number): string {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-export default function RestTimer({ timer, onTick, onSkip, onDismiss }: RestTimerProps) {
+/** Inline rest-timer row rendered inside the exercise sets list. */
+export default function RestTimer({ timer, onTick, onSkip, onDismiss }: RestTimerRowProps) {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const { active, duration, remaining, exerciseName, exerciseType } = timer;
+  const { active, remaining } = timer;
 
-  const progress = duration > 0 ? (remaining / duration) * 100 : 0;
-
-  // Haptic feedback helper — vibration API is unsupported on many browsers/devices,
-  // so we intentionally swallow any errors rather than surfacing them to the user.
+  // Haptic feedback
   const vibrate = useCallback((pattern: number | number[]) => {
     if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-      try {
-        navigator.vibrate(pattern);
-      } catch {
-        // Vibration API not available or blocked — safe to ignore
-      }
+      try { navigator.vibrate(pattern); } catch { /* not available */ }
     }
   }, []);
 
   // Countdown tick
   useEffect(() => {
-    if (!active || remaining <= 0) {
+    if (!active) {
       if (intervalRef.current) clearInterval(intervalRef.current);
       return;
+    }
+    if (remaining <= 0) {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      // Auto-skip after a brief "Done!" moment
+      const t = setTimeout(onSkip, 1200);
+      return () => clearTimeout(t);
     }
 
     intervalRef.current = setInterval(() => {
@@ -101,79 +49,61 @@ export default function RestTimer({ timer, onTick, onSkip, onDismiss }: RestTime
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-    // `onTick` is intentionally excluded from deps: it is a stable callback passed from
-    // the parent and including it would cause the interval to be reset on every tick,
-    // producing double-ticking behaviour.  `remaining` drives the re-run correctly.
+    // `onTick` and `onSkip` are stable callbacks; `remaining` drives re-runs correctly.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, remaining]);
 
-  // Fire haptic when done
+  // Haptic when done
   useEffect(() => {
-    if (active && remaining === 0) {
-      vibrate([200, 100, 200]);
-    }
+    if (active && remaining === 0) vibrate([200, 100, 200]);
   }, [active, remaining, vibrate]);
 
   if (!active) return null;
 
   const isDone = remaining === 0;
-  const label = exerciseType === "compound" ? "Compound rest" : "Isolation rest";
 
   return (
-    /* Floating card — sits just above the bottom nav on mobile */
-    <div className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-sm">
-      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-lg,0_8px_32px_rgba(0,0,0,0.25))] p-4 flex items-center gap-4">
-        {/* Circular countdown */}
-        <div className="flex-shrink-0">
-          <CircularProgress progress={progress} size={72} strokeWidth={6}>
-            <span
-              className={`text-sm font-bold tabular-nums ${
-                isDone
-                  ? "text-[var(--color-success)]"
-                  : remaining <= 10
-                  ? "text-[var(--color-destructive)]"
-                  : "text-[var(--foreground)]"
-              }`}
-            >
-              {isDone ? "Go!" : formatTime(remaining)}
-            </span>
-          </CircularProgress>
-        </div>
+    <div
+      className={`grid grid-cols-[3rem_1fr_1fr_5rem] items-center gap-2 px-1 py-2 rounded-[var(--radius-md)] transition-colors ${
+        isDone
+          ? "bg-[var(--primary-50)] dark:bg-[var(--primary-100)]"
+          : "bg-[var(--primary-50)] dark:bg-[var(--primary-100)]"
+      }`}
+    >
+      {/* Timer icon */}
+      <span className="flex items-center justify-center">
+        <Timer className="w-4 h-4 text-[var(--primary-500)]" />
+      </span>
 
-        {/* Text info */}
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wide">
-            {isDone ? "Rest complete" : label}
-          </p>
-          <p className="text-sm font-bold text-[var(--foreground)] truncate capitalize mt-0.5">
-            {exerciseName}
-          </p>
-          {!isDone && (
-            <p className="text-xs text-[var(--muted-foreground)] mt-0.5">
-              {exerciseType === "compound" ? "3 min rest" : "90 s rest"}
-            </p>
-          )}
-        </div>
+      {/* Countdown */}
+      <span
+        className={`col-span-2 text-sm font-bold tabular-nums text-center ${
+          isDone ? "text-[var(--primary-600)]" : "text-[var(--primary-600)] dark:text-[var(--primary-500)]"
+        }`}
+      >
+        {isDone ? "Rest done!" : `Rest  ${formatTime(remaining)}`}
+      </span>
 
-        {/* Action buttons */}
-        <div className="flex flex-col gap-1.5 flex-shrink-0">
-          {!isDone ? (
-            <button
-              onClick={onSkip}
-              aria-label="Skip rest"
-              className="w-9 h-9 rounded-full flex items-center justify-center bg-[var(--primary-50)] dark:bg-[var(--primary-100)] text-[var(--primary-600)] dark:text-[var(--primary-700)] hover:brightness-95 transition-all"
-            >
-              <SkipForward className="w-4 h-4" />
-            </button>
-          ) : null}
+      {/* Action buttons */}
+      <div className="flex items-center gap-1 justify-end">
+        {!isDone && (
           <button
-            onClick={onDismiss}
-            aria-label="Dismiss timer"
-            className="w-9 h-9 rounded-full flex items-center justify-center bg-[var(--surface-raised)] text-[var(--muted-foreground)] hover:bg-[var(--color-destructive-bg)] hover:text-[var(--color-destructive)] transition-all"
+            onClick={onSkip}
+            aria-label="Skip rest"
+            title="Skip rest"
+            className="w-6 h-6 rounded-full flex items-center justify-center text-[var(--primary-600)] dark:text-[var(--primary-500)] hover:bg-[var(--primary-100)] dark:hover:bg-[var(--primary-200)] transition-colors"
           >
-            <X className="w-4 h-4" />
+            <Check className="w-3.5 h-3.5" />
           </button>
-        </div>
+        )}
+        <button
+          onClick={onDismiss}
+          aria-label="Dismiss rest timer"
+          title="Dismiss"
+          className="w-6 h-6 rounded-full flex items-center justify-center text-[var(--muted-foreground)] hover:bg-[var(--surface-raised)] transition-colors"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
       </div>
     </div>
   );

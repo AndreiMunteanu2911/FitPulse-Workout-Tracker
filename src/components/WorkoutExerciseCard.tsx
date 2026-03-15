@@ -1,6 +1,7 @@
 import LoadingSpinner from "@/components/LoadingSpinner";
+import RestTimer from "@/components/RestTimer";
 import { useState } from "react";
-import type { WorkoutExercise } from "@/types";
+import type { WorkoutExercise, RestTimerState } from "@/types";
 import { Trash2, Check, X, Plus } from "lucide-react";
 
 interface ExerciseCardProps {
@@ -10,10 +11,14 @@ interface ExerciseCardProps {
     onUpdateSet: (exerciseIndex: number, setIndex: number, field: 'reps' | 'weight', value: number) => void;
     onDeleteSet: (exerciseIndex: number, setIndex: number) => void;
     onDeleteExercise: (exerciseIndex: number) => void;
-    onConfirmSet: (setId: string, exercise: WorkoutExercise["exercise"]) => void;
+    onConfirmSet: (setId: string, exercise: WorkoutExercise["exercise"], workoutExerciseId: string) => void;
     confirmedSetIds: Set<string>;
     errorMessage: string;
     setErrorMessage: (message: string) => void;
+    restTimer?: RestTimerState;
+    onRestTimerTick?: (remaining: number) => void;
+    onRestTimerSkip?: () => void;
+    onRestTimerDismiss?: () => void;
 }
 
 function capitalizeFirstLetter(str: string) {
@@ -51,7 +56,17 @@ export default function WorkoutExerciseCard({
     confirmedSetIds,
     errorMessage,
     setErrorMessage,
+    restTimer,
+    onRestTimerTick,
+    onRestTimerSkip,
+    onRestTimerDismiss,
 }: ExerciseCardProps) {
+    const showTimer =
+        restTimer?.active &&
+        restTimer.workoutExerciseId === workoutExercise.id &&
+        onRestTimerTick &&
+        onRestTimerSkip &&
+        onRestTimerDismiss;
     return (
         <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] overflow-hidden">
             {/* Accent top strip */}
@@ -142,7 +157,7 @@ export default function WorkoutExerciseCard({
                                         aria-label="Confirm set"
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            onConfirmSet(set.id, workoutExercise.exercise);
+                                            onConfirmSet(set.id, workoutExercise.exercise, workoutExercise.id);
                                         }}
                                         className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
                                             isConfirmed
@@ -167,6 +182,18 @@ export default function WorkoutExerciseCard({
                         );
                     })}
                 </div>
+
+                {/* Rest Timer row – appears inline after sets when active for this exercise */}
+                {showTimer && (
+                    <div className="mb-4">
+                        <RestTimer
+                            timer={restTimer!}
+                            onTick={onRestTimerTick!}
+                            onSkip={onRestTimerSkip!}
+                            onDismiss={onRestTimerDismiss!}
+                        />
+                    </div>
+                )}
 
                 {/* Add Set */}
                 <button

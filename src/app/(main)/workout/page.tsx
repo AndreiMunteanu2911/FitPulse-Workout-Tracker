@@ -9,7 +9,6 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import CancelWorkoutModal from "@/components/CancelWorkoutModal";
 import FinishWorkoutModal from "@/components/FinishWorkoutModal";
 import DiscardSetsModal from "@/components/DiscardSetsModal";
-import RestTimer from "@/components/RestTimer";
 import { useWorkout } from "@/hooks/useWorkout";
 import { useExercises } from "@/hooks/useExercises";
 import { useWorkoutTemplates } from "@/hooks/useWorkoutTemplates";
@@ -276,10 +275,10 @@ export default function WorkoutPage() {
         }
     };
 
-    const handleConfirmSet = (setId: string, exercise: WorkoutExercise["exercise"]) => {
+    const handleConfirmSet = (setId: string, exercise: WorkoutExercise["exercise"], workoutExerciseId: string) => {
         setConfirmedSetIds((prev) => new Set([...prev, setId]));
 
-        // Auto-start rest timer
+        // Auto-start rest timer inline in the exercise card
         const exerciseType = detectExerciseType(exercise);
         const duration = REST_DURATIONS[exerciseType];
         setRestTimer({
@@ -288,6 +287,7 @@ export default function WorkoutPage() {
             remaining: duration,
             exerciseName: exercise.name,
             exerciseType,
+            workoutExerciseId,
         });
     };
 
@@ -632,6 +632,16 @@ export default function WorkoutPage() {
                                                         [`exercise-${exerciseIndex}`]: message,
                                                     }))
                                                 }
+                                                restTimer={restTimer}
+                                                onRestTimerTick={(remaining) =>
+                                                    setRestTimer((prev) => ({ ...prev, remaining }))
+                                                }
+                                                onRestTimerSkip={() =>
+                                                    setRestTimer((prev) => ({ ...prev, active: false, remaining: 0 }))
+                                                }
+                                                onRestTimerDismiss={() =>
+                                                    setRestTimer((prev) => ({ ...prev, active: false }))
+                                                }
                                             />
                                         ))}
                                     </div>
@@ -728,20 +738,6 @@ export default function WorkoutPage() {
                     </>
                 )}
             </div>
-
-            {/* Smart Rest Timer — floats above the bottom nav */}
-            <RestTimer
-                timer={restTimer}
-                onTick={(remaining) =>
-                    setRestTimer((prev) => ({ ...prev, remaining }))
-                }
-                onSkip={() =>
-                    setRestTimer((prev) => ({ ...prev, active: false, remaining: 0 }))
-                }
-                onDismiss={() =>
-                    setRestTimer((prev) => ({ ...prev, active: false }))
-                }
-            />
         </ProtectedWrapper>
     );
 }

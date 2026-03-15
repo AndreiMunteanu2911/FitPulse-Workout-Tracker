@@ -1,14 +1,14 @@
 "use client";
 
 import type { GamificationStats } from "@/types";
-import { Zap } from "lucide-react";
+import { Zap, Flame } from "lucide-react";
 
 interface XPLevelCardProps {
   gamification: GamificationStats;
 }
 
 export default function XPLevelCard({ gamification }: XPLevelCardProps) {
-  const { level, totalXP, xpForCurrentLevel, xpForNextLevel, xpProgress } = gamification;
+  const { level, totalXP, xpForCurrentLevel, xpForNextLevel, xpProgress, currentStreak } = gamification;
 
   const xpInLevel = totalXP - xpForCurrentLevel;
   const xpNeeded = xpForNextLevel - xpForCurrentLevel;
@@ -39,11 +39,19 @@ export default function XPLevelCard({ gamification }: XPLevelCardProps) {
         </div>
       </div>
 
-      <div className="flex items-center gap-1.5 text-xs text-[var(--muted-foreground)]">
-        <Zap className="w-3.5 h-3.5 text-[var(--primary-500)]" />
-        <span>
-          <span className="font-semibold text-[var(--foreground)]">{totalXP.toLocaleString()}</span> total XP
+      <div className="flex items-center gap-3 text-xs text-[var(--muted-foreground)]">
+        <span className="flex items-center gap-1">
+          <Zap className="w-3.5 h-3.5 text-[var(--primary-500)]" />
+          <span className="font-semibold text-[var(--foreground)]">{totalXP.toLocaleString()}</span> XP
         </span>
+
+        {currentStreak > 0 && (
+          <span className="flex items-center gap-1 ml-2">
+            <Flame className="w-3.5 h-3.5 text-[var(--primary-500)]" />
+            <span className="font-semibold text-[var(--foreground)]">{currentStreak}</span> day streak
+          </span>
+        )}
+
         <span className="ml-auto">
           {(xpForNextLevel - totalXP).toLocaleString()} XP to Level {level + 1}
         </span>

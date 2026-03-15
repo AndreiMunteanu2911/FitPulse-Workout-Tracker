@@ -8,48 +8,36 @@ import XPLevelCard from "@/components/XPLevelCard";
 import type { Achievement, GamificationStats } from "@/types";
 import { ArrowLeft, Trophy } from "lucide-react";
 
-// ── Tier colour palette (inspired by achievement tier systems) ─────────────────
+// ── Category meta – all shades of the primary (indigo) palette ─────────────────
 type CategoryKey = Achievement["category"];
 
 const CATEGORY_META: Record<
   CategoryKey,
-  { label: string; color: string; trackColor: string; bgFrom: string; bgTo: string; badgeBorder: string; badgeBg: string }
+  { label: string; colorVar: string; trackVar: string; headerBg: string }
 > = {
   workouts: {
     label: "Workouts",
-    color: "#6366f1",        // indigo
-    trackColor: "#e0e7ff",
-    bgFrom: "#eef2ff",
-    bgTo: "#c7d2fe",
-    badgeBorder: "#6366f1",
-    badgeBg: "#eef2ff",
+    colorVar: "var(--primary-600)",
+    trackVar: "var(--primary-100)",
+    headerBg: "var(--primary-50)",
   },
   streaks: {
     label: "Streaks",
-    color: "#f59e0b",        // amber
-    trackColor: "#fef3c7",
-    bgFrom: "#fffbeb",
-    bgTo: "#fde68a",
-    badgeBorder: "#f59e0b",
-    badgeBg: "#fffbeb",
+    colorVar: "var(--primary-500)",
+    trackVar: "var(--primary-100)",
+    headerBg: "var(--primary-50)",
   },
   records: {
     label: "Records",
-    color: "#a855f7",        // purple
-    trackColor: "#f3e8ff",
-    bgFrom: "#faf5ff",
-    bgTo: "#e9d5ff",
-    badgeBorder: "#a855f7",
-    badgeBg: "#faf5ff",
+    colorVar: "var(--primary-700)",
+    trackVar: "var(--primary-100)",
+    headerBg: "var(--primary-50)",
   },
   volume: {
     label: "Volume",
-    color: "#10b981",        // emerald
-    trackColor: "#d1fae5",
-    bgFrom: "#ecfdf5",
-    bgTo: "#a7f3d0",
-    badgeBorder: "#10b981",
-    badgeBg: "#ecfdf5",
+    colorVar: "var(--primary-400)",
+    trackVar: "var(--primary-100)",
+    headerBg: "var(--primary-50)",
   },
 };
 
@@ -57,13 +45,13 @@ const CATEGORY_META: Record<
 function CategoryRing({
   unlocked,
   total,
-  color,
-  trackColor,
+  colorVar,
+  trackVar,
 }: {
   unlocked: number;
   total: number;
-  color: string;
-  trackColor: string;
+  colorVar: string;
+  trackVar: string;
 }) {
   const size = 64;
   const strokeWidth = 6;
@@ -79,7 +67,7 @@ function CategoryRing({
         cy={size / 2}
         r={radius}
         fill="none"
-        stroke={trackColor}
+        stroke={trackVar}
         strokeWidth={strokeWidth}
       />
       <circle
@@ -87,7 +75,7 @@ function CategoryRing({
         cy={size / 2}
         r={radius}
         fill="none"
-        stroke={color}
+        stroke={colorVar}
         strokeWidth={strokeWidth}
         strokeDasharray={circumference}
         strokeDashoffset={offset}
@@ -101,12 +89,10 @@ function CategoryRing({
 // ── Badge card ─────────────────────────────────────────────────────────────────
 function AchievementBadge({
   achievement,
-  accentColor,
-  accentBg,
+  colorVar,
 }: {
   achievement: Achievement;
-  accentColor: string;
-  accentBg: string;
+  colorVar: string;
 }) {
   const unlocked = !!achievement.unlockedAt;
 
@@ -119,9 +105,9 @@ function AchievementBadge({
       style={
         unlocked
           ? {
-              borderColor: accentColor,
-              backgroundColor: accentBg,
-              boxShadow: `0 0 0 1px ${accentColor}33`,
+              borderColor: colorVar,
+              backgroundColor: "var(--primary-50)",
+              boxShadow: `0 0 0 1px ${colorVar}33`,
             }
           : { borderColor: "var(--border)", backgroundColor: "var(--surface-raised)" }
       }
@@ -136,7 +122,7 @@ function AchievementBadge({
         className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
         style={
           unlocked
-            ? { color: accentColor, backgroundColor: `${accentColor}22` }
+            ? { color: colorVar, backgroundColor: "var(--primary-100)" }
             : { color: "var(--muted-foreground)", backgroundColor: "var(--surface)" }
         }
       >
@@ -158,27 +144,23 @@ function CategorySection({
   const unlocked = achievements.filter((a) => !!a.unlockedAt).length;
 
   return (
-    <section
-      className="rounded-2xl overflow-hidden shadow-sm border border-[var(--border)]"
-    >
-      {/* Header with gradient strip + ring */}
+    <section className="rounded-2xl overflow-hidden shadow-sm border border-[var(--border)]">
+      {/* Header */}
       <div
         className="px-4 py-3 flex items-center gap-4"
-        style={{
-          background: `linear-gradient(135deg, ${meta.bgFrom} 0%, ${meta.bgTo} 100%)`,
-        }}
+        style={{ backgroundColor: meta.headerBg }}
       >
         <div className="relative flex-shrink-0">
           <CategoryRing
             unlocked={unlocked}
             total={achievements.length}
-            color={meta.color}
-            trackColor={meta.trackColor}
+            colorVar={meta.colorVar}
+            trackVar={meta.trackVar}
           />
           {/* Centre text (rotated back upright) */}
           <span
             className="absolute inset-0 flex items-center justify-center text-[11px] font-extrabold tabular-nums"
-            style={{ color: meta.color }}
+            style={{ color: meta.colorVar }}
           >
             {unlocked}/{achievements.length}
           </span>
@@ -187,7 +169,7 @@ function CategorySection({
         <div>
           <h2
             className="text-base font-extrabold tracking-tight"
-            style={{ color: meta.color }}
+            style={{ color: meta.colorVar }}
           >
             {meta.label}
           </h2>
@@ -205,8 +187,7 @@ function CategorySection({
           <AchievementBadge
             key={a.id}
             achievement={a}
-            accentColor={meta.color}
-            accentBg={meta.badgeBg}
+            colorVar={meta.colorVar}
           />
         ))}
       </div>
@@ -247,7 +228,7 @@ export default function AchievementsPage() {
           </Link>
           <div>
             <h1 className="text-2xl font-extrabold text-[var(--foreground)] tracking-tight flex items-center gap-2">
-              <Trophy className="w-6 h-6 text-amber-500" />
+              <Trophy className="w-6 h-6 text-[var(--primary-500)]" />
               Achievements
             </h1>
             {!loading && gamification && (
@@ -291,3 +272,4 @@ export default function AchievementsPage() {
     </ProtectedWrapper>
   );
 }
+
