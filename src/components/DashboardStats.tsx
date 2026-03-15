@@ -3,9 +3,11 @@
 import { useState, useEffect } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import StatCard from "@/components/StatCard";
+import XPLevelCard from "@/components/XPLevelCard";
+import AchievementsTeaserCard from "@/components/AchievementsTeaserCard";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { BarChart2, Calendar, Flame, Sparkles, Zap, TrendingUp, Plus } from "lucide-react";
-import { WorkoutStats } from "@/types";
+import { WorkoutStats, GamificationStats } from "@/types";
 
 const formatNumber = (num: number): string => {
   if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
@@ -15,16 +17,25 @@ const formatNumber = (num: number): string => {
 
 export default function DashboardStats() {
   const [stats, setStats] = useState<WorkoutStats | null>(null);
+  const [gamification, setGamification] = useState<GamificationStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await fetch("/api/dashboard");
-        if (!res.ok) throw new Error("Failed to fetch stats");
-        const data = await res.json();
-        setStats(data.stats);
+        const [statsRes, gamRes] = await Promise.all([
+          fetch("/api/dashboard"),
+          fetch("/api/gamification"),
+        ]);
+        if (!statsRes.ok) throw new Error("Failed to fetch stats");
+        const statsData = await statsRes.json();
+        setStats(statsData.stats);
+
+        if (gamRes.ok) {
+          const gamData = await gamRes.json();
+          setGamification(gamData.gamification);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
@@ -50,21 +61,35 @@ export default function DashboardStats() {
     );
   }
 
+  // ── Gamification panel rendered independently of workout count ────────────────
+  const gamificationSection = gamification && (
+    <div className="space-y-4">
+      <XPLevelCard gamification={gamification} />
+      <AchievementsTeaserCard achievements={gamification.achievements} />
+    </div>
+  );
+
+  // ── Empty state (no workouts) ──────────────────────────────────────────────────
   if (!stats || stats.totalWorkouts === 0) {
     return (
-      <div className="text-center py-16 bg-[var(--surface)] rounded-[var(--radius-2xl)] shadow-[var(--shadow)]">
-        <div className="w-20 h-20 mx-auto mb-5 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
-          <Zap className="w-10 h-10 text-[var(--primary-600)] dark:text-[var(--primary-700)]" />
+      <div className="space-y-4">
+        <div className="text-center py-12 bg-[var(--surface)] rounded-[var(--radius-2xl)] shadow-[var(--shadow)]">
+          <div className="w-20 h-20 mx-auto mb-5 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
+            <Zap className="w-10 h-10 text-[var(--primary-600)] dark:text-[var(--primary-700)]" />
+          </div>
+          <h3 className="text-xl font-bold text-[var(--foreground)] mb-2">Start your journey</h3>
+          <p className="text-[var(--muted-foreground)] mb-6 max-w-xs mx-auto">Log your first workout to see your progress stats here.</p>
+          <a
+            href="/workout"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-br from-[var(--primary-600)] to-[var(--primary-700)] text-white rounded-xl font-semibold shadow-[0_2px_10px_rgba(99,102,241,0.35)] hover:brightness-105 transition"
+          >
+            <Plus className="w-4 h-4" />
+            Start Workout
+          </a>
         </div>
-        <h3 className="text-xl font-bold text-[var(--foreground)] mb-2">Start your journey</h3>
-        <p className="text-[var(--muted-foreground)] mb-6 max-w-xs mx-auto">Log your first workout to see your progress stats here.</p>
-        <a
-          href="/workout"
-          className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-br from-[var(--primary-600)] to-[var(--primary-700)] text-white rounded-xl font-semibold shadow-[0_2px_10px_rgba(99,102,241,0.35)] hover:brightness-105 transition"
-        >
-          <Plus className="w-4 h-4" />
-          Start Workout
-        </a>
+
+        {/* Achievements are always accessible, even before any workouts */}
+        {gamificationSection}
       </div>
     );
   }
@@ -149,7 +174,7 @@ export default function DashboardStats() {
                   fontSize: "12px",
                   color: "var(--foreground)",
                 }}
-                formatter={(value: number) => [value, "workouts"]}
+                formatter={(value) => [value, "workouts"]}
               />
               <Bar dataKey="count" radius={[4, 4, 0, 0]} maxBarSize={32}>
                 {stats.weeklyHistogram.map((entry, index) => (
@@ -163,6 +188,9 @@ export default function DashboardStats() {
           </ResponsiveContainer>
         </div>
       )}
+
+      {/* XP / Level + Achievements teaser */}
+      {gamificationSection}
     </div>
   );
 }
