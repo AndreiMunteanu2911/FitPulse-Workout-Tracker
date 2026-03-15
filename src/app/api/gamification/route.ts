@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/helper/supabaseServer";
 import {
-  calculateTotalXP,
-  getUnlockedAchievements,
+  ACHIEVEMENT_DEFINITIONS,
+  calculateBaseXP,
+  checkUnlockCondition,
   levelFromXP,
   xpForLevel,
   xpProgress,
@@ -20,12 +21,19 @@ interface WorkoutRow {
   workout_exercises?: WorkoutExerciseRow[];
 }
 
+interface AchievementRow {
+  achievement_id: string;
+  status: string;
+  unlocked_at: string;
+  claimed_at: string | null;
+}
+
 export async function GET() {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Fetch all completed workouts with exercises and sets
+  // ── 1. Fetch all completed workouts ───────────────────────────────────────
   const { data: workouts, error } = await supabase
     .from("workouts")
     .select("workout_date, workout_exercises (exercise_id, sets (weight, reps))")
@@ -37,7 +45,6 @@ export async function GET() {
 
   const totalWorkouts = (workouts as WorkoutRow[]).length;
 
-  // Count total sets and volume
   let totalSets = 0;
   let totalVolume = 0;
   (workouts as WorkoutRow[]).forEach((w) => {
@@ -49,11 +56,9 @@ export async function GET() {
     });
   });
 
-  // Count unique exercises that have a tracked max weight (used as PR proxy)
   const exerciseMaxWeights = new Map<string, number>();
   (workouts as WorkoutRow[]).forEach((w) => {
     (w.workout_exercises ?? []).forEach((we) => {
-      // Skip exercises without a valid ID to avoid counting them toward PR totals
       if (!we.exercise_id) return;
       (we.sets ?? []).forEach((s) => {
         const current = exerciseMaxWeights.get(we.exercise_id!) ?? 0;
@@ -63,7 +68,6 @@ export async function GET() {
   });
   const prCount = exerciseMaxWeights.size;
 
-  // Calculate streaks from unique workout dates (newest first)
   const MS_PER_DAY = 24 * 60 * 60 * 1000;
   const uniqueDates = [
     ...new Set((workouts as WorkoutRow[]).map((w) => w.workout_date)),
@@ -73,26 +77,24 @@ export async function GET() {
   let currentStreak = 0;
 
   if (uniqueDates.length > 0) {
-    // Current streak: must include today or yesterday to be active
     const todayStr = new Date().toISOString().split("T")[0];
     const yesterdayStr = new Date(Date.now() - MS_PER_DAY).toISOString().split("T")[0];
     if (uniqueDates[0] === todayStr || uniqueDates[0] === yesterdayStr) {
       currentStreak = 1;
       for (let i = 1; i < uniqueDates.length; i++) {
-        const prev = new Date(uniqueDates[i - 1]);
-        const curr = new Date(uniqueDates[i]);
-        const diff = (prev.getTime() - curr.getTime()) / MS_PER_DAY;
+        const diff =
+          (new Date(uniqueDates[i - 1]).getTime() - new Date(uniqueDates[i]).getTime()) /
+          MS_PER_DAY;
         if (diff === 1) currentStreak++;
         else break;
       }
     }
 
-    // Longest streak
     let tempStreak = 1;
     for (let i = 1; i < uniqueDates.length; i++) {
-      const prev = new Date(uniqueDates[i - 1]);
-      const curr = new Date(uniqueDates[i]);
-      const diff = (prev.getTime() - curr.getTime()) / MS_PER_DAY;
+      const diff =
+        (new Date(uniqueDates[i - 1]).getTime() - new Date(uniqueDates[i]).getTime()) /
+        MS_PER_DAY;
       if (diff === 1) {
         tempStreak++;
       } else {
@@ -104,18 +106,56 @@ export async function GET() {
   }
 
   const summary = { totalWorkouts, totalSets, prCount, longestStreak, totalVolume };
+  const baseXP = calculateBaseXP(summary);
 
-  // Fetch which achievements this user has already claimed
-  const { data: claimedRows } = await supabase
+  // ── 2. Sync: upsert newly-earned achievements into user_achievements ───────
+  // For every achievement whose conditions are now met, make sure there is a row
+  // in user_achievements (status='unlocked') so the DB stays current.
+  const earnedIds = ACHIEVEMENT_DEFINITIONS
+    .filter((def) => checkUnlockCondition(def.id, summary))
+    .map((def) => def.id);
+
+  if (earnedIds.length > 0) {
+    // ignoreDuplicates=true is intentional: we never want to overwrite a
+    // 'claimed' row back to 'unlocked' if a user somehow re-checks conditions.
+    await supabase
+      .from("user_achievements")
+      .upsert(
+        earnedIds.map((id) => ({ user_id: user.id, achievement_id: id, status: "unlocked" })),
+        { onConflict: "user_id,achievement_id", ignoreDuplicates: true },
+      );
+  }
+
+  // ── 3. Read achievement rows from DB (source of truth) ────────────────────
+  const { data: achievementRows } = await supabase
     .from("user_achievements")
-    .select("achievement_id, claimed_at")
+    .select("achievement_id, status, unlocked_at, claimed_at")
     .eq("user_id", user.id);
 
-  const claimedIds: string[] = (claimedRows ?? []).map(
-    (r: { achievement_id: string }) => r.achievement_id,
+  const dbMap = new Map<string, AchievementRow>(
+    (achievementRows ?? []).map((r: AchievementRow) => [r.achievement_id, r]),
   );
 
-  const totalXP = calculateTotalXP(summary, claimedIds);
+  const achievements = ACHIEVEMENT_DEFINITIONS.map((def) => {
+    const row = dbMap.get(def.id);
+    return {
+      ...def,
+      unlockedAt:  row ? row.unlocked_at : null,
+      // claimed_at is set by the claim endpoint whenever status → 'claimed';
+      // fall back to null to avoid showing a misleading timestamp
+      claimedAt:   row?.status === "claimed" ? (row.claimed_at ?? null) : null,
+    };
+  });
+
+  // ── 4. Read persistent achievement XP from user_stats ─────────────────────
+  const { data: statsRow } = await supabase
+    .from("user_stats")
+    .select("achievement_xp")
+    .eq("user_id", user.id)
+    .single();
+
+  const achievementXP: number = (statsRow as { achievement_xp: number } | null)?.achievement_xp ?? 0;
+  const totalXP = baseXP + achievementXP;
   const level = levelFromXP(totalXP);
 
   return NextResponse.json({
@@ -125,7 +165,7 @@ export async function GET() {
       xpForCurrentLevel: xpForLevel(level),
       xpForNextLevel: xpForLevel(level + 1),
       xpProgress: xpProgress(totalXP),
-      achievements: getUnlockedAchievements(summary, claimedIds),
+      achievements,
       currentStreak,
     },
   });
