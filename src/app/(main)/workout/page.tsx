@@ -14,7 +14,7 @@ import { useExercises } from "@/hooks/useExercises";
 import { useWorkoutTemplates } from "@/hooks/useWorkoutTemplates";
 import TemplateCard from "@/components/TemplateCard";
 import CreateTemplateModal from "@/components/CreateTemplateModal";
-import type { Exercise, WorkoutExercise, Set as WorkoutSet } from "@/types";
+import type { Exercise, WorkoutExercise, Set as WorkoutSet, WorkoutTemplate } from "@/types";
 import { Zap, Plus } from "lucide-react";
 function formatElapsed(seconds: number): string {
     const h = Math.floor(seconds / 3600);
@@ -44,10 +44,11 @@ export default function WorkoutPage() {
     const [isFinishModalOpen, setIsFinishModalOpen] = useState(false);
     const [showDiscardSetsModal, setShowDiscardSetsModal] = useState(false);
     const [discardInfo, setDiscardInfo] = useState({ incompleteSetCount: 0, emptyExerciseCount: 0 });
-    const [templates, setTemplates] = useState<any[]>([]);
+    const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
     const [showTemplates, setShowTemplates] = useState(false);
     const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
-    const { fetchTemplates, createTemplate } = useWorkoutTemplates();
+    const [editingTemplate, setEditingTemplate] = useState<WorkoutTemplate | null>(null);
+    const { fetchTemplates, createTemplate, updateTemplate, deleteTemplate } = useWorkoutTemplates();
 
     const loadTemplates = async () => {
         try {
@@ -57,6 +58,11 @@ export default function WorkoutPage() {
             console.error("Error loading templates:", error);
         }
     };
+
+    useEffect(() => {
+        loadTemplates();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const {
         getDraftWorkout,
@@ -191,6 +197,69 @@ export default function WorkoutPage() {
         } catch (error) {
             console.error("Error starting workout:", error);
             setErrorMessages((prev) => ({ ...prev, general: "Failed to start workout." }));
+        }
+    };
+
+    const startWorkoutFromTemplate = async (template: WorkoutTemplate) => {
+        try {
+            const data = await startWorkoutApi(template.name || "My Workout");
+            const newWorkoutId = data.id;
+            setWorkoutId(newWorkoutId);
+            setWorkoutName(template.name || "My Workout");
+            setWorkoutCreatedAt(data.created_at ?? null);
+            setWorkoutStarted(true);
+
+            const templateExercises = (template.template_exercises || []).sort(
+                (a, b) => a.order_index - b.order_index
+            );
+
+            const addedExercises: WorkoutExercise[] = [];
+
+            for (let i = 0; i < templateExercises.length; i++) {
+                const te = templateExercises[i];
+                if (!te.exercise_id) continue;
+
+                const result = await addExerciseApi(newWorkoutId, te.exercise_id, i);
+                const workoutExerciseData = result.workoutExercise as { id: string; order_index: number };
+                const firstSet = result.set as WorkoutSet;
+
+                let prefillSets: { reps: number; weight: number }[] = [];
+                try {
+                    const lastRes = await fetch(`/api/exercises/${te.exercise_id}/last-session`);
+                    if (lastRes.ok) {
+                        const lastData = await lastRes.json();
+                        prefillSets = lastData.sets ?? [];
+                    }
+                } catch {
+                    // silently ignore – we'll just use blank sets
+                }
+
+                let sets: WorkoutSet[] = [];
+                if (prefillSets.length > 0) {
+                    await updateSetApi(firstSet.id, { reps: prefillSets[0].reps, weight: prefillSets[0].weight });
+                    sets.push({ ...firstSet, reps: prefillSets[0].reps, weight: prefillSets[0].weight });
+                    for (let j = 1; j < prefillSets.length; j++) {
+                        const newSet = await addSetApi(workoutExerciseData.id, j + 1);
+                        await updateSetApi(newSet.id, { reps: prefillSets[j].reps, weight: prefillSets[j].weight });
+                        sets.push({ ...newSet, reps: prefillSets[j].reps, weight: prefillSets[j].weight });
+                    }
+                } else {
+                    sets = [firstSet];
+                }
+
+                addedExercises.push({
+                    id: workoutExerciseData.id,
+                    exercise_id: te.exercise_id,
+                    exercise: te.exercise as Exercise,
+                    order_index: workoutExerciseData.order_index,
+                    sets,
+                });
+            }
+
+            setWorkoutExercises(addedExercises);
+        } catch (error) {
+            console.error("Error starting workout from template:", error);
+            setErrorMessages((prev) => ({ ...prev, general: "Failed to start workout from template." }));
         }
     };
 
@@ -571,7 +640,7 @@ export default function WorkoutPage() {
                         <div className="mt-8">
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="text-base sm:text-lg font-bold text-[var(--foreground)]">Templates</h2>
-                                <Button onClick={() => setIsTemplateModalOpen(true)} variant="secondary" className="px-3 py-1.5 text-xs sm:text-sm">+ Create</Button>
+                                <Button onClick={() => { setEditingTemplate(null); setIsTemplateModalOpen(true); }} variant="secondary" className="px-3 py-1.5 text-xs sm:text-sm">+ Create</Button>
                             </div>
                             {templates.length === 0 ? (
                                 <div className="text-center text-sm text-[var(--muted-foreground)] py-8 bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)]">
@@ -583,11 +652,20 @@ export default function WorkoutPage() {
                                         <TemplateCard
                                             key={template.id}
                                             template={template}
-                                            onEdit={() => {}}
+                                            onEdit={() => {
+                                                setEditingTemplate(template);
+                                                setIsTemplateModalOpen(true);
+                                            }}
                                             onDelete={async () => {
                                                 if (!confirm("Delete this template?")) return;
-                                                await loadTemplates();
+                                                try {
+                                                    await deleteTemplate(template.id);
+                                                    await loadTemplates();
+                                                } catch (error) {
+                                                    console.error("Error deleting template:", error);
+                                                }
                                             }}
+                                            onStart={!workoutStarted ? () => startWorkoutFromTemplate(template) : undefined}
                                         />
                                     ))}
                                 </div>
@@ -596,10 +674,24 @@ export default function WorkoutPage() {
 
                         <CreateTemplateModal
                             isOpen={isTemplateModalOpen}
-                            onClose={() => setIsTemplateModalOpen(false)}
-                            onSubmit={async (name, desc, exercises) => {
-                                await createTemplate({ name, description: desc, exercises: exercises.map(id => ({ exercise_id: id })) });
+                            onClose={() => {
                                 setIsTemplateModalOpen(false);
+                                setEditingTemplate(null);
+                            }}
+                            template={editingTemplate}
+                            onSubmit={async (name, desc, exercises) => {
+                                if (editingTemplate) {
+                                    await updateTemplate({
+                                        id: editingTemplate.id,
+                                        name,
+                                        description: desc,
+                                        exercises: exercises.map(id => ({ exercise_id: id })),
+                                    });
+                                } else {
+                                    await createTemplate({ name, description: desc, exercises: exercises.map(id => ({ exercise_id: id })) });
+                                }
+                                setIsTemplateModalOpen(false);
+                                setEditingTemplate(null);
                                 await loadTemplates();
                             }}
                         />
