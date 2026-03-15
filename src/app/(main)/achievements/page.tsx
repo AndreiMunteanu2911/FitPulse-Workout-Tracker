@@ -25,7 +25,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { ChartBarIncreasing } from "lucide-react";
-import { levelFromXP, xpForLevel, xpProgress as calcXpProgress } from "@/lib/gamification";
 
 // ── Icon registry ─────────────────────────────────────────────────────────────
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -260,24 +259,23 @@ export default function AchievementsPage() {
         achievementId: string;
         claimedAt: string;
         xpEarned: number;
-        achievementXP: number;
+        totalXP: number;
+        level: number;
+        xpForCurrentLevel: number;
+        xpForNextLevel: number;
+        xpProgress: number;
       };
 
       // Update local state in-place — no full-page reload needed
       setGamification((prev) => {
         if (!prev) return prev;
-
-        // Add xpEarned to the locally-known totalXP
-        const updatedTotalXP = prev.totalXP + result.xpEarned;
-        const newLevel       = levelFromXP(updatedTotalXP);
-
         return {
           ...prev,
-          totalXP:          updatedTotalXP,
-          level:            newLevel,
-          xpForCurrentLevel: xpForLevel(newLevel),
-          xpForNextLevel:   xpForLevel(newLevel + 1),
-          xpProgress:       calcXpProgress(updatedTotalXP),
+          totalXP:           result.totalXP,
+          level:             result.level,
+          xpForCurrentLevel: result.xpForCurrentLevel,
+          xpForNextLevel:    result.xpForNextLevel,
+          xpProgress:        result.xpProgress,
           achievements: prev.achievements.map((a) =>
             a.id === result.achievementId ? { ...a, claimedAt: result.claimedAt } : a,
           ),

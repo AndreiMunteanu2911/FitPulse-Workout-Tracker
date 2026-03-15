@@ -155,80 +155,95 @@ create table if not exists template_exercises (
   created_at    timestamptz default now()
 );
 
--- ─────────────────────────────────────────────────────────────────────────────
--- 11. ACHIEVEMENTS  (static catalogue – seeded once, referenced by FK)
--- ─────────────────────────────────────────────────────────────────────────────
-create table if not exists achievements (
-  id          text    primary key,
-  name        text    not null,
-  description text    not null,
-  icon        text    not null,
-  xp_reward   integer not null default 0,
-  category    text    not null check (category in ('workouts','streaks','records','volume'))
+-- ────────────────────────────────────────────────────────────────
+-- 11. User stats (XP, level, streak freeze tokens)
+-- ────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.user_stats (
+  id                  UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id             UUID         NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  total_xp            INTEGER      NOT NULL DEFAULT 0,
+  level               INTEGER      NOT NULL DEFAULT 1,
+  streak_freeze_count INTEGER      NOT NULL DEFAULT 0,
+  created_at          TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  updated_at          TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  UNIQUE (user_id)
 );
 
-insert into achievements (id, name, description, icon, xp_reward, category) values
-  ('first_workout', 'First Step',       'Complete your first workout',          'Dumbbell',         50,   'workouts'),
-  ('workouts_5',    'Warm Up',          'Complete 5 workouts',                  'Activity',        100,   'workouts'),
-  ('workouts_10',   'Getting Serious',  'Complete 10 workouts',                 'TrendingUp',      200,   'workouts'),
-  ('workouts_25',   'Dedicated',        'Complete 25 workouts',                 'Star',            300,   'workouts'),
-  ('workouts_100',  'Century Club',     'Complete 100 workouts',                'Award',          1000,   'workouts'),
-  ('streak_3',      'Hat Trick',        'Maintain a 3-day workout streak',      'Zap',              75,   'streaks'),
-  ('streak_7',      'On Fire',          'Maintain a 7-day workout streak',      'Flame',           150,   'streaks'),
-  ('streak_30',     'Unstoppable',      'Maintain a 30-day workout streak',     'Rocket',          500,   'streaks'),
-  ('pr_1',          'Record Setter',    'Set your first personal record',       'Trophy',           75,   'records'),
-  ('pr_5',          'PR Crusher',       'Set 5 personal records',               'Target',          150,   'records'),
-  ('pr_10',         'Record Breaker',   'Set 10 personal records',              'Medal',           300,   'records'),
-  ('volume_10k',    'Iron Starter',     'Lift 10,000 kg total volume',          'BarChart2',       100,   'volume'),
-  ('volume_50k',    'Heavy Lifter',     'Lift 50,000 kg total volume',          'ChartBarIncreasing', 250, 'volume'),
-  ('volume_100k',   'Volume King',      'Lift 100,000 kg total volume',         'Crown',           500,   'volume')
-on conflict (id) do nothing;
+-- Auto-update updated_at
+CREATE OR REPLACE FUNCTION public.set_updated_at()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN NEW.updated_at = NOW(); RETURN NEW; END;
+$$;
 
--- ─────────────────────────────────────────────────────────────────────────────
--- 12. USER_STATS  (XP bank – source of truth, survives workout/achievement deletions)
--- ─────────────────────────────────────────────────────────────────────────────
-create table if not exists user_stats (
-  id                  uuid        primary key default gen_random_uuid(),
-  user_id             uuid        not null references auth.users(id) on delete cascade,
-  total_xp            integer     not null default 0,
-  level               integer     not null default 1,
-  streak_freeze_count integer     not null default 0,
-  created_at          timestamptz not null default now(),
-  updated_at          timestamptz not null default now(),
-  unique (user_id)
+CREATE TRIGGER trg_user_stats_updated_at
+  BEFORE UPDATE ON public.user_stats
+  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+-- RLS: users can only see/edit their own row
+ALTER TABLE public.user_stats ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "own_user_stats" ON public.user_stats
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- ────────────────────────────────────────────────────────────────
+-- 12. Achievement catalogue (static reference data)
+-- ────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.achievements (
+  id          TEXT PRIMARY KEY,
+  name        TEXT NOT NULL,
+  description TEXT NOT NULL,
+  icon        TEXT NOT NULL,
+  xp_reward   INTEGER NOT NULL DEFAULT 0,
+  category    TEXT NOT NULL CHECK (category IN ('workouts','streaks','records','volume'))
 );
 
-create trigger trg_user_stats_updated_at
-  before update on user_stats
-  for each row execute function update_updated_at();
+-- Seed the catalogue
+INSERT INTO public.achievements (id, name, description, icon, xp_reward, category) VALUES
+  ('first_workout',  'First Step',       'Complete your first workout',         'Dumbbell',            50,   'workouts'),
+  ('workouts_5',     'Warm Up',          'Complete 5 workouts',                 'Activity',           100,   'workouts'),
+  ('workouts_10',    'Getting Serious',  'Complete 10 workouts',                'TrendingUp',         200,   'workouts'),
+  ('workouts_25',    'Dedicated',        'Complete 25 workouts',                'Star',               300,   'workouts'),
+  ('workouts_100',   'Century Club',     'Complete 100 workouts',               'Award',             1000,   'workouts'),
+  ('streak_3',       'Hat Trick',        'Maintain a 3-day workout streak',     'Zap',                 75,   'streaks'),
+  ('streak_7',       'On Fire',          'Maintain a 7-day workout streak',     'Flame',              150,   'streaks'),
+  ('streak_30',      'Unstoppable',      'Maintain a 30-day workout streak',    'Rocket',             500,   'streaks'),
+  ('pr_1',           'Record Setter',    'Set your first personal record',      'Trophy',              75,   'records'),
+  ('pr_5',           'PR Crusher',       'Set 5 personal records',              'Target',             150,   'records'),
+  ('pr_10',          'Record Breaker',   'Set 10 personal records',             'Medal',              300,   'records'),
+  ('volume_10k',     'Iron Starter',     'Lift 10,000 kg total volume',         'BarChart2',          100,   'volume'),
+  ('volume_50k',     'Heavy Lifter',     'Lift 50,000 kg total volume',         'ChartBarIncreasing', 250,   'volume'),
+  ('volume_100k',    'Volume King',      'Lift 100,000 kg total volume',        'Crown',              500,   'volume')
+ON CONFLICT (id) DO NOTHING;
 
--- ─────────────────────────────────────────────────────────────────────────────
--- 13. USER_ACHIEVEMENTS  (unlock log – one row per claimed achievement)
--- ─────────────────────────────────────────────────────────────────────────────
-create table if not exists user_achievements (
-  id             uuid        primary key default gen_random_uuid(),
-  user_id        uuid        not null references auth.users(id) on delete cascade,
-  achievement_id text        not null references achievements(id),
-  unlocked_at    timestamptz not null default now(),
-  unique (user_id, achievement_id)
+-- ────────────────────────────────────────────────────────────────
+-- 13. User achievements (unlock log)
+-- ────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.user_achievements (
+  id             UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id        UUID         NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  achievement_id TEXT         NOT NULL REFERENCES public.achievements(id),
+  unlocked_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  UNIQUE (user_id, achievement_id)
 );
+
+ALTER TABLE public.user_achievements ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "own_user_achievements" ON public.user_achievements
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
 
 -- =============================================================================
--- ROW LEVEL SECURITY (RLS)
+-- ROW LEVEL SECURITY (RLS) – workout-related tables
 -- =============================================================================
 
-alter table workouts           enable row level security;
-alter table workout_exercises  enable row level security;
-alter table sets               enable row level security;
-alter table personal_records   enable row level security;
-alter table weight_logs        enable row level security;
-alter table progress_photos    enable row level security;
-alter table user_exercises     enable row level security;
-alter table workout_templates  enable row level security;
-alter table template_exercises enable row level security;
-alter table achievements       enable row level security;
-alter table user_stats         enable row level security;
-alter table user_achievements  enable row level security;
+ALTER TABLE workouts           ENABLE ROW LEVEL SECURITY;
+ALTER TABLE workout_exercises  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sets               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE personal_records   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE weight_logs        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE progress_photos    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_exercises     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE workout_templates  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE template_exercises ENABLE ROW LEVEL SECURITY;
 -- exercises table is public-read, no user-specific RLS needed
 
 -- ── workouts ─────────────────────────────────────────────────────────────────
@@ -302,33 +317,16 @@ create policy "Users manage own template_exercises"
   );
 
 -- ── exercises (public read) ───────────────────────────────────────────────────
-alter table exercises enable row level security;
-create policy "Exercises are publicly readable"
-  on exercises for select
-  using (true);
+ALTER TABLE exercises ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Exercises are publicly readable"
+  ON exercises FOR SELECT
+  USING (true);
 
--- ── user_achievements ─────────────────────────────────────────────────────────
-create policy "Users manage own user_achievements"
-  on user_achievements for all
-  using  (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
-
--- ── user_stats ────────────────────────────────────────────────────────────────
-create policy "Users manage own user_stats"
-  on user_stats for all
-  using  (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
-
--- ── Helper function: atomically increment achievement_xp ──────────────────────
-create or replace function increment_achievement_xp(p_user_id uuid, p_amount integer)
-returns void language plpgsql security definer as $$
-begin
-  insert into user_stats (user_id, achievement_xp)
-  values (p_user_id, p_amount)
-  on conflict (user_id)
-  do update set achievement_xp = user_stats.achievement_xp + p_amount;
-end;
-$$;
+-- achievements catalogue is publicly readable (no user-specific data)
+ALTER TABLE public.achievements ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Achievements are publicly readable"
+  ON public.achievements FOR SELECT
+  USING (true);
 
 -- =============================================================================
 -- STORAGE BUCKET (progress photos)
@@ -352,59 +350,15 @@ $$;
 --   using (auth.uid()::text = (storage.foldername(name))[1]);
 
 -- =============================================================================
--- MIGRATION  (run this if you already have the old schema in your DB)
+-- MIGRATION  (run only if upgrading an existing DB – skip for fresh installs)
 -- =============================================================================
--- If you are starting fresh, the CREATE TABLE statements above are sufficient.
--- If you are upgrading an existing database, run the following instead:
 
--- Step 1 – add new columns to user_achievements
---   NOTE: default 'claimed' is only used to back-fill existing rows (they were
---   all claimed under the old schema). The main schema default is 'unlocked'.
--- alter table user_achievements
---   add column if not exists status text not null default 'claimed'
---     constraint user_achievements_status_check check (status in ('unlocked', 'claimed')),
---   add column if not exists unlocked_at timestamptz;
-
--- Step 2 – back-fill unlocked_at from claimed_at for existing rows
--- update user_achievements
---   set unlocked_at = claimed_at
---   where unlocked_at is null;
-
--- Step 3 – make unlocked_at NOT NULL now that it is populated
--- alter table user_achievements
---   alter column unlocked_at set not null;
-
--- Step 4 – make claimed_at nullable (was NOT NULL in old schema)
--- alter table user_achievements
---   alter column claimed_at drop not null;
-
--- Step 5 – create user_stats and its RLS policy
--- create table if not exists user_stats (
---   user_id        uuid    primary key references auth.users(id) on delete cascade,
---   achievement_xp integer not null default 0
--- );
--- alter table user_stats enable row level security;
--- create policy "Users manage own user_stats"
---   on user_stats for all
---   using  (auth.uid() = user_id)
---   with check (auth.uid() = user_id);
-
--- Step 6 – back-fill user_stats.achievement_xp from already-claimed achievements
--- (This seeds the persistent XP bank so existing users keep their earned XP)
--- insert into user_stats (user_id, achievement_xp)
--- select
---   ua.user_id,
---   sum(ad.xp_reward)
--- from user_achievements ua
--- join (
---   values
---     ('first_workout', 50), ('workouts_5', 100), ('workouts_10', 200),
---     ('workouts_25', 300), ('workouts_100', 1000),
---     ('streak_3', 75),  ('streak_7', 150),  ('streak_30', 500),
---     ('pr_1', 75),  ('pr_5', 150),  ('pr_10', 300),
---     ('volume_10k', 100), ('volume_50k', 250), ('volume_100k', 500)
--- ) as ad(id, xp_reward) on ua.achievement_id = ad.id
--- where ua.status = 'claimed'
--- group by ua.user_id
--- on conflict (user_id) do update
---   set achievement_xp = user_stats.achievement_xp + excluded.achievement_xp;
+-- Drop old gamification tables/functions if they exist, then recreate cleanly.
+-- Run each line separately in the Supabase SQL editor.
+--
+-- DROP TABLE IF EXISTS public.user_achievements CASCADE;
+-- DROP TABLE IF EXISTS public.user_stats        CASCADE;
+-- DROP TABLE IF EXISTS public.achievements      CASCADE;
+-- DROP FUNCTION IF EXISTS public.increment_achievement_xp(uuid, integer);
+--
+-- Then re-run this entire file from the top (CREATE TABLE IF NOT EXISTS is safe to re-run).
