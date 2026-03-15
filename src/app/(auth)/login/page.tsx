@@ -7,7 +7,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { loginSchema, LoginInput } from "@/lib/validations";
 import { ZodError } from "zod";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Dumbbell } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
+import Image from "next/image";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -53,7 +54,7 @@ export default function LoginPage() {
             {/* Logo */}
             <div className="flex items-center gap-2.5 pt-6 pb-2">
                 <div className="w-9 h-9 rounded-[12px] bg-white/15 flex items-center justify-center">
-                    <Dumbbell className="w-5 h-5 text-white" />
+                    <Image src="/assets/dumbbell-large.svg" alt="FitPulse" width={20} height={20} className="brightness-0 invert" />
                 </div>
                 <span className="text-lg font-extrabold tracking-tight">FitPulse</span>
             </div>
