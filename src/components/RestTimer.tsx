@@ -75,10 +75,15 @@ export default function RestTimer({ timer, onTick, onSkip, onDismiss }: RestTime
 
   const progress = duration > 0 ? (remaining / duration) * 100 : 0;
 
-  // Haptic feedback helper
+  // Haptic feedback helper — vibration API is unsupported on many browsers/devices,
+  // so we intentionally swallow any errors rather than surfacing them to the user.
   const vibrate = useCallback((pattern: number | number[]) => {
     if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-      try { navigator.vibrate(pattern); } catch { /* unsupported */ }
+      try {
+        navigator.vibrate(pattern);
+      } catch {
+        // Vibration API not available or blocked — safe to ignore
+      }
     }
   }, []);
 
@@ -96,6 +101,9 @@ export default function RestTimer({ timer, onTick, onSkip, onDismiss }: RestTime
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
+    // `onTick` is intentionally excluded from deps: it is a stable callback passed from
+    // the parent and including it would cause the interval to be reset on every tick,
+    // producing double-ticking behaviour.  `remaining` drives the re-run correctly.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, remaining]);
 
