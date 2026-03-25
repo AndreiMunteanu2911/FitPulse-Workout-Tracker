@@ -46,22 +46,10 @@ CREATE TABLE IF NOT EXISTS public.exercises (
 
 -- No indexes needed – full-text-style filtering via ilike on a shared table.
 ALTER TABLE public.exercises ENABLE ROW LEVEL SECURITY;
--- Standard exercises (no custom_ prefix) are public read.
--- Custom exercises (custom_<uuid>) are readable only by the user who created them.
+-- Custom exercises live in the `custom_exercises` table, not here.
+-- This table only holds standard exercises which are publicly readable.
 CREATE POLICY "exercises_public_read" ON public.exercises
-  FOR SELECT USING (
-    exercise_id NOT LIKE 'custom_%'
-    OR exercise_id IN (
-      SELECT 'custom_' || id::text
-      FROM   public.custom_exercises
-      WHERE  user_id = auth.uid()
-    )
-  );
--- Allow authenticated users to insert/update their own custom exercise entries.
-CREATE POLICY "auth_upsert_custom_exercises" ON public.exercises
-  FOR INSERT WITH CHECK (auth.uid() IS NOT NULL AND exercise_id LIKE 'custom_%');
-CREATE POLICY "auth_update_custom_exercises" ON public.exercises
-  FOR UPDATE USING (auth.uid() IS NOT NULL AND exercise_id LIKE 'custom_%');
+  FOR SELECT USING (exercise_id NOT LIKE 'custom_%');
 
 -- =============================================================================
 -- 2. CUSTOM_EXERCISES  (user-owned exercises)
@@ -111,7 +99,7 @@ CREATE POLICY "own_workouts" ON public.workouts
 CREATE TABLE IF NOT EXISTS public.workout_exercises (
   id          UUID     PRIMARY KEY DEFAULT gen_random_uuid(),
   workout_id  UUID     NOT NULL REFERENCES public.workouts(id) ON DELETE CASCADE,
-  exercise_id TEXT     NOT NULL REFERENCES public.exercises(exercise_id),
+  exercise_id TEXT     NOT NULL,
   order_index INTEGER  NOT NULL DEFAULT 0
 );
 
@@ -164,7 +152,7 @@ CREATE POLICY "own_sets" ON public.sets
 CREATE TABLE IF NOT EXISTS public.personal_records (
   id           UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id      UUID          NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  exercise_id  TEXT          NOT NULL REFERENCES public.exercises(exercise_id),
+  exercise_id  TEXT          NOT NULL,
   max_weight   NUMERIC(10,2) NOT NULL DEFAULT 0,
   max_reps     INTEGER       NOT NULL DEFAULT 0,
   workout_date DATE          NOT NULL,
@@ -241,7 +229,7 @@ CREATE POLICY "own_workout_templates" ON public.workout_templates
 CREATE TABLE IF NOT EXISTS public.template_exercises (
   id          UUID     PRIMARY KEY DEFAULT gen_random_uuid(),
   template_id UUID     NOT NULL REFERENCES public.workout_templates(id) ON DELETE CASCADE,
-  exercise_id TEXT     NOT NULL REFERENCES public.exercises(exercise_id),
+  exercise_id TEXT     NOT NULL,
   order_index INTEGER  NOT NULL DEFAULT 0
 );
 
@@ -262,7 +250,7 @@ CREATE POLICY "own_template_exercises" ON public.template_exercises
 CREATE TABLE IF NOT EXISTS public.user_exercises (
   id          UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id     UUID         NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  exercise_id TEXT         NOT NULL REFERENCES public.exercises(exercise_id),
+  exercise_id TEXT         NOT NULL,
   is_favorite BOOLEAN      NOT NULL DEFAULT TRUE,
   created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
   UNIQUE (user_id, exercise_id)
@@ -384,67 +372,34 @@ CREATE POLICY "own_user_achievements" ON public.user_achievements
 -- MIGRATIONS  (run these when upgrading an existing database)
 -- =============================================================================
 
--- M1: Allow authenticated users to upsert custom exercises into the exercises table
---     (safe to run multiple times – CREATE POLICY IF NOT EXISTS is not standard, so
---      wrap in a DO block to avoid errors if the policy already exists)
-DO $$ BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE schemaname = 'public' AND tablename = 'exercises'
-      AND policyname = 'auth_upsert_custom_exercises'
-  ) THEN
-    CREATE POLICY "auth_upsert_custom_exercises" ON public.exercises
-      FOR INSERT WITH CHECK (auth.uid() IS NOT NULL AND exercise_id LIKE 'custom_%');
-  END IF;
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE schemaname = 'public' AND tablename = 'exercises'
-      AND policyname = 'auth_update_custom_exercises'
-  ) THEN
-    CREATE POLICY "auth_update_custom_exercises" ON public.exercises
-      FOR UPDATE USING (auth.uid() IS NOT NULL AND exercise_id LIKE 'custom_%');
-  END IF;
-END $$;
-
--- M2: Populate exercises table with all known custom exercises
---     (required before re-adding the FK constraint)
-INSERT INTO public.exercises (exercise_id, name, body_parts)
-SELECT
-  'custom_' || ce.id::text,
-  ce.name,
-  ce.body_part
-FROM public.custom_exercises ce
-ON CONFLICT (exercise_id) DO NOTHING;
-
--- M2b: Add placeholder entries for any workout_exercises rows that reference
---      orphaned custom IDs (custom exercise was deleted but workout row remains)
-INSERT INTO public.exercises (exercise_id, name)
-SELECT DISTINCT we.exercise_id, we.exercise_id
-FROM public.workout_exercises we
-WHERE we.exercise_id LIKE 'custom_%'
-  AND NOT EXISTS (
-    SELECT 1 FROM public.exercises e WHERE e.exercise_id = we.exercise_id
-  )
-ON CONFLICT (exercise_id) DO NOTHING;
-
--- M3: Re-add the FK constraint (Supabase join syntax requires it)
-ALTER TABLE public.workout_exercises
-  ADD CONSTRAINT IF NOT EXISTS workout_exercises_exercise_id_fkey
-  FOREIGN KEY (exercise_id)
-  REFERENCES public.exercises(exercise_id);
+-- M1-M3 (superseded): These steps mirrored custom exercises into the exercises
+--   table to satisfy a FK constraint. That constraint has been removed in M6;
+--   no action needed for new installs.
 
 -- M4: Add body_part column to custom_exercises (safe on existing tables)
 ALTER TABLE public.custom_exercises ADD COLUMN IF NOT EXISTS body_part TEXT;
 
--- M5: Scope exercises_public_read so custom_% entries are only visible to their owner.
---     Drop the old unrestricted policy and replace it with the scoped one.
+-- M5: Replace unrestricted exercises_public_read with one scoped to standard exercises
+--     only (custom exercises live in custom_exercises; after M6b they are gone from here).
 DROP POLICY IF EXISTS "exercises_public_read" ON public.exercises;
 CREATE POLICY "exercises_public_read" ON public.exercises
-  FOR SELECT USING (
-    exercise_id NOT LIKE 'custom_%'
-    OR exercise_id IN (
-      SELECT 'custom_' || id::text
-      FROM   public.custom_exercises
-      WHERE  user_id = auth.uid()
-    )
-  );
+  FOR SELECT USING (exercise_id NOT LIKE 'custom_%');
+
+-- M6: Remove FK constraints that required custom exercises to be mirrored into the
+--     exercises table. Exercise data is now resolved in the application layer by
+--     looking up standard exercises in `exercises` and custom ones in `custom_exercises`.
+ALTER TABLE public.workout_exercises
+  DROP CONSTRAINT IF EXISTS workout_exercises_exercise_id_fkey;
+
+ALTER TABLE public.template_exercises
+  DROP CONSTRAINT IF EXISTS template_exercises_exercise_id_fkey;
+
+ALTER TABLE public.personal_records
+  DROP CONSTRAINT IF EXISTS personal_records_exercise_id_fkey;
+
+ALTER TABLE public.user_exercises
+  DROP CONSTRAINT IF EXISTS user_exercises_exercise_id_fkey;
+
+-- M6b: Clean up any custom_% rows that were mirrored into exercises to satisfy the
+--      old FK constraint (they are no longer needed there).
+DELETE FROM public.exercises WHERE exercise_id LIKE 'custom_%';

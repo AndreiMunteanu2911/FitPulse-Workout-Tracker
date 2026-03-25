@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/helper/supabaseServer";
+import { resolveExercises } from "@/helper/resolveExercises";
 
 export async function GET() {
   const supabase = await createSupabaseServerClient();
@@ -8,12 +9,21 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("personal_records")
-    .select("*, exercise:exercises (exercise_id, name, gif_url, target_muscles, body_parts)")
+    .select("*")
     .eq("user_id", user.id)
     .order("workout_date", { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ records: data || [] });
+
+  const exerciseIds = (data || []).map((r: { exercise_id: string }) => r.exercise_id);
+  const exerciseMap = await resolveExercises(supabase, exerciseIds);
+
+  const records = (data || []).map((r: { exercise_id: string }) => ({
+    ...r,
+    exercise: exerciseMap.get(r.exercise_id) ?? null,
+  }));
+
+  return NextResponse.json({ records });
 }
 
 export async function POST(req: NextRequest) {
