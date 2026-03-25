@@ -10,6 +10,7 @@ import Button from "@/components/Button";
 import WorkoutHistoryExerciseCard from "@/components/WorkoutHistoryExerciseCard";
 import WorkoutExerciseCard from "@/components/WorkoutExerciseCard";
 import ExerciseSearchModal from "@/components/ExerciseSearchModal";
+import AddCustomExerciseModal from "@/components/AddCustomExerciseModal";
 import { useHistory } from "@/hooks/useHistory";
 import { useWorkout } from "@/hooks/useWorkout";
 import { useExercises } from "@/hooks/useExercises";
@@ -45,6 +46,7 @@ export default function WorkoutDetailPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState<Exercise[]>([]);
     const [isSearching, setIsSearching] = useState(false);
+    const [showCustomExerciseModal, setShowCustomExerciseModal] = useState(false);
 
     const { fetchWorkoutDetail, renameWorkout, deleteWorkout } = useHistory();
     const {
@@ -212,6 +214,26 @@ export default function WorkoutDetailPage() {
         } catch {
             setEditErrorMessages((prev) => ({ ...prev, general: "Failed to add exercise." }));
         }
+    };
+
+    const createCustomExercise = async (name: string, bodyPart: string) => {
+        const res = await fetch("/api/custom-exercises", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, body_part: bodyPart || null }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to create exercise");
+
+        const newExercise: Exercise = {
+            exercise_id: data.exercise.exercise_id,
+            name: data.exercise.name,
+            body_parts: data.exercise.body_part ? [data.exercise.body_part] : null,
+            is_custom: true,
+        };
+
+        setShowCustomExerciseModal(false);
+        await addExerciseToWorkout(newExercise);
     };
 
     const addSetToExercise = async (exerciseIndex: number) => {
@@ -441,10 +463,21 @@ export default function WorkoutDetailPage() {
                                 setSearchResults([]);
                             }}
                             onSelectExercise={addExerciseToWorkout}
+                            onAddCustomExercise={() => {
+                                setShowExerciseSearch(false);
+                                setShowCustomExerciseModal(true);
+                            }}
                         />
                     </div>
                 )}
             </div>
+
+            <AddCustomExerciseModal
+                isOpen={showCustomExerciseModal}
+                onClose={() => setShowCustomExerciseModal(false)}
+                onSubmit={createCustomExercise}
+                initialName={searchQuery}
+            />
 
             {/* Rename modal */}
             <ModalWrapper isOpen={showRenameModal} onClose={() => setShowRenameModal(false)} containerClassName="max-w-sm p-4">

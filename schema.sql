@@ -57,6 +57,7 @@ CREATE TABLE IF NOT EXISTS public.custom_exercises (
   id          UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id     UUID         NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   name        TEXT         NOT NULL,
+  body_part   TEXT,
   created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
 
@@ -101,6 +102,9 @@ CREATE TABLE IF NOT EXISTS public.workout_exercises (
 );
 
 CREATE INDEX IF NOT EXISTS idx_we_workout_id ON public.workout_exercises (workout_id);
+
+-- Drop any erroneously-created FK that prevents custom exercise IDs from being stored
+ALTER TABLE public.workout_exercises DROP CONSTRAINT IF EXISTS workout_exercises_exercise_id_fkey;
 
 ALTER TABLE public.workout_exercises ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "own_workout_exercises" ON public.workout_exercises
@@ -364,3 +368,13 @@ CREATE POLICY "own_user_achievements" ON public.user_achievements
 -- CREATE POLICY "Users delete own photos"
 --   ON storage.objects FOR DELETE
 --   USING (auth.uid()::text = (storage.foldername(name))[1]);
+
+-- =============================================================================
+-- MIGRATIONS  (run these when upgrading an existing database)
+-- =============================================================================
+
+-- M1: Remove FK constraint that blocks custom exercise IDs in workout_exercises
+ALTER TABLE public.workout_exercises DROP CONSTRAINT IF EXISTS workout_exercises_exercise_id_fkey;
+
+-- M2: Add body_part column to custom_exercises (safe on existing tables)
+ALTER TABLE public.custom_exercises ADD COLUMN IF NOT EXISTS body_part TEXT;

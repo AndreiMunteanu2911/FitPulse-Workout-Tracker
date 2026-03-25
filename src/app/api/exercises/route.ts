@@ -77,6 +77,7 @@ export async function GET(req: NextRequest) {
     let customExercises = (customExercisesRes.data ?? []).map((e) => ({
       exercise_id: `custom_${e.id}`,
       name: e.name,
+      body_parts: e.body_part ? [e.body_part] : null,
       is_custom: true,
       created_at: e.created_at,
     }));

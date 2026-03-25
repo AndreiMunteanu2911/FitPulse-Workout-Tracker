@@ -448,12 +448,12 @@ export default function WorkoutPage() {
         }
     };
 
-    const createCustomExercise = async (name: string) => {
+    const createCustomExercise = async (name: string, bodyPart: string) => {
         try {
             const res = await fetch("/api/custom-exercises", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name }),
+                body: JSON.stringify({ name, body_part: bodyPart || null }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || "Failed to create exercise");
@@ -461,6 +461,7 @@ export default function WorkoutPage() {
             const newExercise: Exercise = {
                 exercise_id: data.exercise.exercise_id,
                 name: data.exercise.name,
+                body_parts: data.exercise.body_part ? [data.exercise.body_part] : null,
                 is_custom: true,
             };
             

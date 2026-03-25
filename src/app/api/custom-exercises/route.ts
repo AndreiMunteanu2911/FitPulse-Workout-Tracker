@@ -26,6 +26,7 @@ export async function GET(req: NextRequest) {
   const customExercises = (data ?? []).map((e) => ({
     exercise_id: `custom_${e.id}`,
     name: e.name,
+    body_part: e.body_part ?? null,
     is_custom: true,
     created_at: e.created_at,
   }));
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
-  const { name } = body;
+  const { name, body_part } = body;
 
   if (!name || typeof name !== "string" || name.trim().length === 0) {
     return NextResponse.json({ error: "Name is required" }, { status: 400 });
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
 
   const { data, error } = await supabase
     .from("custom_exercises")
-    .insert({ user_id: user.id, name: name.trim() })
+    .insert({ user_id: user.id, name: name.trim(), body_part: body_part ?? null })
     .select()
     .single();
 
@@ -56,6 +57,7 @@ export async function POST(req: NextRequest) {
   const exercise = {
     exercise_id: `custom_${data.id}`,
     name: data.name,
+    body_part: data.body_part ?? null,
     is_custom: true,
     created_at: data.created_at,
   };

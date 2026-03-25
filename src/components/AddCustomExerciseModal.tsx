@@ -3,10 +3,23 @@ import Button from "@/components/Button";
 import ModalWrapper from "@/components/ModalWrapper";
 import { X, Plus } from "lucide-react";
 
+const BODY_PARTS = [
+  "back",
+  "cardio",
+  "chest",
+  "lower arms",
+  "lower legs",
+  "neck",
+  "shoulders",
+  "upper arms",
+  "upper legs",
+  "waist",
+];
+
 interface AddCustomExerciseModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (name: string) => Promise<void>;
+  onSubmit: (name: string, bodyPart: string) => Promise<void>;
   initialName?: string;
 }
 
@@ -17,6 +30,7 @@ const AddCustomExerciseModal: React.FC<AddCustomExerciseModalProps> = ({
   initialName = "",
 }) => {
   const [name, setName] = useState(initialName);
+  const [bodyPart, setBodyPart] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -24,6 +38,7 @@ const AddCustomExerciseModal: React.FC<AddCustomExerciseModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       setName(initialName);
+      setBodyPart("");
       setError("");
     }
   }, [isOpen, initialName]);
@@ -41,8 +56,9 @@ const AddCustomExerciseModal: React.FC<AddCustomExerciseModalProps> = ({
     setError("");
     
     try {
-      await onSubmit(trimmedName);
+      await onSubmit(trimmedName, bodyPart);
       setName("");
+      setBodyPart("");
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create exercise");
@@ -53,6 +69,7 @@ const AddCustomExerciseModal: React.FC<AddCustomExerciseModalProps> = ({
 
   const handleClose = () => {
     setName("");
+    setBodyPart("");
     setError("");
     onClose();
   };
@@ -87,6 +104,24 @@ const AddCustomExerciseModal: React.FC<AddCustomExerciseModalProps> = ({
             autoFocus
             maxLength={100}
           />
+        </div>
+
+        <div>
+          <label className="block mb-1.5 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">
+            Body Part <span className="normal-case font-normal">(optional)</span>
+          </label>
+          <select
+            value={bodyPart}
+            onChange={(e) => setBodyPart(e.target.value)}
+            className="input w-full"
+          >
+            <option value="">— Select body part —</option>
+            {BODY_PARTS.map((bp) => (
+              <option key={bp} value={bp}>
+                {bp.charAt(0).toUpperCase() + bp.slice(1)}
+              </option>
+            ))}
+          </select>
         </div>
 
         {error && (
