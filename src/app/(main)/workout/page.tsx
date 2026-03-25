@@ -9,6 +9,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import CancelWorkoutModal from "@/components/CancelWorkoutModal";
 import FinishWorkoutModal from "@/components/FinishWorkoutModal";
 import DiscardSetsModal from "@/components/DiscardSetsModal";
+import AddCustomExerciseModal from "@/components/AddCustomExerciseModal";
 import { useWorkout } from "@/hooks/useWorkout";
 import { useExercises } from "@/hooks/useExercises";
 import { useWorkoutTemplates } from "@/hooks/useWorkoutTemplates";
@@ -60,6 +61,7 @@ export default function WorkoutPage() {
     const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
     const [editingTemplate, setEditingTemplate] = useState<WorkoutTemplate | null>(null);
     const [templateToDelete, setTemplateToDelete] = useState<WorkoutTemplate | null>(null);
+    const [showCustomExerciseModal, setShowCustomExerciseModal] = useState(false);
     const { fetchTemplates, createTemplate, updateTemplate, deleteTemplate } = useWorkoutTemplates();
 
     const loadTemplates = async () => {
@@ -446,6 +448,30 @@ export default function WorkoutPage() {
         }
     };
 
+    const createCustomExercise = async (name: string) => {
+        try {
+            const res = await fetch("/api/custom-exercises", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Failed to create exercise");
+            
+            const newExercise: Exercise = {
+                exercise_id: data.exercise.exercise_id,
+                name: data.exercise.name,
+                is_custom: true,
+            };
+            
+            await addExerciseToWorkout(newExercise);
+            setShowCustomExerciseModal(false);
+        } catch (error) {
+            console.error("Error creating custom exercise:", error);
+            throw error;
+        }
+    };
+
     const addSetToExercise = async (exerciseIndex: number) => {
         const workoutExercise = workoutExercises[exerciseIndex];
         if (workoutExercise.sets.length >= 10) {
@@ -666,6 +692,17 @@ export default function WorkoutPage() {
                                         setErrorMessages((prev) => ({ ...prev, search: "" }));
                                     }}
                                     onSelectExercise={addExerciseToWorkout}
+                                    onAddCustomExercise={() => {
+                                        setShowExerciseSearch(false);
+                                        setShowCustomExerciseModal(true);
+                                    }}
+                                />
+                                
+                                <AddCustomExerciseModal
+                                    isOpen={showCustomExerciseModal}
+                                    onClose={() => setShowCustomExerciseModal(false)}
+                                    onSubmit={createCustomExercise}
+                                    initialName={searchQuery}
                                 />
                             </div>
                         )}

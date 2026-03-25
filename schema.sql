@@ -50,7 +50,26 @@ CREATE POLICY "exercises_public_read" ON public.exercises
   FOR SELECT USING (true);
 
 -- =============================================================================
--- 2. WORKOUTS
+-- 2. CUSTOM_EXERCISES  (user-owned exercises)
+--    exercise_id format: "custom_<uuid>" to match standard exercise_id pattern
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS public.custom_exercises (
+  id          UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     UUID         NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  name        TEXT         NOT NULL,
+  created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_custom_exercises_user_id   ON public.custom_exercises (user_id);
+CREATE INDEX IF NOT EXISTS idx_custom_exercises_user_name ON public.custom_exercises (user_id, name);
+
+ALTER TABLE public.custom_exercises ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "own_custom_exercises" ON public.custom_exercises
+  USING  (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- =============================================================================
+-- 3. WORKOUTS
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS public.workouts (
   id           UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -72,12 +91,12 @@ CREATE POLICY "own_workouts" ON public.workouts
   WITH CHECK (auth.uid() = user_id);
 
 -- =============================================================================
--- 3. WORKOUT_EXERCISES
+-- 4. WORKOUT_EXERCISES
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS public.workout_exercises (
   id          UUID     PRIMARY KEY DEFAULT gen_random_uuid(),
   workout_id  UUID     NOT NULL REFERENCES public.workouts(id) ON DELETE CASCADE,
-  exercise_id TEXT     NOT NULL REFERENCES public.exercises(exercise_id),
+  exercise_id TEXT     NOT NULL, -- references exercises(exercise_id) or custom_exercises via "custom_<uuid>"
   order_index INTEGER  NOT NULL DEFAULT 0
 );
 
@@ -93,7 +112,7 @@ CREATE POLICY "own_workout_exercises" ON public.workout_exercises
   );
 
 -- =============================================================================
--- 4. SETS
+-- 5. SETS
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS public.sets (
   id                  UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -125,7 +144,7 @@ CREATE POLICY "own_sets" ON public.sets
   );
 
 -- =============================================================================
--- 5. PERSONAL_RECORDS  (one row per user × exercise; updated in-place)
+-- 6. PERSONAL_RECORDS  (one row per user × exercise; updated in-place)
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS public.personal_records (
   id           UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -147,7 +166,7 @@ CREATE POLICY "own_personal_records" ON public.personal_records
   WITH CHECK (auth.uid() = user_id);
 
 -- =============================================================================
--- 6. WEIGHT_LOGS
+-- 7. WEIGHT_LOGS
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS public.weight_logs (
   id       UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -164,7 +183,7 @@ CREATE POLICY "own_weight_logs" ON public.weight_logs
   WITH CHECK (auth.uid() = user_id);
 
 -- =============================================================================
--- 7. PROGRESS_PHOTOS
+-- 8. PROGRESS_PHOTOS
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS public.progress_photos (
   id         UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -183,7 +202,7 @@ CREATE POLICY "own_progress_photos" ON public.progress_photos
   WITH CHECK (auth.uid() = user_id);
 
 -- =============================================================================
--- 8. WORKOUT_TEMPLATES
+-- 9. WORKOUT_TEMPLATES
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS public.workout_templates (
   id          UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -202,7 +221,7 @@ CREATE POLICY "own_workout_templates" ON public.workout_templates
   WITH CHECK (auth.uid() = user_id);
 
 -- =============================================================================
--- 9. TEMPLATE_EXERCISES
+-- 10. TEMPLATE_EXERCISES
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS public.template_exercises (
   id          UUID     PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -223,7 +242,7 @@ CREATE POLICY "own_template_exercises" ON public.template_exercises
   );
 
 -- =============================================================================
--- 10. USER_EXERCISES  (per-user exercise favourites / custom settings)
+-- 11. USER_EXERCISES  (per-user exercise favourites / custom settings)
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS public.user_exercises (
   id          UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -242,7 +261,7 @@ CREATE POLICY "own_user_exercises" ON public.user_exercises
   WITH CHECK (auth.uid() = user_id);
 
 -- =============================================================================
--- 11. USER_STATS  (XP bank – source of truth; survives workout deletions)
+-- 12. USER_STATS  (XP bank – source of truth; survives workout deletions)
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS public.user_stats (
   id                  UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -271,7 +290,7 @@ CREATE POLICY "own_user_stats" ON public.user_stats
   WITH CHECK (auth.uid() = user_id);
 
 -- =============================================================================
--- 12. ACHIEVEMENTS  (static catalogue – seeded once, never changes)
+-- 13. ACHIEVEMENTS  (static catalogue – seeded once, never changes)
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS public.achievements (
   id          TEXT     PRIMARY KEY,
@@ -305,7 +324,7 @@ CREATE POLICY "achievements_public_read" ON public.achievements
   FOR SELECT USING (true);
 
 -- =============================================================================
--- 13. USER_ACHIEVEMENTS  (unlock log – one row per claimed achievement)
+-- 14. USER_ACHIEVEMENTS  (unlock log – one row per claimed achievement)
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS public.user_achievements (
   id             UUID         PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
 
   let query = supabase.from("exercises").select("*");
 
-  // Apply filters
+  // Apply filters (custom exercises don't have these fields)
   if (bodyPart) query = query.ilike("body_parts", "%" + bodyPart + "%");
   if (muscle) query = query.ilike("target_muscles", "%" + muscle + "%");
   if (equipment) query = query.ilike("equipments", "%" + equipment + "%");
@@ -58,10 +58,46 @@ export async function GET(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  // Fetch custom exercises for the user
+  const customExercisesRes = await supabase
+    .from("custom_exercises")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+
+  const customExercises = (customExercisesRes.data ?? []).map((e) => ({
+    exercise_id: `custom_${e.id}`,
+    name: e.name,
+    is_custom: true,
+    created_at: e.created_at,
+  }));
+
+  // Filter custom exercises by search if needed
+  let filteredCustomExercises = customExercises;
+  if (search.trim() !== "") {
+    const searchLower = search.toLowerCase();
+    filteredCustomExercises = customExercises.filter((e) =>
+      e.name.toLowerCase().includes(searchLower)
+    );
+  }
+
+  // Combine and process standard exercises
   const processed = data.map((e: { name?: string }) => ({
     ...e,
     name: e.name ? e.name.charAt(0).toUpperCase() + e.name.slice(1) : e.name,
+    is_custom: false,
   }));
 
-  return NextResponse.json({ exercises: processed, hasMore: processed.length === BATCH_SIZE });
+  // Combine standard and custom exercises
+  // Custom exercises are shown first when searching, otherwise mixed at the end
+  let allExercises = processed;
+  if (search.trim() !== "") {
+    // When searching, show custom exercises first
+    allExercises = [...filteredCustomExercises, ...processed];
+  } else {
+    // When not searching, append custom exercises at the end
+    allExercises = [...processed, ...filteredCustomExercises];
+  }
+
+  return NextResponse.json({ exercises: allExercises, hasMore: processed.length === BATCH_SIZE });
 }

@@ -51,3 +51,5 @@ next-env.d.ts
 /.env.local
 /.env.production
 /FEATURE IDEAS.md
+/clean-history.sh
+/PLAN.md

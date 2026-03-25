@@ -15,6 +15,7 @@ export interface Exercise {
   instructions?: string[] | null;
   description?: string;
   created_at?: string;
+  is_custom?: boolean;
 }
 
 export interface Set {

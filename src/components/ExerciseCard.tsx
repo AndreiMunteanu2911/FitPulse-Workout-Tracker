@@ -41,16 +41,27 @@ export default function ExerciseCard({ exercise, showDetailsButton = true, onCli
                 onClick ? "cursor-pointer hover:shadow-[var(--shadow-md)] hover:-translate-y-0.5 active:scale-[0.99]" : ""
             }`}
         >
-            {exercise.gif_url && (
+            {exercise.is_custom ? (
+                <div className="flex-shrink-0 w-14 h-14 rounded-[var(--radius-md)] bg-[var(--surface-raised)] flex items-center justify-center">
+                    <span className="text-lg">*</span>
+                </div>
+            ) : exercise.gif_url ? (
                 <div className="flex-shrink-0 w-14 h-14 rounded-[var(--radius-md)] overflow-hidden bg-[var(--surface-raised)]">
                     <ImageWithSpinner src={exercise.gif_url} alt={exercise.name} />
                 </div>
-            )}
+            ) : null}
             
             <div className="flex-1 min-w-0">
-                <h3 className="text-sm sm:text-base font-semibold text-[var(--foreground)] truncate">
-                    {exercise.name.charAt(0).toUpperCase() + exercise.name.slice(1)}
-                </h3>
+                <div className="flex items-center gap-2">
+                    <h3 className="text-sm sm:text-base font-semibold text-[var(--foreground)] truncate">
+                        {exercise.name.charAt(0).toUpperCase() + exercise.name.slice(1)}
+                    </h3>
+                    {exercise.is_custom && (
+                        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-[var(--primary-100)] dark:bg-[var(--primary-900)] text-[var(--primary-600)] dark:text-[var(--primary-400)] rounded">
+                            Custom
+                        </span>
+                    )}
+                </div>
                 {exercise.target_muscles?.[0] && (
                     <p className="text-xs text-[var(--muted-foreground)] capitalize mt-0.5">
                         {exercise.target_muscles[0]}

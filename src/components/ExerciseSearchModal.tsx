@@ -3,7 +3,7 @@ import ExerciseCard from "./ExerciseCard";
 import LoadingSpinner from "./LoadingSpinner";
 import ModalWrapper from "./ModalWrapper";
 import type { Exercise } from "@/types";
-import { Search } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 
 interface ExerciseSearchModalProps {
     isOpen: boolean;
@@ -13,6 +13,7 @@ interface ExerciseSearchModalProps {
     isSearching: boolean;
     onClose: () => void;
     onSelectExercise: (exercise: Exercise) => void;
+    onAddCustomExercise?: () => void;
 }
 
 export default function ExerciseSearchModal({
@@ -23,7 +24,11 @@ export default function ExerciseSearchModal({
     isSearching,
     onClose,
     onSelectExercise,
+    onAddCustomExercise,
 }: ExerciseSearchModalProps) {
+    const showEmptyState = searchResults.length === 0 && !isSearching && searchQuery.trim() !== "";
+    const showCreateButton = showEmptyState && onAddCustomExercise;
+
     return (
         <ModalWrapper isOpen={isOpen} onClose={onClose} containerClassName="max-w-md sm:max-w-lg p-4 sm:p-6">
             <h3 className="text-xl font-bold mb-4 text-[var(--foreground)]">Search Exercises</h3>
@@ -43,9 +48,24 @@ export default function ExerciseSearchModal({
             {isSearching && <LoadingSpinner size={10} className="mx-auto my-4" />}
             
             <div className="space-y-2 overflow-y-auto max-h-[60vh] -mx-2 px-2">
-                {searchResults.length === 0 && !isSearching && searchQuery.trim() !== "" && (
+                {showEmptyState && !showCreateButton && (
                     <div className="text-center text-[var(--muted-foreground)] py-8">
-                        No exercises found for "{searchQuery}"
+                        No exercises found for &quot;{searchQuery}&quot;
+                    </div>
+                )}
+                {showCreateButton && (
+                    <div className="text-center py-4">
+                        <p className="text-sm text-[var(--muted-foreground)] mb-3">
+                            No exercises found for &quot;{searchQuery}&quot;
+                        </p>
+                        <Button 
+                            onClick={onAddCustomExercise} 
+                            variant="primary"
+                            className="mx-auto"
+                        >
+                            <Plus className="w-4 h-4 mr-1.5" />
+                            Create Custom Exercise
+                        </Button>
                     </div>
                 )}
                 {searchResults.map((exercise) => (
