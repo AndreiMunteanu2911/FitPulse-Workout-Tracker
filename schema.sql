@@ -46,9 +46,18 @@ CREATE TABLE IF NOT EXISTS public.exercises (
 
 -- No indexes needed – full-text-style filtering via ilike on a shared table.
 ALTER TABLE public.exercises ENABLE ROW LEVEL SECURITY;
+-- Standard exercises (no custom_ prefix) are public read.
+-- Custom exercises (custom_<uuid>) are readable only by the user who created them.
 CREATE POLICY "exercises_public_read" ON public.exercises
-  FOR SELECT USING (true);
--- Allow authenticated users to insert/update custom exercise entries (exercise_id LIKE 'custom_%')
+  FOR SELECT USING (
+    exercise_id NOT LIKE 'custom_%'
+    OR exercise_id IN (
+      SELECT 'custom_' || id::text
+      FROM   public.custom_exercises
+      WHERE  user_id = auth.uid()
+    )
+  );
+-- Allow authenticated users to insert/update their own custom exercise entries.
 CREATE POLICY "auth_upsert_custom_exercises" ON public.exercises
   FOR INSERT WITH CHECK (auth.uid() IS NOT NULL AND exercise_id LIKE 'custom_%');
 CREATE POLICY "auth_update_custom_exercises" ON public.exercises
@@ -426,3 +435,16 @@ ALTER TABLE public.workout_exercises
 
 -- M4: Add body_part column to custom_exercises (safe on existing tables)
 ALTER TABLE public.custom_exercises ADD COLUMN IF NOT EXISTS body_part TEXT;
+
+-- M5: Scope exercises_public_read so custom_% entries are only visible to their owner.
+--     Drop the old unrestricted policy and replace it with the scoped one.
+DROP POLICY IF EXISTS "exercises_public_read" ON public.exercises;
+CREATE POLICY "exercises_public_read" ON public.exercises
+  FOR SELECT USING (
+    exercise_id NOT LIKE 'custom_%'
+    OR exercise_id IN (
+      SELECT 'custom_' || id::text
+      FROM   public.custom_exercises
+      WHERE  user_id = auth.uid()
+    )
+  );
