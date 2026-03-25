@@ -58,29 +58,6 @@ export async function GET(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Fetch custom exercises for the user
-  const customExercisesRes = await supabase
-    .from("custom_exercises")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
-
-  const customExercises = (customExercisesRes.data ?? []).map((e) => ({
-    exercise_id: `custom_${e.id}`,
-    name: e.name,
-    is_custom: true,
-    created_at: e.created_at,
-  }));
-
-  // Filter custom exercises by search if needed
-  let filteredCustomExercises = customExercises;
-  if (search.trim() !== "") {
-    const searchLower = search.toLowerCase();
-    filteredCustomExercises = customExercises.filter((e) =>
-      e.name.toLowerCase().includes(searchLower)
-    );
-  }
-
   // Combine and process standard exercises
   const processed = data.map((e: { name?: string }) => ({
     ...e,
@@ -88,15 +65,33 @@ export async function GET(req: NextRequest) {
     is_custom: false,
   }));
 
-  // Combine standard and custom exercises
-  // Custom exercises are shown first when searching, otherwise mixed at the end
+  // Include custom exercises only on page 0 (or when searching) to avoid duplicates during pagination
   let allExercises = processed;
-  if (search.trim() !== "") {
-    // When searching, show custom exercises first
-    allExercises = [...filteredCustomExercises, ...processed];
-  } else {
-    // When not searching, append custom exercises at the end
-    allExercises = [...processed, ...filteredCustomExercises];
+  if (page === 0 || search.trim() !== "") {
+    const customExercisesRes = await supabase
+      .from("custom_exercises")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    let customExercises = (customExercisesRes.data ?? []).map((e) => ({
+      exercise_id: `custom_${e.id}`,
+      name: e.name,
+      is_custom: true,
+      created_at: e.created_at,
+    }));
+
+    if (search.trim() !== "") {
+      const searchLower = search.toLowerCase();
+      customExercises = customExercises.filter((e) =>
+        e.name.toLowerCase().includes(searchLower)
+      );
+      // When searching, show custom exercises first
+      allExercises = [...customExercises, ...processed];
+    } else {
+      // On page 0 (no search), append custom exercises at the end
+      allExercises = [...processed, ...customExercises];
+    }
   }
 
   return NextResponse.json({ exercises: allExercises, hasMore: processed.length === BATCH_SIZE });

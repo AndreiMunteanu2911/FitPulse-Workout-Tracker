@@ -8,8 +8,6 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { useExercises } from "@/hooks/useExercises";
 import { Search, X } from "lucide-react";
 
-const BATCH_SIZE = 20;
-
 export default function ExercisesPage() {
     const [exercises, setExercises] = useState<Exercise[]>([]);
     const [loading, setLoading] = useState(false);
@@ -41,7 +39,7 @@ export default function ExercisesPage() {
                 const existingIds = new Set(prev.map(e => e.exercise_id));
                 return [...prev, ...data.filter(e => !existingIds.has(e.exercise_id))];
             });
-            setHasMore(data.length === BATCH_SIZE);
+            setHasMore(result.hasMore);
         } catch (err) {
             console.error("Error fetching exercises:", err);
         } finally {

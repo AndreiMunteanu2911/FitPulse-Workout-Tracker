@@ -2,6 +2,7 @@ import Link from "next/link";
 import Button from "@/components/Button";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useState } from "react";
+import { Dumbbell } from "lucide-react";
 import type { Exercise } from "@/types";
 
 export type { Exercise };
@@ -43,7 +44,7 @@ export default function ExerciseCard({ exercise, showDetailsButton = true, onCli
         >
             {exercise.is_custom ? (
                 <div className="flex-shrink-0 w-14 h-14 rounded-[var(--radius-md)] bg-[var(--surface-raised)] flex items-center justify-center">
-                    <span className="text-lg">*</span>
+                    <Dumbbell className="w-6 h-6 text-[var(--primary-500)]" />
                 </div>
             ) : exercise.gif_url ? (
                 <div className="flex-shrink-0 w-14 h-14 rounded-[var(--radius-md)] overflow-hidden bg-[var(--surface-raised)]">
