@@ -47,6 +47,8 @@ export default function ExerciseDetailsPage() {
             try {
                 const data = await fetchExercise(id as string);
                 setExercise(data);
+                // Custom exercises only have a stats tab
+                if (data?.is_custom) setActiveTab("stats");
                 const allRecords = await fetchPersonalRecords();
                 const recordForExercise = (allRecords as PersonalRecord[]).find((r) => r.exercise_id === id);
                 setPersonalRecord(recordForExercise || null);
@@ -93,16 +95,18 @@ export default function ExerciseDetailsPage() {
 
                 {/* Tabs */}
                 <div className="flex gap-1 p-1 bg-[var(--surface-raised)] rounded-[var(--radius-lg)] mb-5 w-fit">
-                    <button
-                        onClick={() => setActiveTab("description")}
-                        className={`px-4 py-1.5 rounded-[var(--radius-md)] text-sm font-semibold transition-all ${
-                            activeTab === "description"
-                                ? "bg-[var(--surface)] shadow-[var(--shadow-xs)] text-[var(--foreground)]"
-                                : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
-                        }`}
-                    >
-                        Description
-                    </button>
+                    {!exercise.is_custom && (
+                        <button
+                            onClick={() => setActiveTab("description")}
+                            className={`px-4 py-1.5 rounded-[var(--radius-md)] text-sm font-semibold transition-all ${
+                                activeTab === "description"
+                                    ? "bg-[var(--surface)] shadow-[var(--shadow-xs)] text-[var(--foreground)]"
+                                    : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                            }`}
+                        >
+                            Description
+                        </button>
+                    )}
                     <button
                         onClick={() => setActiveTab("stats")}
                         className={`px-4 py-1.5 rounded-[var(--radius-md)] text-sm font-semibold transition-all ${

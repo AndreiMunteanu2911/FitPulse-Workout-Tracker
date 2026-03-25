@@ -57,11 +57,6 @@ export default function ExerciseCard({ exercise, showDetailsButton = true, onCli
                     <h3 className="text-sm sm:text-base font-semibold text-[var(--foreground)] truncate">
                         {exercise.name.charAt(0).toUpperCase() + exercise.name.slice(1)}
                     </h3>
-                    {exercise.is_custom && (
-                        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-[var(--primary-100)] dark:bg-[var(--primary-900)] text-[var(--primary-600)] dark:text-[var(--primary-400)] rounded">
-                            Custom
-                        </span>
-                    )}
                 </div>
                 {exercise.target_muscles?.[0] && (
                     <p className="text-xs text-[var(--muted-foreground)] capitalize mt-0.5">

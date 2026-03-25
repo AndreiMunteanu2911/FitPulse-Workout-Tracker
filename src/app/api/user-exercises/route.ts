@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/helper/supabaseServer";
+import { resolveExercises } from "@/helper/resolveExercises";
 
 export async function GET(req: NextRequest) {
   const supabase = await createSupabaseServerClient();
@@ -12,7 +13,7 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from("user_exercises")
-    .select("*, exercise:exercises (*)")
+    .select("*")
     .eq("user_id", user.id);
 
   if (favoritesOnly) query = query.eq("is_favorite", true);
@@ -21,7 +22,15 @@ export async function GET(req: NextRequest) {
   const { data, error } = await query.order("created_at", { ascending: false });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json({ userExercises: data || [] });
+  const exerciseIds = (data || []).map((ue: { exercise_id: string }) => ue.exercise_id);
+  const exerciseMap = await resolveExercises(supabase, exerciseIds);
+
+  const userExercises = (data || []).map((ue: { exercise_id: string }) => ({
+    ...ue,
+    exercise: exerciseMap.get(ue.exercise_id) ?? null,
+  }));
+
+  return NextResponse.json({ userExercises });
 }
 
 export async function POST(req: NextRequest) {
@@ -38,11 +47,13 @@ export async function POST(req: NextRequest) {
   const { data, error } = await supabase
     .from("user_exercises")
     .upsert({ user_id: user.id, exercise_id, is_favorite }, { onConflict: "user_id,exercise_id" })
-    .select("*, exercise:exercises (*)")
+    .select("*")
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ userExercise: data });
+
+  const exerciseMap = await resolveExercises(supabase, [exercise_id]);
+  return NextResponse.json({ userExercise: { ...data, exercise: exerciseMap.get(exercise_id) ?? null } });
 }
 
 export async function PUT(req: NextRequest) {
@@ -63,11 +74,14 @@ export async function PUT(req: NextRequest) {
     .update(updateData)
     .eq("id", id)
     .eq("user_id", user.id)
-    .select("*, exercise:exercises (*)")
+    .select("*")
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ userExercise: data });
+
+  const resolvedId = data.exercise_id;
+  const exerciseMap = await resolveExercises(supabase, [resolvedId]);
+  return NextResponse.json({ userExercise: { ...data, exercise: exerciseMap.get(resolvedId) ?? null } });
 }
 
 export async function DELETE(req: NextRequest) {

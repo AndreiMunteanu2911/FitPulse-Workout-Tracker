@@ -46,8 +46,10 @@ CREATE TABLE IF NOT EXISTS public.exercises (
 
 -- No indexes needed – full-text-style filtering via ilike on a shared table.
 ALTER TABLE public.exercises ENABLE ROW LEVEL SECURITY;
+-- Custom exercises live in the `custom_exercises` table, not here.
+-- This table only holds standard exercises which are publicly readable.
 CREATE POLICY "exercises_public_read" ON public.exercises
-  FOR SELECT USING (true);
+  FOR SELECT USING (exercise_id NOT LIKE 'custom_%');
 
 -- =============================================================================
 -- 2. CUSTOM_EXERCISES  (user-owned exercises)
@@ -57,6 +59,7 @@ CREATE TABLE IF NOT EXISTS public.custom_exercises (
   id          UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id     UUID         NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   name        TEXT         NOT NULL,
+  body_part   TEXT,
   created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
 
@@ -96,7 +99,7 @@ CREATE POLICY "own_workouts" ON public.workouts
 CREATE TABLE IF NOT EXISTS public.workout_exercises (
   id          UUID     PRIMARY KEY DEFAULT gen_random_uuid(),
   workout_id  UUID     NOT NULL REFERENCES public.workouts(id) ON DELETE CASCADE,
-  exercise_id TEXT     NOT NULL, -- references exercises(exercise_id) or custom_exercises via "custom_<uuid>"
+  exercise_id TEXT     NOT NULL,
   order_index INTEGER  NOT NULL DEFAULT 0
 );
 
@@ -149,7 +152,7 @@ CREATE POLICY "own_sets" ON public.sets
 CREATE TABLE IF NOT EXISTS public.personal_records (
   id           UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id      UUID          NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  exercise_id  TEXT          NOT NULL REFERENCES public.exercises(exercise_id),
+  exercise_id  TEXT          NOT NULL,
   max_weight   NUMERIC(10,2) NOT NULL DEFAULT 0,
   max_reps     INTEGER       NOT NULL DEFAULT 0,
   workout_date DATE          NOT NULL,
@@ -226,7 +229,7 @@ CREATE POLICY "own_workout_templates" ON public.workout_templates
 CREATE TABLE IF NOT EXISTS public.template_exercises (
   id          UUID     PRIMARY KEY DEFAULT gen_random_uuid(),
   template_id UUID     NOT NULL REFERENCES public.workout_templates(id) ON DELETE CASCADE,
-  exercise_id TEXT     NOT NULL REFERENCES public.exercises(exercise_id),
+  exercise_id TEXT     NOT NULL,
   order_index INTEGER  NOT NULL DEFAULT 0
 );
 
@@ -247,7 +250,7 @@ CREATE POLICY "own_template_exercises" ON public.template_exercises
 CREATE TABLE IF NOT EXISTS public.user_exercises (
   id          UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id     UUID         NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  exercise_id TEXT         NOT NULL REFERENCES public.exercises(exercise_id),
+  exercise_id TEXT         NOT NULL,
   is_favorite BOOLEAN      NOT NULL DEFAULT TRUE,
   created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
   UNIQUE (user_id, exercise_id)
@@ -364,3 +367,39 @@ CREATE POLICY "own_user_achievements" ON public.user_achievements
 -- CREATE POLICY "Users delete own photos"
 --   ON storage.objects FOR DELETE
 --   USING (auth.uid()::text = (storage.foldername(name))[1]);
+
+-- =============================================================================
+-- MIGRATIONS  (run these when upgrading an existing database)
+-- =============================================================================
+
+-- M1-M3 (superseded): These steps mirrored custom exercises into the exercises
+--   table to satisfy a FK constraint. That constraint has been removed in M6;
+--   no action needed for new installs.
+
+-- M4: Add body_part column to custom_exercises (safe on existing tables)
+ALTER TABLE public.custom_exercises ADD COLUMN IF NOT EXISTS body_part TEXT;
+
+-- M5: Replace unrestricted exercises_public_read with one scoped to standard exercises
+--     only (custom exercises live in custom_exercises; after M6b they are gone from here).
+DROP POLICY IF EXISTS "exercises_public_read" ON public.exercises;
+CREATE POLICY "exercises_public_read" ON public.exercises
+  FOR SELECT USING (exercise_id NOT LIKE 'custom_%');
+
+-- M6: Remove FK constraints that required custom exercises to be mirrored into the
+--     exercises table. Exercise data is now resolved in the application layer by
+--     looking up standard exercises in `exercises` and custom ones in `custom_exercises`.
+ALTER TABLE public.workout_exercises
+  DROP CONSTRAINT IF EXISTS workout_exercises_exercise_id_fkey;
+
+ALTER TABLE public.template_exercises
+  DROP CONSTRAINT IF EXISTS template_exercises_exercise_id_fkey;
+
+ALTER TABLE public.personal_records
+  DROP CONSTRAINT IF EXISTS personal_records_exercise_id_fkey;
+
+ALTER TABLE public.user_exercises
+  DROP CONSTRAINT IF EXISTS user_exercises_exercise_id_fkey;
+
+-- M6b: Clean up any custom_% rows that were mirrored into exercises to satisfy the
+--      old FK constraint (they are no longer needed there).
+DELETE FROM public.exercises WHERE exercise_id LIKE 'custom_%';

@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/helper/supabaseServer";
+import { resolveExercises } from "@/helper/resolveExercises";
 
 interface TemplateExercise {
+  exercise_id: string;
   order_index: number;
 }
 
@@ -21,27 +23,63 @@ export async function GET(req: NextRequest) {
     // Get single template with exercises
     const { data, error } = await supabase
       .from("workout_templates")
-      .select("*, template_exercises (*, exercise:exercises (*))")
+      .select("*, template_exercises (*)")
       .eq("id", templateId)
       .eq("user_id", user.id)
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ template: data });
+
+    const exerciseIds = (data?.template_exercises ?? []).map((te: TemplateExercise) => te.exercise_id);
+    const exerciseMap = await resolveExercises(supabase, exerciseIds);
+
+    const enriched = {
+      ...data,
+      template_exercises: (data?.template_exercises ?? [])
+        .sort((a: TemplateExercise, b: TemplateExercise) => a.order_index - b.order_index)
+        .map((te: TemplateExercise) => ({
+          ...te,
+          exercise: exerciseMap.get(te.exercise_id) ?? {
+            exercise_id: te.exercise_id,
+            name: te.exercise_id,
+            is_custom: false,
+          },
+        })),
+    };
+
+    return NextResponse.json({ template: enriched });
   }
 
   // Get all templates
   const { data, error } = await supabase
     .from("workout_templates")
-    .select("*, template_exercises (*, exercise:exercises (*))")
+    .select("*, template_exercises (*)")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  const allExerciseIds = [
+    ...new Set(
+      (data || []).flatMap((t: Template) =>
+        (t.template_exercises || []).map((te) => te.exercise_id)
+      )
+    ),
+  ];
+  const exerciseMap = await resolveExercises(supabase, allExerciseIds);
+
   const templates = (data || []).map((t: Template) => ({
     ...t,
-    template_exercises: (t.template_exercises || []).sort((a: TemplateExercise, b: TemplateExercise) => a.order_index - b.order_index),
+    template_exercises: (t.template_exercises || [])
+      .sort((a: TemplateExercise, b: TemplateExercise) => a.order_index - b.order_index)
+      .map((te: TemplateExercise) => ({
+        ...te,
+        exercise: exerciseMap.get(te.exercise_id) ?? {
+          exercise_id: te.exercise_id,
+          name: te.exercise_id,
+          is_custom: false,
+        },
+      })),
   }));
 
   return NextResponse.json({ templates });
