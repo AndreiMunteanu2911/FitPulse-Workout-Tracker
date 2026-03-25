@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
     favoriteExerciseIds = favs?.map(f => f.exercise_id) || [];
   }
 
-  let query = supabase.from("exercises").select("*");
+  let query = supabase.from("exercises").select("*").not("exercise_id", "like", "custom_%");
 
   // Apply filters (custom exercises don't have these fields)
   if (bodyPart) query = query.ilike("body_parts", "%" + bodyPart + "%");

@@ -48,6 +48,11 @@ CREATE TABLE IF NOT EXISTS public.exercises (
 ALTER TABLE public.exercises ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "exercises_public_read" ON public.exercises
   FOR SELECT USING (true);
+-- Allow authenticated users to insert/update custom exercise entries (exercise_id LIKE 'custom_%')
+CREATE POLICY "auth_upsert_custom_exercises" ON public.exercises
+  FOR INSERT WITH CHECK (auth.uid() IS NOT NULL AND exercise_id LIKE 'custom_%');
+CREATE POLICY "auth_update_custom_exercises" ON public.exercises
+  FOR UPDATE USING (auth.uid() IS NOT NULL AND exercise_id LIKE 'custom_%');
 
 -- =============================================================================
 -- 2. CUSTOM_EXERCISES  (user-owned exercises)
@@ -97,14 +102,11 @@ CREATE POLICY "own_workouts" ON public.workouts
 CREATE TABLE IF NOT EXISTS public.workout_exercises (
   id          UUID     PRIMARY KEY DEFAULT gen_random_uuid(),
   workout_id  UUID     NOT NULL REFERENCES public.workouts(id) ON DELETE CASCADE,
-  exercise_id TEXT     NOT NULL, -- references exercises(exercise_id) or custom_exercises via "custom_<uuid>"
+  exercise_id TEXT     NOT NULL REFERENCES public.exercises(exercise_id),
   order_index INTEGER  NOT NULL DEFAULT 0
 );
 
 CREATE INDEX IF NOT EXISTS idx_we_workout_id ON public.workout_exercises (workout_id);
-
--- Drop any erroneously-created FK that prevents custom exercise IDs from being stored
-ALTER TABLE public.workout_exercises DROP CONSTRAINT IF EXISTS workout_exercises_exercise_id_fkey;
 
 ALTER TABLE public.workout_exercises ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "own_workout_exercises" ON public.workout_exercises
@@ -373,8 +375,54 @@ CREATE POLICY "own_user_achievements" ON public.user_achievements
 -- MIGRATIONS  (run these when upgrading an existing database)
 -- =============================================================================
 
--- M1: Remove FK constraint that blocks custom exercise IDs in workout_exercises
-ALTER TABLE public.workout_exercises DROP CONSTRAINT IF EXISTS workout_exercises_exercise_id_fkey;
+-- M1: Allow authenticated users to upsert custom exercises into the exercises table
+--     (safe to run multiple times – CREATE POLICY IF NOT EXISTS is not standard, so
+--      wrap in a DO block to avoid errors if the policy already exists)
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'exercises'
+      AND policyname = 'auth_upsert_custom_exercises'
+  ) THEN
+    CREATE POLICY "auth_upsert_custom_exercises" ON public.exercises
+      FOR INSERT WITH CHECK (auth.uid() IS NOT NULL AND exercise_id LIKE 'custom_%');
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'exercises'
+      AND policyname = 'auth_update_custom_exercises'
+  ) THEN
+    CREATE POLICY "auth_update_custom_exercises" ON public.exercises
+      FOR UPDATE USING (auth.uid() IS NOT NULL AND exercise_id LIKE 'custom_%');
+  END IF;
+END $$;
 
--- M2: Add body_part column to custom_exercises (safe on existing tables)
+-- M2: Populate exercises table with all known custom exercises
+--     (required before re-adding the FK constraint)
+INSERT INTO public.exercises (exercise_id, name, body_parts)
+SELECT
+  'custom_' || ce.id::text,
+  ce.name,
+  ce.body_part
+FROM public.custom_exercises ce
+ON CONFLICT (exercise_id) DO NOTHING;
+
+-- M2b: Add placeholder entries for any workout_exercises rows that reference
+--      orphaned custom IDs (custom exercise was deleted but workout row remains)
+INSERT INTO public.exercises (exercise_id, name)
+SELECT DISTINCT we.exercise_id, we.exercise_id
+FROM public.workout_exercises we
+WHERE we.exercise_id LIKE 'custom_%'
+  AND NOT EXISTS (
+    SELECT 1 FROM public.exercises e WHERE e.exercise_id = we.exercise_id
+  )
+ON CONFLICT (exercise_id) DO NOTHING;
+
+-- M3: Re-add the FK constraint (Supabase join syntax requires it)
+ALTER TABLE public.workout_exercises
+  ADD CONSTRAINT IF NOT EXISTS workout_exercises_exercise_id_fkey
+  FOREIGN KEY (exercise_id)
+  REFERENCES public.exercises(exercise_id);
+
+-- M4: Add body_part column to custom_exercises (safe on existing tables)
 ALTER TABLE public.custom_exercises ADD COLUMN IF NOT EXISTS body_part TEXT;
