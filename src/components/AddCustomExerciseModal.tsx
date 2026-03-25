@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Button from "@/components/Button";
 import ModalWrapper from "@/components/ModalWrapper";
 import { X, Plus } from "lucide-react";
@@ -19,6 +19,14 @@ const AddCustomExerciseModal: React.FC<AddCustomExerciseModalProps> = ({
   const [name, setName] = useState(initialName);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  // Sync name field with initialName whenever the modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setName(initialName);
+      setError("");
+    }
+  }, [isOpen, initialName]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
