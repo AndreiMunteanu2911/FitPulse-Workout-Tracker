@@ -9,6 +9,7 @@ const PAGE_TITLES: Record<string, string> = {
     "/workout": "Workout",
     "/exercises": "Exercises",
     "/profile": "Profile",
+    "/ai-coach": "AI Coach",
 };
 
 export default function TopBar() {

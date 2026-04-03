@@ -32,7 +32,7 @@ export default function Button({
         textOnly:
             "bg-transparent text-[var(--primary-600)] dark:text-[var(--primary-500)] hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-100)]",
         danger:
-            "bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400",
+            "bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] hover:bg-[var(--color-destructive-bg)] dark:bg-[var(--color-destructive-bg)] dark:text-[var(--color-destructive)] hover:opacity-90",
     };
 
     return (

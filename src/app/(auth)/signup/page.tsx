@@ -85,7 +85,7 @@ export default function SignUpPage() {
                             required
                             className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-white placeholder-white/40 focus:bg-white/15 focus:border-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 transition"
                         />
-                        {errors.email && <p className="text-red-300 text-xs mt-1 font-medium">{errors.email}</p>}
+                        {errors.email && <p className="text-white text-xs mt-1 font-semibold">{errors.email}</p>}
                     </div>
                     <div>
                         <label className="block text-xs font-semibold uppercase tracking-widest text-white/60 mb-1.5">Password</label>
@@ -97,7 +97,7 @@ export default function SignUpPage() {
                             required
                             className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-white placeholder-white/40 focus:bg-white/15 focus:border-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 transition"
                         />
-                        {errors.password && <p className="text-red-300 text-xs mt-1 font-medium">{errors.password}</p>}
+                        {errors.password && <p className="text-white text-xs mt-1 font-semibold">{errors.password}</p>}
                     </div>
                     <div>
                         <label className="block text-xs font-semibold uppercase tracking-widest text-white/60 mb-1.5">Confirm Password</label>
@@ -109,7 +109,7 @@ export default function SignUpPage() {
                             required
                             className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-white placeholder-white/40 focus:bg-white/15 focus:border-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 transition"
                         />
-                        {errors.confirmPassword && <p className="text-red-300 text-xs mt-1 font-medium">{errors.confirmPassword}</p>}
+                        {errors.confirmPassword && <p className="text-white text-xs mt-1 font-semibold">{errors.confirmPassword}</p>}
                     </div>
 
                     {message && (

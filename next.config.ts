@@ -2,7 +2,13 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    domains: ["static.exercisedb.dev"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "static.exercisedb.dev",
+        pathname: "/**",
+      },
+    ],
   },
   /* config options here */
 };

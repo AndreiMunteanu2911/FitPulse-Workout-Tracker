@@ -6,11 +6,17 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { workout_exercise_id, set_number, reps, weight } = await req.json();
+  const { workout_exercise_id, set_number, reps, weight, is_confirmed } = await req.json();
 
   const { data, error } = await supabase
     .from("sets")
-    .insert({ workout_exercise_id, set_number, reps: reps ?? 0, weight: weight ?? 0 })
+    .insert({
+      workout_exercise_id,
+      set_number,
+      reps: reps ?? 0,
+      weight: weight ?? 0,
+      is_confirmed: is_confirmed ?? false,
+    })
     .select()
     .single();
 

@@ -16,7 +16,7 @@ export default function LandingPage() {
             <div className="flex-1 flex flex-col justify-center py-10">
                 <div className="mb-2">
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs font-semibold text-white/80 mb-6">
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary-300)] animate-pulse" />
                         Your fitness journey starts here
                     </span>
                 </div>
