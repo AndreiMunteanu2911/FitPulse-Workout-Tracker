@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Sparkles, Dumbbell } from "lucide-react";
+import { Dumbbell } from "lucide-react";
+import Image from "next/image";
 import ExpiredWorkoutCard from "./ExpiredWorkoutCard";
 
 interface MessageBubbleProps {
@@ -39,13 +40,13 @@ export default function MessageBubble({
         className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
           isUser
             ? "bg-[var(--primary-600)] text-white"
-            : "bg-[var(--primary-100)] dark:bg-[var(--primary-900)] text-[var(--primary-600)] dark:text-[var(--primary-400)]"
+            : "bg-[var(--primary-100)] dark:bg-[var(--primary-900)]"
         }`}
       >
         {isUser ? (
           <span className="text-xs font-bold">You</span>
         ) : (
-          <Sparkles className="w-4 h-4" />
+          <Image src="/assets/dumbbell-large.svg" alt="AI" width={18} height={18} className="brightness-0 invert" />
         )}
       </div>
 
@@ -138,15 +139,13 @@ export function WorkoutActionCard({
   );
 }
 
-// ── Simple text formatter (basic markdown-like) ─────────────────────────────
+// ── Simple text formatter ───────────────────────────────────────────────────
 function FormattedText({ content }: { content: string }) {
-  // Split by lines and apply basic formatting
   const lines = content.split("\n");
 
   return (
     <>
       {lines.map((line, i) => {
-        // Bold: **text**
         const parts = line.split(/(\*\*[^*]+\*\*)/g);
 
         const formatted = parts.map((part, j) => {
