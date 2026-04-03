@@ -2,19 +2,28 @@
 
 import { motion } from "framer-motion";
 import { Sparkles, Dumbbell } from "lucide-react";
+import ExpiredWorkoutCard from "./ExpiredWorkoutCard";
 
 interface MessageBubbleProps {
   role: "user" | "assistant";
   content: string;
   isStreaming?: boolean;
+  isExpired?: boolean;
   onWorkoutStart?: () => void;
+  onWorkoutRecreate?: () => void;
+  workoutName?: string;
+  workoutExercises?: { name: string; sets: { reps: number; weight: number }[] }[];
 }
 
 export default function MessageBubble({
   role,
   content,
   isStreaming = false,
+  isExpired = false,
   onWorkoutStart,
+  onWorkoutRecreate,
+  workoutName,
+  workoutExercises,
 }: MessageBubbleProps) {
   const isUser = role === "user";
 
@@ -60,6 +69,15 @@ export default function MessageBubble({
           </div>
         ) : null}
       </div>
+
+      {/* Expired workout card (shown for old conversations) */}
+      {!isUser && isExpired && workoutName && workoutExercises && (
+        <ExpiredWorkoutCard
+          workoutName={workoutName}
+          exercises={workoutExercises}
+          onRecreate={onWorkoutRecreate ?? (() => {})}
+        />
+      )}
     </motion.div>
   );
 }
