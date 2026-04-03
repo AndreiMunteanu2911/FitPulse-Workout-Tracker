@@ -112,11 +112,11 @@ export default function WorkoutPage() {
                     setWorkoutExercises(exercises);
                     setWorkoutStarted(true);
                     setErrorMessages({});
-                    // Auto-confirm sets that already have valid values from a previous session
+                    // Restore confirmed state from DB (is_confirmed column)
                     const preConfirmed = new Set<string>();
                     for (const we of data.workout_exercises || []) {
                         for (const s of we.sets || []) {
-                            if (s.reps > 0 || s.weight > 0) {
+                            if (s.is_confirmed) {
                                 preConfirmed.add(s.id);
                             }
                         }
@@ -277,8 +277,19 @@ export default function WorkoutPage() {
         }
     };
 
-    const handleConfirmSet = (setId: string, exercise: WorkoutExercise["exercise"], workoutExerciseId: string) => {
+    const handleConfirmSet = async (setId: string, exercise: WorkoutExercise["exercise"], workoutExerciseId: string) => {
         setConfirmedSetIds((prev) => new Set([...prev, setId]));
+
+        // Persist confirmation to DB
+        try {
+            await fetch(`/api/sets/${setId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ is_confirmed: true }),
+            });
+        } catch {
+            // Silently fail — UI state already updated
+        }
 
         // Auto-start rest timer inline in the exercise card
         const exerciseType = detectExerciseType(exercise);
@@ -360,6 +371,47 @@ export default function WorkoutPage() {
             }
         } catch (error) {
             console.error("Error discarding sets:", error);
+        }
+
+        await finishWorkout();
+    };
+
+    const confirmAllAndFinish = async () => {
+        setShowDiscardSetsModal(false);
+
+        try {
+            // Confirm all unconfirmed sets that have reps or weight
+            for (const exercise of workoutExercises) {
+                for (const s of exercise.sets) {
+                    if (!s.is_confirmed && (s.reps > 0 || s.weight > 0)) {
+                        try {
+                            await fetch(`/api/sets/${s.id}`, {
+                                method: "PATCH",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ is_confirmed: true }),
+                            });
+                        } catch {
+                            // Silently fail — continue with others
+                        }
+                    }
+                }
+            }
+
+            // Delete empty exercises (no valid sets at all)
+            const exercisesToDelete: string[] = [];
+            for (const exercise of workoutExercises) {
+                const hasValidSet = exercise.sets.some(
+                    (s) => s.is_confirmed || s.reps > 0 || s.weight > 0,
+                );
+                if (!hasValidSet) {
+                    exercisesToDelete.push(exercise.id);
+                }
+            }
+            for (const exId of exercisesToDelete) {
+                await deleteWorkoutExercise(exId);
+            }
+        } catch (error) {
+            console.error("Error confirming sets:", error);
         }
 
         await finishWorkout();
@@ -608,6 +660,7 @@ export default function WorkoutPage() {
                             isOpen={showDiscardSetsModal}
                             onClose={() => setShowDiscardSetsModal(false)}
                             onConfirm={discardAndFinish}
+                            onConfirmAll={confirmAllAndFinish}
                             incompleteSetCount={discardInfo.incompleteSetCount}
                             emptyExerciseCount={discardInfo.emptyExerciseCount}
                         />

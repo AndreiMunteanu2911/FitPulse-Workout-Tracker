@@ -32,7 +32,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       exercise_id: exercise.exercise_id,
       order_index: (current.workout_exercises || []).length,
       exercise: exercise,
-      sets: [{ id: crypto.randomUUID(), workout_exercise_id: "", set_number: 1, reps: 0, weight: 0 }],
+      sets: [{ id: crypto.randomUUID(), workout_exercise_id: "", set_number: 1, reps: 0, weight: 0, is_confirmed: false }],
     };
     set({ activeWorkout: { ...current, workout_exercises: [...(current.workout_exercises || []), newWorkoutExercise] } });
   },
@@ -49,7 +49,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
     if (!current || !current.workout_exercises?.[exerciseIndex]) return;
     const exercise = current.workout_exercises[exerciseIndex];
     const newSetNumber = (exercise.sets || []).length + 1;
-    const newSet = { id: crypto.randomUUID(), workout_exercise_id: exercise.id, set_number: newSetNumber, reps: 0, weight: 0 };
+    const newSet = { id: crypto.randomUUID(), workout_exercise_id: exercise.id, set_number: newSetNumber, reps: 0, weight: 0, is_confirmed: false };
     const updatedExercises = [...current.workout_exercises];
     updatedExercises[exerciseIndex] = { ...exercise, sets: [...(exercise.sets || []), newSet] };
     set({ activeWorkout: { ...current, workout_exercises: updatedExercises } });

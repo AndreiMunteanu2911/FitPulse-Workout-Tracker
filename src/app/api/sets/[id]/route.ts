@@ -11,9 +11,10 @@ export async function PATCH(
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
-  const updates: { reps?: number; weight?: number } = {};
+  const updates: { reps?: number; weight?: number; is_confirmed?: boolean } = {};
   if (body.reps !== undefined) updates.reps = body.reps;
   if (body.weight !== undefined) updates.weight = body.weight;
+  if (body.is_confirmed !== undefined) updates.is_confirmed = body.is_confirmed;
 
   const { error } = await supabase.from("sets").update(updates).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
