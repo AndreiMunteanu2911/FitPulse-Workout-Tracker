@@ -36,6 +36,7 @@ FitPulse is a full-stack mobile-first fitness tracking web app built with **Next
 - **Progress Photos** — Upload photos with a body-part tag and optional notes; delete any photo. Photos are stored in a public Supabase Storage bucket.
 - **Workout Templates** — Save and manage reusable workout templates. Start a new workout directly from a template.
 - **User Exercise Library & Favourites** — Mark exercises as favourites for quick access.
+- **AI Coach** — RAG-powered fitness assistant with access to your workout history, PRs, and muscle recovery data. Can answer personalized questions and create draft workouts you can start immediately. Powered by OpenRouter's free-tier LLMs.
 - **Dark Mode** — Fully themed light/dark mode with instant toggle (no flash), persisted to localStorage via Zustand.
 - **Responsive Layout** — Desktop sidebar + main content area; mobile fixed top bar + bottom tab navigation.
 - **Icons** — Every icon in the app is sourced from **Lucide React** for consistent, crisp vector icons at every size.
@@ -123,6 +124,7 @@ All pages in this group are protected by `ProtectedWrapper`.
 | `/history` | `history/page.tsx` | Paginated list of completed workouts with quick edit/delete |
 | `/history/[id]` | `history/[id]/page.tsx` | Full workout detail with inline set editing |
 | `/profile` | `profile/page.tsx` | User info, workout calendar, weight log + chart, progress photos |
+| `/ai-coach` | `ai-coach/page.tsx` | AI-powered fitness coach with conversation history and draft workout creation |
 
 ---
 
@@ -183,6 +185,17 @@ All pages in this group are protected by `ProtectedWrapper`.
 | `AddPhotoModal` | File upload + body-part selector + notes modal for adding a progress photo (ImageIcon upload prompt). |
 | `ExerciseCard` | Exercise tile used in both the library list and the search modal. |
 
+### AI Coach
+
+| Component | Description |
+|---|---|
+| `CoachSidebar` | Collapsible conversation list sidebar (desktop) / slide-in drawer (mobile). Shows chat history with real-time relative timestamps. |
+| `CoachTextWindow` | Scrollable message area with empty-state suggestions. Shows expired workout cards for conversations older than 24h. |
+| `CoachTextArea` | Text input with send button at the bottom of the chat panel. |
+| `MessageBubble` | Individual message rendering with user/assistant avatars and markdown-like formatting. |
+| `QuickSuggestions` | Pre-built prompt chips shown on empty state. |
+| `ExpiredWorkoutCard` | Stale workout suggestion card with "Recreate with current data" button. |
+
 ---
 
 ## Hooks
@@ -200,6 +213,7 @@ All hooks are in `src/hooks/` and use `fetch()` to call Next.js API routes. They
 | `useProgressPhotos` | Fetch, upload, and delete progress photos |
 | `useWorkoutTemplates` | Fetch, create, update, and delete workout templates |
 | `useUserExercises` | Manage per-user exercise library and favourites |
+| `useAIChat` | AI chat with SSE streaming, conversation history (save/load/delete), and workout action detection |
 
 ---
 
@@ -265,9 +279,25 @@ All hooks are in `src/hooks/` and use `fetch()` to call Next.js API routes. They
 
    > **Security note**: These are *server-only* variables (no `NEXT_PUBLIC_` prefix). They are never sent to the browser.
 
+   **Optional: AI Coach** — To enable the AI-powered fitness coach, add your OpenRouter API key (free tier, no credit card required):
+   ```env
+   OPENROUTER_API_KEY=sk-or-your-key-here
+   OPENROUTER_CHAT_MODEL=qwen/qwen3.6-plus:free
+   OPENROUTER_FALLBACK_MODEL=stepfun/step-3.5-flash:free
+   OPENROUTER_EMBEDDING_MODEL=nvidia/llama-nemotron-embed-vl-1b-v2:free
+   ```
+   Get your key at [openrouter.ai/keys](https://openrouter.ai/keys).
+
 4. **Run database migrations**
 
-   Open the Supabase SQL Editor and run the migration SQL to create all tables, indexes, and RLS policies (see [Database Structure](#database-structure-supabase) below).
+   Open the Supabase SQL Editor and run the migration SQL files in order (`migrations/`) to create all tables, indexes, and RLS policies.
+
+   For the AI Coach, also run:
+   - `migrations/004_ai_coach.sql` — enables `pgvector` extension, creates embedding tables
+   - `migrations/005_add_is_confirmed.sql` — adds `is_confirmed` column to sets
+   - `migrations/006_ai_conversations.sql` — creates conversation history tables
+
+   Enable the `vector` extension in Supabase Dashboard → Database → Extensions.
 
 5. **Create the storage bucket**
 
@@ -438,6 +468,18 @@ CREATE INDEX idx_workout_templates_user ON workout_templates(user_id);
 
 -- Template Exercises
 CREATE INDEX idx_template_exercises_template ON template_exercises(template_id);
+
+-- Exercise Embeddings (AI Coach)
+CREATE INDEX idx_exercise_emb_exercise ON exercise_embeddings(exercise_id);
+CREATE INDEX idx_exercise_emb_vector ON exercise_embeddings USING hnsw (embedding vector_cosine_ops);
+
+-- Workout Pattern Embeddings (AI Coach)
+CREATE INDEX idx_workout_emb_workout ON workout_pattern_embeddings(workout_id);
+CREATE INDEX idx_workout_emb_vector ON workout_pattern_embeddings USING hnsw (embedding vector_cosine_ops);
+
+-- AI Conversations
+CREATE INDEX idx_ai_conversations_user ON ai_conversations(user_id, updated_at DESC);
+CREATE INDEX idx_ai_messages_conversation ON ai_messages(conversation_id, created_at ASC);
 ```
 
 ### Row-Level Security (RLS)
@@ -449,7 +491,7 @@ CREATE POLICY "Users can only access their own data"
   USING (user_id = auth.uid())
   WITH CHECK (user_id = auth.uid());
 ```
-Repeat for `workout_exercises`, `sets`, `weight_logs`, `personal_records`, `progress_photos`, `user_exercises`, `workout_templates`, and `template_exercises`.
+Repeat for `workout_exercises`, `sets`, `weight_logs`, `personal_records`, `progress_photos`, `user_exercises`, `workout_templates`, `template_exercises`, `exercise_embeddings`, `workout_pattern_embeddings`, `ai_conversations`, and `ai_messages`.
 
 ---
 
@@ -471,7 +513,13 @@ auth.users (Supabase Auth)
     │
     ├─── progress_photos  (images in Supabase Storage)
     │
-    └─── user_exercises ────────────────────────────────► exercises
+    ├─── user_exercises ────────────────────────────────► exercises
+    │
+    ├─── ai_conversations ──► ai_messages
+    │
+    ├─── exercise_embeddings ──► exercises (exercise_id lookup)
+    │
+    └─── workout_pattern_embeddings ──► workouts
 ```
 
 ### Foreign Key Relationships
@@ -482,6 +530,10 @@ auth.users (Supabase Auth)
 - `template_exercises` references both `workout_templates(id)` and `exercises(exercise_id)`.
 - `personal_records` has a unique constraint on `(user_id, exercise_id)` — one PR per exercise per user.
 - `user_exercises` has a unique constraint on `(user_id, exercise_id)`.
+- `ai_conversations` references `auth.users(id)` — one conversation per user.
+- `ai_messages` references `ai_conversations(id)` with cascade delete.
+- `exercise_embeddings` stores vector(1024) embeddings for each exercise.
+- `workout_pattern_embeddings` stores vector(1024) embeddings for each completed workout.
 
 ### Storage Bucket
 

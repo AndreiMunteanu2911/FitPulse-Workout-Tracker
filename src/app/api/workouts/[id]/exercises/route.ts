@@ -22,7 +22,7 @@ export async function POST(
 
   const { data: setData, error: setError } = await supabase
     .from("sets")
-    .insert({ workout_exercise_id: workoutExerciseData.id, set_number: 1, reps: 0, weight: 0 })
+    .insert({ workout_exercise_id: workoutExerciseData.id, set_number: 1, reps: 0, weight: 0, is_confirmed: false })
     .select()
     .single();
 

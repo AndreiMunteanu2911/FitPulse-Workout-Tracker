@@ -125,7 +125,7 @@ const AddCustomExerciseModal: React.FC<AddCustomExerciseModalProps> = ({
         </div>
 
         {error && (
-          <p className="text-sm text-red-500">{error}</p>
+          <p className="text-sm text-[var(--color-destructive)]">{error}</p>
         )}
 
         <div className="flex gap-3 pt-2">

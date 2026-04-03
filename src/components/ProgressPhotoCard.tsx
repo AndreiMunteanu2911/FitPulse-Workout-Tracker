@@ -25,7 +25,7 @@ export default function ProgressPhotoCard({ photo, onDelete }: ProgressPhotoCard
         />
         <button
           onClick={() => onDelete(photo.id)}
-          className="absolute top-2 right-2 p-1.5 bg-black/60 backdrop-blur-sm text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600"
+          className="absolute top-2 right-2 p-1.5 bg-black/60 backdrop-blur-sm text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-[var(--color-destructive)]"
           aria-label="Delete photo"
         >
           <Trash2 className="w-3.5 h-3.5" />

@@ -22,7 +22,7 @@ export default function PersonalRecordCard({ record }: PersonalRecordCardProps) 
   return (
     <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] overflow-hidden hover:shadow-[var(--shadow-md)] transition-shadow">
       {/* Trophy bar */}
-      <div className="h-1 bg-gradient-to-r from-[var(--color-warning)] via-yellow-400 to-amber-400" />
+      <div className="h-1 bg-gradient-to-r from-[var(--primary-500)] via-[var(--primary-400)] to-[var(--primary-300)]" />
 
       <div className="p-4 sm:p-5">
         <div className="flex items-center justify-between mb-4">
@@ -63,7 +63,7 @@ export default function PersonalRecordCard({ record }: PersonalRecordCardProps) 
         </div>
 
         {estimated1RM !== null && (
-          <div className="mt-3 flex items-center justify-center gap-2 py-2 px-4 rounded-[var(--radius-lg)] bg-gradient-to-r from-[var(--primary-50)] to-purple-50 dark:from-[var(--primary-100)] dark:to-purple-900/20">
+          <div className="mt-3 flex items-center justify-center gap-2 py-2 px-4 rounded-[var(--radius-lg)] bg-[var(--primary-50)] dark:bg-[color-mix(in_srgb,var(--primary-900)_40%,transparent)]">
             <span className="text-sm text-[var(--muted-foreground)]">Est. 1RM</span>
             <span className="text-base font-extrabold text-[var(--primary-600)] dark:text-[var(--primary-500)]">{estimated1RM} kg</span>
           </div>
