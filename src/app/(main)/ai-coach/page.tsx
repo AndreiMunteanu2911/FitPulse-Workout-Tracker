@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Sparkles, Send, Trash2 } from "lucide-react";
+import { Sparkles, Send, Trash2, PanelLeftOpen, PanelLeftClose } from "lucide-react";
 import { useAIChat } from "@/hooks/useAIChat";
 import MessageBubble, { WorkoutActionCard } from "@/components/ai/MessageBubble";
 import QuickSuggestions from "@/components/ai/QuickSuggestions";
@@ -12,7 +12,7 @@ import ConversationList from "@/components/ai/ConversationList";
 export default function AICoachPage() {
   const router = useRouter();
   const [inputValue, setInputValue] = useState("");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   // Detect mobile mode on mount and resize
@@ -73,7 +73,6 @@ export default function AICoachPage() {
   };
 
   const handleWorkoutRecreate = () => {
-    // Re-trigger a workout creation with a prompt based on the expired one
     if (lastWorkoutAction) {
       sendMessage(`Recreate the same workout: ${lastWorkoutAction.name}`);
     }
@@ -93,8 +92,12 @@ export default function AICoachPage() {
   })();
 
   return (
-    <div className="-mx-4 -mt-4 md:-mx-8 md:-mt-6 flex h-[calc(100dvh-7rem)] md:h-screen overflow-hidden">
-      {/* Conversation List */}
+    // Negative margins cancel out <main>'s padding so the panel fills edge-to-edge.
+    // -mb-24 / md:-mb-8 cancel the bottom padding so the page doesn't scroll.
+    // Height: mobile = 100dvh minus TopBar spacer (2.75rem) minus bottom nav (~4.25rem)
+    //         desktop = full viewport (no topbar, no bottom nav)
+    <div className="-mx-4 -mt-4 -mb-24 md:-mx-8 md:-mt-6 md:-mb-8 flex h-[calc(100dvh-7rem)] md:h-screen overflow-hidden">
+      {/* Conversation List (toggle-controlled drawer, 0 → 260 px) */}
       <ConversationList
         conversations={conversations}
         activeId={conversationId}
@@ -107,16 +110,27 @@ export default function AICoachPage() {
       />
 
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 bg-[var(--background)]">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-4 border-b border-[var(--border)] bg-[var(--surface)]">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[var(--primary-100)] dark:bg-[var(--primary-900)] flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-[var(--primary-600)] dark:text-[var(--primary-400)]" />
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-[var(--surface)]">
+          <div className="flex items-center gap-2">
+            {/* Sidebar toggle — always visible, opens/closes the drawer */}
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="w-9 h-9 rounded-lg flex items-center justify-center text-[var(--muted-foreground)] hover:bg-[var(--surface-raised)] transition-colors"
+              title={isSidebarOpen ? "Close chat history" : "Open chat history"}
+            >
+              {isSidebarOpen
+                ? <PanelLeftClose className="w-5 h-5" />
+                : <PanelLeftOpen className="w-5 h-5" />}
+            </button>
+
+            <div className="w-9 h-9 rounded-xl bg-[var(--primary-100)] dark:bg-[var(--primary-900)] flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-[var(--primary-600)] dark:text-[var(--primary-400)]" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-[var(--foreground)]">AI Coach</h1>
-              <p className="text-xs text-[var(--muted-foreground)]">
+              <h1 className="text-base font-bold text-[var(--foreground)] leading-tight">AI Coach</h1>
+              <p className="text-[11px] text-[var(--muted-foreground)] leading-tight">
                 {conversationId ? "Loaded conversation" : "Powered by your workout data"}
               </p>
             </div>
@@ -135,21 +149,19 @@ export default function AICoachPage() {
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-4 py-6">
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center max-w-md mx-auto">
+            <div className="flex flex-col items-center justify-center h-full text-center max-w-sm mx-auto">
               <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className="w-20 h-20 rounded-3xl bg-[var(--primary-100)] dark:bg-[var(--primary-900)] flex items-center justify-center mb-6"
+                className="w-16 h-16 rounded-2xl bg-[var(--primary-100)] dark:bg-[var(--primary-900)] flex items-center justify-center mb-4"
               >
-                <Sparkles className="w-10 h-10 text-[var(--primary-600)] dark:text-[var(--primary-400)]" />
+                <Sparkles className="w-8 h-8 text-[var(--primary-600)] dark:text-[var(--primary-400)]" />
               </motion.div>
-              <h2 className="text-xl font-bold text-[var(--foreground)] mb-2">
+              <h2 className="text-lg font-bold text-[var(--foreground)] mb-2">
                 Your AI Fitness Coach
               </h2>
-              <p className="text-sm text-[var(--muted-foreground)] mb-8 leading-relaxed">
-                I have access to your entire workout history, personal records,
-                volume trends, and muscle recovery status. Ask me anything about
-                your training, or request a custom workout.
+              <p className="text-sm text-[var(--muted-foreground)] mb-5 leading-relaxed">
+                I know your workout history, PRs, and volume trends. Ask anything or request a workout.
               </p>
               <QuickSuggestions onSuggestionClick={handleSuggestionClick} />
             </div>
@@ -200,9 +212,9 @@ export default function AICoachPage() {
         {/* Input */}
         <form
           onSubmit={handleSubmit}
-          className="px-4 py-4 border-t border-[var(--border)] bg-[var(--surface)]"
+          className="px-4 py-3 border-t border-[var(--border)] bg-[var(--surface)]"
         >
-          <div className="max-w-2xl mx-auto flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <input
               ref={inputRef}
               type="text"
@@ -222,7 +234,7 @@ export default function AICoachPage() {
               className="w-12 h-12 rounded-xl flex items-center justify-center
                 bg-[var(--primary-600)] hover:bg-[var(--primary-700)]
                 text-white disabled:opacity-40 disabled:pointer-events-none
-                transition-colors"
+                transition-colors flex-shrink-0"
             >
               <Send className="w-5 h-5" />
             </button>
