@@ -93,7 +93,7 @@ export default function AICoachPage() {
   })();
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] md:h-[calc(100vh-2rem)]">
+    <div className="-mx-4 -mt-4 md:-mx-8 md:-mt-6 flex h-[calc(100dvh-7rem)] md:h-screen overflow-hidden">
       {/* Conversation List */}
       <ConversationList
         conversations={conversations}

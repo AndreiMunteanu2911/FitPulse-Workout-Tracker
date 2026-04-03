@@ -619,7 +619,7 @@ export default function WorkoutPage() {
                 ) : (
                     <>
                         {errorMessages.general && (
-                            <div className="mb-4 text-red-600">{errorMessages.general}</div>
+                            <div className="mb-4 text-[var(--color-destructive)]">{errorMessages.general}</div>
                         )}
                         <div className="page-header mb-6 flex items-center justify-between gap-3">
                           <div>
