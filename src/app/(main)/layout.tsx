@@ -19,7 +19,7 @@ export default function MainLayout({
         <TopBar />
         {/* Spacer matching the fixed TopBar height so content is never hidden beneath it */}
         <div className="h-11 flex-shrink-0 md:hidden" aria-hidden="true" />
-        <main className="flex-1 min-w-0 px-4 pt-4 pb-24 md:px-8 md:pt-6 md:pb-8 max-w-5xl mx-auto w-full">
+        <main className="flex-1 min-w-0 px-4 pt-4 pb-24 md:px-8 md:pt-6 md:pb-8 max-w-6xl mx-auto w-full">
           {children}
         </main>
       </div>
