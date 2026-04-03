@@ -24,6 +24,7 @@ export interface Set {
   set_number: number;
   reps: number;
   weight: number;
+  is_confirmed: boolean;
   created_at?: string;
 }
 

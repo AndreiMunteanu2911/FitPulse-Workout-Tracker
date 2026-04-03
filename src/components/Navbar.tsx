@@ -4,15 +4,19 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import DarkModeToggle from "@/components/DarkModeToggle";
-import { LayoutDashboard, History, Dumbbell, Library, User } from "lucide-react";
+import { LayoutDashboard, History, Dumbbell, Library, User, Sparkles } from "lucide-react";
 
 const tabs = [
-  { name: "Dashboard", href: "/dashboard", Icon: LayoutDashboard },
-  { name: "History",   href: "/history",   Icon: History          },
-  { name: "Workout",   href: "/workout",   Icon: Dumbbell         },
-  { name: "Exercises", href: "/exercises", Icon: Library          },
-  { name: "Profile",   href: "/profile",   Icon: User             },
+  { name: "Dashboard",  href: "/dashboard",  Icon: LayoutDashboard },
+  { name: "History",    href: "/history",    Icon: History          },
+  { name: "Workout",    href: "/workout",    Icon: Dumbbell         },
+  { name: "Exercises",  href: "/exercises",  Icon: Library          },
+  { name: "AI Coach",   href: "/ai-coach",   Icon: Sparkles         },
+  { name: "Profile",    href: "/profile",    Icon: User             },
 ];
+
+// Mobile tabs exclude AI Coach (only shown on dashboard on mobile)
+const mobileTabs = tabs.filter((t) => t.name !== "AI Coach");
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -65,7 +69,7 @@ export default function Navbar() {
       {/* ── Mobile Bottom Tab Bar ────────────────────────── */}
       <nav className="fixed bottom-0 left-0 right-0 md:hidden z-20 bg-[#1d4ed8] text-white shadow-[0_-4px_20px_rgba(29,78,216,0.4)]">
         <ul className="flex">
-          {tabs.map(({ name, href, Icon }) => {
+          {mobileTabs.map(({ name, href, Icon }) => {
             const active = pathname === href;
             return (
               <li key={name} className="flex-1">
