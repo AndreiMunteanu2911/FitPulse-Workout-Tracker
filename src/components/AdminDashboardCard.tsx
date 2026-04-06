@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from "react";
+import Skeleton from "react-loading-skeleton";
 import Link from "next/link";
 import { Shield, Users, Dumbbell, TrendingUp } from "lucide-react";
-import LoadingSpinner from "@/components/LoadingSpinner";
 import AdminStatCard from "@/components/admin/AdminStatCard";
 import AdminQuickLinks from "@/components/admin/AdminQuickLinks";
 
@@ -42,36 +42,50 @@ export default function AdminDashboardCard() {
     load();
   }, []);
 
-  if (loading) return null;
-  if (!isAdmin) return null;
+  if (!isAdmin && !loading) return null;
 
   return (
     <div className="mb-6">
-      <Link
-        href="/admin"
-        className="block mb-4 p-5 rounded-2xl border border-[var(--primary-500)]/30
+      {loading ? (
+        <div className="block mb-4 p-5 rounded-2xl border border-[var(--primary-500)]/30
           bg-gradient-to-r from-[var(--primary-600)]/10 to-[var(--primary-400)]/5
-          dark:from-[var(--primary-600)]/15 dark:to-[var(--primary-400)]/10
-          hover:border-[var(--primary-500)]/60 transition-colors group"
-      >
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-[var(--primary-600)] flex items-center justify-center flex-shrink-0
-            group-hover:bg-[var(--primary-700)] transition-colors">
-            <Shield className="w-6 h-6 text-white" />
+          dark:from-[var(--primary-600)]/15 dark:to-[var(--primary-400)]/10"
+        >
+          <div className="flex items-center gap-4">
+            <Skeleton circle width={48} height={48} />
+            <div className="flex-1">
+              <Skeleton width={120} className="mb-1" />
+              <Skeleton width={200} />
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-base font-bold text-[var(--foreground)] mb-0.5">
-              Admin Dashboard
-            </h3>
-            <p className="text-sm text-[var(--muted-foreground)]">
-              Manage exercises, users, templates, and view platform analytics.
-            </p>
-          </div>
-          <svg className="w-5 h-5 text-[var(--primary-600)] flex-shrink-0 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
         </div>
-      </Link>
+      ) : (
+        <Link
+          href="/admin"
+          className="block mb-4 p-5 rounded-2xl border border-[var(--primary-500)]/30
+            bg-gradient-to-r from-[var(--primary-600)]/10 to-[var(--primary-400)]/5
+            dark:from-[var(--primary-600)]/15 dark:to-[var(--primary-400)]/10
+            hover:border-[var(--primary-500)]/60 transition-colors group"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-[var(--primary-600)] flex items-center justify-center flex-shrink-0
+              group-hover:bg-[var(--primary-700)] transition-colors">
+              <Shield className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-base font-bold text-[var(--foreground)] mb-0.5">
+                Admin Dashboard
+              </h3>
+              <p className="text-sm text-[var(--muted-foreground)]">
+                Manage exercises, users, templates, and view platform analytics.
+              </p>
+            </div>
+            <svg className="w-5 h-5 text-[var(--primary-600)] flex-shrink-0 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        </Link>
+      )}
 
       {/* Quick stats */}
       {stats && (

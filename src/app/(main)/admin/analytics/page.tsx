@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Users, Dumbbell, TrendingUp, BarChart3 } from "lucide-react";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import Skeleton from "react-loading-skeleton";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminStatCard from "@/components/admin/AdminStatCard";
 import TimeRangeSelector from "@/components/admin/TimeRangeSelector";
@@ -59,8 +59,19 @@ export default function AdminAnalyticsPage() {
 
   if (!isAdmin || loading) {
     return (
-      <div className="flex items-center justify-center h-[60vh]">
-        <LoadingSpinner size={40} />
+      <div className="w-full">
+        <div className="page-header mb-6">
+          <Skeleton width={160} height={28} className="mb-2" />
+          <Skeleton width={180} />
+        </div>
+        <Skeleton width={200} height={32} className="mb-6" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} height={80} className="rounded-xl" />
+          ))}
+        </div>
+        <Skeleton height={220} className="rounded-xl mb-6" />
+        <Skeleton height={200} className="rounded-xl" />
       </div>
     );
   }

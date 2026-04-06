@@ -1,5 +1,5 @@
 import React from "react";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import Skeleton from "react-loading-skeleton";
 import RestTimer from "@/components/RestTimer";
 import SetRow from "@/components/SetRow";
 import { useState } from "react";
@@ -27,19 +27,14 @@ function capitalizeFirstLetter(str: string) {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-function ImageWithSpinner({ src, alt }: { src: string; alt: string }) {
+function ExerciseThumbnail({ src }: { src: string }) {
     const [loaded, setLoaded] = useState(false);
-
     return (
-        <div className="relative w-full h-full">
-            {!loaded && (
-                <div className="absolute inset-0 flex items-center justify-center z-10">
-                    <LoadingSpinner size={3} variant="image" />
-                </div>
-            )}
+        <div className="relative w-full h-full bg-[var(--surface-raised)] overflow-hidden">
+            {!loaded && <Skeleton className="absolute inset-0" />}
             <img
                 src={src}
-                alt={alt}
+                alt=""
                 className={`w-full h-full object-cover transition-opacity duration-200 ${loaded ? "opacity-100" : "opacity-0"}`}
                 onLoad={() => setLoaded(true)}
             />
@@ -80,7 +75,7 @@ export default function WorkoutExerciseCard({
                 <div className="flex items-center gap-3 mb-4">
                     {workoutExercise.exercise.gif_url && (
                         <div className="flex-shrink-0 w-14 h-14 rounded-[var(--radius-md)] overflow-hidden bg-[var(--surface-raised)]">
-                            <ImageWithSpinner src={workoutExercise.exercise.gif_url} alt={workoutExercise.exercise.name} />
+                            <ExerciseThumbnail src={workoutExercise.exercise.gif_url} />
                         </div>
                     )}
                     <div className="flex-1 min-w-0">

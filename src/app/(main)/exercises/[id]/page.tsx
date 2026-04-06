@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import Skeleton from "react-loading-skeleton";
 import Link from "next/link";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { useExercises } from "@/hooks/useExercises";
 import { usePersonalRecords } from "@/hooks/usePersonalRecords";
 import PersonalRecordCard from "@/components/PersonalRecordCard";
@@ -12,18 +13,14 @@ import ExerciseStatsTab from "@/components/ExerciseStatsTab";
 import type { Exercise, PersonalRecord } from "@/types";
 import { ChevronLeft, Sparkles } from "lucide-react";
 
-function ImageWithSpinner({ src, alt }: { src: string; alt: string }) {
+function ExerciseThumbnail({ src }: { src: string }) {
     const [loaded, setLoaded] = useState(false);
     return (
-        <div className="relative w-full h-full">
-            {!loaded && (
-                <div className="absolute inset-0 flex items-center justify-center z-10">
-                    <LoadingSpinner size={5} variant="image" />
-                </div>
-            )}
+        <div className="relative w-full h-full bg-[var(--surface-raised)] overflow-hidden">
+            {!loaded && <Skeleton className="absolute inset-0" />}
             <img
                 src={src}
-                alt={alt}
+                alt=""
                 className={`w-full h-full object-cover transition-opacity duration-200 ${loaded ? "opacity-100" : "opacity-0"}`}
                 onLoad={() => setLoaded(true)}
             />
@@ -64,8 +61,35 @@ export default function ExerciseDetailsPage() {
     if (loading) {
         return (
             <ProtectedWrapper>
-                <div className="flex justify-center items-center h-[60vh]">
-                    <LoadingSpinner size={8} />
+                <div className="w-full">
+                    <div className="page-header mb-4 flex items-center gap-3" style={{ top: 0 }}>
+                        <Skeleton circle width={36} height={36} />
+                        <Skeleton width={160} height={28} />
+                    </div>
+                    <div className="flex gap-1 p-1 bg-[var(--surface-raised)] rounded-[var(--radius-lg)] mb-5 w-fit">
+                        <Skeleton width={100} height={32} />
+                        <Skeleton width={60} height={32} />
+                    </div>
+                    <div className="flex flex-col md:flex-row gap-5 mb-5">
+                        <Skeleton className="w-full md:w-56 aspect-square rounded-xl" />
+                        <div className="flex-1 bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-5 space-y-4">
+                            <Skeleton width={100} height={16} />
+                            <div className="flex flex-wrap gap-1.5">
+                                <Skeleton width={70} height={24} />
+                                <Skeleton width={80} height={24} />
+                            </div>
+                            <Skeleton width={80} height={16} />
+                            <div className="flex flex-wrap gap-1.5">
+                                <Skeleton width={60} height={24} />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-5 mb-6">
+                        <Skeleton width={100} height={16} className="mb-3" />
+                        <Skeleton className="mb-2" />
+                        <Skeleton className="mb-2" />
+                        <Skeleton width="80%" />
+                    </div>
                 </div>
             </ProtectedWrapper>
         );
@@ -127,7 +151,7 @@ export default function ExerciseDetailsPage() {
                             {exercise.gif_url && (
                                 <div className="w-full md:w-56 flex-shrink-0">
                                     <div className="rounded-[var(--radius-xl)] overflow-hidden shadow-[var(--shadow)] bg-[var(--surface)] aspect-square md:w-56 md:h-56 mx-auto">
-                                        <ImageWithSpinner src={exercise.gif_url} alt={exercise.name + " demo"} />
+                                        <ExerciseThumbnail src={exercise.gif_url} />
                                     </div>
                                 </div>
                             )}

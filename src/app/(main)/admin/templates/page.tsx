@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, X, LayoutTemplate } from "lucide-react";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import Skeleton from "react-loading-skeleton";
 import Button from "@/components/Button";
 import ModalWrapper from "@/components/ModalWrapper";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
@@ -143,8 +143,17 @@ export default function AdminTemplatesPage() {
 
   if (!isAdmin || loading) {
     return (
-      <div className="flex items-center justify-center h-[60vh]">
-        <LoadingSpinner size={40} />
+      <div className="w-full">
+        <div className="page-header mb-6">
+          <Skeleton width={170} height={28} className="mb-2" />
+          <Skeleton width={200} />
+        </div>
+        <Skeleton width={160} height={40} className="mb-6" />
+        <div className="space-y-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} height={70} className="rounded-xl" />
+          ))}
+        </div>
       </div>
     );
   }
