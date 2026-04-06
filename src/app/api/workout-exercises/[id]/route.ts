@@ -10,15 +10,26 @@ export async function DELETE(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Verify the workout_exercise belongs to the user's workout
+  // Step 1: Get the workout_id for this workout_exercise
   const { data: weData } = await supabase
     .from("workout_exercises")
-    .select("id")
+    .select("workout_id")
     .eq("id", id)
-    .eq("workouts.user_id", user.id)
     .maybeSingle();
 
   if (!weData) {
+    return NextResponse.json({ error: "Workout exercise not found or unauthorized" }, { status: 404 });
+  }
+
+  // Step 2: Check the workout belongs to this user
+  const { data: workoutData } = await supabase
+    .from("workouts")
+    .select("id")
+    .eq("id", weData.workout_id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!workoutData) {
     return NextResponse.json({ error: "Workout exercise not found or unauthorized" }, { status: 404 });
   }
 

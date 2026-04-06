@@ -1,15 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/helper/supabaseServer";
 
-// Verify that a set belongs to the authenticated user's workout
-async function verifySetOwnership(supabase: any, userId: string, setId: string) {
-  const { data } = await supabase
+// Verify that a set belongs to the authenticated user's workout.
+// Uses three sequential queries (no nested joins) to avoid PostgREST join limitations.
+async function verifySetOwnership(supabase: any, userId: string, setId: string): Promise<boolean> {
+  // 1. Find the set
+  const { data: setRow } = await supabase
     .from("sets")
-    .select("id")
+    .select("workout_exercise_id")
     .eq("id", setId)
-    .eq("workout_exercise.workouts.user_id", userId)
     .maybeSingle();
-  return data;
+
+  if (!setRow) return false;
+
+  // 2. Find the workout_exercise
+  const { data: weRow } = await supabase
+    .from("workout_exercises")
+    .select("workout_id")
+    .eq("id", setRow.workout_exercise_id)
+    .maybeSingle();
+
+  if (!weRow) return false;
+
+  // 3. Check the workout belongs to this user
+  const { data: workoutRow } = await supabase
+    .from("workouts")
+    .select("id")
+    .eq("id", weRow.workout_id)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  return !!workoutRow;
 }
 
 export async function PATCH(
@@ -21,9 +42,8 @@ export async function PATCH(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Verify ownership
-  const set = await verifySetOwnership(supabase, user.id, id);
-  if (!set) return NextResponse.json({ error: "Set not found or unauthorized" }, { status: 404 });
+  const owned = await verifySetOwnership(supabase, user.id, id);
+  if (!owned) return NextResponse.json({ error: "Set not found or unauthorized" }, { status: 404 });
 
   const body = await req.json();
   const updates: { reps?: number; weight?: number; is_confirmed?: boolean } = {};
@@ -45,9 +65,8 @@ export async function DELETE(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Verify ownership
-  const set = await verifySetOwnership(supabase, user.id, id);
-  if (!set) return NextResponse.json({ error: "Set not found or unauthorized" }, { status: 404 });
+  const owned = await verifySetOwnership(supabase, user.id, id);
+  if (!owned) return NextResponse.json({ error: "Set not found or unauthorized" }, { status: 404 });
 
   const { error } = await supabase.from("sets").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

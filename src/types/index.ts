@@ -166,5 +166,6 @@ export interface RestTimerState {
   remaining: number;       // seconds left
   exerciseName: string;
   exerciseType: ExerciseType;
-  workoutExerciseId?: string; // which exercise triggered this timer
+  workoutExerciseId?: string; // which exercise card
+  setId?: string;            // exact set row to render timer under
 }
