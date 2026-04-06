@@ -1,3 +1,4 @@
+import React from "react";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import RestTimer from "@/components/RestTimer";
 import { useState } from "react";
@@ -27,7 +28,7 @@ function capitalizeFirstLetter(str: string) {
 
 function ImageWithSpinner({ src, alt }: { src: string; alt: string }) {
     const [loaded, setLoaded] = useState(false);
-    
+
     return (
         <div className="relative w-full h-full">
             {!loaded && (
@@ -67,6 +68,7 @@ export default function WorkoutExerciseCard({
         onRestTimerTick &&
         onRestTimerSkip &&
         onRestTimerDismiss;
+
     return (
         <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] overflow-hidden">
             {/* Accent top strip */}
@@ -117,83 +119,82 @@ export default function WorkoutExerciseCard({
                 <div className="space-y-1.5 mb-4">
                     {workoutExercise.sets.map((set, setIndex) => {
                         const isConfirmed = confirmedSetIds.has(set.id);
+                        const showTimerHere = showTimer && restTimer?.setId === set.id;
                         return (
-                            <div
-                                key={set.id}
-                                className={`grid grid-cols-[3rem_1fr_1fr_5rem] items-center gap-2 px-1 py-1.5 rounded-[var(--radius-md)] transition-colors ${
-                                    isConfirmed
-                                        ? "bg-[var(--color-success-bg)]"
-                                        : "hover:bg-[var(--surface-raised)]"
-                                }`}
-                            >
-                                <span className={`text-sm font-semibold ${isConfirmed ? "text-[var(--color-success)]" : "text-[var(--muted-foreground)]"}`}>
-                                    {set.set_number}
-                                </span>
-                                <input
-                                    type="number"
-                                    placeholder="0"
-                                    value={set.reps || ""}
-                                    onChange={(e) => {
-                                        onUpdateSet(exerciseIndex, setIndex, "reps", parseInt(e.target.value) || 0);
-                                        setErrorMessage("");
-                                    }}
-                                    min="0"
-                                    className="w-full px-2 py-1.5 text-center bg-[var(--surface-raised)] rounded-[var(--radius-sm)] text-[var(--foreground)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] placeholder-[var(--muted-foreground)]"
-                                />
-                                <input
-                                    type="number"
-                                    placeholder="0"
-                                    value={set.weight || ""}
-                                    onChange={(e) => {
-                                        onUpdateSet(exerciseIndex, setIndex, "weight", parseFloat(e.target.value) || 0);
-                                        setErrorMessage("");
-                                    }}
-                                    min="0"
-                                    step="0.5"
-                                    className="w-full px-2 py-1.5 text-center bg-[var(--surface-raised)] rounded-[var(--radius-sm)] text-[var(--foreground)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] placeholder-[var(--muted-foreground)]"
-                                />
-                                <div className="flex items-center gap-1 justify-end">
-                                    <button
-                                        aria-label="Confirm set"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onConfirmSet(set.id, workoutExercise.exercise, workoutExercise.id);
+                            <React.Fragment key={set.id}>
+                                <div
+                                    className={`grid grid-cols-[3rem_1fr_1fr_5rem] items-center gap-2 px-1 py-1.5 rounded-[var(--radius-md)] transition-colors ${
+                                        isConfirmed
+                                            ? "bg-[var(--color-success-bg)]"
+                                            : "hover:bg-[var(--surface-raised)]"
+                                    }`}
+                                >
+                                    <span className={`text-sm font-semibold ${isConfirmed ? "text-[var(--color-success)]" : "text-[var(--muted-foreground)]"}`}>
+                                        {set.set_number}
+                                    </span>
+                                    <input
+                                        type="number"
+                                        placeholder="0"
+                                        value={set.reps || ""}
+                                        onChange={(e) => {
+                                            onUpdateSet(exerciseIndex, setIndex, "reps", parseInt(e.target.value) || 0);
+                                            setErrorMessage("");
                                         }}
-                                        className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
-                                            isConfirmed
-                                                ? "bg-[var(--color-success)] text-white"
-                                                : "text-[var(--muted-foreground)] hover:bg-[var(--color-success-bg)] hover:text-[var(--color-success)]"
-                                        }`}
-                                    >
-                                        <Check className="w-3.5 h-3.5" />
-                                    </button>
-                                    <button
-                                        aria-label="Delete set"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onDeleteSet(exerciseIndex, setIndex);
+                                        min="0"
+                                        className="w-full px-2 py-1.5 text-center bg-[var(--surface-raised)] rounded-[var(--radius-sm)] text-[var(--foreground)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] placeholder-[var(--muted-foreground)]"
+                                    />
+                                    <input
+                                        type="number"
+                                        placeholder="0"
+                                        value={set.weight || ""}
+                                        onChange={(e) => {
+                                            onUpdateSet(exerciseIndex, setIndex, "weight", parseFloat(e.target.value) || 0);
+                                            setErrorMessage("");
                                         }}
-                                        className="w-6 h-6 rounded-full flex items-center justify-center text-[var(--muted-foreground)] hover:bg-[var(--color-destructive-bg)] hover:text-[var(--color-destructive)] transition-colors"
-                                    >
-                                        <X className="w-3.5 h-3.5" />
-                                    </button>
+                                        min="0"
+                                        step="0.5"
+                                        className="w-full px-2 py-1.5 text-center bg-[var(--surface-raised)] rounded-[var(--radius-sm)] text-[var(--foreground)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] placeholder-[var(--muted-foreground)]"
+                                    />
+                                    <div className="flex items-center gap-1 justify-end">
+                                        <button
+                                            aria-label="Confirm set"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onConfirmSet(set.id, workoutExercise.exercise, workoutExercise.id);
+                                            }}
+                                            className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
+                                                isConfirmed
+                                                    ? "bg-[var(--color-success)] text-white"
+                                                    : "text-[var(--muted-foreground)] hover:bg-[var(--color-success-bg)] hover:text-[var(--color-success)]"
+                                            }`}
+                                        >
+                                            <Check className="w-3.5 h-3.5" />
+                                        </button>
+                                        <button
+                                            aria-label="Delete set"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onDeleteSet(exerciseIndex, setIndex);
+                                            }}
+                                            className="w-6 h-6 rounded-full flex items-center justify-center text-[var(--muted-foreground)] hover:bg-[var(--color-destructive-bg)] hover:text-[var(--color-destructive)] transition-colors"
+                                        >
+                                            <X className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
+                                {/* Inline rest timer — renders directly under the confirmed set row */}
+                                {showTimerHere && (
+                                    <RestTimer
+                                        timer={restTimer!}
+                                        onTick={onRestTimerTick!}
+                                        onSkip={onRestTimerSkip!}
+                                        onDismiss={onRestTimerDismiss!}
+                                    />
+                                )}
+                            </React.Fragment>
                         );
                     })}
                 </div>
-
-                {/* Rest Timer row – appears inline after sets when active for this exercise */}
-                {showTimer && (
-                    <div className="mb-4">
-                        <RestTimer
-                            timer={restTimer!}
-                            onTick={onRestTimerTick!}
-                            onSkip={onRestTimerSkip!}
-                            onDismiss={onRestTimerDismiss!}
-                        />
-                    </div>
-                )}
 
                 {/* Add Set */}
                 <button

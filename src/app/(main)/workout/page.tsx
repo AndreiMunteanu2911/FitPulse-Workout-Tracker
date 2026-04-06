@@ -291,7 +291,7 @@ export default function WorkoutPage() {
             // Silently fail — UI state already updated
         }
 
-        // Auto-start rest timer inline in the exercise card
+        // Auto-start rest timer — keyed by set so it renders inline under the correct row
         const exerciseType = detectExerciseType(exercise);
         const duration = REST_DURATIONS[exerciseType];
         setRestTimer({
@@ -301,6 +301,7 @@ export default function WorkoutPage() {
             exerciseName: exercise.name,
             exerciseType,
             workoutExerciseId,
+            setId,
         });
     };
 
