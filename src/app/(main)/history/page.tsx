@@ -192,8 +192,8 @@ export default function HistoryPage() {
                     &ldquo;{deleteTarget?.name}&rdquo; will be permanently deleted.
                 </p>
                 <div className="flex gap-2">
-                    <Button onClick={() => setDeleteTarget(null)} variant="secondary" block>Cancel</Button>
-                    <Button onClick={handleDelete} variant="danger" block disabled={deleting}>
+                    <Button onClick={() => setDeleteTarget(null)} variant="primary" block>Cancel</Button>
+                    <Button onClick={handleDelete} variant="secondary" block disabled={deleting}>
                         {deleting ? "Deleting…" : "Delete"}
                     </Button>
                 </div>

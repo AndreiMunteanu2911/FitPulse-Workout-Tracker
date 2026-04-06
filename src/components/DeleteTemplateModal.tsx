@@ -46,10 +46,10 @@ const DeleteTemplateModal: React.FC<DeleteTemplateModalProps> = ({
             </p>
 
             <div className="flex gap-3">
-                <Button type="button" variant="secondary" block onClick={onClose}>
+                <Button type="button" variant="primary" block onClick={onClose}>
                     Cancel
                 </Button>
-                <Button type="button" variant="danger" block onClick={handleConfirm}>
+                <Button type="button" variant="secondary" block onClick={handleConfirm}>
                     Delete
                 </Button>
             </div>

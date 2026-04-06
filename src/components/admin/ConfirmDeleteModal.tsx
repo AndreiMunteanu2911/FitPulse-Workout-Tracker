@@ -37,8 +37,8 @@ export default function ConfirmDeleteModal({
         </div>
       )}
       <div className="flex gap-3">
-        <Button variant="secondary" onClick={onClose} block>Cancel</Button>
-        <Button variant="danger" onClick={onConfirm} disabled={loading} block>
+        <Button variant="primary" onClick={onClose} block>Cancel</Button>
+        <Button variant="secondary" onClick={onConfirm} disabled={loading} block>
           {loading ? "Deleting..." : "Delete"}
         </Button>
       </div>
