@@ -15,7 +15,7 @@ export default function MainLayout({
   return (
     <div className="flex min-h-screen w-full bg-[var(--background)] text-[var(--foreground)]">
       <Navbar />
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen overflow-x-hidden">
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
         <TopBar />
         {/* Spacer matching the fixed TopBar height so content is never hidden beneath it */}
         <div className="h-11 flex-shrink-0 md:hidden" aria-hidden="true" />
