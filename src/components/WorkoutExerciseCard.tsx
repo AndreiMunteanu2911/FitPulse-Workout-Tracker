@@ -1,9 +1,10 @@
 import React from "react";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import RestTimer from "@/components/RestTimer";
+import SetRow from "@/components/SetRow";
 import { useState } from "react";
 import type { WorkoutExercise, RestTimerState } from "@/types";
-import { Trash2, Check, X, Plus } from "lucide-react";
+import { Trash2, Plus } from "lucide-react";
 
 interface ExerciseCardProps {
     workoutExercise: WorkoutExercise;
@@ -69,6 +70,8 @@ export default function WorkoutExerciseCard({
         onRestTimerSkip &&
         onRestTimerDismiss;
 
+    const previousSets = workoutExercise.previousSets ?? [];
+
     return (
         <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] overflow-hidden">
             {/* Accent top strip */}
@@ -108,8 +111,9 @@ export default function WorkoutExerciseCard({
                 )}
 
                 {/* Column headers */}
-                <div className="grid grid-cols-[3rem_1fr_1fr_5rem] gap-2 px-1 mb-2">
+                <div className="grid grid-cols-[2.5rem_3.5rem_1fr_1fr_5rem] gap-2 px-1 mb-2">
                     <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Set</span>
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] text-center">Prev</span>
                     <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] text-center">Reps</span>
                     <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] text-center">kg</span>
                     <span />
@@ -120,68 +124,21 @@ export default function WorkoutExerciseCard({
                     {workoutExercise.sets.map((set, setIndex) => {
                         const isConfirmed = confirmedSetIds.has(set.id);
                         const showTimerHere = showTimer && restTimer?.setId === set.id;
+                        const previous = previousSets[setIndex] ?? null;
                         return (
                             <React.Fragment key={set.id}>
-                                <div
-                                    className={`grid grid-cols-[3rem_1fr_1fr_5rem] items-center gap-2 px-1 py-1.5 rounded-[var(--radius-md)] transition-colors ${
-                                        isConfirmed
-                                            ? "bg-[var(--primary-50)] dark:bg-[var(--primary-100)]"
-                                            : "hover:bg-[var(--surface-raised)]"
-                                    }`}
-                                >
-                                    <span className={`text-sm font-semibold ${isConfirmed ? "text-[var(--primary-600)] dark:text-[var(--primary-700)]" : "text-[var(--muted-foreground)]"}`}>
-                                        {set.set_number}
-                                    </span>
-                                    <input
-                                        type="number"
-                                        placeholder="0"
-                                        value={set.reps || ""}
-                                        onChange={(e) => {
-                                            onUpdateSet(exerciseIndex, setIndex, "reps", parseInt(e.target.value) || 0);
-                                            setErrorMessage("");
-                                        }}
-                                        min="0"
-                                        className="w-full px-2 py-1.5 text-center bg-[var(--surface-raised)] rounded-[var(--radius-sm)] text-[var(--foreground)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] placeholder-[var(--muted-foreground)]"
-                                    />
-                                    <input
-                                        type="number"
-                                        placeholder="0"
-                                        value={set.weight || ""}
-                                        onChange={(e) => {
-                                            onUpdateSet(exerciseIndex, setIndex, "weight", parseFloat(e.target.value) || 0);
-                                            setErrorMessage("");
-                                        }}
-                                        min="0"
-                                        step="0.5"
-                                        className="w-full px-2 py-1.5 text-center bg-[var(--surface-raised)] rounded-[var(--radius-sm)] text-[var(--foreground)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] placeholder-[var(--muted-foreground)]"
-                                    />
-                                    <div className="flex items-center gap-1.5 justify-end">
-                                        <button
-                                            aria-label="Confirm set"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                onConfirmSet(set.id, workoutExercise.exercise, workoutExercise.id);
-                                            }}
-                                            className={`w-8 h-8 rounded-md flex items-center justify-center font-bold transition-all ${
-                                                isConfirmed
-                                                    ? "bg-[var(--primary-500)] text-white shadow-[0_2px_6px_rgba(59,130,246,0.3)]"
-                                                    : "bg-[var(--primary-100)] dark:bg-[var(--primary-200)] text-[var(--primary-600)] dark:text-[var(--primary-700)] hover:bg-[var(--primary-500)] hover:text-white"
-                                            }`}
-                                        >
-                                            <Check className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            aria-label="Delete set"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                onDeleteSet(exerciseIndex, setIndex);
-                                            }}
-                                            className="w-8 h-8 rounded-md flex items-center justify-center bg-[var(--primary-100)] dark:bg-[var(--primary-200)] text-[var(--primary-600)] dark:text-[var(--primary-700)] hover:bg-[var(--primary-500)] hover:text-white transition-all font-bold"
-                                        >
-                                            <X className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                </div>
+                                <SetRow
+                                    set={set}
+                                    setIndex={setIndex}
+                                    exerciseIndex={exerciseIndex}
+                                    isConfirmed={isConfirmed}
+                                    previous={previous}
+                                    onUpdateSet={onUpdateSet}
+                                    onDeleteSet={onDeleteSet}
+                                    onConfirmSet={onConfirmSet}
+                                    exercise={workoutExercise.exercise}
+                                    workoutExerciseId={workoutExercise.id}
+                                />
                                 {/* Inline rest timer — renders directly under the confirmed set row */}
                                 {showTimerHere && (
                                     <RestTimer

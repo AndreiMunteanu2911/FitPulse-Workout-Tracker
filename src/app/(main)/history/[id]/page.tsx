@@ -182,7 +182,7 @@ export default function WorkoutDetailPage() {
         // Optimistic: add immediately
         const tempId = crypto.randomUUID();
         const tempSet: WorkoutSet = { id: crypto.randomUUID(), workout_exercise_id: tempId, set_number: 1, reps: 0, weight: 0, is_confirmed: false };
-        const optimisticWe: WorkoutExercise = { id: tempId, workout_id: workoutId, exercise_id: exercise.exercise_id, order_index: workoutExercises.length, exercise, sets: [tempSet] };
+        const optimisticWe: WorkoutExercise = { id: tempId, workout_id: workoutId, exercise_id: exercise.exercise_id, order_index: workoutExercises.length, exercise, sets: [tempSet], previousSets: [] };
         setWorkoutExercises((prev) => [...prev, optimisticWe]);
         setShowExerciseSearch(false);
         setSearchQuery("");
@@ -217,7 +217,7 @@ export default function WorkoutDetailPage() {
                 const idx = prev.findIndex((e) => e.id === tempId);
                 if (idx === -1) return prev;
                 const updated = [...prev];
-                updated[idx] = { id: workoutExerciseData.id, workout_id: workoutId, exercise_id: exercise.exercise_id, order_index: workoutExerciseData.order_index, exercise, sets };
+                updated[idx] = { id: workoutExerciseData.id, workout_id: workoutId, exercise_id: exercise.exercise_id, order_index: workoutExerciseData.order_index, exercise, sets, previousSets: prefillSets };
                 return updated;
             });
         } catch {
@@ -231,7 +231,7 @@ export default function WorkoutDetailPage() {
         const tempId = `custom_${crypto.randomUUID()}`;
         const weId = crypto.randomUUID();
         const tempSet: WorkoutSet = { id: crypto.randomUUID(), workout_exercise_id: weId, set_number: 1, reps: 0, weight: 0, is_confirmed: false };
-        const optimisticWe: WorkoutExercise = { id: weId, workout_id: workoutId!, exercise_id: tempId, order_index: workoutExercises.length, exercise: { exercise_id: tempId, name, body_parts: bodyPart ? [bodyPart] : null, is_custom: true }, sets: [tempSet] };
+        const optimisticWe: WorkoutExercise = { id: weId, workout_id: workoutId!, exercise_id: tempId, order_index: workoutExercises.length, exercise: { exercise_id: tempId, name, body_parts: bodyPart ? [bodyPart] : null, is_custom: true }, sets: [tempSet], previousSets: [] };
         setWorkoutExercises((prev) => [...prev, optimisticWe]);
         setShowCustomExerciseModal(false);
 

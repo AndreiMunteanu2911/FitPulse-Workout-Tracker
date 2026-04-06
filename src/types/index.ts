@@ -35,6 +35,7 @@ export interface WorkoutExercise {
   order_index: number;
   exercise: Exercise;
   sets: Set[];
+  previousSets?: { reps: number; weight: number }[]; // last session's sets for "Previous" column
   created_at?: string;
 }
 

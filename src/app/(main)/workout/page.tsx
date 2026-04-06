@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import ExerciseCard from "@/components/WorkoutExerciseCard";
 import ExerciseSearchModal from "@/components/ExerciseSearchModal";
@@ -28,6 +29,7 @@ function formatElapsed(seconds: number): string {
 }
 
 export default function WorkoutPage() {
+    const router = useRouter();
     const [workoutStarted, setWorkoutStarted] = useState(false);
     const [workoutName, setWorkoutName] = useState("My Workout");
     const [workoutId, setWorkoutId] = useState<string | null>(null);
@@ -108,6 +110,7 @@ export default function WorkoutPage() {
                         exercise: we.exercise,
                         order_index: we.order_index,
                         sets: (we.sets || []).sort((a: WorkoutSet, b: WorkoutSet) => a.set_number - b.set_number),
+                        previousSets: we.previousSets ?? [],
                     }));
                     setWorkoutExercises(exercises);
                     setWorkoutStarted(true);
@@ -229,6 +232,7 @@ export default function WorkoutPage() {
                     exercise: te.exercise as Exercise,
                     order_index: te.order_index,
                     sets: [{ id: crypto.randomUUID(), workout_exercise_id: "", set_number: 1, reps: 0, weight: 0, is_confirmed: false }],
+                    previousSets: [],
                 }));
 
             // Show immediately
@@ -283,6 +287,7 @@ export default function WorkoutPage() {
                             exercise: te.exercise as Exercise,
                             order_index: workoutExerciseData.order_index,
                             sets,
+                            previousSets: prefillSets,
                         };
                         return updated;
                     });
@@ -507,6 +512,7 @@ export default function WorkoutPage() {
             exercise: exercise,
             order_index: workoutExercises.length,
             sets: [tempSet],
+            previousSets: [],
         };
         setWorkoutExercises([...workoutExercises, optimisticExercise]);
         setShowExerciseSearch(false);
@@ -533,11 +539,11 @@ export default function WorkoutPage() {
             let sets: WorkoutSet[] = [];
             if (prefillSets.length > 0) {
                 await updateSetApi(firstSet.id, { reps: prefillSets[0].reps, weight: prefillSets[0].weight });
-                sets.push({ ...firstSet, reps: prefillSets[0].reps, weight: prefillSets[0].weight });
+                sets.push({ ...firstSet, reps: prefillSets[0].reps, weight: prefillSets[0].weight, is_confirmed: false });
                 for (let i = 1; i < prefillSets.length; i++) {
                     const newSet = await addSetApi(workoutExerciseData.id, i + 1);
                     await updateSetApi(newSet.id, { reps: prefillSets[i].reps, weight: prefillSets[i].weight });
-                    sets.push({ ...newSet, reps: prefillSets[i].reps, weight: prefillSets[i].weight });
+                    sets.push({ ...newSet, reps: prefillSets[i].reps, weight: prefillSets[i].weight, is_confirmed: false });
                 }
             } else {
                 sets = [firstSet];
@@ -554,6 +560,7 @@ export default function WorkoutPage() {
                     exercise: exercise,
                     order_index: workoutExerciseData.order_index,
                     sets,
+                    previousSets: prefillSets, // store for "Previous" column
                 };
                 return updated;
             });
@@ -576,6 +583,7 @@ export default function WorkoutPage() {
             exercise: { exercise_id: tempExerciseId, name, body_parts: bodyPart ? [bodyPart] : null, is_custom: true },
             order_index: workoutExercises.length,
             sets: [tempSet],
+            previousSets: [],
         };
         setWorkoutExercises([...workoutExercises, optimisticExercise]);
         setShowCustomExerciseModal(false);
