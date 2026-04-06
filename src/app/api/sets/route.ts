@@ -8,6 +8,18 @@ export async function POST(req: NextRequest) {
 
   const { workout_exercise_id, set_number, reps, weight, is_confirmed } = await req.json();
 
+  // Verify the workout_exercise belongs to the user's workout
+  const { data: weData } = await supabase
+    .from("workout_exercises")
+    .select("id, workouts!inner(user_id)")
+    .eq("id", workout_exercise_id)
+    .eq("workouts.user_id", user.id)
+    .maybeSingle();
+
+  if (!weData) {
+    return NextResponse.json({ error: "Workout exercise not found or unauthorized" }, { status: 404 });
+  }
+
   const { data, error } = await supabase
     .from("sets")
     .insert({

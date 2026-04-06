@@ -1,5 +1,6 @@
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import DashboardStats from "@/components/DashboardStats";
+import AdminDashboardCard from "@/components/AdminDashboardCard";
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
 
@@ -11,6 +12,9 @@ export default function DashboardPage() {
           <h1 className="hidden md:block text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight">Dashboard</h1>
           <p className="text-sm text-[var(--muted-foreground)] mt-0.5">Your fitness overview</p>
         </div>
+
+        {/* Admin Card (only visible to admins) */}
+        <AdminDashboardCard />
 
         {/* AI Coach Promo Card */}
         <Link
