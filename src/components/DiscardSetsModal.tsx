@@ -37,7 +37,7 @@ export default function DiscardSetsModal({
                 <Button onClick={onConfirmAll} variant="primary" block>Confirm All &amp; Finish</Button>
                 <div className="flex gap-2">
                     <Button onClick={onClose} variant="secondary" block>Go Back</Button>
-                    <Button onClick={onConfirm} variant="danger" block>Discard &amp; Finish</Button>
+                    <Button onClick={onConfirm} variant="secondary" block>Discard &amp; Finish</Button>
                 </div>
             </div>
         </ModalWrapper>

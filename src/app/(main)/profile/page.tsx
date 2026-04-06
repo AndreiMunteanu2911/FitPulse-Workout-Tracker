@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Button from "@/components/Button";
+import ConfirmDeleteModal from "@/components/admin/ConfirmDeleteModal";
 import { useRouter } from "next/navigation";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import WeightHistoryChart from "@/components/WeightHistoryChart";
@@ -32,6 +33,10 @@ export default function ProfilePage() {
     const [loading, setLoading] = useState(true);
     const [showWeightModal, setShowWeightModal] = useState(false);
     const [showPhotoModal, setShowPhotoModal] = useState(false);
+
+    // Delete confirmation modal state
+    const [deleteTarget, setDeleteTarget] = useState<{ type: "weight" | "photo"; id: string; name: string } | null>(null);
+    const [deleteLoading, setDeleteLoading] = useState(false);
 
     const signOut = async () => {
         await logout();
@@ -83,23 +88,32 @@ export default function ProfilePage() {
         }
     };
 
-    const handleDeletePhoto = async (id: string) => {
-        if (!confirm("Delete this photo?")) return;
-        try {
-            await deleteProgressPhoto(id);
-            await loadData();
-        } catch (error) {
-            console.error("Error deleting photo:", error);
-        }
+    const handleDeletePhoto = (id: string) => {
+        const photo = photos.find((p) => p.id === id);
+        setDeleteTarget({ type: "photo", id, name: `photo from ${photo?.log_date || "unknown date"}` });
     };
 
-    const handleDeleteWeight = async (id: string) => {
-        if (!confirm("Delete this weight entry?")) return;
+    const handleDeleteWeight = (id: string) => {
+        const log = weights.find((w) => w.id === id);
+        const dateStr = log?.log_date ? new Date(log.log_date).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "unknown date";
+        setDeleteTarget({ type: "weight", id, name: `${log?.weight || 0} kg — ${dateStr}` });
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteTarget) return;
+        setDeleteLoading(true);
         try {
-            await deleteWeight(id);
+            if (deleteTarget.type === "photo") {
+                await deleteProgressPhoto(deleteTarget.id);
+            } else {
+                await deleteWeight(deleteTarget.id);
+            }
             await loadData();
         } catch (error) {
-            console.error("Error deleting weight:", error);
+            console.error(`Error deleting ${deleteTarget.type}:`, error);
+        } finally {
+            setDeleteLoading(false);
+            setDeleteTarget(null);
         }
     };
 
@@ -203,6 +217,15 @@ export default function ProfilePage() {
                     isOpen={showPhotoModal}
                     onClose={() => setShowPhotoModal(false)}
                     onAdd={handleAddPhoto}
+                />
+
+                <ConfirmDeleteModal
+                    isOpen={deleteTarget !== null}
+                    onClose={() => setDeleteTarget(null)}
+                    title={`Delete ${deleteTarget?.type === "weight" ? "Weight Entry" : "Photo"}`}
+                    itemName={deleteTarget?.name ?? ""}
+                    onConfirm={confirmDelete}
+                    loading={deleteLoading}
                 />
             </div>
         </ProtectedWrapper>

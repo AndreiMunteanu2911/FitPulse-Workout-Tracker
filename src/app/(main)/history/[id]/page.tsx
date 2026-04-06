@@ -506,8 +506,8 @@ export default function WorkoutDetailPage() {
                     &ldquo;{workout.name}&rdquo; will be permanently deleted.
                 </p>
                 <div className="flex gap-2">
-                    <Button onClick={() => setShowDeleteModal(false)} variant="secondary" block>Cancel</Button>
-                    <Button onClick={handleDelete} variant="danger" block disabled={deleting}>
+                    <Button onClick={() => setShowDeleteModal(false)} variant="primary" block>Cancel</Button>
+                    <Button onClick={handleDelete} variant="secondary" block disabled={deleting}>
                         {deleting ? "Deleting…" : "Delete"}
                     </Button>
                 </div>
