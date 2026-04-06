@@ -77,31 +77,37 @@ export default function HistoryPage() {
 
     const handleRename = async () => {
         if (!renameTarget || !renameValue.trim()) return;
-        setRenaming(true);
+        const newName = renameValue.trim();
+        const prev = workouts;
+
+        // Optimistic: update name immediately
+        setWorkouts((w) => w.map((w) => w.id === renameTarget.id ? { ...w, name: newName } : w));
+        setRenameTarget(null);
+
+        // Persist in background
         try {
-            await renameWorkout(renameTarget.id, renameValue.trim());
-            setWorkouts((prev) =>
-                prev.map((w) => w.id === renameTarget.id ? { ...w, name: renameValue.trim() } : w)
-            );
-            setRenameTarget(null);
+            await renameWorkout(renameTarget.id, newName);
         } catch {
+            setWorkouts(prev); // rollback
             setErrorMessages({ general: "Failed to rename workout." });
-        } finally {
-            setRenaming(false);
         }
     };
 
     const handleDelete = async () => {
         if (!deleteTarget) return;
-        setDeleting(true);
+        const targetId = deleteTarget.id;
+        const prev = workouts;
+
+        // Optimistic: remove immediately
+        setWorkouts((w) => w.filter((w) => w.id !== targetId));
+        setDeleteTarget(null);
+
+        // Persist in background
         try {
-            await deleteWorkout(deleteTarget.id);
-            setWorkouts((prev) => prev.filter((w) => w.id !== deleteTarget.id));
-            setDeleteTarget(null);
+            await deleteWorkout(targetId);
         } catch {
+            setWorkouts(prev); // rollback
             setErrorMessages({ general: "Failed to delete workout." });
-        } finally {
-            setDeleting(false);
         }
     };
 

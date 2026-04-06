@@ -124,33 +124,36 @@ export default function AdminExercisesPage() {
     setSaving(true);
     setError("");
 
+    const newExercise: Exercise = {
+      exercise_id: formExerciseId.trim(),
+      name: formName.trim(),
+      gif_url: formGifUrl.trim() || null,
+      target_muscles: formTargetMuscles.trim() || null,
+      body_parts: formBodyParts.trim() || null,
+      equipments: formEquipments.trim() || null,
+    };
+
+    // Optimistic: add to list immediately
+    setExercises((prev) => [newExercise, ...prev]);
+    setShowAddModal(false);
+    setSaving(false);
+
+    // Persist in background
     try {
       const res = await fetch("/api/admin/exercises", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          exercise_id: formExerciseId.trim(),
-          name: formName.trim(),
-          gif_url: formGifUrl.trim() || null,
-          target_muscles: formTargetMuscles.trim() || null,
-          body_parts: formBodyParts.trim() || null,
-          equipments: formEquipments.trim() || null,
-        }),
+        body: JSON.stringify(newExercise),
       });
-
       if (!res.ok) {
         const json = await res.json();
+        setExercises((prev) => prev.filter((ex) => ex.exercise_id !== newExercise.exercise_id));
         setError(json.error || "Failed to add exercise");
-        setSaving(false);
-        return;
       }
-
-      setShowAddModal(false);
-      fetchExercises();
     } catch {
+      setExercises((prev) => prev.filter((ex) => ex.exercise_id !== newExercise.exercise_id));
       setError("Network error");
     }
-    setSaving(false);
   };
 
   const handleEdit = async (e: React.FormEvent) => {
@@ -158,56 +161,60 @@ export default function AdminExercisesPage() {
     setSaving(true);
     setError("");
 
+    const updatedExercise: Exercise = {
+      exercise_id: editingExercise!.exercise_id,
+      name: formName.trim(),
+      gif_url: formGifUrl.trim() || null,
+      target_muscles: formTargetMuscles.trim() || null,
+      body_parts: formBodyParts.trim() || null,
+      equipments: formEquipments.trim() || null,
+    };
+
+    // Optimistic: update in list immediately
+    setExercises((prev) => prev.map((ex) => ex.exercise_id === updatedExercise.exercise_id ? updatedExercise : ex));
+    setShowEditModal(false);
+    setSaving(false);
+
+    // Persist in background
     try {
       const res = await fetch(`/api/admin/exercises/${editingExercise?.exercise_id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: formName.trim(),
-          gif_url: formGifUrl.trim() || null,
-          target_muscles: formTargetMuscles.trim() || null,
-          body_parts: formBodyParts.trim() || null,
-          equipments: formEquipments.trim() || null,
-        }),
+        body: JSON.stringify(updatedExercise),
       });
-
       if (!res.ok) {
         const json = await res.json();
+        setExercises((prev) => prev.map((ex) => ex.exercise_id === updatedExercise.exercise_id ? editingExercise! : ex));
         setError(json.error || "Failed to update exercise");
-        setSaving(false);
-        return;
       }
-
-      setShowEditModal(false);
-      fetchExercises();
     } catch {
+      setExercises((prev) => prev.map((ex) => ex.exercise_id === updatedExercise.exercise_id ? editingExercise! : ex));
       setError("Network error");
     }
-    setSaving(false);
   };
 
   const handleDelete = async () => {
     setSaving(true);
     setError("");
+    const targetId = deletingExercise?.exercise_id;
 
+    // Optimistic: remove from list immediately
+    setExercises((prev) => prev.filter((ex) => ex.exercise_id !== targetId));
+    setShowDeleteModal(false);
+    setSaving(false);
+
+    // Persist in background
     try {
-      const res = await fetch(`/api/admin/exercises/${deletingExercise?.exercise_id}`, {
-        method: "DELETE",
-      });
-
+      const res = await fetch(`/api/admin/exercises/${targetId}`, { method: "DELETE" });
       if (!res.ok) {
         const json = await res.json();
+        setExercises((prev) => prev.includes(deletingExercise!) ? [deletingExercise!, ...prev.filter((ex) => ex.exercise_id !== targetId)] : prev);
         setError(json.error || "Failed to delete exercise");
-        setSaving(false);
-        return;
       }
-
-      setShowDeleteModal(false);
-      fetchExercises();
     } catch {
+      setExercises((prev) => prev.includes(deletingExercise!) ? [deletingExercise!, ...prev.filter((ex) => ex.exercise_id !== targetId)] : prev);
       setError("Network error");
     }
-    setSaving(false);
   };
 
   if (!isAdmin || loading) {

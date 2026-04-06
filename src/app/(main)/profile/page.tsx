@@ -79,12 +79,20 @@ export default function ProfilePage() {
     }, [user, loadData]);
 
     const handleAddPhoto = async (photo: File, logDate: string, notes: string) => {
+        // Optimistic: add to local photos immediately with local URL
+        const tempId = crypto.randomUUID();
+        const localUrl = URL.createObjectURL(photo);
+        const newPhoto = { id: tempId, photo_url: localUrl, log_date: logDate, notes: notes || undefined, created_at: new Date().toISOString() } as ProgressPhoto;
+        setPhotos((prev) => [newPhoto, ...prev]);
+        setShowPhotoModal(false);
+
+        // Persist in background
         try {
             await addProgressPhoto({ photo, log_date: logDate, notes: notes || undefined });
-            setShowPhotoModal(false);
-            await loadData();
+            URL.revokeObjectURL(localUrl); // clean up temp URL
         } catch (error) {
             console.error("Error adding photo:", error);
+            setPhotos((prev) => prev.filter((p) => p.id !== tempId)); // rollback
         }
     };
 
@@ -102,15 +110,32 @@ export default function ProfilePage() {
     const confirmDelete = async () => {
         if (!deleteTarget) return;
         setDeleteLoading(true);
+        const target = deleteTarget;
+
+        // Optimistic: remove from local state immediately
+        if (target.type === "photo") {
+            setPhotos((prev) => prev.filter((p) => p.id !== target.id));
+        } else {
+            setWeights((prev) => prev.filter((w) => w.id !== target.id));
+        }
+
+        // Persist in background
         try {
-            if (deleteTarget.type === "photo") {
-                await deleteProgressPhoto(deleteTarget.id);
+            if (target.type === "photo") {
+                await deleteProgressPhoto(target.id);
             } else {
-                await deleteWeight(deleteTarget.id);
+                await deleteWeight(target.id);
             }
-            await loadData();
         } catch (error) {
-            console.error(`Error deleting ${deleteTarget.type}:`, error);
+            console.error(`Error deleting ${target.type}:`, error);
+            // Rollback: re-add to local state
+            if (target.type === "photo") {
+                const photo = photos.find((p) => p.id === target.id);
+                if (photo) setPhotos((prev) => [photo, ...prev]);
+            } else {
+                const log = weights.find((w) => w.id === target.id);
+                if (log) setWeights((prev) => [...prev, log]);
+            }
         } finally {
             setDeleteLoading(false);
             setDeleteTarget(null);
@@ -197,14 +222,21 @@ export default function ProfilePage() {
                     onClose={() => setShowWeightModal(false)}
                     onSubmit={async (date, weight) => {
                         if (!weight || !date || !user) return;
+                        setShowWeightModal(false);
+
+                        // Optimistic: add to local weights immediately
+                        const tempId = crypto.randomUUID();
+                        const newLog = { id: tempId, log_date: date, weight: parseFloat(weight) } as WeightLog;
+                        setWeights((prev) => [...prev, newLog].sort((a, b) => a.log_date.localeCompare(b.log_date)));
+                        setNewWeight("");
+                        setNewDate(new Date().toISOString().split("T")[0]);
+
+                        // Persist in background
                         try {
                             await addWeight(date, weight);
-                            setNewWeight("");
-                            setNewDate(new Date().toISOString().split("T")[0]);
-                            await loadData();
-                            setShowWeightModal(false);
                         } catch (error) {
                             console.error("Error adding weight:", error);
+                            setWeights((prev) => prev.filter((w) => w.id !== tempId)); // rollback
                         }
                     }}
                     initialDate={newDate}

@@ -91,46 +91,54 @@ export default function AdminTemplatesPage() {
       .filter((id) => id.trim() !== "")
       .map((exercise_id) => ({ exercise_id: exercise_id.trim() }));
 
+    const tempId = crypto.randomUUID();
+    const newTemplate: Template = { id: tempId, name: formName.trim(), description: formDescription.trim() || null, is_official: true, created_at: new Date().toISOString(), template_exercises: exercises.map((ex, i) => ({ exercise_id: ex.exercise_id, order_index: i })) };
+
+    // Optimistic: add to list immediately
+    setTemplates((prev) => [newTemplate, ...prev]);
+    setShowCreateModal(false);
+    setSaving(false);
+
+    // Persist in background
     try {
       const res = await fetch("/api/admin/templates", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: formName.trim(), description: formDescription.trim() || null, exercises }),
       });
-
       if (!res.ok) {
         const json = await res.json();
+        setTemplates((prev) => prev.filter((t) => t.id !== tempId));
         setError(json.error || "Failed to create template");
-        setSaving(false);
-        return;
       }
-
-      setShowCreateModal(false);
-      fetchTemplates();
     } catch {
+      setTemplates((prev) => prev.filter((t) => t.id !== tempId));
       setError("Network error");
     }
-    setSaving(false);
   };
 
   const handleDelete = async () => {
     setSaving(true);
     setError("");
+    const targetId = deletingTemplate?.id;
 
+    // Optimistic: remove from list immediately
+    setTemplates((prev) => prev.filter((t) => t.id !== targetId));
+    setShowDeleteModal(false);
+    setSaving(false);
+
+    // Persist in background
     try {
-      const res = await fetch(`/api/admin/templates/${deletingTemplate?.id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/templates/${targetId}`, { method: "DELETE" });
       if (!res.ok) {
         const json = await res.json();
+        setTemplates((prev) => prev.includes(deletingTemplate!) ? [deletingTemplate!, ...prev.filter((t) => t.id !== targetId)] : prev);
         setError(json.error || "Failed to delete template");
-        setSaving(false);
-        return;
       }
-      setShowDeleteModal(false);
-      fetchTemplates();
     } catch {
+      setTemplates((prev) => prev.includes(deletingTemplate!) ? [deletingTemplate!, ...prev.filter((t) => t.id !== targetId)] : prev);
       setError("Network error");
     }
-    setSaving(false);
   };
 
   if (!isAdmin || loading) {
