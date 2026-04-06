@@ -4,9 +4,10 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import ExerciseCard from "@/components/ExerciseCard";
 import type { Exercise } from "@/types";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import Skeleton from "react-loading-skeleton";
 import { useExercises } from "@/hooks/useExercises";
 import { Search, X } from "lucide-react";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 export default function ExercisesPage() {
     const [exercises, setExercises] = useState<Exercise[]>([]);

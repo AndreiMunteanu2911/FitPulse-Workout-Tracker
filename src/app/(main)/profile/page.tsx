@@ -6,7 +6,7 @@ import ConfirmDeleteModal from "@/components/admin/ConfirmDeleteModal";
 import { useRouter } from "next/navigation";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import WeightHistoryChart from "@/components/WeightHistoryChart";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import Skeleton from "react-loading-skeleton";
 import AddWeightModal from "@/components/AddWeightModal";
 import ProgressPhotoCard from "@/components/ProgressPhotoCard";
 import AddPhotoModal from "@/components/AddPhotoModal";
@@ -161,8 +161,20 @@ export default function ProfilePage() {
                 </div>
 
                 {loading && (
-                    <div className="flex justify-center items-center py-12">
-                        <LoadingSpinner size={8} />
+                    <div className="space-y-6">
+                        <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4">
+                            <Skeleton width={140} className="mb-3" />
+                            <div className="h-[220px] bg-[var(--surface-raised)] rounded-lg" />
+                        </div>
+                        <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4">
+                            <Skeleton width={160} className="mb-3" />
+                            <Skeleton height={200} />
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            {Array.from({ length: 6 }).map((_, i) => (
+                                <Skeleton key={i} className="aspect-square rounded-xl" />
+                            ))}
+                        </div>
                     </div>
                 )}
 

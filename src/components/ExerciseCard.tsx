@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Button from "@/components/Button";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import Skeleton from "react-loading-skeleton";
 import { useState } from "react";
 import { Dumbbell } from "lucide-react";
 import type { Exercise } from "@/types";
@@ -14,19 +14,14 @@ interface ExerciseCardProps {
     showAnimation?: boolean;
 }
 
-function ImageWithSpinner({ src, alt }: { src: string; alt: string }) {
+function ExerciseThumbnail({ src }: { src: string }) {
     const [loaded, setLoaded] = useState(false);
-    
     return (
-        <div className="relative w-full h-full">
-            {!loaded && (
-                <div className="absolute inset-0 flex items-center justify-center z-10">
-                    <LoadingSpinner size={3} variant="image" />
-                </div>
-            )}
+        <div className="relative w-full h-full bg-[var(--surface-raised)] overflow-hidden">
+            {!loaded && <Skeleton className="absolute inset-0" />}
             <img
                 src={src}
-                alt={alt}
+                alt=""
                 className={`w-full h-full object-cover transition-opacity duration-200 ${loaded ? "opacity-100" : "opacity-0"}`}
                 onLoad={() => setLoaded(true)}
             />
@@ -48,7 +43,7 @@ export default function ExerciseCard({ exercise, showDetailsButton = true, onCli
                 </div>
             ) : exercise.gif_url ? (
                 <div className="flex-shrink-0 w-14 h-14 rounded-[var(--radius-md)] overflow-hidden bg-[var(--surface-raised)]">
-                    <ImageWithSpinner src={exercise.gif_url} alt={exercise.name} />
+                    <ExerciseThumbnail src={exercise.gif_url} />
                 </div>
             ) : null}
             

@@ -6,7 +6,7 @@ import ProtectedWrapper from "@/components/ProtectedWrapper";
 import ExerciseCard from "@/components/WorkoutExerciseCard";
 import ExerciseSearchModal from "@/components/ExerciseSearchModal";
 import Button from "@/components/Button";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import Skeleton from "react-loading-skeleton";
 import CancelWorkoutModal from "@/components/CancelWorkoutModal";
 import FinishWorkoutModal from "@/components/FinishWorkoutModal";
 import DiscardSetsModal from "@/components/DiscardSetsModal";
@@ -739,8 +739,19 @@ export default function WorkoutPage() {
             <div className="w-full">
 
                 {isLoading ? (
-                    <div className="flex justify-center items-center h-[60vh]">
-                        <LoadingSpinner size={8} />
+                    <div className="w-full">
+                        <div className="page-header mb-6 flex items-center justify-between gap-3">
+                            <div>
+                                <Skeleton width={100} height={28} className="mb-1" />
+                                <Skeleton width={80} />
+                            </div>
+                            <Skeleton width={120} height={36} />
+                        </div>
+                        <div className="text-center py-16 bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] mb-6">
+                            <Skeleton circle width={80} height={80} className="mx-auto mb-4" />
+                            <Skeleton width={140} className="mx-auto mb-2" />
+                            <Skeleton width={220} className="mx-auto" />
+                        </div>
                     </div>
                 ) : (
                     <>

@@ -1,6 +1,6 @@
 import Button from "./Button";
 import ExerciseCard from "./ExerciseCard";
-import LoadingSpinner from "./LoadingSpinner";
+import Skeleton from "react-loading-skeleton";
 import ModalWrapper from "./ModalWrapper";
 import type { Exercise } from "@/types";
 import { Search, Plus } from "lucide-react";
@@ -45,7 +45,19 @@ export default function ExerciseSearchModal({
                 />
             </div>
             
-            {isSearching && <LoadingSpinner size={10} className="mx-auto my-4" />}
+            {isSearching && (
+                <div className="space-y-2 my-4">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className="flex items-center gap-3 p-3">
+                            <Skeleton circle width={40} height={40} />
+                            <div className="flex-1">
+                                <Skeleton width={120} className="mb-1" />
+                                <Skeleton width={80} />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
             
             <div className="space-y-2 overflow-y-auto max-h-[60vh] -mx-2 px-2">
                 {showEmptyState && !showCreateButton && (

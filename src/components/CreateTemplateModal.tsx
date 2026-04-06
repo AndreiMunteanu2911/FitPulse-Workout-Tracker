@@ -6,6 +6,7 @@ import Button from "./Button";
 import { useExercises } from "@/hooks/useExercises";
 import type { WorkoutTemplate } from "@/types";
 import { Check } from "lucide-react";
+import Skeleton from "react-loading-skeleton";
 
 interface CreateTemplateModalProps {
   isOpen: boolean;
@@ -138,7 +139,9 @@ export default function CreateTemplateModal({
 
         <div className="flex-1 overflow-auto mb-4 border border-[var(--border)] rounded-lg p-3">
           {loading ? (
-            <div className="text-center text-[var(--muted-foreground)] py-4">Loading exercises...</div>
+            <div className="text-center text-[var(--muted-foreground)] py-4">
+                <Skeleton width={120} className="mx-auto" />
+            </div>
           ) : exercises.length === 0 ? (
             <div className="text-center text-[var(--muted-foreground)] py-4">No exercises found</div>
           ) : (

@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Skeleton from "react-loading-skeleton";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import WorkoutHistoryCard from "@/components/WorkoutHistoryCard";
-import LoadingSpinner from "@/components/LoadingSpinner";
 import ModalWrapper from "@/components/ModalWrapper";
 import Button from "@/components/Button";
 import { useHistory } from "@/hooks/useHistory";
@@ -114,8 +114,24 @@ export default function HistoryPage() {
     if (loading) {
         return (
             <ProtectedWrapper>
-                <div className="flex items-center justify-center h-[50vh]">
-                    <LoadingSpinner size={40} />
+                <div className="w-full">
+                    <div className="page-header mb-6">
+                        <h1 className="hidden md:block"><Skeleton width={120} height={32} /></h1>
+                        <p className="mt-0.5"><Skeleton width={150} /></p>
+                    </div>
+                    <div className="space-y-3">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                            <div key={i} className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4 sm:p-5">
+                                <Skeleton width={100} className="mb-2" />
+                                <Skeleton width={200} className="mb-3" />
+                                <div className="flex gap-2">
+                                    <Skeleton width={80} height={24} />
+                                    <Skeleton width={80} height={24} />
+                                    <Skeleton width={80} height={24} />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </ProtectedWrapper>
         );
