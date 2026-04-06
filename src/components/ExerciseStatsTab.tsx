@@ -10,7 +10,7 @@ import {
     Tooltip,
     ResponsiveContainer,
 } from "recharts";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import Skeleton from "react-loading-skeleton";
 import { BarChart2 } from "lucide-react";
 
 interface ExerciseStat {
@@ -123,8 +123,15 @@ export default function ExerciseStatsTab({ exerciseId }: ExerciseStatsTabProps) 
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center py-16">
-                <LoadingSpinner size={8} />
+            <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-3">
+                    <Skeleton height={70} className="rounded-xl" />
+                    <Skeleton height={70} className="rounded-xl" />
+                    <Skeleton height={70} className="rounded-xl" />
+                </div>
+                <Skeleton height={180} className="rounded-xl" />
+                <Skeleton height={180} className="rounded-xl" />
+                <Skeleton height={180} className="rounded-xl" />
             </div>
         );
     }

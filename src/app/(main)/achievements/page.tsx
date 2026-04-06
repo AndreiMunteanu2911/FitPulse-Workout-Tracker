@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import Skeleton from "react-loading-skeleton";
 import XPLevelCard from "@/components/XPLevelCard";
 import type { Achievement, GamificationStats } from "@/types";
 import {
@@ -324,8 +324,14 @@ export default function AchievementsPage() {
         </div>
 
         {loading && (
-          <div className="flex items-center justify-center py-24">
-            <LoadingSpinner size={12} />
+          <div className="space-y-4 py-4">
+            <Skeleton height={80} className="mb-4" />
+            <Skeleton height={60} className="mb-2" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} height={80} className="rounded-xl" />
+              ))}
+            </div>
           </div>
         )}
 

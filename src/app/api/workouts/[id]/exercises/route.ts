@@ -10,6 +10,18 @@ export async function POST(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  // Verify the workout belongs to the user
+  const { data: workoutData } = await supabase
+    .from("workouts")
+    .select("id")
+    .eq("id", workoutId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!workoutData) {
+    return NextResponse.json({ error: "Workout not found or unauthorized" }, { status: 404 });
+  }
+
   const { exercise_id, order_index } = await req.json();
 
   const { data: workoutExerciseData, error: exerciseError } = await supabase

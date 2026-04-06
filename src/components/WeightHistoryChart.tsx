@@ -1,6 +1,6 @@
 import React from "react";
 import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import Skeleton from "react-loading-skeleton";
 import WeightLogCard from "@/components/WeightLogCard";
 
 interface WeightHistoryChartProps {
@@ -15,8 +15,13 @@ const WeightHistoryChart: React.FC<WeightHistoryChartProps> = ({ weights, loadin
     return (
         <div className="w-full">
             {loading ? (
-                <div className="flex justify-center items-center py-12">
-                    <LoadingSpinner size={10} />
+                <div className="space-y-4">
+                    <Skeleton height={220} className="rounded-xl" />
+                    <div className="bg-[var(--surface-raised)] rounded-lg overflow-hidden max-h-72 p-4 space-y-3">
+                        <Skeleton height={36} />
+                        <Skeleton height={36} />
+                        <Skeleton height={36} />
+                    </div>
                 </div>
             ) : chartData.length === 0 ? (
                 <p className="text-center text-[var(--muted-foreground)] py-8">No weight logs yet.</p>

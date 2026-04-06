@@ -83,6 +83,13 @@ export function useAIChat(): UseAIChatReturn {
   const createConversation = useCallback(async (firstMessage: string): Promise<string | null> => {
     try {
       const title = firstMessage.length > 50 ? firstMessage.slice(0, 50) + "…" : firstMessage;
+      const tempId = crypto.randomUUID();
+
+      // Optimistic: set ID and add to list immediately
+      setConversationId(tempId);
+      setConversations((prev) => [{ id: tempId, title, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }, ...prev]);
+
+      // Persist in background
       const res = await fetch("/api/ai/conversations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -91,9 +98,9 @@ export function useAIChat(): UseAIChatReturn {
       if (!res.ok) return null;
       const data = await res.json();
       const id = data.conversation?.id;
-      if (id) {
+      if (id && id !== tempId) {
         setConversationId(id);
-        await fetchConversations();
+        setConversations((prev) => prev.map((c) => c.id === tempId ? { ...c, id } : c));
       }
       return id;
     } catch {
@@ -162,19 +169,6 @@ export function useAIChat(): UseAIChatReturn {
     }
   }, []);
 
-  // ── Delete a conversation ───────────────────────────────────────────────
-  const deleteConversation = useCallback(async (id: string) => {
-    try {
-      await fetch(`/api/ai/conversations/${id}`, { method: "DELETE" });
-      setConversations((prev) => prev.filter((c) => c.id !== id));
-      if (conversationId === id) {
-        newConversation();
-      }
-    } catch {
-      // Silently fail
-    }
-  }, [conversationId]);
-
   // ── Start fresh conversation ────────────────────────────────────────────
   const newConversation = useCallback(() => {
     abortRef.current?.abort();
@@ -185,6 +179,22 @@ export function useAIChat(): UseAIChatReturn {
     setLastWorkoutAction(null);
     setIsStreaming(false);
   }, []);
+
+  // ── Delete a conversation ───────────────────────────────────────────────
+  const deleteConversation = useCallback(async (id: string) => {
+    // Optimistic: remove from list immediately
+    setConversations((prev) => prev.filter((c) => c.id !== id));
+    if (conversationId === id) {
+      newConversation();
+    }
+
+    // Persist in background
+    try {
+      await fetch(`/api/ai/conversations/${id}`, { method: "DELETE" });
+    } catch {
+      // Silently fail
+    }
+  }, [conversationId, newConversation]);
 
   // ── Clear (alias for newConversation) ───────────────────────────────────
   const clearConversation = useCallback(() => {

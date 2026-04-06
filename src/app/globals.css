@@ -277,3 +277,42 @@ input[type="number"] {
   background: color-mix(in srgb, var(--primary-900) 35%, transparent);
 }
 
+/* ============================================
+   react-loading-skeleton overrides
+   ============================================ */
+.react-loading-skeleton {
+  background-color: var(--surface-raised) !important;
+  background-image: linear-gradient(
+    90deg,
+    var(--surface-raised) 0%,
+    var(--surface-raised) 40%,
+    var(--border) 50%,
+    var(--surface-raised) 60%,
+    var(--surface-raised) 100%
+  ) !important;
+}
+
+.dark .react-loading-skeleton {
+  background-color: #1A2338 !important;
+  background-image: linear-gradient(
+    90deg,
+    #1A2338 0%,
+    #1A2338 40%,
+    #23304A 50%,
+    #1A2338 60%,
+    #1A2338 100%
+  ) !important;
+}
+
+.dark .react-loading-skeleton::after {
+  background-color: #1A2338 !important;
+  background-image: linear-gradient(
+    90deg,
+    #1A2338 0%,
+    #1A2338 40%,
+    #23304A 50%,
+    #1A2338 60%,
+    #1A2338 100%
+  ) !important;
+}
+

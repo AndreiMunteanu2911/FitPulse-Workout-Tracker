@@ -2,10 +2,11 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Button from "@/components/Button";
+import ConfirmDeleteModal from "@/components/admin/ConfirmDeleteModal";
 import { useRouter } from "next/navigation";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import WeightHistoryChart from "@/components/WeightHistoryChart";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import Skeleton from "react-loading-skeleton";
 import AddWeightModal from "@/components/AddWeightModal";
 import ProgressPhotoCard from "@/components/ProgressPhotoCard";
 import AddPhotoModal from "@/components/AddPhotoModal";
@@ -32,6 +33,10 @@ export default function ProfilePage() {
     const [loading, setLoading] = useState(true);
     const [showWeightModal, setShowWeightModal] = useState(false);
     const [showPhotoModal, setShowPhotoModal] = useState(false);
+
+    // Delete confirmation modal state
+    const [deleteTarget, setDeleteTarget] = useState<{ type: "weight" | "photo"; id: string; name: string } | null>(null);
+    const [deleteLoading, setDeleteLoading] = useState(false);
 
     const signOut = async () => {
         await logout();
@@ -74,32 +79,66 @@ export default function ProfilePage() {
     }, [user, loadData]);
 
     const handleAddPhoto = async (photo: File, logDate: string, notes: string) => {
+        // Optimistic: add to local photos immediately with local URL
+        const tempId = crypto.randomUUID();
+        const localUrl = URL.createObjectURL(photo);
+        const newPhoto = { id: tempId, photo_url: localUrl, log_date: logDate, notes: notes || undefined, created_at: new Date().toISOString() } as ProgressPhoto;
+        setPhotos((prev) => [newPhoto, ...prev]);
+        setShowPhotoModal(false);
+
+        // Persist in background
         try {
             await addProgressPhoto({ photo, log_date: logDate, notes: notes || undefined });
-            setShowPhotoModal(false);
-            await loadData();
+            URL.revokeObjectURL(localUrl); // clean up temp URL
         } catch (error) {
             console.error("Error adding photo:", error);
+            setPhotos((prev) => prev.filter((p) => p.id !== tempId)); // rollback
         }
     };
 
-    const handleDeletePhoto = async (id: string) => {
-        if (!confirm("Delete this photo?")) return;
-        try {
-            await deleteProgressPhoto(id);
-            await loadData();
-        } catch (error) {
-            console.error("Error deleting photo:", error);
-        }
+    const handleDeletePhoto = (id: string) => {
+        const photo = photos.find((p) => p.id === id);
+        setDeleteTarget({ type: "photo", id, name: `photo from ${photo?.log_date || "unknown date"}` });
     };
 
-    const handleDeleteWeight = async (id: string) => {
-        if (!confirm("Delete this weight entry?")) return;
+    const handleDeleteWeight = (id: string) => {
+        const log = weights.find((w) => w.id === id);
+        const dateStr = log?.log_date ? new Date(log.log_date).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "unknown date";
+        setDeleteTarget({ type: "weight", id, name: `${log?.weight || 0} kg — ${dateStr}` });
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteTarget) return;
+        setDeleteLoading(true);
+        const target = deleteTarget;
+
+        // Optimistic: remove from local state immediately
+        if (target.type === "photo") {
+            setPhotos((prev) => prev.filter((p) => p.id !== target.id));
+        } else {
+            setWeights((prev) => prev.filter((w) => w.id !== target.id));
+        }
+
+        // Persist in background
         try {
-            await deleteWeight(id);
-            await loadData();
+            if (target.type === "photo") {
+                await deleteProgressPhoto(target.id);
+            } else {
+                await deleteWeight(target.id);
+            }
         } catch (error) {
-            console.error("Error deleting weight:", error);
+            console.error(`Error deleting ${target.type}:`, error);
+            // Rollback: re-add to local state
+            if (target.type === "photo") {
+                const photo = photos.find((p) => p.id === target.id);
+                if (photo) setPhotos((prev) => [photo, ...prev]);
+            } else {
+                const log = weights.find((w) => w.id === target.id);
+                if (log) setWeights((prev) => [...prev, log]);
+            }
+        } finally {
+            setDeleteLoading(false);
+            setDeleteTarget(null);
         }
     };
 
@@ -122,8 +161,20 @@ export default function ProfilePage() {
                 </div>
 
                 {loading && (
-                    <div className="flex justify-center items-center py-12">
-                        <LoadingSpinner size={8} />
+                    <div className="space-y-6">
+                        <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4">
+                            <Skeleton width={140} className="mb-3" />
+                            <div className="h-[220px] bg-[var(--surface-raised)] rounded-lg" />
+                        </div>
+                        <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4">
+                            <Skeleton width={160} className="mb-3" />
+                            <Skeleton height={200} />
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            {Array.from({ length: 6 }).map((_, i) => (
+                                <Skeleton key={i} className="aspect-square rounded-xl" />
+                            ))}
+                        </div>
                     </div>
                 )}
 
@@ -183,14 +234,21 @@ export default function ProfilePage() {
                     onClose={() => setShowWeightModal(false)}
                     onSubmit={async (date, weight) => {
                         if (!weight || !date || !user) return;
+                        setShowWeightModal(false);
+
+                        // Optimistic: add to local weights immediately
+                        const tempId = crypto.randomUUID();
+                        const newLog = { id: tempId, log_date: date, weight: parseFloat(weight) } as WeightLog;
+                        setWeights((prev) => [...prev, newLog].sort((a, b) => a.log_date.localeCompare(b.log_date)));
+                        setNewWeight("");
+                        setNewDate(new Date().toISOString().split("T")[0]);
+
+                        // Persist in background
                         try {
                             await addWeight(date, weight);
-                            setNewWeight("");
-                            setNewDate(new Date().toISOString().split("T")[0]);
-                            await loadData();
-                            setShowWeightModal(false);
                         } catch (error) {
                             console.error("Error adding weight:", error);
+                            setWeights((prev) => prev.filter((w) => w.id !== tempId)); // rollback
                         }
                     }}
                     initialDate={newDate}
@@ -203,6 +261,15 @@ export default function ProfilePage() {
                     isOpen={showPhotoModal}
                     onClose={() => setShowPhotoModal(false)}
                     onAdd={handleAddPhoto}
+                />
+
+                <ConfirmDeleteModal
+                    isOpen={deleteTarget !== null}
+                    onClose={() => setDeleteTarget(null)}
+                    title={`Delete ${deleteTarget?.type === "weight" ? "Weight Entry" : "Photo"}`}
+                    itemName={deleteTarget?.name ?? ""}
+                    onConfirm={confirmDelete}
+                    loading={deleteLoading}
                 />
             </div>
         </ProtectedWrapper>
