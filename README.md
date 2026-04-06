@@ -379,8 +379,6 @@ An "Admin Dashboard" card appears on the main `/dashboard` page **only** for use
 
    Open the Supabase SQL Editor and run the migration files in `migrations/` **in numerical order** (`001_extensions.sql` through `017_ai_messages.sql`). These create all tables, indexes, triggers, RLS policies, and seed data.
 
-   > **Existing database?** Run `migrations/_TEMP_run_once.sql` instead — it contains only the delta changes (new columns, new RLS policies). Delete this file after running.
-
 5. **Promote a user to admin** *(optional)*
 
    In Supabase SQL Editor:
@@ -710,7 +708,6 @@ The database is managed through individual migration files in `migrations/`, run
 | `015_user_achievements.sql` | user_achievements table + index + RLS |
 | `016_ai_conversations.sql` | ai_conversations table + indexes + trigger + RLS |
 | `017_ai_messages.sql` | ai_messages table + indexes + RLS |
-| `_TEMP_run_once.sql` | **Delta-only for existing databases** — ALTER TABLEs and new RLS policies. Delete after running. |
 
 ---
 
