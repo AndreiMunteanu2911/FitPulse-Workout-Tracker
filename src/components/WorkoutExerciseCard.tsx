@@ -70,8 +70,6 @@ export default function WorkoutExerciseCard({
         onRestTimerSkip &&
         onRestTimerDismiss;
 
-    const previousSets = workoutExercise.previousSets ?? [];
-
     return (
         <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] overflow-hidden">
             {/* Accent top strip */}
@@ -124,7 +122,8 @@ export default function WorkoutExerciseCard({
                     {workoutExercise.sets.map((set, setIndex) => {
                         const isConfirmed = confirmedSetIds.has(set.id);
                         const showTimerHere = showTimer && restTimer?.setId === set.id;
-                        const previous = previousSets[setIndex] ?? null;
+                        const previous = workoutExercise.previousSets?.[setIndex] ?? null;
+                        const previousLoading = !workoutExercise.previousSetsLoaded && set.set_number <= (workoutExercise.previousSets?.length ?? 0) + 1;
                         return (
                             <React.Fragment key={set.id}>
                                 <SetRow
@@ -133,6 +132,7 @@ export default function WorkoutExerciseCard({
                                     exerciseIndex={exerciseIndex}
                                     isConfirmed={isConfirmed}
                                     previous={previous}
+                                    previousLoading={previousLoading}
                                     onUpdateSet={onUpdateSet}
                                     onDeleteSet={onDeleteSet}
                                     onConfirmSet={onConfirmSet}

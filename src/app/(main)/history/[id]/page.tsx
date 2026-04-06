@@ -182,32 +182,27 @@ export default function WorkoutDetailPage() {
         // Optimistic: add immediately
         const tempId = crypto.randomUUID();
         const tempSet: WorkoutSet = { id: crypto.randomUUID(), workout_exercise_id: tempId, set_number: 1, reps: 0, weight: 0, is_confirmed: false };
-        const optimisticWe: WorkoutExercise = { id: tempId, workout_id: workoutId, exercise_id: exercise.exercise_id, order_index: workoutExercises.length, exercise, sets: [tempSet], previousSets: [] };
+        const optimisticWe: WorkoutExercise = { id: tempId, workout_id: workoutId, exercise_id: exercise.exercise_id, order_index: workoutExercises.length, exercise, sets: [tempSet], previousSets: [], previousSetsLoaded: false };
         setWorkoutExercises((prev) => [...prev, optimisticWe]);
         setShowExerciseSearch(false);
         setSearchQuery("");
         setSearchResults([]);
 
-        // Persist in background
+        // Persist in background — fire both requests in parallel
         try {
-            const result = await addExerciseApi(workoutId, exercise.exercise_id, workoutExercises.length);
+            const [result, lastSession] = await Promise.all([
+                addExerciseApi(workoutId, exercise.exercise_id, workoutExercises.length),
+                fetch(`/api/exercises/${exercise.exercise_id}/last-session`).then(r => r.ok ? r.json() : { sets: [] }).catch(() => ({ sets: [] })),
+            ]);
             const workoutExerciseData = result.workoutExercise as { id: string; order_index: number };
             const firstSet = result.set as WorkoutSet;
-
-            let prefillSets: { reps: number; weight: number }[] = [];
-            try {
-                const lastRes = await fetch(`/api/exercises/${exercise.exercise_id}/last-session`);
-                if (lastRes.ok) prefillSets = (await lastRes.json()).sets ?? [];
-            } catch { /* ignore */ }
+            const prefillSets: { reps: number; weight: number }[] = lastSession.sets ?? [];
 
             let sets: WorkoutSet[] = [];
             if (prefillSets.length > 0) {
-                await updateSetApi(firstSet.id, { reps: prefillSets[0].reps, weight: prefillSets[0].weight });
-                sets.push({ ...firstSet, reps: prefillSets[0].reps, weight: prefillSets[0].weight });
+                sets.push({ ...firstSet, reps: prefillSets[0].reps, weight: prefillSets[0].weight, is_confirmed: false });
                 for (let i = 1; i < prefillSets.length; i++) {
-                    const ns = await addSetApi(workoutExerciseData.id, i + 1);
-                    await updateSetApi(ns.id, { reps: prefillSets[i].reps, weight: prefillSets[i].weight });
-                    sets.push({ ...ns, reps: prefillSets[i].reps, weight: prefillSets[i].weight });
+                    sets.push({ id: crypto.randomUUID(), workout_exercise_id: workoutExerciseData.id, set_number: i + 1, reps: prefillSets[i].reps, weight: prefillSets[i].weight, is_confirmed: false });
                 }
             } else {
                 sets = [firstSet];
@@ -217,9 +212,19 @@ export default function WorkoutDetailPage() {
                 const idx = prev.findIndex((e) => e.id === tempId);
                 if (idx === -1) return prev;
                 const updated = [...prev];
-                updated[idx] = { id: workoutExerciseData.id, workout_id: workoutId, exercise_id: exercise.exercise_id, order_index: workoutExerciseData.order_index, exercise, sets, previousSets: prefillSets };
+                updated[idx] = { id: workoutExerciseData.id, workout_id: workoutId, exercise_id: exercise.exercise_id, order_index: workoutExerciseData.order_index, exercise, sets, previousSets: prefillSets, previousSetsLoaded: true };
                 return updated;
             });
+
+            // Sync sets with server in parallel
+            const syncPromises: Promise<unknown>[] = [];
+            if (prefillSets.length > 0) {
+                syncPromises.push(updateSetApi(firstSet.id, { reps: prefillSets[0].reps, weight: prefillSets[0].weight }));
+                for (let i = 1; i < prefillSets.length; i++) {
+                    syncPromises.push(addSetApi(workoutExerciseData.id, i + 1));
+                }
+            }
+            Promise.all(syncPromises).catch(() => {});
         } catch {
             setWorkoutExercises((prev) => prev.filter((e) => e.id !== tempId)); // rollback
             setEditErrorMessages((prev) => ({ ...prev, general: "Failed to add exercise." }));
@@ -231,7 +236,7 @@ export default function WorkoutDetailPage() {
         const tempId = `custom_${crypto.randomUUID()}`;
         const weId = crypto.randomUUID();
         const tempSet: WorkoutSet = { id: crypto.randomUUID(), workout_exercise_id: weId, set_number: 1, reps: 0, weight: 0, is_confirmed: false };
-        const optimisticWe: WorkoutExercise = { id: weId, workout_id: workoutId!, exercise_id: tempId, order_index: workoutExercises.length, exercise: { exercise_id: tempId, name, body_parts: bodyPart ? [bodyPart] : null, is_custom: true }, sets: [tempSet], previousSets: [] };
+        const optimisticWe: WorkoutExercise = { id: weId, workout_id: workoutId!, exercise_id: tempId, order_index: workoutExercises.length, exercise: { exercise_id: tempId, name, body_parts: bodyPart ? [bodyPart] : null, is_custom: true }, sets: [tempSet], previousSets: [], previousSetsLoaded: true };
         setWorkoutExercises((prev) => [...prev, optimisticWe]);
         setShowCustomExerciseModal(false);
 

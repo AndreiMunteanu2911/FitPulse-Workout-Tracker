@@ -36,6 +36,7 @@ export interface WorkoutExercise {
   exercise: Exercise;
   sets: Set[];
   previousSets?: { reps: number; weight: number }[]; // last session's sets for "Previous" column
+  previousSetsLoaded?: boolean; // whether last-session data has been fetched yet
   created_at?: string;
 }
 

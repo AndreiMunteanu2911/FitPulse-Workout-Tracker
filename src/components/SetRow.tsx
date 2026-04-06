@@ -7,6 +7,7 @@ interface SetRowProps {
   exerciseIndex: number;
   isConfirmed: boolean;
   previous?: { reps: number; weight: number } | null;
+  previousLoading?: boolean;
   onUpdateSet: (exerciseIndex: number, setIndex: number, field: "reps" | "weight", value: number) => void;
   onDeleteSet: (exerciseIndex: number, setIndex: number) => void;
   onConfirmSet: (setId: string, exercise: { exercise_id: string; name: string }, workoutExerciseId: string) => void;
@@ -20,6 +21,7 @@ export default function SetRow({
   exerciseIndex,
   isConfirmed,
   previous,
+  previousLoading,
   onUpdateSet,
   onDeleteSet,
   onConfirmSet,
@@ -41,7 +43,12 @@ export default function SetRow({
 
       {/* Previous session */}
       <span className="text-center text-xs font-medium tabular-nums text-[var(--muted-foreground)]">
-        {previous ? `${previous.reps}×${previous.weight}` : "—"}
+        {previousLoading
+          ? <span className="inline-block w-5 h-3 bg-[var(--muted-foreground)]/20 rounded animate-pulse" />
+          : previous
+            ? `${previous.reps}×${previous.weight}`
+            : "—"
+        }
       </span>
 
       {/* Reps input */}
