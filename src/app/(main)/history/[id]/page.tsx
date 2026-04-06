@@ -83,27 +83,34 @@ export default function WorkoutDetailPage() {
     // --- Rename / delete ---
     const handleRename = async () => {
         if (!workout || !renameValue.trim()) return;
-        setRenaming(true);
+        const newName = renameValue.trim();
+        const prevName = workout.name;
+
+        // Optimistic: update immediately
+        setWorkout((prev) => prev ? { ...prev, name: newName } : prev);
+        setShowRenameModal(false);
+
+        // Persist in background
         try {
-            await renameWorkout(workout.id, renameValue.trim());
-            setWorkout((prev) => prev ? { ...prev, name: renameValue.trim() } : prev);
-            setShowRenameModal(false);
+            await renameWorkout(workout.id, newName);
         } catch {
+            setWorkout((prev) => prev ? { ...prev, name: prevName } : prev); // rollback
             setError("Failed to rename workout.");
-        } finally {
-            setRenaming(false);
         }
     };
 
     const handleDelete = async () => {
         if (!workout) return;
-        setDeleting(true);
+        const workoutId = workout.id;
+
+        // Optimistic: redirect immediately
+        router.push("/history");
+
+        // Persist in background
         try {
-            await deleteWorkout(workout.id);
-            router.push("/history");
+            await deleteWorkout(workoutId);
         } catch {
             setError("Failed to delete workout.");
-            setDeleting(false);
         }
     };
 
@@ -171,6 +178,17 @@ export default function WorkoutDetailPage() {
     // --- Edit handlers (mirror workout/page.tsx) ---
     const addExerciseToWorkout = async (exercise: Exercise) => {
         if (!workoutId) return;
+
+        // Optimistic: add immediately
+        const tempId = crypto.randomUUID();
+        const tempSet: WorkoutSet = { id: crypto.randomUUID(), workout_exercise_id: tempId, set_number: 1, reps: 0, weight: 0, is_confirmed: false };
+        const optimisticWe: WorkoutExercise = { id: tempId, workout_id: workoutId, exercise_id: exercise.exercise_id, order_index: workoutExercises.length, exercise, sets: [tempSet] };
+        setWorkoutExercises((prev) => [...prev, optimisticWe]);
+        setShowExerciseSearch(false);
+        setSearchQuery("");
+        setSearchResults([]);
+
+        // Persist in background
         try {
             const result = await addExerciseApi(workoutId, exercise.exercise_id, workoutExercises.length);
             const workoutExerciseData = result.workoutExercise as { id: string; order_index: number };
@@ -179,10 +197,7 @@ export default function WorkoutDetailPage() {
             let prefillSets: { reps: number; weight: number }[] = [];
             try {
                 const lastRes = await fetch(`/api/exercises/${exercise.exercise_id}/last-session`);
-                if (lastRes.ok) {
-                    const lastData = await lastRes.json();
-                    prefillSets = lastData.sets ?? [];
-                }
+                if (lastRes.ok) prefillSets = (await lastRes.json()).sets ?? [];
             } catch { /* ignore */ }
 
             let sets: WorkoutSet[] = [];
@@ -190,50 +205,51 @@ export default function WorkoutDetailPage() {
                 await updateSetApi(firstSet.id, { reps: prefillSets[0].reps, weight: prefillSets[0].weight });
                 sets.push({ ...firstSet, reps: prefillSets[0].reps, weight: prefillSets[0].weight });
                 for (let i = 1; i < prefillSets.length; i++) {
-                    const newSet = await addSetApi(workoutExerciseData.id, i + 1);
-                    await updateSetApi(newSet.id, { reps: prefillSets[i].reps, weight: prefillSets[i].weight });
-                    sets.push({ ...newSet, reps: prefillSets[i].reps, weight: prefillSets[i].weight });
+                    const ns = await addSetApi(workoutExerciseData.id, i + 1);
+                    await updateSetApi(ns.id, { reps: prefillSets[i].reps, weight: prefillSets[i].weight });
+                    sets.push({ ...ns, reps: prefillSets[i].reps, weight: prefillSets[i].weight });
                 }
             } else {
                 sets = [firstSet];
             }
 
-            setWorkoutExercises((prev) => [
-                ...prev,
-                {
-                    id: workoutExerciseData.id,
-                    exercise_id: exercise.exercise_id,
-                    exercise,
-                    order_index: workoutExerciseData.order_index,
-                    sets,
-                },
-            ]);
-            setShowExerciseSearch(false);
-            setSearchQuery("");
-            setSearchResults([]);
+            setWorkoutExercises((prev) => {
+                const idx = prev.findIndex((e) => e.id === tempId);
+                if (idx === -1) return prev;
+                const updated = [...prev];
+                updated[idx] = { id: workoutExerciseData.id, workout_id: workoutId, exercise_id: exercise.exercise_id, order_index: workoutExerciseData.order_index, exercise, sets };
+                return updated;
+            });
         } catch {
+            setWorkoutExercises((prev) => prev.filter((e) => e.id !== tempId)); // rollback
             setEditErrorMessages((prev) => ({ ...prev, general: "Failed to add exercise." }));
         }
     };
 
     const createCustomExercise = async (name: string, bodyPart: string) => {
-        const res = await fetch("/api/custom-exercises", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name, body_part: bodyPart || null }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed to create exercise");
-
-        const newExercise: Exercise = {
-            exercise_id: data.exercise.exercise_id,
-            name: data.exercise.name,
-            body_parts: data.exercise.body_part ? [data.exercise.body_part] : null,
-            is_custom: true,
-        };
-
+        // Optimistic: show immediately
+        const tempId = `custom_${crypto.randomUUID()}`;
+        const weId = crypto.randomUUID();
+        const tempSet: WorkoutSet = { id: crypto.randomUUID(), workout_exercise_id: weId, set_number: 1, reps: 0, weight: 0, is_confirmed: false };
+        const optimisticWe: WorkoutExercise = { id: weId, workout_id: workoutId!, exercise_id: tempId, order_index: workoutExercises.length, exercise: { exercise_id: tempId, name, body_parts: bodyPart ? [bodyPart] : null, is_custom: true }, sets: [tempSet] };
+        setWorkoutExercises((prev) => [...prev, optimisticWe]);
         setShowCustomExerciseModal(false);
-        await addExerciseToWorkout(newExercise);
+
+        // Persist in background
+        try {
+            const res = await fetch("/api/custom-exercises", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, body_part: bodyPart || null }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Failed to create exercise");
+            await addExerciseToWorkout({ exercise_id: data.exercise.exercise_id, name: data.exercise.name, body_parts: data.exercise.body_part ? [data.exercise.body_part] : null, is_custom: true });
+            setWorkoutExercises((prev) => prev.filter((e) => e.id !== weId)); // remove optimistic, real one added by addExerciseToWorkout
+        } catch (error) {
+            setWorkoutExercises((prev) => prev.filter((e) => e.id !== weId)); // rollback
+            throw error;
+        }
     };
 
     const addSetToExercise = async (exerciseIndex: number) => {
@@ -242,14 +258,33 @@ export default function WorkoutDetailPage() {
             setEditErrorMessages((prev) => ({ ...prev, [`exercise-${exerciseIndex}`]: "Maximum 10 sets." }));
             return;
         }
+
+        // Optimistic: add immediately
+        const tempSet: WorkoutSet = { id: crypto.randomUUID(), workout_exercise_id: we.id, set_number: we.sets.length + 1, reps: 0, weight: 0, is_confirmed: false };
+        setWorkoutExercises((prev) => {
+            const updated = [...prev];
+            updated[exerciseIndex] = { ...updated[exerciseIndex], sets: [...updated[exerciseIndex].sets, tempSet] };
+            return updated;
+        });
+
+        // Persist in background
         try {
-            const data = await addSetApi(we.id, we.sets.length + 1);
+            const data = await addSetApi(we.id, tempSet.set_number);
             setWorkoutExercises((prev) => {
                 const updated = [...prev];
-                updated[exerciseIndex] = { ...updated[exerciseIndex], sets: [...updated[exerciseIndex].sets, data] };
+                const ex = updated[exerciseIndex];
+                ex.sets = ex.sets.map((s) => s.id === tempSet.id ? { ...s, id: data.id } : s);
+                updated[exerciseIndex] = ex;
                 return updated;
             });
         } catch {
+            setWorkoutExercises((prev) => {
+                const updated = [...prev];
+                const ex = updated[exerciseIndex];
+                ex.sets = ex.sets.filter((s) => s.id !== tempSet.id).map((s, i) => ({ ...s, set_number: i + 1 }));
+                updated[exerciseIndex] = ex;
+                return updated;
+            });
             setEditErrorMessages((prev) => ({ ...prev, [`exercise-${exerciseIndex}`]: "Failed to add set." }));
         }
     };
@@ -269,28 +304,39 @@ export default function WorkoutDetailPage() {
     };
 
     const deleteSet = async (exerciseIndex: number, setIndex: number) => {
-        const set = workoutExercises[exerciseIndex].sets[setIndex];
+        const setToRemove = workoutExercises[exerciseIndex].sets[setIndex];
+        const prev = [...workoutExercises];
+
+        // Optimistic: remove immediately
+        setWorkoutExercises((p) => {
+            const updated = [...p];
+            const newSets = updated[exerciseIndex].sets.filter((_, i) => i !== setIndex).map((s, i) => ({ ...s, set_number: i + 1 }));
+            updated[exerciseIndex] = { ...updated[exerciseIndex], sets: newSets };
+            return updated;
+        });
+
+        // Persist in background
         try {
-            await deleteSetApi(set.id);
-            setWorkoutExercises((prev) => {
-                const updated = [...prev];
-                const newSets = updated[exerciseIndex].sets
-                    .filter((_, i) => i !== setIndex)
-                    .map((s, i) => ({ ...s, set_number: i + 1 }));
-                updated[exerciseIndex] = { ...updated[exerciseIndex], sets: newSets };
-                return updated;
-            });
+            await deleteSetApi(setToRemove.id);
         } catch {
-            setEditErrorMessages((prev) => ({ ...prev, [`exercise-${exerciseIndex}`]: "Failed to delete set." }));
+            setWorkoutExercises(prev); // rollback
+            setEditErrorMessages((p) => ({ ...p, [`exercise-${exerciseIndex}`]: "Failed to delete set." }));
         }
     };
 
     const deleteExercise = async (exerciseIndex: number) => {
+        const we = workoutExercises[exerciseIndex];
+        const prev = [...workoutExercises];
+
+        // Optimistic: remove immediately
+        setWorkoutExercises((p) => p.filter((_, i) => i !== exerciseIndex));
+
+        // Persist in background
         try {
-            await deleteWorkoutExercise(workoutExercises[exerciseIndex].id);
-            setWorkoutExercises((prev) => prev.filter((_, i) => i !== exerciseIndex));
+            await deleteWorkoutExercise(we.id);
         } catch {
-            setEditErrorMessages((prev) => ({ ...prev, [`exercise-${exerciseIndex}`]: "Failed to delete exercise." }));
+            setWorkoutExercises(prev); // rollback
+            setEditErrorMessages((p) => ({ ...p, [`exercise-${exerciseIndex}`]: "Failed to delete exercise." }));
         }
     };
 

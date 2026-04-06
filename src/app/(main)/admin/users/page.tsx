@@ -70,27 +70,30 @@ export default function AdminUsersPage() {
     if (!changingUser) return;
     setSaving(true);
     setError("");
+    const userId = changingUser.user_id;
+    const oldRole = changingUser.role;
 
+    // Optimistic: update role immediately
+    setUsers((prev) => prev.map((u) => u.user_id === userId ? { ...u, role: newRole } : u));
+    setShowRoleModal(false);
+    setSaving(false);
+
+    // Persist in background
     try {
-      const res = await fetch(`/api/admin/users/${changingUser.user_id}/role`, {
+      const res = await fetch(`/api/admin/users/${userId}/role`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role: newRole }),
       });
-
       if (!res.ok) {
         const json = await res.json();
+        setUsers((prev) => prev.map((u) => u.user_id === userId ? { ...u, role: oldRole } : u));
         setError(json.error || "Failed to change role");
-        setSaving(false);
-        return;
       }
-
-      setShowRoleModal(false);
-      fetchUsers();
     } catch {
+      setUsers((prev) => prev.map((u) => u.user_id === userId ? { ...u, role: oldRole } : u));
       setError("Network error");
     }
-    setSaving(false);
   };
 
   if (!isAdmin || loading) {
