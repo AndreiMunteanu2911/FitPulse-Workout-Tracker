@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { SkeletonTheme } from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 import "./globals.css";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import ThemeProvider from "@/components/ThemeProvider";
@@ -37,7 +39,12 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <ThemeProvider>
           <ErrorBoundary>
-            {children}
+            <SkeletonTheme
+              borderRadius="var(--radius-md)"
+              duration={1.5}
+            >
+              {children}
+            </SkeletonTheme>
           </ErrorBoundary>
         </ThemeProvider>
       </body>

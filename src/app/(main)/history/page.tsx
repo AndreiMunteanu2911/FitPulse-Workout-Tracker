@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Skeleton from "react-loading-skeleton";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import WorkoutHistoryCard from "@/components/WorkoutHistoryCard";
-import LoadingSpinner from "@/components/LoadingSpinner";
 import ModalWrapper from "@/components/ModalWrapper";
 import Button from "@/components/Button";
 import { useHistory } from "@/hooks/useHistory";
@@ -77,39 +77,61 @@ export default function HistoryPage() {
 
     const handleRename = async () => {
         if (!renameTarget || !renameValue.trim()) return;
-        setRenaming(true);
+        const newName = renameValue.trim();
+        const prev = workouts;
+
+        // Optimistic: update name immediately
+        setWorkouts((w) => w.map((w) => w.id === renameTarget.id ? { ...w, name: newName } : w));
+        setRenameTarget(null);
+
+        // Persist in background
         try {
-            await renameWorkout(renameTarget.id, renameValue.trim());
-            setWorkouts((prev) =>
-                prev.map((w) => w.id === renameTarget.id ? { ...w, name: renameValue.trim() } : w)
-            );
-            setRenameTarget(null);
+            await renameWorkout(renameTarget.id, newName);
         } catch {
+            setWorkouts(prev); // rollback
             setErrorMessages({ general: "Failed to rename workout." });
-        } finally {
-            setRenaming(false);
         }
     };
 
     const handleDelete = async () => {
         if (!deleteTarget) return;
-        setDeleting(true);
+        const targetId = deleteTarget.id;
+        const prev = workouts;
+
+        // Optimistic: remove immediately
+        setWorkouts((w) => w.filter((w) => w.id !== targetId));
+        setDeleteTarget(null);
+
+        // Persist in background
         try {
-            await deleteWorkout(deleteTarget.id);
-            setWorkouts((prev) => prev.filter((w) => w.id !== deleteTarget.id));
-            setDeleteTarget(null);
+            await deleteWorkout(targetId);
         } catch {
+            setWorkouts(prev); // rollback
             setErrorMessages({ general: "Failed to delete workout." });
-        } finally {
-            setDeleting(false);
         }
     };
 
     if (loading) {
         return (
             <ProtectedWrapper>
-                <div className="flex items-center justify-center h-[50vh]">
-                    <LoadingSpinner size={40} />
+                <div className="w-full">
+                    <div className="page-header mb-6">
+                        <h1 className="hidden md:block"><Skeleton width={120} height={32} /></h1>
+                        <p className="mt-0.5"><Skeleton width={150} /></p>
+                    </div>
+                    <div className="space-y-3">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                            <div key={i} className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4 sm:p-5">
+                                <Skeleton width={100} className="mb-2" />
+                                <Skeleton width={200} className="mb-3" />
+                                <div className="flex gap-2">
+                                    <Skeleton width={80} height={24} />
+                                    <Skeleton width={80} height={24} />
+                                    <Skeleton width={80} height={24} />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </ProtectedWrapper>
         );
@@ -192,8 +214,8 @@ export default function HistoryPage() {
                     &ldquo;{deleteTarget?.name}&rdquo; will be permanently deleted.
                 </p>
                 <div className="flex gap-2">
-                    <Button onClick={() => setDeleteTarget(null)} variant="secondary" block>Cancel</Button>
-                    <Button onClick={handleDelete} variant="danger" block disabled={deleting}>
+                    <Button onClick={() => setDeleteTarget(null)} variant="primary" block>Cancel</Button>
+                    <Button onClick={handleDelete} variant="secondary" block disabled={deleting}>
                         {deleting ? "Deleting…" : "Delete"}
                     </Button>
                 </div>

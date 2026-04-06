@@ -3,8 +3,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import DarkModeToggle from "@/components/DarkModeToggle";
-import { LayoutDashboard, History, Dumbbell, Library, User, Sparkles } from "lucide-react";
+import { LayoutDashboard, History, Dumbbell, Library, User, Sparkles, Shield } from "lucide-react";
 
 const tabs = [
   { name: "Dashboard",  href: "/dashboard",  Icon: LayoutDashboard },
@@ -20,6 +21,18 @@ const mobileTabs = tabs.filter((t) => t.name !== "AI Coach");
 
 export default function Navbar() {
   const pathname = usePathname();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth/session")
+      .then((r) => r.json())
+      .then((d) => setIsAdmin(d.user?.role === "admin"))
+      .catch(() => {});
+  }, []);
+
+  const desktopTabs = isAdmin
+    ? [...tabs, { name: "Admin", href: "/admin", Icon: Shield }]
+    : tabs;
 
   return (
     <>
@@ -35,7 +48,7 @@ export default function Navbar() {
 
         {/* Nav items */}
         <ul className="flex flex-col gap-0.5 flex-1 overflow-y-auto px-3">
-          {tabs.map(({ name, href, Icon }) => {
+          {desktopTabs.map(({ name, href, Icon }) => {
             const active = pathname === href;
             return (
               <li key={name}>

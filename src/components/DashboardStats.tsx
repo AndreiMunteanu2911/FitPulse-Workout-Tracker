@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import Skeleton from "react-loading-skeleton";
 import StatCard from "@/components/StatCard";
 import XPLevelCard from "@/components/XPLevelCard";
 import AchievementsTeaserCard from "@/components/AchievementsTeaserCard";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import { BarChart2, Calendar, Flame, Sparkles, Zap, TrendingUp, Plus } from "lucide-react";
 import { WorkoutStats, GamificationStats } from "@/types";
+import { BarChart2, Calendar, Flame, Sparkles, Zap, TrendingUp, Plus } from "lucide-react";
 
 const formatNumber = (num: number): string => {
   if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
@@ -45,14 +45,6 @@ export default function DashboardStats() {
     fetchStats();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[320px]">
-        <LoadingSpinner size={12} />
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] rounded-[var(--radius-xl)] p-6 text-center">
@@ -61,7 +53,9 @@ export default function DashboardStats() {
     );
   }
 
-  // ── Gamification panel rendered independently of workout count ────────────────
+  const maxCount = stats ? Math.max(...(stats.weeklyHistogram ?? []).map((w) => w.count), 1) : 0;
+
+  // ── Gamification panel ────────────────
   const gamificationSection = gamification && (
     <div className="space-y-4">
       <XPLevelCard gamification={gamification} />
@@ -69,8 +63,8 @@ export default function DashboardStats() {
     </div>
   );
 
-  // ── Empty state (no workouts) ──────────────────────────────────────────────────
-  if (!stats || stats.totalWorkouts === 0) {
+  // ── Empty state (no workouts) ─────────
+  if (stats && stats.totalWorkouts === 0) {
     return (
       <div className="space-y-4">
         <div className="text-center py-12 bg-[var(--surface)] rounded-[var(--radius-2xl)] shadow-[var(--shadow)]">
@@ -87,14 +81,10 @@ export default function DashboardStats() {
             Start Workout
           </a>
         </div>
-
-        {/* Achievements are always accessible, even before any workouts */}
         {gamificationSection}
       </div>
     );
   }
-
-  const maxCount = Math.max(...(stats.weeklyHistogram ?? []).map((w) => w.count), 1);
 
   return (
     <div className="space-y-4">
@@ -102,28 +92,28 @@ export default function DashboardStats() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
           title="Total Workouts"
-          value={stats.totalWorkouts}
-          subtitle={`${stats.workoutsThisWeek} this week`}
+          value={loading ? <Skeleton width={40} /> : stats?.totalWorkouts ?? 0}
+          subtitle={loading ? <Skeleton width={80} /> : `${stats?.workoutsThisWeek ?? 0} this week`}
           trend="up"
           icon={<BarChart2 className="w-5 h-5" />}
         />
         <StatCard
           title="This Week"
-          value={stats.workoutsThisWeek}
-          subtitle={`${stats.workoutsThisMonth} this month`}
+          value={loading ? <Skeleton width={30} /> : stats?.workoutsThisWeek ?? 0}
+          subtitle={loading ? <Skeleton width={80} /> : `${stats?.workoutsThisMonth ?? 0} this month`}
           icon={<Calendar className="w-5 h-5" />}
         />
         <StatCard
           title="Streak"
-          value={`${stats.currentStreak}d`}
-          subtitle={`Longest: ${stats.longestStreak}d`}
+          value={loading ? <Skeleton width={30} /> : `${stats?.currentStreak ?? 0}d`}
+          subtitle={loading ? <Skeleton width={70} /> : `Longest: ${stats?.longestStreak ?? 0}d`}
           icon={<Flame className="w-5 h-5" />}
-          trend={stats.currentStreak > 0 ? "up" : "neutral"}
+          trend={(stats?.currentStreak ?? 0) > 0 ? "up" : "neutral"}
         />
         <StatCard
           title="Personal Records"
-          value={stats.prCount}
-          subtitle="Exercises tracked"
+          value={loading ? <Skeleton width={30} /> : stats?.prCount ?? 0}
+          subtitle={loading ? <Skeleton width={80} /> : "Exercises tracked"}
           icon={<Sparkles className="w-5 h-5" />}
         />
       </div>
@@ -132,25 +122,30 @@ export default function DashboardStats() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         <StatCard
           title="Total Volume"
-          value={formatNumber(stats.totalVolume) + " kg"}
-          subtitle="All time"
+          value={loading ? <Skeleton width={80} /> : formatNumber(stats?.totalVolume ?? 0) + " kg"}
+          subtitle={loading ? <Skeleton width={60} /> : "All time"}
           trend="up"
           icon={<Zap className="w-5 h-5" />}
         />
         <StatCard
           title="Weekly Volume"
-          value={formatNumber(stats.weekVolume) + " kg"}
-          subtitle="This week"
+          value={loading ? <Skeleton width={80} /> : formatNumber(stats?.weekVolume ?? 0) + " kg"}
+          subtitle={loading ? <Skeleton width={70} /> : "This week"}
           icon={<TrendingUp className="w-5 h-5" />}
         />
       </div>
 
       {/* Weekly workout histogram */}
-      {stats.weeklyHistogram && stats.weeklyHistogram.length > 0 && (
+      {loading ? (
+        <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4 sm:p-5">
+          <Skeleton width={180} className="mb-4" />
+          <div className="h-[160px] bg-[var(--surface-raised)] rounded-lg animate-pulse" />
+        </div>
+      ) : stats?.weeklyHistogram && stats.weeklyHistogram.length > 0 && (
         <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4 sm:p-5">
           <h3 className="text-sm font-bold text-[var(--foreground)] mb-4">Workouts per Week <span className="font-normal text-[var(--muted-foreground)]">(last 12 weeks)</span></h3>
           <ResponsiveContainer width="100%" height={160}>
-            <BarChart data={stats.weeklyHistogram} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
+            <BarChart data={stats?.weeklyHistogram ?? []} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
               <XAxis
                 dataKey="weekLabel"
                 tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
@@ -177,7 +172,7 @@ export default function DashboardStats() {
                 formatter={(value) => [value, "workouts"]}
               />
               <Bar dataKey="count" radius={[4, 4, 0, 0]} maxBarSize={32}>
-                {stats.weeklyHistogram.map((entry, index) => (
+                {stats?.weeklyHistogram?.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
                     fill={entry.count > 0 ? "var(--primary-500)" : "var(--surface-raised)"}
@@ -190,7 +185,14 @@ export default function DashboardStats() {
       )}
 
       {/* XP / Level + Achievements teaser */}
-      {gamificationSection}
+      {loading ? (
+        <div className="space-y-4">
+          <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-5">
+            <Skeleton height={60} className="mb-3" />
+            <Skeleton height={40} />
+          </div>
+        </div>
+      ) : gamificationSection}
     </div>
   );
 }
