@@ -34,11 +34,11 @@ function ExerciseThumbnail({ src }: { src: string }) {
 
 export default function WorkoutHistoryExerciseCard({ workoutExercise }: WorkoutHistoryExerciseCardProps) {
     return (
-        <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] overflow-hidden">
+        <div className="bg-[var(--surface)] rounded-[var(--radius-lg)] overflow-hidden">
             {/* Header */}
-            <div className="flex items-center gap-3 p-4 pb-3">
+            <div className="flex items-center gap-3 p-5 pb-3">
                 {workoutExercise.exercise.gif_url && (
-                    <div className="flex-shrink-0 w-14 h-14 rounded-[var(--radius-md)] overflow-hidden bg-[var(--surface-raised)]">
+                    <div className="flex-shrink-0 w-14 h-14 rounded-[var(--radius-sm)] overflow-hidden bg-[var(--surface-raised)]">
                         <ExerciseThumbnail src={workoutExercise.exercise.gif_url} />
                     </div>
                 )}
@@ -57,8 +57,8 @@ export default function WorkoutHistoryExerciseCard({ workoutExercise }: WorkoutH
             </div>
 
             {/* Sets table */}
-            <div className="px-4 pb-4">
-                <div className="bg-[var(--surface-raised)] rounded-[var(--radius-lg)] overflow-hidden overflow-x-auto">
+            <div className="px-5 pb-5">
+                <div className="bg-[var(--surface-raised)] rounded-[var(--radius-sm)] overflow-hidden overflow-x-auto">
                     {/* Column headers */}
                     <div className="grid grid-cols-5 gap-2 px-4 py-2 border-b border-[var(--border)] min-w-[300px]">
                         <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Set</span>

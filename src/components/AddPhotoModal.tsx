@@ -65,7 +65,7 @@ export default function AddPhotoModal({ isOpen, onClose, onAdd }: AddPhotoModalP
           <label className="block mb-1.5 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Photo</label>
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="relative rounded-[var(--radius-lg)] overflow-hidden cursor-pointer border-2 border-dashed border-[var(--border)] hover:border-[var(--primary-400)] transition-colors"
+            className="relative rounded-[var(--radius-sm)] overflow-hidden cursor-pointer border-2 border-dashed border-[var(--border)] hover:border-[var(--primary-400)] transition-colors"
           >
             {preview ? (
               <img src={preview} alt="Preview" className="w-full max-h-52 object-cover" />

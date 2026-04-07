@@ -25,7 +25,7 @@ const AddWeightModal: React.FC<AddWeightModalProps> = ({
     return (
         <ModalWrapper isOpen={show} onClose={onClose} containerClassName="max-w-sm p-6">
             <button
-                className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center text-[var(--muted-foreground)] hover:bg-[var(--surface-raised)] transition-colors"
+                className="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center text-[var(--muted-foreground)] hover:bg-[var(--surface-raised)] transition-colors"
                 onClick={onClose}
                 aria-label="Close"
                 type="button"
@@ -33,17 +33,17 @@ const AddWeightModal: React.FC<AddWeightModalProps> = ({
                 <X className="w-4 h-4" />
             </button>
 
-            <h2 className="text-lg font-bold text-[var(--foreground)] mb-5">Log Weight</h2>
+            <h2 className="text-lg font-bold text-[var(--foreground)] mb-6">Log Weight</h2>
 
             <form
                 onSubmit={async (e) => {
                     e.preventDefault();
                     await onSubmit(initialDate, initialWeight);
                 }}
-                className="space-y-4"
+                className="space-y-5"
             >
                 <div>
-                    <label className="block mb-1.5 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Date</label>
+                    <label className="block mb-2 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Date</label>
                     <input
                         type="date"
                         value={initialDate}

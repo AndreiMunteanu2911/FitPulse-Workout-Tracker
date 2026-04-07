@@ -38,12 +38,12 @@ export default function RoleChangeModal({
         User: <span className="font-mono text-[var(--foreground)]">{userId.slice(0, 12)}...</span>
       </p>
       {error && (
-        <div className="mb-3 p-3 bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] rounded-[var(--radius-md)] text-sm font-medium">
+        <div className="mb-3 p-3 bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] rounded-[var(--radius-sm)] text-sm font-medium">
           {error}
         </div>
       )}
       <div className="space-y-3 mb-5">
-        <label className="flex items-center gap-3 p-3 rounded-[var(--radius-md)] border border-[var(--border)] cursor-pointer hover:bg-[var(--surface-raised)] transition-colors">
+        <label className="flex items-center gap-3 p-3 rounded-[var(--radius-sm)] border border-[var(--border)] cursor-pointer hover:bg-[var(--surface-raised)] transition-colors">
           <input
             type="radio"
             name="role"
@@ -57,7 +57,7 @@ export default function RoleChangeModal({
             <p className="text-xs text-[var(--muted-foreground)]">Regular user access</p>
           </div>
         </label>
-        <label className="flex items-center gap-3 p-3 rounded-[var(--radius-md)] border border-[var(--border)] cursor-pointer hover:bg-[var(--surface-raised)] transition-colors">
+        <label className="flex items-center gap-3 p-3 rounded-[var(--radius-sm)] border border-[var(--border)] cursor-pointer hover:bg-[var(--surface-raised)] transition-colors">
           <input
             type="radio"
             name="role"

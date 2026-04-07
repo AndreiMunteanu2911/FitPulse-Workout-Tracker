@@ -37,7 +37,7 @@ export default function MessageBubble({
     >
       {/* Avatar */}
       <div
-        className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+        className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center ${
           isUser
             ? "bg-[var(--primary-600)] text-white"
             : "bg-[var(--primary-100)] dark:bg-[var(--primary-900)]"
@@ -46,13 +46,13 @@ export default function MessageBubble({
         {isUser ? (
           <span className="text-xs font-bold">You</span>
         ) : (
-          <Image src="/assets/dumbbell-large.svg" alt="AI" width={18} height={18} className="brightness-0 invert" />
+          <Image src="/assets/logo.png" alt="AI" width={20} height={20} className="object-contain" />
         )}
       </div>
 
       {/* Bubble */}
       <div
-        className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+        className={`max-w-[80%] rounded-[var(--radius-md)] px-5 py-3.5 text-[15px] leading-relaxed ${
           isUser
             ? "bg-[var(--primary-600)] text-white rounded-tr-sm"
             : "bg-[var(--surface-raised)] text-[var(--foreground)] rounded-tl-sm"
@@ -64,9 +64,9 @@ export default function MessageBubble({
           </div>
         ) : isStreaming ? (
           <div className="flex items-center gap-1 text-[var(--muted-foreground)]">
-            <span className="w-2 h-2 bg-[var(--muted-foreground)] rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-            <span className="w-2 h-2 bg-[var(--muted-foreground)] rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-            <span className="w-2 h-2 bg-[var(--muted-foreground)] rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+            <span className="w-2.5 h-2.5 bg-[var(--muted-foreground)] rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+            <span className="w-2.5 h-2.5 bg-[var(--muted-foreground)] rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+            <span className="w-2.5 h-2.5 bg-[var(--muted-foreground)] rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
           </div>
         ) : null}
       </div>
@@ -102,9 +102,9 @@ export function WorkoutActionCard({
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="mx-2 mt-2 p-4 rounded-xl border border-[var(--primary-500)] bg-[var(--primary-50)] dark:bg-[var(--primary-950)]"
+      className="mx-2 mt-2 p-5 rounded-[var(--radius-md)] border border-[var(--primary-500)] bg-[var(--primary-50)] dark:bg-[var(--primary-950)]"
     >
-      <div className="flex items-center gap-2 mb-2">
+      <div className="flex items-center gap-2.5 mb-3">
         <Dumbbell className="w-5 h-5 text-[var(--primary-600)] dark:text-[var(--primary-400)]" />
         <span className="text-sm font-semibold text-[var(--primary-700)] dark:text-[var(--primary-300)]">
           {workoutName}
@@ -112,10 +112,10 @@ export function WorkoutActionCard({
       </div>
 
       {/* Exercise list */}
-      <ul className="space-y-1.5 mb-3">
+      <ul className="space-y-2 mb-4">
         {exercises.map((ex, i) => (
-          <li key={i} className="text-xs text-[var(--foreground)] flex items-start gap-2">
-            <span className="text-[var(--primary-600)] dark:text-[var(--primary-400)] font-medium mt-0.5">
+          <li key={i} className="text-sm text-[var(--foreground)] flex items-start gap-2">
+            <span className="text-[var(--primary-600)] dark:text-[var(--primary-400)] font-semibold mt-0.5">
               {i + 1}.
             </span>
             <div className="flex-1">
@@ -130,7 +130,7 @@ export function WorkoutActionCard({
 
       <button
         onClick={onStart}
-        className="w-full py-2.5 px-4 rounded-lg bg-[var(--primary-600)] hover:bg-[var(--primary-700)] text-white text-sm font-semibold transition-colors flex items-center justify-center gap-2"
+        className="w-full py-3 px-4 rounded-[var(--radius-sm)] bg-[var(--primary-600)] hover:bg-[var(--primary-700)] text-white text-sm font-semibold transition-colors flex items-center justify-center gap-2"
       >
         <Dumbbell className="w-4 h-4" />
         Start Workout

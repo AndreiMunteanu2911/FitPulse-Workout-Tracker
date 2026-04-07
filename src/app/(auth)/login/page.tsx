@@ -53,10 +53,12 @@ export default function LoginPage() {
         <div className="w-full min-h-screen flex flex-col text-white">
             {/* Logo */}
             <div className="flex items-center gap-2.5 pt-6 pb-2">
-                <div className="w-9 h-9 rounded-[12px] bg-white/15 flex items-center justify-center">
-                    <Image src="/assets/dumbbell-large.svg" alt="FitPulse" width={20} height={20} className="brightness-0 invert" />
+                <div className="w-9 h-9 rounded-[12px] overflow-hidden bg-white/15 flex items-center justify-center">
+                    <Image src="/assets/logo.png" alt="FitPulse" width={22} height={22} className="object-contain" />
                 </div>
-                <span className="text-lg font-extrabold tracking-tight">FitPulse</span>
+                <span className="text-lg tracking-tight" style={{ fontFamily: "var(--font-poppins)" }}>
+                    <span className="font-extrabold text-white">Fit</span><span className="font-bold text-[var(--lime-green)]">Pulse</span>
+                </span>
             </div>
 
             <div className="flex-1 flex flex-col justify-center max-w-sm w-full py-8">
@@ -65,7 +67,7 @@ export default function LoginPage() {
                         <ChevronLeft className="w-4 h-4" />
                         Back
                     </Link>
-                    <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-1">Welcome back</h1>
+                    <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-1" style={{ fontFamily: "var(--font-poppins)" }}>Welcome back</h1>
                     <p className="text-white/60 text-sm">Log in to continue your journey</p>
                 </div>
 
@@ -78,7 +80,7 @@ export default function LoginPage() {
                             type="email"
                             placeholder="you@email.com"
                             required
-                            className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-white placeholder-white/40 focus:bg-white/15 focus:border-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 transition"
+                            className="w-full px-4 py-3 rounded-full bg-white/10 border border-white/15 text-white placeholder-white/40 focus:bg-white/15 focus:border-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 transition"
                         />
                         {errors.email && <p className="text-white text-xs mt-1 font-semibold">{errors.email}</p>}
                     </div>
@@ -90,22 +92,24 @@ export default function LoginPage() {
                             type="password"
                             placeholder="••••••••"
                             required
-                            className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-white placeholder-white/40 focus:bg-white/15 focus:border-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 transition"
+                            className="w-full px-4 py-3 rounded-full bg-white/10 border border-white/15 text-white placeholder-white/40 focus:bg-white/15 focus:border-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 transition"
                         />
                         {errors.password && <p className="text-white text-xs mt-1 font-semibold">{errors.password}</p>}
                     </div>
 
                     {message && (
-                        <div className="p-3 rounded-xl bg-white/10 border border-white/15 text-sm text-white/90">{message}</div>
+                        <div className="p-3 rounded-full bg-white/10 border border-white/15 text-sm text-white/90">{message}</div>
                     )}
 
-                    <button
+                    <Button
                         type="submit"
                         disabled={loading}
-                        className="w-full py-3 rounded-xl bg-white text-[var(--primary-700)] font-bold text-base shadow-[0_2px_12px_rgba(0,0,0,0.25)] hover:bg-white/90 transition disabled:opacity-60 active:scale-[0.98]"
+                        block
+                        variant="lime"
+                        className="!py-3 !text-base"
                     >
                         {loading ? "Logging in..." : "Log In"}
-                    </button>
+                    </Button>
                 </form>
 
                 <p className="text-center text-white/60 text-sm mt-6">

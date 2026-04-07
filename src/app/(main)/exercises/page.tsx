@@ -76,30 +76,30 @@ export default function ExercisesPage() {
     return (
         <ProtectedWrapper>
             <div className="w-full">
-                <div className="page-header mb-4">
+                <div className="page-header mb-5">
                     <h1 className="hidden md:block text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight mb-3">Exercises</h1>
                     {/* Search */}
                     <div className="relative">
-                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" />
                         <input
                             type="text"
                             placeholder="Search exercises..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow-sm)] text-[var(--foreground)] text-sm font-medium placeholder-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] transition"
+                            className="w-full pl-11 pr-10 py-3 bg-white dark:bg-[var(--surface)] rounded-[var(--radius-lg)] text-[var(--foreground)] text-sm font-medium placeholder-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] transition"
                         />
                         {searchQuery && (
                             <button
                                 onClick={() => setSearchQuery("")}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full flex items-center justify-center text-[var(--muted-foreground)] hover:bg-[var(--surface-raised)]"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center bg-[var(--primary-500)] text-white hover:bg-[var(--primary-600)] transition-colors"
                             >
-                                <X className="w-3 h-3" />
+                                <X className="w-3.5 h-3.5" />
                             </button>
                         )}
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {exercises.map((exercise) => (
                         <ExerciseCard key={exercise.exercise_id} exercise={exercise} />
                     ))}
@@ -107,12 +107,12 @@ export default function ExercisesPage() {
 
                 <div ref={loaderRef} className="h-10" />
                 {loading && (
-                    <div className="flex justify-center py-6">
+                    <div className="flex justify-center py-8">
                         <LoadingSpinner size={8} />
                     </div>
                 )}
                 {!hasMore && exercises.length > 0 && (
-                    <p className="text-center text-xs text-[var(--muted-foreground)] py-4">All exercises loaded</p>
+                    <p className="text-center text-xs text-[var(--muted-foreground)] py-5">All exercises loaded</p>
                 )}
             </div>
         </ProtectedWrapper>

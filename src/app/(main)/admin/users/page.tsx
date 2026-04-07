@@ -103,10 +103,10 @@ export default function AdminUsersPage() {
           <Skeleton width={120} height={28} className="mb-2" />
           <Skeleton width={160} />
         </div>
-        <Skeleton height={40} className="mb-6 rounded-xl" />
+        <Skeleton height={40} className="mb-6 rounded-lg" />
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} height={70} className="rounded-xl" />
+            <Skeleton key={i} height={70} className="rounded-lg" />
           ))}
         </div>
       </div>

@@ -102,7 +102,7 @@ function AchievementBadge({
   return (
     <div
       title={achievement.description}
-      className={`relative flex flex-col items-center gap-2 p-3 rounded-2xl border-2 transition-all ${
+      className={`relative flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all ${
         isClaimed ? "opacity-100" : isClaimable ? "opacity-100" : "opacity-35 grayscale"
       }`}
       style={
@@ -116,7 +116,7 @@ function AchievementBadge({
       {/* Spinner overlay — shown while this specific card is being claimed */}
       {claiming && (
         <div
-          className="absolute inset-0 rounded-2xl flex items-center justify-center z-10"
+          className="absolute inset-0 rounded-xl flex items-center justify-center z-10"
           style={{ backgroundColor: "var(--surface)", opacity: 0.85 }}
         >
           <div
@@ -188,7 +188,7 @@ function CategorySection({ category, achievements, onClaim, claimingId }: {
   const claimed = achievements.filter((a) => !!a.claimedAt).length;
 
   return (
-    <section className="rounded-2xl overflow-hidden shadow-sm border border-[var(--border)]">
+    <section className="rounded-xl overflow-hidden">
       <div className="px-4 py-3 flex items-center gap-4" style={{ backgroundColor: meta.headerBg }}>
         <div className="relative flex-shrink-0">
           <CategoryRing unlocked={claimed} total={achievements.length} colorVar={meta.colorVar} trackVar={meta.trackVar} />
@@ -301,7 +301,7 @@ export default function AchievementsPage() {
           <Link
             href="/dashboard"
             aria-label="Back to dashboard"
-            className="w-9 h-9 rounded-xl flex items-center justify-center bg-[var(--surface)] border border-[var(--border)] shadow-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
+            className="w-9 h-9 rounded-lg flex items-center justify-center bg-[var(--surface)] border border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
@@ -329,20 +329,20 @@ export default function AchievementsPage() {
             <Skeleton height={60} className="mb-2" />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} height={80} className="rounded-xl" />
+                <Skeleton key={i} height={80} className="rounded-lg" />
               ))}
             </div>
           </div>
         )}
 
         {!loading && error && (
-          <div className="bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] rounded-xl p-5 text-sm font-medium text-center">
+          <div className="bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] rounded-lg p-5 text-sm font-medium text-center">
             {error}
           </div>
         )}
 
         {claimError && (
-          <div className="bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] rounded-xl p-3 text-sm font-medium text-center">
+          <div className="bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] rounded-lg p-3 text-sm font-medium text-center">
             {claimError}
           </div>
         )}

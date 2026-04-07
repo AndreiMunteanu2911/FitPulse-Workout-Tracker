@@ -57,7 +57,7 @@ export default function QuickSuggestions({
             transition={{ duration: 0.2, delay: i * 0.05 }}
             onClick={() => handleClick(i, s.message)}
             disabled={isUsed}
-            className="flex items-start gap-2 px-3 py-2.5 rounded-xl text-xs font-medium text-left
+            className="flex items-start gap-2 px-3 py-2.5 rounded-lg text-xs font-medium text-left
               bg-[var(--surface-raised)] text-[var(--foreground)]
               border border-[var(--border)]
               hover:border-[var(--primary-500)] hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-950)]
