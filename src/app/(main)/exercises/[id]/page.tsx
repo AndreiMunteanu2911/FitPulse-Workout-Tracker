@@ -66,13 +66,13 @@ export default function ExerciseDetailsPage() {
                         <Skeleton circle width={36} height={36} />
                         <Skeleton width={160} height={28} />
                     </div>
-                    <div className="flex gap-1 p-1 bg-[var(--surface-raised)] rounded-[var(--radius-lg)] mb-5 w-fit">
+                    <div className="flex gap-1 p-1 bg-[var(--surface-raised)] rounded-[var(--radius-md)] mb-5 w-fit">
                         <Skeleton width={100} height={32} />
                         <Skeleton width={60} height={32} />
                     </div>
                     <div className="flex flex-col md:flex-row gap-5 mb-5">
-                        <Skeleton className="w-full md:w-56 aspect-square rounded-xl" />
-                        <div className="flex-1 bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-5 space-y-4">
+                        <Skeleton className="w-full md:w-56 aspect-square rounded-lg" />
+                        <div className="flex-1 bg-[var(--surface)] rounded-[var(--radius-md)] p-5 space-y-4">
                             <Skeleton width={100} height={16} />
                             <div className="flex flex-wrap gap-1.5">
                                 <Skeleton width={70} height={24} />
@@ -84,7 +84,7 @@ export default function ExerciseDetailsPage() {
                             </div>
                         </div>
                     </div>
-                    <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-5 mb-6">
+                    <div className="bg-[var(--surface)] rounded-[var(--radius-md)] p-5 mb-6">
                         <Skeleton width={100} height={16} className="mb-3" />
                         <Skeleton className="mb-2" />
                         <Skeleton className="mb-2" />
@@ -110,7 +110,7 @@ export default function ExerciseDetailsPage() {
                 <div className="page-header mb-4 flex items-center gap-3" style={{ top: 0 }}>
                     <Link
                         href="/exercises"
-                        className="w-9 h-9 rounded-[var(--radius-lg)] flex items-center justify-center bg-[var(--surface)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow)] transition-shadow flex-shrink-0"
+                        className="w-9 h-9 rounded-[var(--radius-sm)] flex items-center justify-center bg-[var(--surface)] transition-shadow flex-shrink-0"
                     >
                         <ChevronLeft className="w-4 h-4 text-[var(--foreground)]" />
                     </Link>
@@ -118,13 +118,13 @@ export default function ExerciseDetailsPage() {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex gap-1 p-1 bg-[var(--surface-raised)] rounded-[var(--radius-lg)] mb-5 w-fit">
+                <div className="flex gap-1 p-1 bg-[var(--surface-raised)] rounded-[var(--radius-md)] mb-5 w-fit">
                     {!exercise.is_custom && (
                         <button
                             onClick={() => setActiveTab("description")}
-                            className={`px-4 py-1.5 rounded-[var(--radius-md)] text-sm font-semibold transition-all ${
+                            className={`px-4 py-1.5 rounded-[var(--radius-sm)] text-sm font-semibold transition-all ${
                                 activeTab === "description"
-                                    ? "bg-[var(--surface)] shadow-[var(--shadow-xs)] text-[var(--foreground)]"
+                                    ? "bg-[var(--surface)] text-[var(--foreground)]"
                                     : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
                             }`}
                         >
@@ -133,9 +133,9 @@ export default function ExerciseDetailsPage() {
                     )}
                     <button
                         onClick={() => setActiveTab("stats")}
-                        className={`px-4 py-1.5 rounded-[var(--radius-md)] text-sm font-semibold transition-all ${
+                        className={`px-4 py-1.5 rounded-[var(--radius-sm)] text-sm font-semibold transition-all ${
                             activeTab === "stats"
-                                ? "bg-[var(--surface)] shadow-[var(--shadow-xs)] text-[var(--foreground)]"
+                                ? "bg-[var(--surface)] text-[var(--foreground)]"
                                 : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
                         }`}
                     >
@@ -150,13 +150,13 @@ export default function ExerciseDetailsPage() {
                         <div className="flex flex-col md:flex-row gap-5 mb-5">
                             {exercise.gif_url && (
                                 <div className="w-full md:w-56 flex-shrink-0">
-                                    <div className="rounded-[var(--radius-xl)] overflow-hidden shadow-[var(--shadow)] bg-[var(--surface)] aspect-square md:w-56 md:h-56 mx-auto">
+                                    <div className="rounded-[var(--radius-md)] overflow-hidden bg-[var(--surface)] aspect-square md:w-56 md:h-56 mx-auto">
                                         <ExerciseThumbnail src={exercise.gif_url} />
                                     </div>
                                 </div>
                             )}
 
-                            <div className="flex-1 bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4 sm:p-5 space-y-4">
+                            <div className="flex-1 bg-[var(--surface)] rounded-[var(--radius-md)] p-4 sm:p-5 space-y-4">
                                 {exercise.target_muscles?.length ? (
                                     <div>
                                         <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-2">Target Muscles</h2>
@@ -205,7 +205,7 @@ export default function ExerciseDetailsPage() {
 
                         {/* Instructions */}
                         {exercise.instructions?.length ? (
-                            <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4 sm:p-5 mb-6">
+                            <div className="bg-[var(--surface)] rounded-[var(--radius-md)] p-4 sm:p-5 mb-6">
                                 <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-3">Instructions</h2>
                                 <ol className="space-y-2.5">
                                     {exercise.instructions.map((step, i) => (
@@ -226,7 +226,7 @@ export default function ExerciseDetailsPage() {
                             {personalRecord ? (
                                 <PersonalRecordCard record={personalRecord} />
                             ) : (
-                                <div className="text-center py-10 bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)]">
+                                <div className="text-center py-10 bg-[var(--surface)] rounded-[var(--radius-md)]">
                                     <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
                                         <Sparkles className="w-6 h-6 text-[var(--primary-600)] dark:text-[var(--primary-700)]" />
                                     </div>

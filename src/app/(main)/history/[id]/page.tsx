@@ -359,13 +359,13 @@ export default function WorkoutDetailPage() {
                         <Skeleton width={200} />
                     </div>
                     <div className="grid grid-cols-3 gap-3 mb-6">
-                        <Skeleton height={80} className="rounded-xl" />
-                        <Skeleton height={80} className="rounded-xl" />
-                        <Skeleton height={80} className="rounded-xl" />
+                        <Skeleton height={80} className="rounded-lg" />
+                        <Skeleton height={80} className="rounded-lg" />
+                        <Skeleton height={80} className="rounded-lg" />
                     </div>
                     <div className="space-y-4">
                         {Array.from({ length: 3 }).map((_, i) => (
-                            <div key={i} className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-5">
+                            <div key={i} className="bg-[var(--surface)] rounded-[var(--radius-md)] p-5">
                                 <Skeleton width={120} className="mb-3" />
                                 <div className="grid grid-cols-[2.5rem_3.5rem_1fr_1fr_5rem] gap-2">
                                     {Array.from({ length: 3 }).map((_, j) => (
@@ -393,7 +393,7 @@ export default function WorkoutDetailPage() {
                     <div className="page-header mb-6" style={{ top: 0 }}>
                         <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--foreground)]">Workout Details</h1>
                     </div>
-                    <div className="p-6 rounded-[var(--radius-xl)] bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] text-center font-medium">
+                    <div className="p-6 rounded-[var(--radius-md)] bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] text-center font-medium">
                         {error || "Workout not found."}
                     </div>
                 </div>
@@ -422,7 +422,7 @@ export default function WorkoutDetailPage() {
                 <div className="page-header mb-4 flex items-center gap-3" style={{ top: 0 }}>
                     <Link
                         href="/history"
-                        className="w-9 h-9 rounded-[var(--radius-lg)] flex items-center justify-center bg-[var(--surface)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow)] transition-shadow flex-shrink-0"
+                        className="w-9 h-9 rounded-[var(--radius-sm)] flex items-center justify-center bg-[var(--surface)] transition-shadow flex-shrink-0"
                     >
                         <ChevronLeft className="w-4 h-4 text-[var(--foreground)]" />
                     </Link>
@@ -444,21 +444,21 @@ export default function WorkoutDetailPage() {
                             <button
                                 aria-label="Edit workout"
                                 onClick={enterEditMode}
-                                className="w-9 h-9 rounded-[var(--radius-lg)] flex items-center justify-center bg-[var(--surface)] shadow-[var(--shadow-sm)] text-[var(--primary-600)] dark:text-[var(--primary-500)] hover:shadow-[var(--shadow)] transition-all flex-shrink-0"
+                                className="w-9 h-9 rounded-[var(--radius-sm)] flex items-center justify-center bg-[var(--surface)] text-[var(--primary-600)] dark:text-[var(--primary-500)] transition-all flex-shrink-0"
                             >
                                 <PenSquare className="w-4 h-4" />
                             </button>
                             <button
                                 aria-label="Rename workout"
                                 onClick={() => { setRenameValue(workout.name); setShowRenameModal(true); }}
-                                className="w-9 h-9 rounded-[var(--radius-lg)] flex items-center justify-center bg-[var(--surface)] shadow-[var(--shadow-sm)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:shadow-[var(--shadow)] transition-all flex-shrink-0"
+                                className="w-9 h-9 rounded-[var(--radius-sm)] flex items-center justify-center bg-[var(--surface)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-all flex-shrink-0"
                             >
                                 <Pencil className="w-4 h-4" />
                             </button>
                             <button
                                 aria-label="Delete workout"
                                 onClick={() => setShowDeleteModal(true)}
-                                className="w-9 h-9 rounded-[var(--radius-lg)] flex items-center justify-center bg-[var(--surface)] shadow-[var(--shadow-sm)] text-[var(--muted-foreground)] hover:text-[var(--color-destructive)] hover:shadow-[var(--shadow)] transition-all flex-shrink-0"
+                                className="w-9 h-9 rounded-[var(--radius-sm)] flex items-center justify-center bg-[var(--surface)] text-[var(--muted-foreground)] hover:text-[var(--color-destructive)] transition-all flex-shrink-0"
                             >
                                 <Trash2 className="w-4 h-4" />
                             </button>
@@ -473,7 +473,7 @@ export default function WorkoutDetailPage() {
                         { label: "Sets", value: isEditing ? workoutExercises.reduce((n, we) => n + we.sets.length, 0) : totalSets },
                         { label: "Volume", value: `${isEditing ? workoutExercises.reduce((n, we) => n + we.sets.reduce((s, set) => s + set.reps * set.weight, 0), 0).toFixed(0) : totalVolume.toFixed(0)} kg` },
                     ].map(({ label, value }) => (
-                        <div key={label} className="bg-[var(--surface)] rounded-[var(--radius-xl)] p-3 sm:p-4 shadow-[var(--shadow)] text-center">
+                        <div key={label} className="bg-[var(--surface)] rounded-[var(--radius-md)] p-3 sm:p-4 text-center">
                             <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-1">{label}</p>
                             <p className="text-xl sm:text-2xl font-extrabold text-[var(--foreground)] leading-none">{value}</p>
                         </div>
@@ -493,13 +493,13 @@ export default function WorkoutDetailPage() {
                 {isEditing && (
                     <div className="space-y-4">
                         {editErrorMessages.general && (
-                            <div className="p-3 bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] rounded-[var(--radius-md)] text-sm font-medium">
+                            <div className="p-3 bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] rounded-[var(--radius-sm)] text-sm font-medium">
                                 {editErrorMessages.general}
                             </div>
                         )}
 
                         {workoutExercises.length === 0 ? (
-                            <div className="text-center py-10 bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)]">
+                            <div className="text-center py-10 bg-[var(--surface)] rounded-[var(--radius-md)]">
                                 <p className="text-sm text-[var(--muted-foreground)]">No exercises. Tap &ldquo;Add Exercise&rdquo; to add one.</p>
                             </div>
                         ) : (

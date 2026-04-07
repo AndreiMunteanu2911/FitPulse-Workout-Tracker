@@ -225,12 +225,12 @@ export default function AdminExercisesPage() {
           <Skeleton width={220} />
         </div>
         <div className="flex gap-3 mb-6">
-          <Skeleton height={40} className="flex-1 rounded-xl" />
+          <Skeleton height={40} className="flex-1 rounded-lg" />
           <Skeleton width={120} height={40} />
         </div>
         <div className="space-y-3">
           {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} height={60} className="rounded-xl" />
+            <Skeleton key={i} height={60} className="rounded-lg" />
           ))}
         </div>
       </div>
@@ -285,7 +285,7 @@ export default function AdminExercisesPage() {
           <X className="w-4 h-4" />
         </button>
         <h2 className="text-lg font-bold text-[var(--foreground)] mb-5">Add Exercise</h2>
-        {error && <div className="mb-3 p-3 bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] rounded-[var(--radius-md)] text-sm font-medium">{error}</div>}
+        {error && <div className="mb-3 p-3 bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] rounded-[var(--radius-sm)] text-sm font-medium">{error}</div>}
         <form onSubmit={handleAdd} className="space-y-4">
           <div>
             <label className="block mb-1.5 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Exercise ID</label>
@@ -329,7 +329,7 @@ export default function AdminExercisesPage() {
           <X className="w-4 h-4" />
         </button>
         <h2 className="text-lg font-bold text-[var(--foreground)] mb-5">Edit Exercise</h2>
-        {error && <div className="mb-3 p-3 bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] rounded-[var(--radius-md)] text-sm font-medium">{error}</div>}
+        {error && <div className="mb-3 p-3 bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] rounded-[var(--radius-sm)] text-sm font-medium">{error}</div>}
         <form onSubmit={handleEdit} className="space-y-4">
           <div>
             <label className="block mb-1.5 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Exercise ID</label>

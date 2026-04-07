@@ -30,7 +30,7 @@ export default function SetRow({
 }: SetRowProps) {
   return (
     <div
-      className={`grid grid-cols-[2.5rem_3.5rem_1fr_1fr_5rem] items-center gap-2 px-1 py-1.5 rounded-[var(--radius-md)] transition-colors ${
+      className={`grid grid-cols-[2.5rem_3.5rem_1fr_1fr_5rem] items-center gap-2 px-4 py-1.5 rounded-[var(--radius-sm)] transition-colors ${
         isConfirmed
           ? "bg-[var(--primary-50)] dark:bg-[var(--primary-100)]"
           : "hover:bg-[var(--surface-raised)]"
@@ -84,9 +84,9 @@ export default function SetRow({
             e.stopPropagation();
             onConfirmSet(set.id, exercise, workoutExerciseId);
           }}
-          className={`w-8 h-8 rounded-md flex items-center justify-center font-bold transition-all ${
+          className={`w-8 h-8 rounded-sm flex items-center justify-center font-bold transition-all ${
             isConfirmed
-              ? "bg-[var(--primary-500)] text-white shadow-[0_2px_6px_rgba(59,130,246,0.3)]"
+              ? "bg-[var(--primary-500)] text-white"
               : "bg-[var(--primary-100)] dark:bg-[var(--primary-200)] text-[var(--primary-600)] dark:text-[var(--primary-700)] hover:bg-[var(--primary-500)] hover:text-white"
           }`}
         >
@@ -98,7 +98,7 @@ export default function SetRow({
             e.stopPropagation();
             onDeleteSet(exerciseIndex, setIndex);
           }}
-          className="w-8 h-8 rounded-md flex items-center justify-center bg-[var(--primary-100)] dark:bg-[var(--primary-200)] text-[var(--primary-600)] dark:text-[var(--primary-700)] hover:bg-[var(--primary-500)] hover:text-white transition-all font-bold"
+          className="w-8 h-8 rounded-sm flex items-center justify-center bg-[var(--primary-100)] dark:bg-[var(--primary-200)] text-[var(--primary-600)] dark:text-[var(--primary-700)] hover:bg-[var(--primary-500)] hover:text-white transition-all font-bold"
         >
           <X className="w-4 h-4" />
         </button>

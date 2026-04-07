@@ -19,7 +19,7 @@ export default function AdminPageHeader({ title, subtitle, action, backHref }: A
       {backHref && (
         <Link
           href={backHref}
-          className="w-9 h-9 rounded-[var(--radius-lg)] flex items-center justify-center bg-[var(--surface)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow)] transition-shadow flex-shrink-0"
+          className="w-9 h-9 rounded-[var(--radius-sm)] flex items-center justify-center bg-[var(--surface)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow)] transition-shadow flex-shrink-0"
         >
           <ChevronLeft className="w-4 h-4 text-[var(--foreground)]" />
         </Link>

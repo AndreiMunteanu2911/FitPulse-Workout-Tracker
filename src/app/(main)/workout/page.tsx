@@ -19,7 +19,7 @@ import CreateTemplateModal from "@/components/CreateTemplateModal";
 import DeleteTemplateModal from "@/components/DeleteTemplateModal";
 import type { Exercise, WorkoutExercise, Set as WorkoutSet, WorkoutTemplate, RestTimerState } from "@/types";
 import { detectExerciseType, REST_DURATIONS } from "@/lib/gamification";
-import { Zap, Plus } from "lucide-react";
+import { Zap, Plus, Pencil } from "lucide-react";
 function formatElapsed(seconds: number): string {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
@@ -747,7 +747,7 @@ export default function WorkoutPage() {
                             </div>
                             <Skeleton width={120} height={36} />
                         </div>
-                        <div className="text-center py-16 bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] mb-6">
+                        <div className="text-center py-16 bg-[var(--surface)] rounded-[var(--radius-md)] mb-6">
                             <Skeleton circle width={80} height={80} className="mx-auto mb-4" />
                             <Skeleton width={140} className="mx-auto mb-2" />
                             <Skeleton width={220} className="mx-auto" />
@@ -771,11 +771,11 @@ export default function WorkoutPage() {
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
                             {!workoutStarted ? (
-                                <Button onClick={startWorkout} className="px-4 py-2 text-sm sm:text-base">Start Workout</Button>
+                                <Button onClick={startWorkout} className="px-5 py-2.5 text-sm sm:text-base">Start Workout</Button>
                             ) : (
                                 <>
                                      <Button onClick={handleCancelWorkout} variant="secondary" className="px-3 py-2 text-sm">Cancel</Button>
-                                    <Button onClick={handleFinishClick} className="px-4 py-2 text-sm sm:text-base">Finish</Button>
+                                    <Button onClick={handleFinishClick} className="px-5 py-2.5 text-sm sm:text-base">Finish</Button>
                                 </>
                             )}
                           </div>
@@ -802,29 +802,30 @@ export default function WorkoutPage() {
                             emptyExerciseCount={discardInfo.emptyExerciseCount}
                         />
                         {noDraftFound && !workoutStarted && (
-                            <div className="text-center py-16 bg-[var(--surface)] rounded-[var(--radius-2xl)] shadow-[var(--shadow)] mb-6">
-                                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
+                            <div className="text-center py-16 bg-[var(--surface)] rounded-[var(--radius-lg)] mb-6">
+                                <div className="w-20 h-20 mx-auto mb-5 rounded-[var(--radius-lg)] bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
                                     <Zap className="w-10 h-10 text-[var(--primary-600)] dark:text-[var(--primary-700)]" />
                                 </div>
-                                <h3 className="text-xl font-bold text-[var(--foreground)] mb-1">Ready to train?</h3>
+                                <h3 className="text-xl font-bold text-[var(--foreground)] mb-1" style={{ fontFamily: "var(--font-poppins)" }}>Ready to train?</h3>
                                 <p className="text-sm text-[var(--muted-foreground)] mb-6">Start a new workout or use a template.</p>
                             </div>
                         )}
                         {workoutStarted && (
                             <div className="space-y-6 sm:space-y-8 mt-4">
-                                <div className="pb-4 mb-2">
+                                <div className="pb-4 mb-2 flex items-center gap-2">
                                     <input
                                         type="text"
                                         value={workoutName}
                                         onChange={(e) => setWorkoutName(e.target.value)}
-                                        className="w-full px-0 py-2 text-[var(--foreground)] text-xl sm:text-2xl font-extrabold border-none focus:outline-none bg-transparent placeholder-[var(--muted-foreground)] tracking-tight"
+                                        className="rounded-sm w-full px-2 py-2 text-[var(--foreground)] text-xl sm:text-2xl font-extrabold border-none focus:outline-none bg-transparent placeholder-[var(--muted-foreground)] tracking-tight"
                                         placeholder="Workout Name"
                                     />
+                                    <Pencil className="w-5 h-5 text-[var(--muted-foreground)] flex-shrink-0 mt-1" />
                                 </div>
 
                                 {workoutExercises.length === 0 ? (
-                                    <div className="text-center py-12 bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)]">
-                                        <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
+                                    <div className="text-center py-14 bg-[var(--surface)] rounded-[var(--radius-lg)]">
+                                        <div className="w-14 h-14 mx-auto mb-3 rounded-[var(--radius-md)] bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
                                             <Plus className="w-6 h-6 text-[var(--primary-600)] dark:text-[var(--primary-700)]" />
                                         </div>
                                         <p className="text-sm text-[var(--muted-foreground)]">No exercises yet. Tap &quot;Add Exercise&quot; to begin.</p>
@@ -901,11 +902,11 @@ export default function WorkoutPage() {
                         {/* Templates Section – only shown when no workout is active */}
                         {!workoutStarted && <div className="mt-8">
                             <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-base sm:text-lg font-bold text-[var(--foreground)]">Templates</h2>
+                                <h2 className="text-base sm:text-lg font-bold text-[var(--foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>Templates</h2>
                                 <Button onClick={() => { setEditingTemplate(null); setIsTemplateModalOpen(true); }} variant="secondary" className="px-3 py-1.5 text-xs sm:text-sm">+ Create</Button>
                             </div>
                             {templates.length === 0 ? (
-                                <div className="text-center text-sm text-[var(--muted-foreground)] py-8 bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)]">
+                                <div className="text-center text-sm text-[var(--muted-foreground)] py-10 bg-[var(--surface)] rounded-[var(--radius-lg)]">
                                     No templates yet. Create one to quickly start workouts!
                                 </div>
                             ) : (

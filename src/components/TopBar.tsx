@@ -85,10 +85,10 @@ export default function TopBar() {
   const title = getPageTitle(pathname);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-20 md:hidden h-11 flex items-center justify-between px-4 bg-gradient-to-r from-[#1e3a8a] to-[#1d4ed8] shadow-[0_1px_6px_rgba(0,0,0,0.25)]">
-      <span className="text-lg font-bold text-white tracking-tight truncate">{title}</span>
-      <div className="w-7 h-7 rounded-lg bg-white/15 flex items-center justify-center flex-shrink-0">
-        <Image src="/assets/dumbbell-large.svg" alt="FitPulse" width={18} height={18} className="brightness-0 invert" />
+    <header className="fixed top-0 left-0 right-0 z-20 md:hidden h-11 flex items-center justify-between px-5 bg-gradient-to-r from-[#5E3FDE] to-[#896CFE]">
+      <span className="text-lg font-bold text-white tracking-tight truncate flex-1" style={{ fontFamily: "var(--font-poppins)" }}>{title}</span>
+      <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center flex-shrink-0 overflow-hidden">
+        <Image src="/assets/logo.png" alt="FitPulse" width={20} height={20} className="object-contain" />
       </div>
     </header>
   );

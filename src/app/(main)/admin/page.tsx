@@ -57,12 +57,12 @@ export default function AdminPage() {
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} height={80} className="rounded-xl" />
+            <Skeleton key={i} height={80} className="rounded-lg" />
           ))}
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} height={80} className="rounded-xl" />
+            <Skeleton key={i} height={80} className="rounded-lg" />
           ))}
         </div>
       </div>

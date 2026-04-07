@@ -9,7 +9,7 @@ import ModalWrapper from "@/components/ModalWrapper";
 import Button from "@/components/Button";
 import { useHistory } from "@/hooks/useHistory";
 import type { Workout } from "@/types";
-import { Clock, PenSquare, Trash2 } from "lucide-react";
+import { Clock, PenSquare, Trash2, Plus } from "lucide-react";
 
 function computePrCountsPerWorkout(workouts: Workout[]): Map<string, number> {
     const sorted = [...workouts].sort(
@@ -79,16 +79,12 @@ export default function HistoryPage() {
         if (!renameTarget || !renameValue.trim()) return;
         const newName = renameValue.trim();
         const prev = workouts;
-
-        // Optimistic: update name immediately
         setWorkouts((w) => w.map((w) => w.id === renameTarget.id ? { ...w, name: newName } : w));
         setRenameTarget(null);
-
-        // Persist in background
         try {
             await renameWorkout(renameTarget.id, newName);
         } catch {
-            setWorkouts(prev); // rollback
+            setWorkouts(prev);
             setErrorMessages({ general: "Failed to rename workout." });
         }
     };
@@ -97,31 +93,35 @@ export default function HistoryPage() {
         if (!deleteTarget) return;
         const targetId = deleteTarget.id;
         const prev = workouts;
-
-        // Optimistic: remove immediately
         setWorkouts((w) => w.filter((w) => w.id !== targetId));
         setDeleteTarget(null);
-
-        // Persist in background
         try {
             await deleteWorkout(targetId);
         } catch {
-            setWorkouts(prev); // rollback
+            setWorkouts(prev);
             setErrorMessages({ general: "Failed to delete workout." });
         }
     };
+
+    const totalVolume = workouts.reduce((sum, w) => {
+        return sum + w.workout_exercises.reduce((es, we) => es + we.sets.reduce((ss, s) => ss + s.reps * s.weight, 0), 0);
+    }, 0);
 
     if (loading) {
         return (
             <ProtectedWrapper>
                 <div className="w-full">
-                    <div className="page-header mb-6">
-                        <h1 className="hidden md:block"><Skeleton width={120} height={32} /></h1>
-                        <p className="mt-0.5"><Skeleton width={150} /></p>
+                    <div className="bg-gradient-to-br from-[var(--primary-700)] to-[var(--primary-400)] rounded-[var(--radius-lg)] p-6 mb-5">
+                        <Skeleton className="mb-4 bg-white/20" width={120} height={20} />
+                        <div className="grid grid-cols-3 gap-3">
+                            <Skeleton className="bg-white/20" height={50} />
+                            <Skeleton className="bg-white/20" height={50} />
+                            <Skeleton className="bg-white/20" height={50} />
+                        </div>
                     </div>
                     <div className="space-y-3">
                         {Array.from({ length: 4 }).map((_, i) => (
-                            <div key={i} className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4 sm:p-5">
+                            <div key={i} className="bg-[var(--surface)] rounded-[var(--radius-lg)] p-5">
                                 <Skeleton width={100} className="mb-2" />
                                 <Skeleton width={200} className="mb-3" />
                                 <div className="flex gap-2">
@@ -140,18 +140,45 @@ export default function HistoryPage() {
     return (
         <ProtectedWrapper>
             <div className="w-full">
-                <div className="page-header mb-6">
-                    <h1 className="hidden md:block text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight">History</h1>
-                    <p className="text-sm text-[var(--muted-foreground)] mt-0.5">{workouts.length} completed workout{workouts.length !== 1 ? "s" : ""}</p>
+                {/* ── Purple Hero Header ── */}
+                <div className="bg-gradient-to-br from-[var(--primary-700)] via-[var(--primary-500)] to-[var(--primary-400)] text-white rounded-[var(--radius-lg)] overflow-hidden mb-5">
+                    <div className="px-6 pt-6 pb-5">
+                        <div className="flex items-center justify-between mb-4">
+                            <h1 className="text-lg font-extrabold tracking-tight flex items-center gap-2" style={{ fontFamily: "var(--font-poppins)" }}>
+                                <Clock className="w-5 h-5" />
+                                Workout Log
+                            </h1>
+                            <Button onClick={() => router.push("/workout")} variant="lime" className="px-4 py-2 text-xs">
+                                <Plus className="w-4 h-4 mr-1" />
+                                New
+                            </Button>
+                        </div>
+
+                        {/* Stats row */}
+                        <div className="grid grid-cols-3 gap-3 pt-4 border-t border-white/15">
+                            <div className="text-center">
+                                <p className="text-lg font-extrabold">{workouts.length}</p>
+                                <p className="text-[10px] text-white/60 uppercase tracking-wide">Workouts</p>
+                            </div>
+                            <div className="text-center">
+                                <p className="text-lg font-extrabold">{totalVolume >= 1000 ? (totalVolume / 1000).toFixed(1) + "k" : totalVolume}</p>
+                                <p className="text-[10px] text-white/60 uppercase tracking-wide">Volume (kg)</p>
+                            </div>
+                            <div className="text-center">
+                                <p className="text-lg font-extrabold">{prCounts.size > 0 ? Array.from(prCounts.values()).reduce((a, b) => a + b, 0) : 0}</p>
+                                <p className="text-[10px] text-white/60 uppercase tracking-wide">PRs</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {errorMessages.general && (
-                    <div className="mb-4 p-4 rounded-[var(--radius-lg)] bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] text-sm font-medium">{errorMessages.general}</div>
+                    <div className="mb-4 p-4 rounded-[var(--radius-md)] bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] text-sm font-medium">{errorMessages.general}</div>
                 )}
 
                 {workouts.length === 0 ? (
-                    <div className="text-center py-16 bg-[var(--surface)] rounded-[var(--radius-2xl)] shadow-[var(--shadow)]">
-                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
+                    <div className="text-center py-14 bg-[var(--surface)] rounded-[var(--radius-lg)]">
+                        <div className="w-16 h-16 mx-auto mb-4 rounded-[var(--radius-md)] bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
                             <Clock className="w-8 h-8 text-[var(--primary-600)] dark:text-[var(--primary-700)]" />
                         </div>
                         <h3 className="text-lg font-bold text-[var(--foreground)] mb-2">No workouts yet</h3>
@@ -167,20 +194,20 @@ export default function HistoryPage() {
                                 >
                                     <WorkoutHistoryCard workout={workout} prCount={prCounts.get(workout.id)} />
                                 </button>
-                                <div className="flex flex-col gap-1 justify-center flex-shrink-0">
+                                <div className="flex flex-col gap-1.5 justify-center flex-shrink-0">
                                     <button
                                         aria-label="Rename workout"
                                         onClick={() => { setRenameTarget(workout); setRenameValue(workout.name); }}
-                                        className="w-8 h-8 rounded-[var(--radius-md)] flex items-center justify-center bg-[var(--surface)] shadow-[var(--shadow-sm)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:shadow-[var(--shadow)] transition-all"
+                                        className="w-9 h-9 rounded-[var(--radius-sm)] flex items-center justify-center bg-[var(--surface)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-all"
                                     >
-                                        <PenSquare className="w-3.5 h-3.5" />
+                                        <PenSquare className="w-4 h-4" />
                                     </button>
                                     <button
                                         aria-label="Delete workout"
                                         onClick={() => setDeleteTarget(workout)}
-                                        className="w-8 h-8 rounded-[var(--radius-md)] flex items-center justify-center bg-[var(--surface)] shadow-[var(--shadow-sm)] text-[var(--muted-foreground)] hover:text-[var(--color-destructive)] hover:shadow-[var(--shadow)] transition-all"
+                                        className="w-9 h-9 rounded-[var(--radius-sm)] flex items-center justify-center bg-[var(--surface)] text-[var(--muted-foreground)] hover:text-[var(--color-destructive)] transition-all"
                                     >
-                                        <Trash2 className="w-3.5 h-3.5" />
+                                        <Trash2 className="w-4 h-4" />
                                     </button>
                                 </div>
                             </div>
@@ -189,7 +216,8 @@ export default function HistoryPage() {
                 )}
             </div>
 
-            <ModalWrapper isOpen={!!renameTarget} onClose={() => setRenameTarget(null)} containerClassName="max-w-sm p-4">
+            {/* Rename Modal */}
+            <ModalWrapper isOpen={!!renameTarget} onClose={() => setRenameTarget(null)} containerClassName="max-w-sm p-5">
                 <h3 className="text-base font-bold text-[var(--foreground)] mb-3">Rename Workout</h3>
                 <input
                     ref={renameInputRef}
@@ -197,7 +225,7 @@ export default function HistoryPage() {
                     value={renameValue}
                     onChange={(e) => setRenameValue(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter") handleRename(); }}
-                    className="w-full px-3 py-2 mb-3 rounded-[var(--radius-md)] bg-[var(--surface-raised)] border border-[var(--border)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
+                    className="w-full px-4 py-3 mb-3 rounded-[var(--radius-sm)] bg-[var(--surface-raised)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
                     placeholder="Workout name"
                 />
                 <div className="flex gap-2">
@@ -208,7 +236,8 @@ export default function HistoryPage() {
                 </div>
             </ModalWrapper>
 
-            <ModalWrapper isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} containerClassName="max-w-sm p-4">
+            {/* Delete Modal */}
+            <ModalWrapper isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} containerClassName="max-w-sm p-5">
                 <h3 className="text-base font-bold text-[var(--foreground)] mb-1">Delete Workout?</h3>
                 <p className="text-sm text-[var(--muted-foreground)] mb-4">
                     &ldquo;{deleteTarget?.name}&rdquo; will be permanently deleted.

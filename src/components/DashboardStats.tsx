@@ -47,7 +47,7 @@ export default function DashboardStats() {
 
   if (error) {
     return (
-      <div className="bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] rounded-[var(--radius-xl)] p-6 text-center">
+      <div className="bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] rounded-[var(--radius-lg)] p-6 text-center">
         <p className="font-semibold">{error}</p>
       </div>
     );
@@ -57,7 +57,7 @@ export default function DashboardStats() {
 
   // ── Gamification panel ────────────────
   const gamificationSection = gamification && (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <XPLevelCard gamification={gamification} />
       <AchievementsTeaserCard achievements={gamification.achievements} />
     </div>
@@ -66,16 +66,16 @@ export default function DashboardStats() {
   // ── Empty state (no workouts) ─────────
   if (stats && stats.totalWorkouts === 0) {
     return (
-      <div className="space-y-4">
-        <div className="text-center py-12 bg-[var(--surface)] rounded-[var(--radius-2xl)] shadow-[var(--shadow)]">
-          <div className="w-20 h-20 mx-auto mb-5 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
-            <Zap className="w-10 h-10 text-[var(--primary-600)] dark:text-[var(--primary-700)]" />
+      <div className="space-y-5">
+        <div className="text-center py-14 bg-[var(--surface)] rounded-md">
+          <div className="w-20 h-20 mx-auto mb-5 rounded-[var(--radius-lg)] bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
+            <Zap className="w-10 h-10 text-[var(--primary-600)] dark:text-[var(--primary-500)]" />
           </div>
-          <h3 className="text-xl font-bold text-[var(--foreground)] mb-2">Start your journey</h3>
+          <h3 className="text-xl font-bold text-[var(--foreground)] mb-2" style={{ fontFamily: "var(--font-poppins)" }}>Start your journey</h3>
           <p className="text-[var(--muted-foreground)] mb-6 max-w-xs mx-auto">Log your first workout to see your progress stats here.</p>
           <a
             href="/workout"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-br from-[var(--primary-600)] to-[var(--primary-700)] text-white rounded-xl font-semibold shadow-[0_2px_10px_rgba(99,102,241,0.35)] hover:brightness-105 transition"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--lime-green)] text-[#232323] rounded-full font-semibold shadow-[0_2px_10px_rgba(226,241,99,0.35)] hover:shadow-[0_4px_18px_rgba(226,241,99,0.45)] hover:brightness-105 transition"
           >
             <Plus className="w-4 h-4" />
             Start Workout
@@ -87,7 +87,7 @@ export default function DashboardStats() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Primary stats grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
@@ -137,13 +137,13 @@ export default function DashboardStats() {
 
       {/* Weekly workout histogram */}
       {loading ? (
-        <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4 sm:p-5">
+        <div className="bg-[var(--surface)] rounded-[var(--radius-lg)] p-5">
           <Skeleton width={180} className="mb-4" />
-          <div className="h-[160px] bg-[var(--surface-raised)] rounded-lg animate-pulse" />
+          <div className="h-[160px] bg-[var(--surface-raised)] rounded-[var(--radius-sm)] animate-pulse" />
         </div>
       ) : stats?.weeklyHistogram && stats.weeklyHistogram.length > 0 && (
-        <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4 sm:p-5">
-          <h3 className="text-sm font-bold text-[var(--foreground)] mb-4">Workouts per Week <span className="font-normal text-[var(--muted-foreground)]">(last 12 weeks)</span></h3>
+        <div className="bg-[var(--surface)] rounded-[var(--radius-lg)] p-5">
+          <h3 className="text-sm font-bold text-[var(--foreground)] mb-4" style={{ fontFamily: "var(--font-poppins)" }}>Workouts per Week <span className="font-normal text-[var(--muted-foreground)]">(last 12 weeks)</span></h3>
           <ResponsiveContainer width="100%" height={160}>
             <BarChart data={stats?.weeklyHistogram ?? []} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
               <XAxis
@@ -161,13 +161,14 @@ export default function DashboardStats() {
                 domain={[0, maxCount + 1]}
               />
               <Tooltip
-                cursor={{ fill: "var(--surface-raised)", radius: 4 }}
+                cursor={{ fill: "var(--surface-raised)" }}
                 contentStyle={{
-                  background: "var(--surface)",
-                  border: "1px solid var(--border)",
+                  background: "var(--primary-600)",
+                  border: "none",
                   borderRadius: "8px",
                   fontSize: "12px",
-                  color: "var(--foreground)",
+                  color: "#fff",
+                  fontWeight: 600,
                 }}
                 formatter={(value) => [value, "workouts"]}
               />
@@ -186,8 +187,8 @@ export default function DashboardStats() {
 
       {/* XP / Level + Achievements teaser */}
       {loading ? (
-        <div className="space-y-4">
-          <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-5">
+        <div className="space-y-5">
+          <div className="bg-[var(--surface)] rounded-[var(--radius-lg)] p-5">
             <Skeleton height={60} className="mb-3" />
             <Skeleton height={40} />
           </div>

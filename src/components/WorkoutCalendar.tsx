@@ -40,13 +40,13 @@ export default function WorkoutCalendar({ workoutDates }: WorkoutCalendarProps) 
     for (let d = 1; d <= daysInMonth; d++) cells.push(d);
 
     return (
-        <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4 sm:p-5">
+        <div className="bg-[var(--surface)] rounded-[var(--radius-lg)] p-5">
             {/* Calendar header */}
             <div className="flex items-center justify-between mb-4">
                 <button
                     onClick={goToPrev}
                     aria-label="Previous month"
-                    className="w-8 h-8 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--surface-raised)] transition-colors"
+                    className="w-8 h-8 flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--surface-raised)] transition-colors"
                 >
                     <ChevronLeft className="w-4 h-4" />
                 </button>
@@ -56,7 +56,7 @@ export default function WorkoutCalendar({ workoutDates }: WorkoutCalendarProps) 
                 <button
                     onClick={goToNext}
                     aria-label="Next month"
-                    className="w-8 h-8 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--surface-raised)] transition-colors"
+                    className="w-8 h-8 flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--surface-raised)] transition-colors"
                 >
                     <ChevronRight className="w-4 h-4" />
                 </button>
@@ -86,24 +86,26 @@ export default function WorkoutCalendar({ workoutDates }: WorkoutCalendarProps) 
                     return (
                         <div
                             key={dateStr}
-                            className={`
-                                flex items-center justify-center mx-auto w-8 h-8 rounded-full text-xs font-medium select-none
+                            className="flex items-center justify-center mx-auto w-8 h-8 select-none"
+                        >
+                            <div className={`
+                                flex items-center justify-center w-8 h-8 rounded-full text-xs font-medium
                                 ${hasWorkout
-                                    ? "bg-[var(--primary-500)] text-white font-bold"
+                                    ? "bg-[var(--primary-500)] text-white font-bold shadow-sm"
                                     : isToday
-                                        ? "border-2 border-[var(--primary-500)] text-[var(--primary-600)] dark:text-[var(--primary-400)]"
+                                        ? "border-2 border-[var(--primary-500)] text-[var(--primary-600)] dark:text-[var(--primary-400)] font-semibold"
                                         : "text-[var(--foreground)]"
                                 }
-                            `}
-                        >
-                            {day}
+                            `}>
+                                {day}
+                            </div>
                         </div>
                     );
                 })}
             </div>
 
             {/* Legend */}
-            <div className="flex items-center gap-3 mt-4 pt-3 border-t border-[var(--border)]">
+            <div className="flex items-center gap-3 mt-4 pt-3">
                 <span className="flex items-center gap-1.5 text-xs text-[var(--muted-foreground)]">
                     <span className="w-3 h-3 rounded-full bg-[var(--primary-500)] inline-block" />
                     Workout day

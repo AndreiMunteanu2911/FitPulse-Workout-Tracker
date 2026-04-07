@@ -19,7 +19,7 @@ const SUGGESTIONS = [
 export default function AICoachPage() {
   const router = useRouter();
   const [inputValue, setInputValue] = useState("");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const {
     messages,
@@ -77,7 +77,7 @@ export default function AICoachPage() {
         />
 
         {/* Chat panel */}
-        <div className="flex-1 flex flex-col min-w-0 bg-[var(--surface)] rounded-2xl border border-[var(--border)] overflow-hidden">
+        <div className="flex-1 flex flex-col min-w-0 bg-[var(--surface)] rounded-xl overflow-hidden">
           <CoachTextWindow
             messages={messages}
             isStreaming={isStreaming}

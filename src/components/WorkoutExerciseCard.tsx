@@ -66,20 +66,17 @@ export default function WorkoutExerciseCard({
         onRestTimerDismiss;
 
     return (
-        <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] overflow-hidden">
-            {/* Accent top strip */}
-            <div className="h-1 bg-gradient-to-r from-[var(--primary-500)] to-[var(--primary-400)]" />
-
-            <div className="p-4 sm:p-5">
+        <div className="bg-[var(--surface)] rounded-[var(--radius-lg)] overflow-hidden">
+            <div className="p-5 sm:p-6">
                 {/* Header */}
-                <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center gap-3 mb-5">
                     {workoutExercise.exercise.gif_url && (
-                        <div className="flex-shrink-0 w-14 h-14 rounded-[var(--radius-md)] overflow-hidden bg-[var(--surface-raised)]">
+                        <div className="flex-shrink-0 w-14 h-14 rounded-[var(--radius-sm)] overflow-hidden bg-[var(--surface-raised)]">
                             <ExerciseThumbnail src={workoutExercise.exercise.gif_url} />
                         </div>
                     )}
                     <div className="flex-1 min-w-0">
-                        <h3 className="text-base sm:text-lg font-bold text-[var(--foreground)] truncate">
+                        <h3 className="text-base sm:text-lg font-bold text-[var(--foreground)] truncate" style={{ fontFamily: "var(--font-poppins)" }}>
                             {capitalizeFirstLetter(workoutExercise.exercise.name)}
                         </h3>
                         {workoutExercise.exercise.target_muscles?.[0] && (
@@ -91,24 +88,24 @@ export default function WorkoutExerciseCard({
                     <button
                         aria-label="Delete exercise"
                         onClick={() => onDeleteExercise(exerciseIndex)}
-                        className="flex-shrink-0 w-8 h-8 rounded-[var(--radius-md)] flex items-center justify-center text-[var(--muted-foreground)] hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-100)] hover:text-[var(--primary-600)] dark:hover:text-[var(--primary-700)] transition-colors"
+                        className="flex-shrink-0 w-8 h-8 rounded-[var(--radius-sm)] flex items-center justify-center text-[var(--muted-foreground)] hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-100)] hover:text-[var(--primary-600)] dark:hover:text-[var(--primary-700)] transition-colors"
                     >
                         <Trash2 className="w-4 h-4" />
                     </button>
                 </div>
 
                 {errorMessage && (
-                    <div className="mb-3 p-3 bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] rounded-[var(--radius-md)] text-sm font-medium">
+                    <div className="mb-3 p-3 bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] rounded-[var(--radius-sm)] text-sm font-medium">
                         {errorMessage}
                     </div>
                 )}
 
                 {/* Column headers */}
                 <div className="grid grid-cols-[2.5rem_3.5rem_1fr_1fr_5rem] gap-2 px-1 mb-2">
-                    <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Set</span>
-                    <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] text-center">Prev</span>
-                    <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] text-center">Reps</span>
-                    <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] text-center">kg</span>
+                    <span className="text-[10px] ml-1.5 font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Set</span>
+                    <span className="text-[10px] ml-6.5 font-semibold uppercase tracking-widest text-[var(--muted-foreground)] text-center">Prev</span>
+                    <span className="text-[10px] ml-3 font-semibold uppercase tracking-widest text-[var(--muted-foreground)] text-center">Reps</span>
+                    <span className="text-[10px] mr-3 font-semibold uppercase tracking-widest text-[var(--muted-foreground)] text-center">kg</span>
                     <span />
                 </div>
 
@@ -151,7 +148,7 @@ export default function WorkoutExerciseCard({
                 {/* Add Set */}
                 <button
                     onClick={() => onAddSet(exerciseIndex)}
-                    className="w-full py-2.5 flex items-center justify-center gap-2 text-sm font-semibold text-[var(--primary-600)] dark:text-[var(--primary-500)] bg-[var(--primary-50)] dark:bg-[var(--primary-100)] rounded-[var(--radius-lg)] hover:brightness-95 transition-all"
+                    className="w-full py-2.5 flex items-center justify-center gap-2 text-sm font-semibold text-[var(--primary-600)] dark:text-[var(--primary-500)] bg-[var(--primary-50)] dark:bg-[var(--primary-100)] rounded-full hover:brightness-95 transition-all"
                 >
                     <Plus className="w-4 h-4" />
                     Add Set
