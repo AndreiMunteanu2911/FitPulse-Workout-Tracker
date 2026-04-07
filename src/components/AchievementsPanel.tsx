@@ -32,9 +32,9 @@ function AchievementBadge({ achievement }: { achievement: Achievement }) {
   return (
     <div
       title={achievement.description}
-      className={`flex flex-col items-center gap-1.5 p-3 rounded-[var(--radius-lg)] border transition-all ${
+      className={`flex flex-col items-center gap-1.5 p-3 rounded-[var(--radius-sm)] border transition-all ${
         unlocked
-          ? "bg-[var(--surface-raised)] border-[var(--primary-500)] shadow-[0_0_0_1px_var(--primary-500)]"
+          ? "bg-[var(--surface-raised)]"
           : "bg-[var(--surface-raised)] border-[var(--border)] opacity-40 grayscale"
       }`}
     >
@@ -70,7 +70,7 @@ export default function AchievementsPanel({ achievements }: AchievementsPanelPro
   const unlockedCount = achievements.filter((a) => !!a.unlockedAt).length;
 
   return (
-    <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4 sm:p-5">
+    <div className="bg-[var(--surface)] rounded-[var(--radius-md)] p-4 sm:p-5">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-bold text-[var(--foreground)]">
           Achievements

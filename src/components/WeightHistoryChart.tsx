@@ -16,8 +16,8 @@ const WeightHistoryChart: React.FC<WeightHistoryChartProps> = ({ weights, loadin
         <div className="w-full">
             {loading ? (
                 <div className="space-y-4">
-                    <Skeleton height={220} className="rounded-xl" />
-                    <div className="bg-[var(--surface-raised)] rounded-lg overflow-hidden max-h-72 p-4 space-y-3">
+                    <Skeleton height={220} className="rounded-[var(--radius-md)]" />
+                    <div className="bg-[var(--surface-raised)] rounded-[var(--radius-sm)] overflow-hidden max-h-72 p-4 space-y-3">
                         <Skeleton height={36} />
                         <Skeleton height={36} />
                         <Skeleton height={36} />
@@ -65,7 +65,7 @@ const WeightHistoryChart: React.FC<WeightHistoryChartProps> = ({ weights, loadin
                         </ResponsiveContainer>
                     </div>
 
-                    <div className="mt-4 bg-[var(--surface-raised)] rounded-[var(--radius-lg)] overflow-hidden max-h-72 overflow-y-auto">
+                    <div className="mt-4 bg-[var(--surface-raised)] rounded-[var(--radius-sm)] overflow-hidden max-h-72 overflow-y-auto">
                         {weights.map((log, idx) => (
                             <WeightLogCard
                                 key={log.id || `${log.log_date}-${log.weight}-${idx}`}

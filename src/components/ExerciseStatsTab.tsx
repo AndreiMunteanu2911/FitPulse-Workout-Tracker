@@ -44,7 +44,7 @@ function StatsChart({
     unit: string;
 }) {
     return (
-        <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4 sm:p-5">
+        <div className="bg-[var(--surface)] rounded-[var(--radius-md)] p-4 sm:p-5">
             <h3 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-3">
                 {label}
             </h3>
@@ -125,20 +125,20 @@ export default function ExerciseStatsTab({ exerciseId }: ExerciseStatsTabProps) 
         return (
             <div className="space-y-4">
                 <div className="grid grid-cols-3 gap-3">
-                    <Skeleton height={70} className="rounded-xl" />
-                    <Skeleton height={70} className="rounded-xl" />
-                    <Skeleton height={70} className="rounded-xl" />
+                    <Skeleton height={70} className="rounded-lg" />
+                    <Skeleton height={70} className="rounded-lg" />
+                    <Skeleton height={70} className="rounded-lg" />
                 </div>
-                <Skeleton height={180} className="rounded-xl" />
-                <Skeleton height={180} className="rounded-xl" />
-                <Skeleton height={180} className="rounded-xl" />
+                <Skeleton height={180} className="rounded-lg" />
+                <Skeleton height={180} className="rounded-lg" />
+                <Skeleton height={180} className="rounded-lg" />
             </div>
         );
     }
 
     if (stats.length === 0) {
         return (
-            <div className="text-center py-14 bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)]">
+            <div className="text-center py-14 bg-[var(--surface)] rounded-[var(--radius-md)]">
                 <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
                     <BarChart2 className="w-7 h-7 text-[var(--primary-600)] dark:text-[var(--primary-700)]" />
                 </div>
@@ -175,7 +175,7 @@ export default function ExerciseStatsTab({ exerciseId }: ExerciseStatsTabProps) 
         <div className="space-y-4">
             {/* Summary row */}
             <div className="grid grid-cols-3 gap-3">
-                <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-3 text-center">
+                <div className="bg-[var(--surface)] rounded-[var(--radius-md)] p-3 text-center">
                     <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-1">
                         Best Weight
                     </p>
@@ -187,7 +187,7 @@ export default function ExerciseStatsTab({ exerciseId }: ExerciseStatsTabProps) 
                         <p className="text-[9px] text-[var(--muted-foreground)] mt-1 leading-none">{fmtShortDate(bestWeightDate)}</p>
                     )}
                 </div>
-                <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-3 text-center">
+                <div className="bg-[var(--surface)] rounded-[var(--radius-md)] p-3 text-center">
                     <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-1">
                         Best Reps
                     </p>
@@ -199,7 +199,7 @@ export default function ExerciseStatsTab({ exerciseId }: ExerciseStatsTabProps) 
                         <p className="text-[9px] text-[var(--muted-foreground)] mt-1 leading-none">{fmtShortDate(bestRepsDate)}</p>
                     )}
                 </div>
-                <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-3 text-center">
+                <div className="bg-[var(--surface)] rounded-[var(--radius-md)] p-3 text-center">
                     <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-1">
                         Best Volume
                     </p>
@@ -214,7 +214,7 @@ export default function ExerciseStatsTab({ exerciseId }: ExerciseStatsTabProps) 
             </div>
 
             {/* Last session summary */}
-            <div className="bg-[var(--surface-raised)] rounded-[var(--radius-lg)] px-4 py-3 flex items-center justify-between gap-2 text-sm">
+            <div className="bg-[var(--surface-raised)] rounded-[var(--radius-sm)] px-4 py-3 flex items-center justify-between gap-2 text-sm">
                 <span className="text-[var(--muted-foreground)] text-xs">Last session</span>
                 <div className="flex gap-4">
                     <span className="font-semibold text-[var(--foreground)]">{latestWeight} kg</span>

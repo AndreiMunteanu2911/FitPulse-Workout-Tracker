@@ -151,7 +151,7 @@ export default function AdminTemplatesPage() {
         <Skeleton width={160} height={40} className="mb-6" />
         <div className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} height={70} className="rounded-xl" />
+            <Skeleton key={i} height={70} className="rounded-lg" />
           ))}
         </div>
       </div>
@@ -199,7 +199,7 @@ export default function AdminTemplatesPage() {
           <X className="w-4 h-4" />
         </button>
         <h2 className="text-lg font-bold text-[var(--foreground)] mb-5">Create Official Template</h2>
-        {error && <div className="mb-3 p-3 bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] rounded-[var(--radius-md)] text-sm font-medium">{error}</div>}
+        {error && <div className="mb-3 p-3 bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] rounded-[var(--radius-sm)] text-sm font-medium">{error}</div>}
         <form onSubmit={handleCreate} className="space-y-4">
           <div>
             <label className="block mb-1.5 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Name</label>

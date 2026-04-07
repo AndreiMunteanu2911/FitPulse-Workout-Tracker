@@ -12,7 +12,7 @@ export default function DailyWorkoutsChart({ data }: DailyWorkoutsChartProps) {
   }));
 
   return (
-    <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4 sm:p-5 mb-6">
+    <div className="bg-[var(--surface)] rounded-[var(--radius-md)] p-4 sm:p-5 mb-6">
       <h2 className="text-base font-bold text-[var(--foreground)] mb-4">Workouts per Day</h2>
       <ResponsiveContainer width="100%" height={220}>
         <BarChart data={chartData}>

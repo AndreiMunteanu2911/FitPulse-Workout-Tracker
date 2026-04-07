@@ -81,7 +81,7 @@ export default function AIChatModal({ onWorkoutStart }: AIChatModalProps) {
         onClick={() => setIsOpen(true)}
         className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full
           bg-[var(--primary-600)] hover:bg-[var(--primary-700)]
-          text-white shadow-lg flex items-center justify-center
+          text-white shadow-[var(--shadow)] flex items-center justify-center
           transition-colors"
         aria-label="Open AI Coach"
       >
@@ -109,7 +109,7 @@ export default function AIChatModal({ onWorkoutStart }: AIChatModalProps) {
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
               className={`fixed z-50 bg-[var(--surface)] border-t border-[var(--border)]
                 flex flex-col
-                md:right-6 md:bottom-24 md:rounded-2xl md:border md:shadow-xl
+                md:right-6 md:bottom-24 md:rounded-xl md:border md:shadow-[var(--shadow-md)]
                 ${
                   isExpanded
                     ? "inset-0 md:inset-auto md:w-[500px] md:h-[700px] md:max-h-[calc(100vh-6rem)]"
@@ -159,7 +159,7 @@ export default function AIChatModal({ onWorkoutStart }: AIChatModalProps) {
               <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
                 {messages.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full text-center">
-                    <div className="w-16 h-16 rounded-2xl bg-[var(--primary-100)] dark:bg-[var(--primary-900)] flex items-center justify-center mb-4">
+                    <div className="w-16 h-16 rounded-xl bg-[var(--primary-100)] dark:bg-[var(--primary-900)] flex items-center justify-center mb-4">
                       <Sparkles className="w-8 h-8 text-[var(--primary-600)] dark:text-[var(--primary-400)]" />
                     </div>
                     <h3 className="text-base font-semibold text-[var(--foreground)] mb-1">
@@ -223,7 +223,7 @@ export default function AIChatModal({ onWorkoutStart }: AIChatModalProps) {
                   onChange={(e) => setInputValue(e.target.value)}
                   placeholder="Ask about your training..."
                   disabled={isStreaming}
-                  className="flex-1 px-4 py-2.5 rounded-xl text-sm
+                  className="flex-1 px-4 py-2.5 rounded-lg text-sm
                     bg-[var(--surface-raised)] text-[var(--foreground)]
                     placeholder-[var(--muted-foreground)]
                     focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]
@@ -232,7 +232,7 @@ export default function AIChatModal({ onWorkoutStart }: AIChatModalProps) {
                 <button
                   type="submit"
                   disabled={!inputValue.trim() || isStreaming}
-                  className="w-10 h-10 rounded-xl flex items-center justify-center
+                  className="w-10 h-10 rounded-lg flex items-center justify-center
                     bg-[var(--primary-600)] hover:bg-[var(--primary-700)]
                     text-white disabled:opacity-40 disabled:pointer-events-none
                     transition-colors"

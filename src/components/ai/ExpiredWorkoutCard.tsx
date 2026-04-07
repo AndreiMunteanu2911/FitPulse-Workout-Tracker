@@ -19,7 +19,7 @@ export default function ExpiredWorkoutCard({
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="mx-2 mt-2 p-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] opacity-80"
+      className="mx-2 mt-2 p-4 rounded-lg border border-[var(--border)] bg-[var(--surface)] opacity-80"
     >
       <div className="flex items-center gap-2 mb-2">
         <Clock className="w-4 h-4 text-[var(--muted-foreground)]" />
@@ -51,7 +51,7 @@ export default function ExpiredWorkoutCard({
 
       <button
         onClick={onRecreate}
-        className="w-full py-2.5 px-4 rounded-lg bg-[var(--surface-raised)] hover:bg-[var(--primary-600)]
+        className="w-full py-2.5 px-4 rounded-md bg-[var(--surface-raised)] hover:bg-[var(--primary-600)]
           text-[var(--foreground)] hover:text-white text-sm font-semibold transition-colors
           flex items-center justify-center gap-2 border border-[var(--border)]"
       >

@@ -5,6 +5,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     variant?:
         | "primary"
         | "secondary"
+        | "lime"
         | "textOnly"
         | "danger";
     ariaLabel?: string;
@@ -22,13 +23,15 @@ export default function Button({
                                    ...props
                                }: ButtonProps) {
     const base =
-        "inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm sm:px-5 sm:py-2.5 sm:text-base font-semibold transition-all duration-150 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 active:scale-95";
+        "inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm sm:px-6 sm:py-3 sm:text-base font-semibold transition-all duration-200 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 active:scale-95";
 
     const variants: Record<NonNullable<ButtonProps["variant"]>, string> = {
         primary:
-            "bg-gradient-to-br from-[var(--primary-600)] to-[var(--primary-700)] dark:from-[var(--primary-500)] dark:to-[var(--primary-600)] text-white shadow-[0_2px_10px_rgba(99,102,241,0.35)] hover:shadow-[0_4px_18px_rgba(99,102,241,0.45)] hover:brightness-105",
+            "bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-600)] text-white hover:brightness-105",
+        lime:
+            "bg-[var(--lime-green)] text-[#232323] hover:brightness-105",
         secondary:
-            "bg-[var(--surface)] text-[var(--foreground)] border border-[var(--border)] shadow-[var(--shadow-xs)] hover:bg-[var(--surface-raised)] hover:shadow-[var(--shadow-sm)]",
+            "bg-[var(--surface)] text-[var(--foreground)] hover:bg-[var(--surface-raised)]",
         textOnly:
             "bg-transparent text-[var(--primary-600)] dark:text-[var(--primary-500)] hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-100)]",
         danger:

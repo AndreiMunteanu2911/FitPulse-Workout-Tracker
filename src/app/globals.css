@@ -5,26 +5,33 @@
    ============================================ */
 
 :root {
-  /* Backgrounds — distinct layers for depth */
-  --background:     #ECEEF4;   /* tinted so cards pop */
+  /* Backgrounds — dark base from reference design */
+  --background:     #F5F5F5;
   --surface:        #FFFFFF;
-  --surface-raised: #F7F8FC;
+  --surface-raised: #FAFAFA;
 
   /* Typography */
-  --foreground:        #0D1117;
+  --foreground:        #232323;
   --muted-foreground:  #6B7280;
 
-  /* Accent scale — Blue */
-  --primary-50:  #EFF6FF;
-  --primary-100: #DBEAFE;
-  --primary-200: #BFDBFE;
-  --primary-300: #93C5FD;
-  --primary-400: #60A5FA;
-  --primary-500: #3B82F6;
-  --primary-600: #2563EB;
-  --primary-700: #1D4ED8;
-  --primary-800: #1E40AF;
-  --primary-900: #1E3A8A;
+  /* Accent scale — Purple */
+  --primary-50:  #F3EEFF;
+  --primary-100: #E8DDFF;
+  --primary-200: #D1BBFF;
+  --primary-300: #B3A0FF;
+  --primary-400: #9B7FFF;
+  --primary-500: #896CFE;
+  --primary-600: #7457F5;
+  --primary-700: #5E3FDE;
+  --primary-800: #4A2FC2;
+  --primary-900: #3B25A3;
+
+  /* Lime Green — accent/CTA */
+  --lime-green:       #E2F163;
+  --lime-green-dark:  #C5D44A;
+
+  /* Light Purple */
+  --light-purple:     #B3A0FF;
 
   /* Semantic */
   --color-destructive:    #EF4444;
@@ -36,22 +43,22 @@
 
   /* Structural */
   --border: #E5E7EB;
-  --ring:   rgba(59, 130, 246, 0.25);
+  --ring:   rgba(137, 108, 254, 0.25);
 
-  /* Elevation — borderless cards rely on these */
-  --shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-sm: 0 2px 6px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-  --shadow:    0 4px 12px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04);
-  --shadow-md: 0 8px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.04);
-  --shadow-lg: 0 16px 48px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06);
+  /* Elevation — softer shadows for premium feel, matching reference */
+  --shadow-xs: 0 1px 3px rgba(0,0,0,0.04), 0 1px 1px rgba(0,0,0,0.02);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.03);
+  --shadow:    0 4px 16px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-md: 0 8px 32px rgba(0,0,0,0.09), 0 2px 8px rgba(0,0,0,0.04);
+  --shadow-lg: 0 16px 56px rgba(0,0,0,0.11), 0 4px 16px rgba(0,0,0,0.05);
 
-  /* Radius */
-  --radius-xs:   4px;
+  /* Radius — reduced from reference, moderate rounding */
+  --radius-xs:   6px;
   --radius-sm:   8px;
-  --radius-md:   12px;
-  --radius-lg:   16px;
-  --radius-xl:   20px;
-  --radius-2xl:  24px;
+  --radius-md:   10px;
+  --radius-lg:   14px;
+  --radius-xl:   18px;
+  --radius-2xl:  22px;
   --radius-full: 9999px;
 }
 
@@ -60,32 +67,47 @@
    ============================================ */
 
 .dark {
-  --background:     #090D18;
-  --surface:        #121929;
-  --surface-raised: #1A2338;
+  --background:     #1A1A1A;
+  --surface:        #252525;
+  --surface-raised: #303030;
 
-  --foreground:       #F1F5F9;
-  --muted-foreground: #8B95A8;
+  --foreground:       #FFFFFF;
+  --muted-foreground: #A0A0A0;
 
-  --primary-50:  #1E3A8A;
-  --primary-100: #1E40AF;
-  --primary-200: #1D4ED8;
-  --primary-300: #2563EB;
-  --primary-400: #3B82F6;
-  --primary-500: #60A5FA;
-  --primary-600: #93C5FD;
-  --primary-700: #BFDBFE;
-  --primary-800: #DBEAFE;
-  --primary-900: #EFF6FF;
+  --primary-50:  #1E1245;
+  --primary-100: #2D1B66;
+  --primary-200: #3B2588;
+  --primary-300: #4A2FC2;
+  --primary-400: #5E3FDE;
+  --primary-500: #7457F5;
+  --primary-600: #896CFE;
+  --primary-700: #B3A0FF;
+  --primary-800: #D1BBFF;
+  --primary-900: #F3EEFF;
 
-  --border: #1E2A3E;
-  --ring:   rgba(59, 130, 246, 0.30);
+  /* Lime green accent for dark mode */
+  --lime-green:       #E2F163;
+  --lime-green-dark:  #C5D44A;
 
-  --shadow-xs: 0 1px 2px rgba(0,0,0,0.40);
-  --shadow-sm: 0 2px 6px rgba(0,0,0,0.50), 0 1px 2px rgba(0,0,0,0.30);
-  --shadow:    0 4px 12px rgba(0,0,0,0.55), 0 1px 3px rgba(0,0,0,0.30);
-  --shadow-md: 0 8px 24px rgba(0,0,0,0.60), 0 2px 6px rgba(0,0,0,0.35);
-  --shadow-lg: 0 16px 48px rgba(0,0,0,0.70), 0 4px 12px rgba(0,0,0,0.40);
+  /* Light Purple accent for dark mode */
+  --light-purple:     #B3A0FF;
+
+  /* Semantic */
+  --color-destructive:    #EF4444;
+  --color-destructive-bg: #4A1515;
+  --color-success:        #10B981;
+  --color-success-bg:     #0D3325;
+  --color-warning:        #F59E0B;
+  --color-warning-bg:     #3D2800;
+
+  --border: #333333;
+  --ring:   rgba(137, 108, 254, 0.30);
+
+  --shadow-xs: 0 1px 3px rgba(0,0,0,0.40), 0 1px 1px rgba(0,0,0,0.20);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.50), 0 1px 2px rgba(0,0,0,0.25);
+  --shadow:    0 4px 16px rgba(0,0,0,0.55), 0 2px 4px rgba(0,0,0,0.30);
+  --shadow-md: 0 8px 32px rgba(0,0,0,0.60), 0 2px 8px rgba(0,0,0,0.35);
+  --shadow-lg: 0 16px 56px rgba(0,0,0,0.70), 0 4px 16px rgba(0,0,0,0.40);
 }
 
 /* ============================================
@@ -100,6 +122,7 @@
   --color-foreground:         var(--foreground);
   --color-muted-foreground:   var(--muted-foreground);
   --color-border:             var(--border);
+  --color-lime-green:         var(--lime-green);
 }
 
 /* ============================================
@@ -120,7 +143,7 @@ html, body {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-league-spartan), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -136,7 +159,7 @@ body {
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--primary-400) transparent;
+  scrollbar-color: var(--primary-500) transparent;
 }
 
 *::-webkit-scrollbar {
@@ -145,7 +168,7 @@ body {
 }
 
 *::-webkit-scrollbar-thumb {
-  background: var(--primary-400);
+  background: var(--primary-500);
   border-radius: var(--radius-full);
 }
 
@@ -173,30 +196,30 @@ body {
   -webkit-backdrop-filter: blur(12px);
 }
 
-/* Borderless card — elevation via shadow only */
+/* Borderless card — elevation via shadow only, more rounded */
 .card {
   background: var(--surface);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-2xl);
   box-shadow: var(--shadow);
 }
 
 /* Card with hover lift */
 .card-interactive {
   background: var(--surface);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-2xl);
   box-shadow: var(--shadow);
-  transition: box-shadow 0.18s ease, transform 0.18s ease;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
   cursor: pointer;
 }
 
 .card-interactive:hover {
   box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
-/* Auth background */
+/* Auth background — purple gradient */
 .auth-bg {
-  background: linear-gradient(145deg, #1e3a8a 0%, #1d4ed8 60%, #2563eb 100%);
+  background: linear-gradient(145deg, #5E3FDE 0%, #7457F5 60%, #896CFE 100%);
 }
 
 /* Badge pill */
@@ -222,7 +245,7 @@ body {
 
 .dark .badge-soft {
   background: var(--primary-100);
-  color: var(--primary-700);
+  color: var(--primary-200);
 }
 
 /* Hide number input spinner arrows */
@@ -235,12 +258,12 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
-/* Premium form input */
+/* Premium form input — more rounded */
 .input {
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: 0.8rem 1.1rem;
   border: 1.5px solid var(--border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background: var(--surface);
   color: var(--foreground);
   font-size: 0.9375rem;
@@ -265,11 +288,11 @@ input[type="number"] {
 .text-muted-foreground { color: var(--muted-foreground); }
 .border-default        { border-color: var(--border); }
 
-/* Stat block used in PersonalRecordCard */
+/* Stat block used in PersonalRecordCard — more rounded */
 .stat-block {
   background: var(--primary-50);
-  border-radius: var(--radius-md);
-  padding: 0.75rem;
+  border-radius: var(--radius-lg);
+  padding: 0.85rem;
   text-align: center;
 }
 
@@ -293,26 +316,25 @@ input[type="number"] {
 }
 
 .dark .react-loading-skeleton {
-  background-color: #1A2338 !important;
+  background-color: #363636 !important;
   background-image: linear-gradient(
     90deg,
-    #1A2338 0%,
-    #1A2338 40%,
-    #23304A 50%,
-    #1A2338 60%,
-    #1A2338 100%
+    #363636 0%,
+    #363636 40%,
+    #454545 50%,
+    #363636 60%,
+    #363636 100%
   ) !important;
 }
 
 .dark .react-loading-skeleton::after {
-  background-color: #1A2338 !important;
+  background-color: #363636 !important;
   background-image: linear-gradient(
     90deg,
-    #1A2338 0%,
-    #1A2338 40%,
-    #23304A 50%,
-    #1A2338 60%,
-    #1A2338 100%
+    #363636 0%,
+    #363636 40%,
+    #454545 50%,
+    #363636 60%,
+    #363636 100%
   ) !important;
 }
-

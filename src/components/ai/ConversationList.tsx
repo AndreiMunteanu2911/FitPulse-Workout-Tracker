@@ -65,7 +65,7 @@ export default function ConversationList({
             </h2>
             <button
               onClick={onNew}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--muted-foreground)] hover:bg-[var(--surface-raised)] transition-colors"
+              className="w-8 h-8 rounded-md flex items-center justify-center text-[var(--muted-foreground)] hover:bg-[var(--surface-raised)] transition-colors"
               title="New conversation"
             >
               <Plus className="w-4 h-4" />
@@ -89,7 +89,7 @@ export default function ConversationList({
                   return (
                     <li key={conv.id} className="px-2 py-0.5">
                       <div
-                        className={`group flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${
+                        className={`group flex items-center gap-2 px-3 py-2.5 rounded-md cursor-pointer transition-colors ${
                           isActive
                             ? "bg-[var(--primary-100)] dark:bg-[var(--primary-900)]"
                             : "hover:bg-[var(--surface-raised)]"
@@ -122,7 +122,7 @@ export default function ConversationList({
                             e.stopPropagation();
                             onDelete(conv.id);
                           }}
-                          className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-md flex items-center justify-center text-[var(--muted-foreground)] hover:text-[var(--color-destructive)] hover:bg-[var(--surface-raised)] transition-all"
+                          className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-sm flex items-center justify-center text-[var(--muted-foreground)] hover:text-[var(--color-destructive)] hover:bg-[var(--surface-raised)] transition-all"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>

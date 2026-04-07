@@ -13,7 +13,7 @@ interface UserCardProps {
 
 export default function UserCard({ user_id, total_xp, level, workout_count, role, onChangeRole }: UserCardProps) {
   return (
-    <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4 sm:p-5 hover:shadow-[var(--shadow-md)] hover:-translate-y-0.5 transition-all duration-200">
+    <div className="bg-[var(--surface)] rounded-[var(--radius-md)] p-4 sm:p-5 transition-all duration-200">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
@@ -33,7 +33,7 @@ export default function UserCard({ user_id, total_xp, level, workout_count, role
             <span>{workout_count} workouts</span>
           </div>
         </div>
-        <Button variant="secondary" onClick={onChangeRole}>
+        <Button variant="secondary" onClick={onChangeRole} className="rounded-full">
           Change Role
         </Button>
       </div>
