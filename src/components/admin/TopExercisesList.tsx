@@ -7,7 +7,7 @@ interface TopExercisesListProps {
 export default function TopExercisesList({ exercises }: TopExercisesListProps) {
   if (exercises.length === 0) {
     return (
-      <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4 sm:p-5">
+      <div className="bg-[var(--surface)] rounded-[var(--radius-md)] p-4 sm:p-5">
         <h2 className="text-base font-bold text-[var(--foreground)] mb-4">Most Used Exercises</h2>
         <p className="text-sm text-[var(--muted-foreground)] text-center py-8">No exercise data yet.</p>
       </div>
@@ -15,7 +15,7 @@ export default function TopExercisesList({ exercises }: TopExercisesListProps) {
   }
 
   return (
-    <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-4 sm:p-5">
+    <div className="bg-[var(--surface)] rounded-[var(--radius-md)] p-4 sm:p-5">
       <h2 className="text-base font-bold text-[var(--foreground)] mb-4">Most Used Exercises</h2>
       <div className="space-y-2">
         {exercises.map((ex, idx) => (

@@ -67,11 +67,11 @@ export default function AdminAnalyticsPage() {
         <Skeleton width={200} height={32} className="mb-6" />
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} height={80} className="rounded-xl" />
+            <Skeleton key={i} height={80} className="rounded-lg" />
           ))}
         </div>
-        <Skeleton height={220} className="rounded-xl mb-6" />
-        <Skeleton height={200} className="rounded-xl" />
+        <Skeleton height={220} className="rounded-lg mb-6" />
+        <Skeleton height={200} className="rounded-lg" />
       </div>
     );
   }

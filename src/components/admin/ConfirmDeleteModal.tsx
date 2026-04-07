@@ -32,7 +32,7 @@ export default function ConfirmDeleteModal({
         Are you sure you want to delete <strong className="text-[var(--foreground)]">{itemName}</strong>? This cannot be undone.
       </p>
       {error && (
-        <div className="mb-3 p-3 bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] rounded-[var(--radius-md)] text-sm font-medium">
+        <div className="mb-3 p-3 bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] rounded-[var(--radius-sm)] text-sm font-medium">
           {error}
         </div>
       )}

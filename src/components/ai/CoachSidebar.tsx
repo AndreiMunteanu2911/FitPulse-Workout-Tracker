@@ -47,7 +47,7 @@ export default function CoachSidebar({
       <button
         onClick={onToggle}
         className="lg:hidden fixed top-4 right-4 z-30 w-10 h-10 rounded-full
-          bg-[var(--surface)] border border-[var(--border)] shadow-md
+          bg-[var(--surface)] border border-[var(--border)] shadow-[var(--shadow-sm)]
           flex items-center justify-center text-[var(--foreground)]
           active:scale-95 transition-transform"
         aria-label="Chat history"
@@ -88,7 +88,7 @@ export default function CoachSidebar({
           <div className="flex items-center gap-2 px-3 py-2.5 border-b border-[var(--border)] flex-shrink-0">
             <button
               onClick={onToggle}
-              className="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-[var(--muted-foreground)] hover:bg-[var(--surface-raised)] transition-colors"
+              className="w-8 h-8 rounded-md flex-shrink-0 flex items-center justify-center text-[var(--muted-foreground)] hover:bg-[var(--surface-raised)] transition-colors"
               title="Close"
             >
               <PanelLeftOpen className="w-4 h-4 rotate-180" />
@@ -97,7 +97,7 @@ export default function CoachSidebar({
             <div className="flex-1" />
             <button
               onClick={() => { onNew(); onToggle(); }}
-              className="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-[var(--muted-foreground)] hover:bg-[var(--surface-raised)] transition-colors"
+              className="w-8 h-8 rounded-md flex-shrink-0 flex items-center justify-center text-[var(--muted-foreground)] hover:bg-[var(--surface-raised)] transition-colors"
               title="New conversation"
             >
               <Plus className="w-4 h-4" />
@@ -118,7 +118,7 @@ export default function CoachSidebar({
                   return (
                     <li key={conv.id} className="px-2 py-0.5">
                       <div
-                        className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors text-sm
+                        className={`group flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer transition-colors text-sm
                           ${isActive ? "bg-[var(--primary-100)] dark:bg-[var(--primary-900)]" : "hover:bg-[var(--surface-raised)]"}`}
                         onClick={() => { onSelect(conv.id); onToggle(); }}
                       >
@@ -133,7 +133,7 @@ export default function CoachSidebar({
                         </div>
                         <button
                           onClick={(e) => { e.stopPropagation(); onDelete(conv.id); }}
-                          className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded-md flex items-center justify-center text-[var(--muted-foreground)] hover:text-[var(--color-destructive)] transition-all"
+                          className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded-sm flex items-center justify-center text-[var(--muted-foreground)] hover:text-[var(--color-destructive)] transition-all"
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
@@ -149,7 +149,7 @@ export default function CoachSidebar({
 
       {/* ── Desktop sidebar ────────────────────────────────── */}
       <motion.aside
-        className="hidden lg:flex lg:flex-col lg:bg-[var(--surface)] lg:rounded-2xl lg:border lg:border-[var(--border)] lg:overflow-hidden lg:flex-shrink-0"
+        className="hidden lg:flex lg:flex-col lg:bg-[var(--surface)] lg:rounded-xl lg:overflow-hidden lg:flex-shrink-0"
         initial={false}
         animate={{ width: isOpen ? EXPANDED : COLLAPSED }}
         transition={{ duration: 0.2, ease: "easeInOut" }}
@@ -157,10 +157,10 @@ export default function CoachSidebar({
       >
         <div className="flex flex-col h-full" style={{ width: EXPANDED }}>
           {/* Header */}
-          <div className="flex items-center gap-2 px-3 py-2.5 border-b border-[var(--border)] flex-shrink-0">
+          <div className="flex items-center gap-2 px-3 py-2.5 flex-shrink-0">
             <button
               onClick={onToggle}
-              className="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-[var(--muted-foreground)] hover:bg-[var(--surface-raised)] transition-colors"
+              className="w-8 h-8 rounded-md flex-shrink-0 flex items-center justify-center text-[var(--muted-foreground)] hover:bg-[var(--surface-raised)] transition-colors"
               title={isOpen ? "Collapse" : "Expand"}
             >
               <PanelLeftOpen className="w-4 h-4" />
@@ -188,7 +188,7 @@ export default function CoachSidebar({
                   exit={{ opacity: 0, width: 0 }}
                   transition={{ duration: 0.15, ease: "easeInOut" }}
                   onClick={onNew}
-                  className="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-[var(--muted-foreground)] hover:bg-[var(--surface-raised)] transition-colors"
+                  className="w-8 h-8 rounded-md flex-shrink-0 flex items-center justify-center text-[var(--muted-foreground)] hover:bg-[var(--surface-raised)] transition-colors"
                   title="New conversation"
                 >
                   <Plus className="w-4 h-4" />
@@ -212,7 +212,7 @@ export default function CoachSidebar({
                     return (
                       <li key={conv.id} className="px-2 py-0.5">
                         <div
-                          className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors text-sm
+                          className={`group flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer transition-colors text-sm
                             ${isActive ? "bg-[var(--primary-100)] dark:bg-[var(--primary-900)]" : "hover:bg-[var(--surface-raised)]"}`}
                           onClick={() => onSelect(conv.id)}
                         >
@@ -227,7 +227,7 @@ export default function CoachSidebar({
                           </div>
                           <button
                             onClick={(e) => { e.stopPropagation(); onDelete(conv.id); }}
-                            className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded-md flex items-center justify-center text-[var(--muted-foreground)] hover:text-[var(--color-destructive)] transition-all"
+                            className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded-sm flex items-center justify-center text-[var(--muted-foreground)] hover:text-[var(--color-destructive)] transition-all"
                           >
                             <Trash2 className="w-3 h-3" />
                           </button>

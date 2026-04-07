@@ -67,7 +67,7 @@ export default function RestTimer({ timer, onTick, onSkip, onDismiss }: RestTime
   const isDone = remaining === 0;
 
   return (
-    <div className="grid grid-cols-[3rem_1fr_1fr_5rem] items-center gap-2 px-1 py-2 rounded-[var(--radius-md)] bg-[var(--primary-50)] dark:bg-[var(--primary-100)]">
+    <div className="grid grid-cols-[3rem_1fr_1fr_5rem] items-center gap-2 px-1 py-2.5 rounded-[var(--radius-sm)] bg-[var(--primary-50)] dark:bg-[var(--primary-100)]">
       {/* Timer icon */}
       <span className="flex items-center justify-center">
         <Timer className="w-4 h-4 text-[var(--primary-500)]" />

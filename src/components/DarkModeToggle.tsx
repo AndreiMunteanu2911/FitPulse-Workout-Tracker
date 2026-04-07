@@ -19,7 +19,7 @@ export default function DarkModeToggle() {
   return (
     <button
       onClick={toggle}
-      className="p-2 rounded-lg bg-[var(--surface)] hover:bg-[var(--surface)]/80 transition"
+      className="p-2 rounded-md bg-[var(--surface)] hover:bg-[var(--surface)]/80 transition"
       aria-label="Toggle dark mode"
     >
       {isDark ? (

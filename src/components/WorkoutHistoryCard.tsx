@@ -1,5 +1,5 @@
 import type { Workout } from "@/types";
-import { ChevronRight, Zap, Clock, Sparkles } from "lucide-react";
+import { ChevronRight, Zap, Clock, Sparkles, Calendar } from "lucide-react";
 
 interface WorkoutHistoryCardProps {
     workout: Workout;
@@ -60,19 +60,23 @@ export default function WorkoutHistoryCard({ workout, prCount }: WorkoutHistoryC
     const extraCount = workout.workout_exercises.length - maxExercisesToShow;
 
     return (
-        <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] overflow-hidden shadow-[var(--shadow)] hover:shadow-[var(--shadow-md)] hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
+        <div className="bg-[var(--surface)] rounded-[var(--radius-lg)] cursor-pointer">
             <div className="flex min-h-[5rem]">
-                {/* Left accent strip */}
-                <div className="w-1.5 flex-shrink-0 bg-gradient-to-b from-[var(--primary-500)] to-[var(--primary-700)]" />
+                {/* Left date circle */}
+                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)] flex items-center justify-center text-white mt-4 ml-4">
+                    <Calendar className="w-5 h-5" />
+                </div>
 
                 <div className="flex-1 p-4 sm:p-5">
                     {/* Title row */}
-                    <div className="flex items-start justify-between gap-2 mb-0.5">
-                        <h3 className="text-base sm:text-lg font-bold text-[var(--foreground)] leading-snug">{workout.name}</h3>
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                        <div className="flex-1 min-w-0 pr-2">
+                            <h3 className="text-sm sm:text-base font-bold text-[var(--foreground)] leading-snug" style={{ fontFamily: "var(--font-poppins)" }}>{workout.name}</h3>
+                        </div>
                         <ChevronRight className="w-4 h-4 flex-shrink-0 mt-0.5 text-[var(--muted-foreground)]" />
                     </div>
 
-                    {/* Date – plain subtitle, no duration here */}
+                    {/* Date – plain subtitle */}
                     <p className="text-xs text-[var(--muted-foreground)] mb-3">{formatDate(workout.workout_date)}</p>
 
                     {/* Stats badges: volume · duration · PRs */}
@@ -102,7 +106,7 @@ export default function WorkoutHistoryCard({ workout, prCount }: WorkoutHistoryC
 
                     {/* Exercise list */}
                     {workout.workout_exercises.length > 0 && (
-                        <div className="space-y-0.5 border-t border-[var(--border)] pt-2 mt-1">
+                        <div className="space-y-0.5 pt-2 mt-1">
                             {exercises.map((we) => {
                                 const best = getBestSet(we.sets);
                                 return (

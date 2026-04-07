@@ -13,7 +13,7 @@ export default function TimeRangeSelector({ value, onChange, options = [7, 14, 3
         <button
           key={d}
           onClick={() => onChange(d)}
-          className={`px-3 py-1.5 rounded-[var(--radius-md)] text-sm font-semibold transition-colors ${
+          className={`px-3 py-1.5 rounded-[var(--radius-sm)] text-sm font-semibold transition-colors ${
             value === d
               ? "bg-[var(--primary-500)] text-white"
               : "bg-[var(--surface)] text-[var(--muted-foreground)] hover:bg-[var(--surface-raised)]"

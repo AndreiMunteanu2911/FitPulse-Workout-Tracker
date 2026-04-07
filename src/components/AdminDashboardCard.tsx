@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import Skeleton from "react-loading-skeleton";
 import Link from "next/link";
 import { Shield, Users, Dumbbell, TrendingUp } from "lucide-react";
 import AdminStatCard from "@/components/admin/AdminStatCard";
@@ -43,37 +42,25 @@ export default function AdminDashboardCard() {
   }, []);
 
   if (!isAdmin && !loading) return null;
+  // Don't render anything while loading role — prevents non-admins from seeing admin skeletons
+  if (loading) return null;
 
   return (
     <div className="mb-6">
-      {loading ? (
-        <div className="block mb-4 p-5 rounded-2xl border border-[var(--primary-500)]/30
-          bg-gradient-to-r from-[var(--primary-600)]/10 to-[var(--primary-400)]/5
-          dark:from-[var(--primary-600)]/15 dark:to-[var(--primary-400)]/10"
-        >
-          <div className="flex items-center gap-4">
-            <Skeleton circle width={48} height={48} />
-            <div className="flex-1">
-              <Skeleton width={120} className="mb-1" />
-              <Skeleton width={200} />
-            </div>
-          </div>
-        </div>
-      ) : (
-        <Link
+      <Link
           href="/admin"
-          className="block mb-4 p-5 rounded-2xl border border-[var(--primary-500)]/30
+          className="block mb-4 p-5 rounded-sm
             bg-gradient-to-r from-[var(--primary-600)]/10 to-[var(--primary-400)]/5
             dark:from-[var(--primary-600)]/15 dark:to-[var(--primary-400)]/10
-            hover:border-[var(--primary-500)]/60 transition-colors group"
+            transition-colors group"
         >
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-[var(--primary-600)] flex items-center justify-center flex-shrink-0
+            <div className="w-12 h-12 rounded-full bg-[var(--primary-600)] flex items-center justify-center flex-shrink-0
               group-hover:bg-[var(--primary-700)] transition-colors">
               <Shield className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-base font-bold text-[var(--foreground)] mb-0.5">
+              <h3 className="text-base font-bold text-[var(--foreground)] mb-0.5" style={{ fontFamily: "var(--font-poppins)" }}>
                 Admin Dashboard
               </h3>
               <p className="text-sm text-[var(--muted-foreground)]">
@@ -85,7 +72,6 @@ export default function AdminDashboardCard() {
             </svg>
           </div>
         </Link>
-      )}
 
       {/* Quick stats */}
       {stats && (
@@ -108,8 +94,8 @@ export default function AdminDashboardCard() {
             value={stats.totalSets}
             accentColor="bg-[var(--primary-700)]"
           />
-          <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] p-5 shadow-[var(--shadow)] relative overflow-hidden">
-            <div className="absolute left-0 inset-y-0 w-1 bg-[var(--primary-400)]" />
+          <div className="bg-[var(--surface)] rounded-[var(--radius-lg)] p-5 relative overflow-hidden">
+            <div className="absolute left-0 inset-y-0 w-1 bg-[var(--lime-green)]" />
             <div className="flex items-center gap-2 mb-1.5">
               <TrendingUp className="w-3.5 h-3.5 text-[var(--muted-foreground)]" />
               <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Quick Links</p>

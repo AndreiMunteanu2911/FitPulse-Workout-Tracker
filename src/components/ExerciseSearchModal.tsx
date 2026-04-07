@@ -31,8 +31,19 @@ export default function ExerciseSearchModal({
 
     return (
         <ModalWrapper isOpen={isOpen} onClose={onClose} containerClassName="max-w-md sm:max-w-lg p-4 sm:p-6">
-            <h3 className="text-xl font-bold mb-4 text-[var(--foreground)]">Search Exercises</h3>
-            
+            <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-[var(--foreground)]">Search Exercises</h3>
+                <button
+                    onClick={onClose}
+                    className="w-8 h-8 rounded-full flex items-center justify-center bg-[var(--primary-500)] text-white hover:bg-[var(--primary-600)] transition-colors"
+                    aria-label="Close"
+                >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
             <div className="relative mb-3">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" />
                 <input
@@ -40,7 +51,7 @@ export default function ExerciseSearchModal({
                     placeholder="Search exercises..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-[var(--surface-raised)] rounded-[var(--radius-xl)] text-[var(--foreground)] text-sm font-medium placeholder-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] transition"
+                    className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-[var(--surface)] rounded-[var(--radius-md)] text-[var(--foreground)] text-sm font-medium placeholder-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] transition"
                     autoFocus
                 />
             </div>

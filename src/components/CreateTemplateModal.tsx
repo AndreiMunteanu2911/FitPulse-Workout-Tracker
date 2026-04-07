@@ -109,7 +109,7 @@ export default function CreateTemplateModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Upper Body Day"
-              className="w-full px-3 py-2 border border-[var(--border)] rounded-lg bg-[var(--surface)] text-[var(--foreground)]"
+              className="w-full px-3 py-2 border border-[var(--border)] rounded-md bg-[var(--surface)] text-[var(--foreground)]"
               required
             />
           </div>
@@ -154,8 +154,8 @@ export default function CreateTemplateModal({
                     onClick={() => toggleExercise(exercise.exercise_id)}
                     className={`flex items-center gap-3 p-3 rounded-[var(--radius-md)] cursor-pointer transition ${
                       isSelected
-                        ? "bg-[var(--primary-50)] border border-[var(--primary-500)]"
-                        : "bg-[var(--surface)] border border-[var(--border)] hover:border-[var(--primary-300)]"
+                        ? "bg-[var(--primary-50)]"
+                        : "bg-[var(--surface)]"
                     }`}
                   >
                     <div
