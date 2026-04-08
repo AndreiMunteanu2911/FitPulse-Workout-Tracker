@@ -12,6 +12,7 @@ import AddPhotoModal from "@/components/AddPhotoModal";
 import ToggleSwitch from "@/components/ToggleSwitch";
 import WorkoutCalendar from "@/components/WorkoutCalendar";
 import NumberPicker from "@/components/NumberPicker";
+import DatePicker from "@/components/DatePicker";
 import ModalWrapper from "@/components/ModalWrapper";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
@@ -155,11 +156,10 @@ function EditProfileModal({
 
         <div>
           <label className="block mb-1.5 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Birthday</label>
-          <input
-            className="input"
-            type="date"
+          <DatePicker
             value={birthday}
-            onChange={(e) => setBirthday(e.target.value)}
+            onChange={setBirthday}
+            placeholder="Select your birthday"
           />
         </div>
 
