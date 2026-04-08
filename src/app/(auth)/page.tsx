@@ -6,7 +6,7 @@ export default function LandingPage() {
         <div className="w-full text-white min-h-screen flex flex-col">
             {/* Logo */}
             <div className="flex items-center gap-2.5 pt-6 pb-2">
-                <div className="w-9 h-9 rounded-[12px] overflow-hidden bg-white/15 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-[12px] overflow-hidden bg-white flex items-center justify-center">
                     <Image src="/assets/logo.png" alt="FitPulse" width={22} height={22} className="object-contain" />
                 </div>
                 <span className="text-lg tracking-tight" style={{ fontFamily: "var(--font-poppins)" }}>
