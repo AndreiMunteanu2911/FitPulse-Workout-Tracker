@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "Workout Tracker",
+    title: "FitPulse - Workout Tracker",
     description: "Track your workouts and progress with ease.",
 };
 

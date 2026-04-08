@@ -52,6 +52,7 @@ function StatsChart({
                 <LineChart data={data} margin={{ left: 0, right: 10, top: 8, bottom: 8 }}>
                     <CartesianGrid stroke="var(--border)" strokeDasharray="4 4" />
                     <XAxis
+                        key={`xaxis-${label}`}
                         dataKey="date_ms"
                         scale="time"
                         type="number"
@@ -60,8 +61,10 @@ function StatsChart({
                         tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
                         axisLine={{ stroke: "var(--border)" }}
                         tickLine={false}
+                        allowDuplicatedCategory={false}
                     />
                     <YAxis
+                        key={`yaxis-${label}`}
                         dataKey={dataKey as string}
                         tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
                         axisLine={{ stroke: "var(--border)" }}
