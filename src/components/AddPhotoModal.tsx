@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import ModalWrapper from "./ModalWrapper";
 import Button from "./Button";
+import DatePicker from "./DatePicker";
 import { ImageIcon } from "lucide-react";
 
 interface AddPhotoModalProps {
@@ -81,12 +82,10 @@ export default function AddPhotoModal({ isOpen, onClose, onAdd }: AddPhotoModalP
 
         <div>
           <label className="block mb-1.5 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Date</label>
-          <input
-            type="date"
+          <DatePicker
             value={logDate}
-            onChange={(e) => setLogDate(e.target.value)}
-            className="input"
-            required
+            onChange={setLogDate}
+            placeholder="Pick a date"
           />
         </div>
 
