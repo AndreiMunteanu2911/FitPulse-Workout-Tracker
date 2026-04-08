@@ -17,7 +17,23 @@ config({ path: resolve(__dirname, "..", ".env.local") });
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY!;
-const OPENROUTER_CHAT_MODEL = process.env.OPENROUTER_CHAT_MODEL ?? "qwen/qwen3.6-plus:free";
+
+// Build fallback chain from env (same as src/lib/ai.ts)
+const CHAT_MODELS = [
+  process.env.OPENROUTER_CHAT_MODEL,
+  process.env.OPENROUTER_FALLBACK_MODEL,
+  process.env.OPENROUTER_FALLBACK_MODEL_2,
+  process.env.OPENROUTER_FALLBACK_MODEL_3,
+  process.env.OPENROUTER_FALLBACK_MODEL_4,
+  process.env.OPENROUTER_FALLBACK_MODEL_5,
+  process.env.OPENROUTER_FALLBACK_MODEL_6,
+  process.env.OPENROUTER_FALLBACK_MODEL_LAST,
+].filter(Boolean) as string[];
+
+if (CHAT_MODELS.length === 0) {
+  console.error("Error: No chat models configured in environment.");
+  process.exit(1);
+}
 
 // MediaPipe Pose 33 landmark reference (the ones we care about for form checking)
 const LANDMARK_REFERENCE = `
@@ -96,30 +112,46 @@ Generate form rules:`;
 }
 
 async function callOpenRouter(messages: { role: string; content: string }[]): Promise<string> {
-  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-      "HTTP-Referer": "http://localhost:3000",
-      "X-Title": "FitPulse Form Rules Generator",
-    },
-    body: JSON.stringify({
-      model: OPENROUTER_CHAT_MODEL,
-      messages,
-      temperature: 0.3,
-      max_tokens: 1024,
-      response_format: { type: "json_object" },
-    }),
-  });
+  let lastErr: Error | null = null;
 
-  if (!res.ok) {
-    const errText = await res.text().catch(() => "");
-    throw new Error(`OpenRouter API ${res.status}: ${errText}`);
+  for (let i = 0; i < CHAT_MODELS.length; i++) {
+    const model = CHAT_MODELS[i];
+    if (i > 0) console.log(`  → Trying fallback: ${model}`);
+
+    try {
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+          "HTTP-Referer": "http://localhost:3000",
+          "X-Title": "FitPulse Form Rules Generator",
+        },
+        body: JSON.stringify({
+          model,
+          messages,
+          temperature: 0.3,
+          max_tokens: 1024,
+          response_format: { type: "json_object" },
+        }),
+      });
+
+      if (!res.ok) {
+        const errText = await res.text().catch(() => "");
+        throw new Error(`API ${res.status}: ${errText}`);
+      }
+
+      const json = await res.json();
+      const content = json.choices?.[0]?.message?.content;
+      if (!content) throw new Error("Empty response");
+      return content;
+    } catch (err) {
+      lastErr = err instanceof Error ? err : new Error(String(err));
+      console.log(`  ✗ Model "${model}" failed: ${lastErr.message}`);
+    }
   }
 
-  const json = await res.json();
-  return json.choices?.[0]?.message?.content ?? "";
+  throw lastErr ?? new Error("All models failed");
 }
 
 function parseJsonResponse(content: string): Record<string, unknown> | null {
@@ -256,19 +288,41 @@ async function main() {
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+  // Fetch ALL exercises without form_rules (paginate in chunks of 1000 due to PostgREST max-rows limit)
   console.log("Fetching exercises without form rules...");
-  const { data: exercises, error } = await supabase
-    .from("exercises")
-    .select("exercise_id, name, target_muscles, body_parts, equipments, instructions")
-    .is("form_rules", null)
-    .limit(5000);
+  const allExercises: Array<{
+    exercise_id: string;
+    name: string;
+    target_muscles?: string[];
+    body_parts?: string[];
+    equipments?: string[];
+    instructions?: string[];
+  }> = [];
 
-  if (error) {
-    console.error("Error fetching exercises:", error);
-    process.exit(1);
+  let offset = 0;
+  const CHUNK = 1000;
+  while (true) {
+    const { data, error } = await supabase
+      .from("exercises")
+      .select("exercise_id, name, target_muscles, body_parts, equipments, instructions")
+      .is("form_rules", null)
+      .range(offset, offset + CHUNK - 1);
+
+    if (error) {
+      console.error("Error fetching exercises:", error);
+      process.exit(1);
+    }
+
+    if (!data || data.length === 0) break;
+    allExercises.push(...data);
+
+    if (data.length < CHUNK) break; // Last chunk
+    offset += CHUNK;
   }
 
-  if (!exercises || exercises.length === 0) {
+  const exercises = allExercises;
+
+  if (exercises.length === 0) {
     console.log("All exercises already have form rules. Nothing to do.");
     process.exit(0);
   }
