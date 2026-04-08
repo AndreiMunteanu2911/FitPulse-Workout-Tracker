@@ -176,6 +176,15 @@ body {
   background: transparent;
 }
 
+/* Hide scrollbar completely (used by NumberPicker) */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* ============================================
    UTILITY CLASSES — Global Source of Truth
    ============================================ */

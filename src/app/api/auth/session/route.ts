@@ -6,10 +6,10 @@ export async function GET() {
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error || !user) return NextResponse.json({ user: null }, { status: 401 });
 
-  // Fetch the user's role from user_stats
-  const { data: roleData } = await supabase
+  // Fetch the user's profile data from user_stats
+  const { data: profileData } = await supabase
     .from("user_stats")
-    .select("role")
+    .select("role, onboarding_done, display_name, birthday, gender, height_cm")
     .eq("user_id", user.id)
     .single();
 
@@ -17,7 +17,12 @@ export async function GET() {
     user: {
       id: user.id,
       email: user.email,
-      role: roleData?.role ?? "client",
+      role: profileData?.role ?? "client",
+      onboarding_done: profileData?.onboarding_done ?? false,
+      display_name: profileData?.display_name ?? null,
+      birthday: profileData?.birthday ?? null,
+      gender: profileData?.gender ?? null,
+      height_cm: profileData?.height_cm ?? null,
     },
   });
 }
