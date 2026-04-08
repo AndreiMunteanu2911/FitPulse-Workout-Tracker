@@ -1,6 +1,7 @@
 import React from "react";
 import Button from "@/components/Button";
 import ModalWrapper from "@/components/ModalWrapper";
+import DatePicker from "@/components/DatePicker";
 import { X } from "lucide-react";
 
 interface AddWeightModalProps {
@@ -44,11 +45,10 @@ const AddWeightModal: React.FC<AddWeightModalProps> = ({
             >
                 <div>
                     <label className="block mb-2 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Date</label>
-                    <input
-                        type="date"
+                    <DatePicker
                         value={initialDate}
-                        onChange={(e) => setDate(e.target.value)}
-                        className="input"
+                        onChange={setDate}
+                        placeholder="Pick a date"
                     />
                 </div>
                 <div>
