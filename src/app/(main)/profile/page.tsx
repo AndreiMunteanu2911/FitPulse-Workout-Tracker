@@ -11,7 +11,10 @@ import ProgressPhotoCard from "@/components/ProgressPhotoCard";
 import AddPhotoModal from "@/components/AddPhotoModal";
 import ToggleSwitch from "@/components/ToggleSwitch";
 import WorkoutCalendar from "@/components/WorkoutCalendar";
+import NumberPicker from "@/components/NumberPicker";
+import ModalWrapper from "@/components/ModalWrapper";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { useWeightLogs } from "@/hooks/useWeightLogs";
 import { useProgressPhotos } from "@/hooks/useProgressPhotos";
 import type { User, WeightLog, ProgressPhoto } from "@/types";
@@ -26,11 +29,163 @@ import {
   Moon,
   Sun,
   Zap,
+  Ruler,
+  Pencil,
+  X,
+  Save,
+  Loader2,
+  Heart,
 } from "lucide-react";
+
+function formatDate(dateStr: string | null): string {
+  if (!dateStr) return "N/A";
+  try {
+    return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  } catch {
+    return "N/A";
+  }
+}
+
+function calcAge(birthday: string | null): number | null {
+  if (!birthday) return null;
+  const birth = new Date(birthday);
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+}
+
+function bmi(weightKg: number | null, heightCm: number | null): number | null {
+  if (!weightKg || !heightCm || heightCm === 0) return null;
+  const hm = heightCm / 100;
+  return Math.round((weightKg / (hm * hm)) * 10) / 10;
+}
+
+// ── Edit Profile Modal ────────────────────────────────────────────────────────
+
+interface EditProfileModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  initialName: string;
+  initialGender: "male" | "female" | "other" | null;
+  initialBirthday: string | null;
+  initialHeight: number | null;
+  onSave: (data: {
+    display_name: string;
+    gender: "male" | "female" | "other" | null;
+    birthday: string | null;
+    height_cm: number | null;
+  }) => Promise<boolean>;
+}
+
+function EditProfileModal({
+  isOpen,
+  onClose,
+  initialName,
+  initialGender,
+  initialBirthday,
+  initialHeight,
+  onSave,
+}: EditProfileModalProps) {
+  const [name, setName] = useState(initialName);
+  const [gender, setGender] = useState<"male" | "female" | "other" | null>(initialGender);
+  const [height, setHeight] = useState(initialHeight ?? 170);
+  const [saving, setSaving] = useState(false);
+  const [birthday, setBirthday] = useState(initialBirthday ?? "");
+
+  useEffect(() => {
+    if (isOpen) {
+      setName(initialName);
+      setGender(initialGender);
+      setHeight(initialHeight ?? 170);
+      setBirthday(initialBirthday ?? "");
+    }
+  }, [isOpen, initialName, initialGender, initialHeight, initialBirthday]);
+
+  const handleSave = async () => {
+    if (!name.trim()) return;
+    setSaving(true);
+    const success = await onSave({
+      display_name: name.trim(),
+      gender,
+      birthday: birthday || null,
+      height_cm: height,
+    });
+    setSaving(false);
+    if (success) onClose();
+  };
+
+  return (
+    <ModalWrapper isOpen={isOpen} onClose={onClose} containerClassName="max-w-md p-6 max-h-[90vh] overflow-y-auto">
+      <button className="absolute top-3 right-3 w-8 h-8 rounded-full hover:bg-[var(--surface-raised)] flex items-center justify-center" onClick={onClose}>
+        <X className="w-4 h-4" />
+      </button>
+      <h2 className="text-lg font-bold text-[var(--foreground)] mb-5">Edit Profile</h2>
+
+      <div className="space-y-4">
+        <div>
+          <label className="block mb-1.5 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Full Name</label>
+          <input
+            className="input"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Your name"
+          />
+        </div>
+
+        <div>
+          <label className="block mb-1.5 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Gender</label>
+          <div className="flex gap-2">
+            {(["male", "female", "other"] as const).map((g) => (
+              <button
+                key={g}
+                onClick={() => setGender(g)}
+                className={`flex-1 py-2 rounded-lg text-sm font-semibold capitalize transition-colors ${
+                  gender === g
+                    ? "bg-[var(--primary-500)] text-white"
+                    : "bg-[var(--surface-raised)] text-[var(--muted-foreground)]"
+                }`}
+              >
+                {g}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="block mb-1.5 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Birthday</label>
+          <input
+            className="input"
+            type="date"
+            value={birthday}
+            onChange={(e) => setBirthday(e.target.value)}
+          />
+        </div>
+
+        <div>
+          <label className="block mb-1.5 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">
+            Height (cm) — {height} cm
+          </label>
+          <div className="bg-[var(--surface-raised)] rounded-lg p-2">
+            <NumberPicker value={height} onChange={setHeight} min={120} max={220} height={160} />
+          </div>
+        </div>
+
+        <Button onClick={handleSave} disabled={saving || !name.trim()} block>
+          {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : <><Save className="w-4 h-4 mr-2" /> Save</>}
+        </Button>
+      </div>
+    </ModalWrapper>
+  );
+}
+
+// ── Profile Page ──────────────────────────────────────────────────────────────
 
 export default function ProfilePage() {
     const router = useRouter();
     const { logout, getSession } = useAuth();
+    const { profile, fetchProfile, updateProfile } = useUserProfile();
     const { fetchWeights, addWeight, deleteWeight } = useWeightLogs();
     const { fetchProgressPhotos, addProgressPhoto, deleteProgressPhoto } = useProgressPhotos();
 
@@ -43,9 +198,9 @@ export default function ProfilePage() {
     const [loading, setLoading] = useState(true);
     const [showWeightModal, setShowWeightModal] = useState(false);
     const [showPhotoModal, setShowPhotoModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
     const [darkMode, setDarkMode] = useState(false);
 
-    // Delete confirmation modal state
     const [deleteTarget, setDeleteTarget] = useState<{ type: "weight" | "photo"; id: string; name: string } | null>(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
 
@@ -66,7 +221,8 @@ export default function ProfilePage() {
     useEffect(() => {
         const getUser = async () => {
             const userData = await getSession();
-            if (userData) setUser({ id: userData.id ?? "", email: userData.email ?? "" });
+            if (userData) setUser({ id: userData.id ?? "", email: userData.email ?? "", ...userData });
+            await fetchProfile();
         };
         getUser();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -154,8 +310,13 @@ export default function ProfilePage() {
         }
     };
 
-    const userEmail = user?.email ?? "";
-    const userInitial = userEmail[0]?.toUpperCase() ?? "?";
+    const displayName = profile?.display_name || user?.email?.split("@")[0] || "User";
+    const displayEmail = user?.email ?? "";
+    const age = calcAge(profile?.birthday ?? null);
+    // Latest weight from weight_logs
+    const latestWeight = weights.length > 0 ? weights[weights.length - 1].weight : null;
+    const bmiValue = bmi(latestWeight, profile?.height_cm ?? null);
+    const userInitial = displayName[0]?.toUpperCase() ?? "?";
 
     if (loading) {
         return (
@@ -164,7 +325,6 @@ export default function ProfilePage() {
                     <div className="page-header mb-5">
                         <h1 className="hidden md:block text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight" style={{ fontFamily: "var(--font-poppins)" }}>Profile</h1>
                     </div>
-                    {/* Purple header skeleton */}
                     <div className="bg-gradient-to-br from-[var(--primary-600)] to-[var(--primary-400)] rounded-[var(--radius-lg)] p-5 mb-5 animate-pulse">
                         <div className="flex items-center gap-4">
                             <div className="w-14 h-14 rounded-full bg-white/20" />
@@ -174,7 +334,6 @@ export default function ProfilePage() {
                             </div>
                         </div>
                     </div>
-                    {/* Settings cards skeleton */}
                     <div className="space-y-5">
                         {[1, 2, 3, 4].map((i) => (
                             <div key={i} className="bg-[var(--surface)] rounded-[var(--radius-lg)] p-5 animate-pulse">
@@ -198,17 +357,43 @@ export default function ProfilePage() {
             <div className="w-full">
                 {/* Page header */}
                 <div className="page-header mb-5">
-                    <h1 className="hidden md:block text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight" style={{ fontFamily: "var(--font-poppins)" }}>Profile</h1>
+                    <h1 className="hidden md:block text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight" style={{ fontFamily: "var(--font-poppins)" }}>My Profile</h1>
                 </div>
 
                 {/* ── User Info Card — purple gradient ── */}
-                <div className="bg-gradient-to-br from-[var(--primary-600)] to-[var(--primary-400)] rounded-[var(--radius-lg)] p-5 mb-5">
-                    <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center text-white text-xl font-extrabold flex-shrink-0">
+                <div className="bg-gradient-to-br from-[var(--primary-600)] to-[var(--primary-400)] rounded-[var(--radius-lg)] p-5 mb-5 relative">
+                    <button
+                        onClick={() => setShowEditModal(true)}
+                        className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                        title="Edit profile"
+                    >
+                        <Pencil className="w-4 h-4 text-white" />
+                    </button>
+
+                    <div className="flex flex-col items-center text-center">
+                        <div className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center text-white text-2xl font-extrabold mb-3 overflow-hidden">
                             {userInitial}
                         </div>
-                        <div className="flex-1 min-w-0">
-                            <p className="text-base font-bold text-white truncate">{userEmail || "Loading..."}</p>
+                        <p className="text-lg font-bold text-white">{displayName}</p>
+                        <p className="text-xs text-white/60">{displayEmail}</p>
+                        {profile?.birthday && (
+                            <p className="text-xs text-white/40 mt-0.5">Birthday: {formatDate(profile.birthday)}</p>
+                        )}
+                    </div>
+
+                    {/* Stats row */}
+                    <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-white/20">
+                        <div className="text-center">
+                            <p className="text-sm font-bold text-white">{latestWeight ?? "—"} <span className="text-xs font-normal text-white/60">kg</span></p>
+                            <p className="text-xs text-white/50">Weight</p>
+                        </div>
+                        <div className="text-center border-x border-white/20">
+                            <p className="text-sm font-bold text-white">{age ?? "—"} <span className="text-xs font-normal text-white/60">yrs</span></p>
+                            <p className="text-xs text-white/50">Age</p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-sm font-bold text-white">{profile?.height_cm ?? "—"} <span className="text-xs font-normal text-white/60">cm</span></p>
+                            <p className="text-xs text-white/50">Height</p>
                         </div>
                     </div>
                 </div>
@@ -344,6 +529,26 @@ export default function ProfilePage() {
                     isOpen={showPhotoModal}
                     onClose={() => setShowPhotoModal(false)}
                     onAdd={handleAddPhoto}
+                />
+
+                <EditProfileModal
+                    isOpen={showEditModal}
+                    onClose={() => setShowEditModal(false)}
+                    initialName={profile?.display_name ?? user?.email?.split("@")[0] ?? ""}
+                    initialGender={profile?.gender ?? null}
+                    initialBirthday={profile?.birthday ?? null}
+                    initialHeight={profile?.height_cm ?? null}
+                    onSave={async (data) => {
+                        const ok = await updateProfile(data);
+                        if (ok) {
+                            const res = await fetch("/api/auth/session");
+                            if (res.ok) {
+                                const json = await res.json();
+                                setUser(json.user);
+                            }
+                        }
+                        return ok;
+                    }}
                 />
 
                 <ConfirmDeleteModal
