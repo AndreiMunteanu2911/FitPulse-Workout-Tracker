@@ -1,30 +1,49 @@
 'use client'
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
+// Pages that don't require authentication
+const PUBLIC_PAGES = ["/login", "/signup", "/"];
+// Pages that don't require onboarding
+const ONBOARDING_EXEMPT = ["/onboarding"];
+
 export default function ProtectedWrapper({ children }: { children: React.ReactNode }) {
+    const [ready, setReady] = useState(false);
     const [authenticated, setAuthenticated] = useState(false);
-    const [loading, setLoading] = useState(true);
+    const [onboardingDone, setOnboardingDone] = useState(true);
     const router = useRouter();
+    const pathname = usePathname();
 
     useEffect(() => {
         const checkSession = async () => {
             const res = await fetch("/api/auth/session");
-            setAuthenticated(res.ok);
-            setLoading(false);
+            if (!res.ok) {
+                setAuthenticated(false);
+                setReady(true);
+                return;
+            }
+            const json = await res.json();
+            setAuthenticated(true);
+            setOnboardingDone(json.user?.onboarding_done ?? true);
+            setReady(true);
         };
         checkSession();
     }, []);
 
     useEffect(() => {
-        if (!loading && !authenticated) {
-            router.push("/login");
+        if (!ready) return;
+        if (!authenticated && !PUBLIC_PAGES.includes(pathname ?? "")) {
+            router.replace("/login");
+            return;
         }
-    }, [loading, authenticated, router]);
+        if (authenticated && !onboardingDone && !ONBOARDING_EXEMPT.some(p => pathname === p || pathname?.startsWith(p + "/"))) {
+            router.replace("/onboarding/gender");
+        }
+    }, [ready, authenticated, onboardingDone, pathname, router]);
 
-    if (loading) {
+    if (!ready) {
         return (
             <div className="flex justify-center items-center min-h-screen w-full text-center">
                 <LoadingSpinner size={10} />
@@ -32,7 +51,7 @@ export default function ProtectedWrapper({ children }: { children: React.ReactNo
         );
     }
 
-    if (!authenticated) {
+    if (!authenticated && !PUBLIC_PAGES.includes(pathname ?? "")) {
         return null;
     }
 

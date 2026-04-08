@@ -10,7 +10,13 @@ interface WeightHistoryChartProps {
 }
 
 const WeightHistoryChart: React.FC<WeightHistoryChartProps> = ({ weights, loading, onDelete }) => {
-    const chartData = weights.map(w => ({ ...w, log_date: new Date(w.log_date).getTime() }));
+    // Format dates as readable strings for categorical XAxis (avoids Recharts time-scale key collision)
+    const chartData = weights.map((w, i) => ({
+        ...w,
+        dateStr: new Date(w.log_date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+        // Ensure unique key for each point
+        chartKey: `${w.log_date}-${i}`,
+    }));
 
     return (
         <div className="w-full">
@@ -32,18 +38,12 @@ const WeightHistoryChart: React.FC<WeightHistoryChartProps> = ({ weights, loadin
                             <LineChart data={chartData} margin={{ left: 0, right: 10, top: 8, bottom: 8 }}>
                                 <CartesianGrid stroke="var(--border)" strokeDasharray="4 4" />
                                 <XAxis
-                                    dataKey="log_date"
-                                    scale="time"
-                                    type="number"
-                                    domain={['auto', 'auto']}
-                                    tickFormatter={(val) => {
-                                        const d = new Date(val);
-                                        if (isNaN(d.getTime())) return '';
-                                        return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
-                                    }}
+                                    dataKey="chartKey"
+                                    tickFormatter={(_val, idx) => chartData[idx]?.dateStr ?? ""}
                                     tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
                                     axisLine={{ stroke: 'var(--border)' }}
                                     tickLine={false}
+                                    interval="preserveStartEnd"
                                 />
                                 <YAxis
                                     dataKey="weight"
