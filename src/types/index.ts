@@ -2,6 +2,12 @@ export interface User {
   id: string;
   email: string;
   created_at?: string;
+  role?: string;
+  onboarding_done?: boolean;
+  display_name?: string | null;
+  birthday?: string | null;
+  gender?: "male" | "female" | "other" | null;
+  height_cm?: number | null;
 }
 
 export interface Exercise {
