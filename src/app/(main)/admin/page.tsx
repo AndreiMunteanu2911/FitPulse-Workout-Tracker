@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Dumbbell, Users, LayoutTemplate, BarChart3, Shield } from "lucide-react";
+import { Dumbbell, Users, LayoutTemplate, BarChart3, Shield, Brain } from "lucide-react";
 import Skeleton from "react-loading-skeleton";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminStatCard from "@/components/admin/AdminStatCard";
@@ -18,6 +18,7 @@ interface AdminStats {
 
 const adminLinks = [
   { href: "/admin/exercises", title: "Exercises", desc: "Manage the standard exercise catalogue", icon: Dumbbell, color: "bg-[var(--primary-500)]" },
+  { href: "/admin/form-rules", title: "Form Rules", desc: "Review AI-generated form checking rules", icon: Brain, color: "bg-violet-500" },
   { href: "/admin/users", title: "Users", desc: "View and manage user accounts and roles", icon: Users, color: "bg-[var(--primary-600)]" },
   { href: "/admin/templates", title: "Templates", desc: "Create and edit official workout templates", icon: LayoutTemplate, color: "bg-[var(--primary-700)]" },
   { href: "/admin/analytics", title: "Analytics", desc: "Platform-wide usage metrics and charts", icon: BarChart3, color: "bg-[var(--primary-400)]" },

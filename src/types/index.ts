@@ -16,6 +16,25 @@ export interface Exercise {
   description?: string;
   created_at?: string;
   is_custom?: boolean;
+  form_rules?: ExerciseFormRules | null;
+}
+
+export interface ExerciseFormRules {
+  rules: Array<{
+    name: string;
+    landmarks: number[];
+    description: string;
+    phase: "eccentric" | "concentric" | "both";
+    min: number;
+    max: number;
+    cue: string;
+  }>;
+  tempo?: {
+    eccentricSeconds: number;
+    pauseSeconds: number;
+    concentricSeconds: number;
+  };
+  applicable?: boolean;
 }
 
 export interface Set {

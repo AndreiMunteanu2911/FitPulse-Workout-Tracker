@@ -10,8 +10,9 @@ import { useExercises } from "@/hooks/useExercises";
 import { usePersonalRecords } from "@/hooks/usePersonalRecords";
 import PersonalRecordCard from "@/components/PersonalRecordCard";
 import ExerciseStatsTab from "@/components/ExerciseStatsTab";
-import type { Exercise, PersonalRecord } from "@/types";
-import { ChevronLeft, Sparkles } from "lucide-react";
+import FormChecker from "@/components/FormChecker";
+import type { Exercise, PersonalRecord, ExerciseFormRules } from "@/types";
+import { ChevronLeft, Sparkles, Camera } from "lucide-react";
 
 function ExerciseThumbnail({ src }: { src: string }) {
     const [loaded, setLoaded] = useState(false);
@@ -36,6 +37,7 @@ export default function ExerciseDetailsPage() {
     const [personalRecord, setPersonalRecord] = useState<PersonalRecord | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<"description" | "stats">("description");
+    const [showFormChecker, setShowFormChecker] = useState(false);
     const { fetchExercise } = useExercises();
     const { fetchPersonalRecords } = usePersonalRecords();
 
@@ -240,7 +242,35 @@ export default function ExerciseDetailsPage() {
                         <ExerciseStatsTab exerciseId={id as string} />
                     </div>
                 )}
+
+                {/* Check My Form Button — shown in description tab for non-custom exercises */}
+                {activeTab === "description" && !exercise.is_custom && (
+                    <div className="mb-6">
+                        <button
+                            onClick={() => setShowFormChecker(true)}
+                            className="w-full p-4 rounded-lg bg-gradient-to-r from-violet-500/10 to-blue-500/10 border border-violet-500/20 hover:border-violet-500/40 transition-colors text-left flex items-center gap-3"
+                        >
+                            <div className="w-10 h-10 rounded-full bg-violet-500/20 flex items-center justify-center flex-shrink-0">
+                                <Camera className="w-5 h-5 text-violet-400" />
+                            </div>
+                            <div>
+                                <p className="font-semibold text-[var(--foreground)]">Check My Form</p>
+                                <p className="text-xs text-[var(--muted-foreground)]">Use your camera to get real-time form feedback</p>
+                            </div>
+                        </button>
+                    </div>
+                )}
             </div>
+
+            {/* Full-screen Form Checker */}
+            {showFormChecker && (
+                <FormChecker
+                    exerciseId={exercise.exercise_id}
+                    exerciseName={exercise.name}
+                    formRules={(exercise as Exercise & { form_rules?: ExerciseFormRules | null }).form_rules ?? null}
+                    onClose={() => setShowFormChecker(false)}
+                />
+            )}
         </ProtectedWrapper>
     );
 }
