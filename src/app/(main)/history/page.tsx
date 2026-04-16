@@ -6,10 +6,11 @@ import Skeleton from "react-loading-skeleton";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import WorkoutHistoryCard from "@/components/WorkoutHistoryCard";
 import ModalWrapper from "@/components/ModalWrapper";
+import ShareWorkoutModal from "@/components/ShareWorkoutModal";
 import Button from "@/components/Button";
 import { useHistory } from "@/hooks/useHistory";
 import type { Workout } from "@/types";
-import { Clock, PenSquare, Trash2, Plus } from "lucide-react";
+import { Clock, PenSquare, Trash2, Plus, Share2 } from "lucide-react";
 
 function computePrCountsPerWorkout(workouts: Workout[]): Map<string, number> {
     const sorted = [...workouts].sort(
@@ -47,8 +48,11 @@ export default function HistoryPage() {
     const [deleteTarget, setDeleteTarget] = useState<Workout | null>(null);
     const [deleting, setDeleting] = useState(false);
 
+    const [shareTarget, setShareTarget] = useState<Workout | null>(null);
+    const [sharing, setSharing] = useState(false);
+
     const renameInputRef = useRef<HTMLInputElement>(null);
-    const { fetchHistory, renameWorkout, deleteWorkout } = useHistory();
+    const { fetchHistory, renameWorkout, deleteWorkout, shareWorkout } = useHistory();
 
     useEffect(() => {
         fetchWorkoutHistory();
@@ -100,6 +104,20 @@ export default function HistoryPage() {
         } catch {
             setWorkouts(prev);
             setErrorMessages({ general: "Failed to delete workout." });
+        }
+    };
+
+    const handleShare = async () => {
+        if (!shareTarget) return;
+        setSharing(true);
+        try {
+            await shareWorkout(shareTarget.id);
+            setShareTarget(null);
+            router.push("/social");
+        } catch {
+            setErrorMessages({ general: "Failed to share workout." });
+        } finally {
+            setSharing(false);
         }
     };
 
@@ -196,6 +214,13 @@ export default function HistoryPage() {
                                 </button>
                                 <div className="flex flex-col gap-1.5 justify-center flex-shrink-0">
                                     <button
+                                        aria-label="Share workout"
+                                        onClick={() => setShareTarget(workout)}
+                                        className="w-9 h-9 rounded-[var(--radius-sm)] flex items-center justify-center bg-[var(--surface)] text-[var(--muted-foreground)] hover:text-[var(--lime-green)] transition-all"
+                                    >
+                                        <Share2 className="w-4 h-4" />
+                                    </button>
+                                    <button
                                         aria-label="Rename workout"
                                         onClick={() => { setRenameTarget(workout); setRenameValue(workout.name); }}
                                         className="w-9 h-9 rounded-[var(--radius-sm)] flex items-center justify-center bg-[var(--surface)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-all"
@@ -249,6 +274,15 @@ export default function HistoryPage() {
                     </Button>
                 </div>
             </ModalWrapper>
+
+            {/* Share Modal */}
+            <ShareWorkoutModal
+                isOpen={!!shareTarget}
+                workoutName={shareTarget?.name}
+                onClose={() => setShareTarget(null)}
+                onConfirm={handleShare}
+                isSharing={sharing}
+            />
         </ProtectedWrapper>
     );
 }

@@ -100,8 +100,8 @@ export default function NumberPicker({
         style={{
           top: (height - ITEM_HEIGHT) / 2,
           height: ITEM_HEIGHT,
-          borderTop: "2px solid rgba(198, 255, 0, 0.3)",
-          borderBottom: "2px solid rgba(198, 255, 0, 0.3)",
+          borderTop: "2px solid color-mix(in srgb, var(--lime-green) 30%, transparent)",
+          borderBottom: "2px solid color-mix(in srgb, var(--lime-green) 30%, transparent)",
         }}
       />
 
@@ -123,10 +123,13 @@ export default function NumberPicker({
           return (
             <div
               key={v}
-              className={`flex items-center justify-center snap-center select-none transition-all ${
-                isActive ? "text-white text-4xl font-extrabold" : "text-white/30 text-xl font-medium"
-              }`}
-              style={{ height: ITEM_HEIGHT }}
+              className="flex items-center justify-center"
+              style={{
+                height: ITEM_HEIGHT,
+                color: isActive ? "var(--foreground)" : "var(--muted-foreground)",
+                fontSize: isActive ? "1.5rem" : "1.25rem",
+                fontWeight: isActive ? 800 : 500,
+              }}
             >
               {v}
             </div>

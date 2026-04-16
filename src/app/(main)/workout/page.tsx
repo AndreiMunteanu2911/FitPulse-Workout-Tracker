@@ -334,7 +334,7 @@ export default function WorkoutPage() {
         }
     };
 
-    const finishWorkout = async () => {
+    const finishWorkout = async (shareToFeed = false) => {
         if (!workoutId) return;
 
         // Optimistic: clear UI and redirect immediately
@@ -353,6 +353,13 @@ export default function WorkoutPage() {
         try {
             await saveWorkoutToDB();
             await updateWorkout(finishingWorkoutId, { status: "completed" });
+            if (shareToFeed) {
+                await fetch("/api/social/posts", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ workout_id: finishingWorkoutId }),
+                });
+            }
         } catch (error) {
             console.error("Error finishing workout:", error);
             setErrorMessages((prev) => ({ ...prev, general: "Failed to finish workout." }));
@@ -788,9 +795,9 @@ export default function WorkoutPage() {
                         <FinishWorkoutModal
                             isOpen={isFinishModalOpen}
                             onClose={() => setIsFinishModalOpen(false)}
-                            onConfirm={() => {
+                            onConfirm={(shareToFeed) => {
                                 setIsFinishModalOpen(false);
-                                finishWorkout();
+                                finishWorkout(shareToFeed);
                             }}
                         />
                         <DiscardSetsModal
