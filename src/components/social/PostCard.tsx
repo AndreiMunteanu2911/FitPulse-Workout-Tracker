@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { Post, PostComment } from "@/types";
-import { Heart, MessageCircle, User, ChevronDown, Send } from "lucide-react";
+import { Heart, MessageCircle, User, Send, Maximize2 } from "lucide-react";
 import PostWorkoutCard from "./PostWorkoutCard";
+import ImageModal from "../ImageModal";
 import { useSocial } from "@/hooks/useSocial";
 
 interface PostCardProps {
@@ -42,6 +43,7 @@ export default function PostCard({ post, onLike }: PostCardProps) {
   const [commentText, setCommentText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showCommentInput, setShowCommentInput] = useState(false);
+  const [expandedImage, setExpandedImage] = useState<string | null>(null);
 
   const displayName = post.user_stats?.display_name || "Unknown User";
   const initials = getInitials(displayName);
@@ -100,12 +102,18 @@ export default function PostCard({ post, onLike }: PostCardProps) {
         )}
 
         {post.image_url && (
-          <div className="rounded-[var(--radius-md)] overflow-hidden mb-3">
+          <div className="rounded-[var(--radius-md)] overflow-hidden mb-3 relative">
             <img
               src={post.image_url}
               alt="Post image"
               className="w-full object-cover max-h-80"
             />
+            <button
+              onClick={() => setExpandedImage(post.image_url)}
+              className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors"
+            >
+              <Maximize2 className="w-4 h-4" />
+            </button>
           </div>
         )}
 
@@ -206,6 +214,12 @@ export default function PostCard({ post, onLike }: PostCardProps) {
           </button>
         )}
       </div>
+
+      <ImageModal
+        isOpen={!!expandedImage}
+        imageUrl={expandedImage || ""}
+        onClose={() => setExpandedImage(null)}
+      />
     </div>
   );
 }
