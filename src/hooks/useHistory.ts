@@ -33,5 +33,16 @@ export function useHistory() {
     return data;
   };
 
-  return { fetchHistory, fetchWorkoutDetail, renameWorkout, deleteWorkout };
+  const shareWorkout = async (workoutId: string) => {
+    const res = await fetch("/api/social/posts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ workout_id: workoutId }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to share workout");
+    return data.post;
+  };
+
+  return { fetchHistory, fetchWorkoutDetail, renameWorkout, deleteWorkout, shareWorkout };
 }

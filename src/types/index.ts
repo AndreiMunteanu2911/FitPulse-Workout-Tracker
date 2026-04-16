@@ -182,11 +182,10 @@ export interface Post {
   user_id: string;
   content?: string | null;
   image_url?: string | null;
-  workout_id?: string | null;
+  workout_summary?: string | null;
   created_at?: string;
   updated_at?: string;
   user_stats?: { display_name: string | null };
-  workout?: Workout | null;
   post_likes?: PostLike[];
   post_comments?: PostComment[];
   likes_count?: number;

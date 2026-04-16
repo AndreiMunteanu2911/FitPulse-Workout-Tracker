@@ -8,12 +8,30 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("friendships")
-    .select("*, user_stats!friendships_user_id_fkey(display_name), friend_stats:user_stats!friendships_friend_id_fkey(display_name)")
+    .select("*")
     .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json({ friendships: data || [] });
+  const friendships = data || [];
+
+  const userIds = [...new Set(friendships.flatMap((f) => [f.user_id, f.friend_id]))] as string[];
+  const userStatsMap = new Map<string, { display_name: string | null }>();
+  if (userIds.length > 0) {
+    const { data: userStats } = await supabase
+      .from("user_stats")
+      .select("user_id, display_name")
+      .in("user_id", userIds);
+    userStats?.forEach((stat) => userStatsMap.set(stat.user_id, stat));
+  }
+
+  const enriched = friendships.map((f) => ({
+    ...f,
+    user_stats: userStatsMap.get(f.user_id) ?? { display_name: null },
+    friend_stats: userStatsMap.get(f.friend_id) ?? { display_name: null },
+  }));
+
+  return NextResponse.json({ friendships: enriched });
 }
 
 export async function POST(req: NextRequest) {

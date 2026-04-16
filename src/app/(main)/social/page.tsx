@@ -133,7 +133,7 @@ export default function SocialPage() {
             <Users className="w-4 h-4" />
             Friends
             {pendingCount > 0 && (
-              <span className="absolute top-1 right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold px-1">
+              <span className="absolute -top-1 -right-1 min-w-[20px] h-[20px] flex items-center justify-center rounded-full bg-[var(--lime-green)] text-black text-[10px] font-bold px-1">
                 {pendingCount}
               </span>
             )}
