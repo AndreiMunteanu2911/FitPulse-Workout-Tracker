@@ -18,7 +18,7 @@ export default function SocialPage() {
   const [loadingFeed, setLoadingFeed] = useState(true);
   const [loadingFriends, setLoadingFriends] = useState(true);
   const [showCreatePost, setShowCreatePost] = useState(false);
-  const { fetchFeed, fetchFriendships, createPost, toggleLike } = useSocial();
+  const { fetchFeed, fetchFriendships, createPost, toggleLike, deletePost } = useSocial();
 
   const loadFeed = useCallback(async () => {
     setLoadingFeed(true);
@@ -80,6 +80,11 @@ export default function SocialPage() {
   const handleCreatePost = async (payload: { content?: string; image?: File; workout_id?: string }) => {
     const post = await createPost(payload);
     setPosts((prev) => [post, ...prev]);
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    await deletePost(postId);
+    setPosts((prev) => prev.filter((p) => p.id !== postId));
   };
 
   const pendingCount = friendships.filter(
@@ -178,7 +183,7 @@ export default function SocialPage() {
             ) : (
               <div className="space-y-4">
                 {posts.map((post) => (
-                  <PostCard key={post.id} post={post} onLike={handleLike} />
+                  <PostCard key={post.id} post={post} onLike={handleLike} onDelete={handleDeletePost} currentUserId={currentUserId} />
                 ))}
               </div>
             )}

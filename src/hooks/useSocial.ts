@@ -101,6 +101,22 @@ export function useSocial() {
     return { comments: data.comments || [], total: data.total || 0 };
   };
 
+  const deletePost = async (postId: string): Promise<void> => {
+    const res = await fetch(`/api/social/posts/${postId}`, { method: "DELETE" });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || "Failed to delete post");
+    }
+  };
+
+  const deleteComment = async (commentId: string): Promise<void> => {
+    const res = await fetch(`/api/social/comments/${commentId}`, { method: "DELETE" });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || "Failed to delete comment");
+    }
+  };
+
   return {
     fetchFeed,
     fetchFriendships,
@@ -111,5 +127,7 @@ export function useSocial() {
     toggleLike,
     addComment,
     fetchComments,
+    deletePost,
+    deleteComment,
   };
 }
