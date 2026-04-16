@@ -148,7 +148,7 @@ export function checkSpinalAlignment(landmarks: NormalizedLandmark[]): number {
 export function detectCameraAngle(
   landmarks: NormalizedLandmark[],
   overlapThreshold = 0.08,
-): "good" | "front" | "back" | "too-far" | "not-detected" {
+): "good" | "front-view" | "back-view" | "too-far" | "not-detected" {
   const lShoulder = landmarks[11];
   const rShoulder = landmarks[12];
   const lHip = landmarks[23];
@@ -165,9 +165,9 @@ export function detectCameraAngle(
     const nose = landmarks[0];
     const shoulderMidX = (lShoulder.x + rShoulder.x) / 2;
     if (nose && Math.abs(nose.x - shoulderMidX) < overlapThreshold) {
-      return "front";
+      return "front-view";
     }
-    return "back";
+    return "back-view";
   }
 
   // Check if body is too small in frame (too far from camera)
@@ -183,6 +183,7 @@ interface TempoState {
   phaseStartTime: number;
   lastRepCount: number;
   repTimestamps: number[];
+  lastWasInRange: boolean;
 }
 
 /**
@@ -198,6 +199,7 @@ export class TempoTracker {
       phaseStartTime: performance.now(),
       lastRepCount: 0,
       repTimestamps: [],
+      lastWasInRange: false,
     };
   }
 
@@ -207,13 +209,16 @@ export class TempoTracker {
    */
   checkRep(angle: number, minAngle: number, maxAngle: number): boolean {
     const now = performance.now();
-    if (now - this.state.phaseStartTime < this.thresholdWindow) return false;
 
-    // Simple: count when angle goes from outside range to inside range
-    const wasInRange = this.isInRange(this.state.lastRepCount > 0 ? 0 : 0, minAngle, maxAngle);
-    const isInRange = this.isInRange(angle, minAngle, maxAngle);
+    // Track whether the angle was in range on the previous frame
+    const wasInRange = this.state.lastWasInRange;
+    const inRange = this.isInRange(angle, minAngle, maxAngle);
 
-    if (!wasInRange && isInRange) {
+    // Always update the previous-frame state
+    this.state.lastWasInRange = inRange;
+
+    // Count a rep when transitioning from outside → inside range, respecting cooldown
+    if (!wasInRange && inRange && now - this.state.phaseStartTime >= this.thresholdWindow) {
       this.state.lastRepCount++;
       this.state.repTimestamps.push(now);
       this.state.phaseStartTime = now;
@@ -250,6 +255,7 @@ export class TempoTracker {
       phaseStartTime: performance.now(),
       lastRepCount: 0,
       repTimestamps: [],
+      lastWasInRange: false,
     };
   }
 }

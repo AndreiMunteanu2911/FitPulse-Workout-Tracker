@@ -9,7 +9,7 @@
 
 import { config } from "dotenv";
 import { resolve } from "path";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 // Load .env.local from project root
 config({ path: resolve(__dirname, "..", ".env.local") });
@@ -215,7 +215,8 @@ async function processExercise(
     equipments?: string[];
     instructions?: string[];
   },
-  supabase: ReturnType<typeof createClient>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: SupabaseClient<any, any, any>,
   index: number,
   total: number,
 ): Promise<"success" | "skipped" | "failed"> {
