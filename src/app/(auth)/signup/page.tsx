@@ -21,7 +21,7 @@ export default function SignUpPage() {
 
     const validate = (): boolean => {
         const e: Record<string, string> = {};
-        if (!fullName.trim()) e.fullName = "Name is required";
+        if (!fullName.trim()) e.fullName = "Display name is required";
         if (!email.includes("@")) e.email = "Invalid email";
         if (password.length < 6) e.password = "At least 6 characters";
         if (password !== confirmPassword) e.confirmPassword = "Passwords do not match";
@@ -75,7 +75,7 @@ export default function SignUpPage() {
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-xs font-semibold uppercase tracking-widest text-white/60 mb-1.5">Full Name</label>
+                        <label className="block text-xs font-semibold uppercase tracking-widest text-white/60 mb-1.5">Display Name</label>
                         <input
                             value={fullName}
                             onChange={(e) => setFullName(e.target.value)}

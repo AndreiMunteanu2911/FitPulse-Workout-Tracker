@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import type { Post } from "@/types";
-import { Heart, MessageCircle, User } from "lucide-react";
-import PostWorkoutSummary from "./PostWorkoutSummary";
+import { useState, useEffect } from "react";
+import type { Post, PostComment } from "@/types";
+import { Heart, MessageCircle, User, ChevronDown, Send } from "lucide-react";
+import PostWorkoutCard from "./PostWorkoutCard";
+import { useSocial } from "@/hooks/useSocial";
 
 interface PostCardProps {
   post: Post;
@@ -22,15 +23,28 @@ function timeAgo(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-export default function PostCard({ post, onLike }: PostCardProps) {
-  const [liking, setLiking] = useState(false);
-  const displayName = post.user_stats?.display_name || "Unknown User";
-  const initials = displayName
+function getInitials(name: string): string {
+  return name
     .split(" ")
     .map((n) => n[0])
     .join("")
     .toUpperCase()
     .slice(0, 2);
+}
+
+export default function PostCard({ post, onLike }: PostCardProps) {
+  const { addComment, fetchComments } = useSocial();
+  const [liking, setLiking] = useState(false);
+  const [comments, setComments] = useState<PostComment[]>(post.post_comments || []);
+  const [totalComments, setTotalComments] = useState(post.comments_count || 0);
+  const [visibleCount, setVisibleCount] = useState(3);
+  const [showComments, setShowComments] = useState(true);
+  const [commentText, setCommentText] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [showCommentInput, setShowCommentInput] = useState(false);
+
+  const displayName = post.user_stats?.display_name || "Unknown User";
+  const initials = getInitials(displayName);
 
   const handleLike = async () => {
     if (liking) return;
@@ -41,6 +55,32 @@ export default function PostCard({ post, onLike }: PostCardProps) {
       setLiking(false);
     }
   };
+
+  const handleAddComment = async () => {
+    if (!commentText.trim() || submitting) return;
+    setSubmitting(true);
+    try {
+      const newComment = await addComment(post.id, commentText.trim());
+      setComments((prev) => [...prev, newComment]);
+      setTotalComments((prev) => prev + 1);
+      setCommentText("");
+      setShowComments(true);
+    } catch {
+      // handle error silently
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const loadMoreComments = async () => {
+    const { comments: moreComments, total } = await fetchComments(post.id, 10, visibleCount);
+    setComments((prev) => [...prev, ...moreComments]);
+    setVisibleCount((prev) => prev + 10);
+    setTotalComments(total);
+  };
+
+  const visibleComments = showComments ? comments.slice(0, visibleCount) : [];
+  const hasMore = visibleCount < totalComments;
 
   return (
     <div className="bg-[var(--surface)] rounded-[var(--radius-lg)] overflow-hidden">
@@ -69,28 +109,102 @@ export default function PostCard({ post, onLike }: PostCardProps) {
           </div>
         )}
 
-        {post.workout && (
-          <PostWorkoutSummary workout={post.workout} />
+        {post.workout_summary && (
+          <PostWorkoutCard workoutSummary={post.workout_summary} />
+        )}
+
+        {showComments && visibleComments.length > 0 && (
+          <div className="mt-3 space-y-2">
+            {visibleComments.map((comment) => (
+              <div key={comment.id} className="flex items-start gap-2">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[var(--primary-400)] to-[var(--primary-600)] flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+                  {getInitials(comment.user_stats?.display_name || "?")}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-xs font-semibold text-[var(--foreground)]">
+                      {comment.user_stats?.display_name || "Unknown"}
+                    </span>
+                    <span className="text-[10px] text-[var(--muted-foreground)]">
+                      {timeAgo(comment.created_at!)}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[var(--foreground)] mt-0.5 break-words">
+                    {comment.content}
+                  </p>
+                </div>
+              </div>
+            ))}
+            {hasMore && (
+              <button
+                onClick={loadMoreComments}
+                className="text-xs text-[var(--primary-500)] hover:text-[var(--primary-600)] font-medium"
+              >
+                See more comments
+              </button>
+            )}
+          </div>
         )}
       </div>
 
-      <div className="px-4 py-2.5 border-t border-[var(--border)] flex items-center gap-4">
-        <button
-          onClick={handleLike}
-          disabled={liking}
-          className={`flex items-center gap-1.5 text-sm transition-colors ${
-            post.liked_by_me
-              ? "text-red-500"
-              : "text-[var(--muted-foreground)] hover:text-red-500"
-          }`}
-        >
-          <Heart className={`w-4 h-4 ${post.liked_by_me ? "fill-current" : ""}`} />
-          <span>{post.likes_count || 0}</span>
-        </button>
-        <div className="flex items-center gap-1.5 text-sm text-[var(--muted-foreground)]">
-          <MessageCircle className="w-4 h-4" />
-          <span>{post.comments_count || 0}</span>
+      <div className="px-4 py-2.5 border-t border-[var(--border)]">
+        <div className="flex items-center gap-4 mb-2">
+          <button
+            onClick={handleLike}
+            disabled={liking}
+            className={`flex items-center gap-1.5 text-sm transition-colors ${
+              post.liked_by_me
+                ? "text-red-500"
+                : "text-[var(--muted-foreground)] hover:text-red-500"
+            }`}
+          >
+            <Heart className={`w-4 h-4 ${post.liked_by_me ? "fill-current" : ""}`} />
+            <span>{post.likes_count || 0}</span>
+          </button>
+          <button
+            onClick={() => setShowComments(!showComments)}
+            className="flex items-center gap-1.5 text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
+          >
+            <MessageCircle className="w-4 h-4" />
+            <span>{totalComments}</span>
+          </button>
         </div>
+
+        {showCommentInput ? (
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
+              placeholder="Write a comment..."
+              className="flex-1 px-3 py-1.5 text-xs bg-[var(--surface-raised)] border border-[var(--border)] rounded-[var(--radius-md)] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:border-[var(--primary-500)]"
+            />
+            <button
+              onClick={handleAddComment}
+              disabled={!commentText.trim() || submitting}
+              className="p-1.5 rounded-[var(--radius-sm)] bg-[var(--primary-500)] text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => {
+                setShowCommentInput(false);
+                setCommentText("");
+              }}
+              className="p-1.5 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowCommentInput(true)}
+            className="text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
+          >
+            Add a comment...
+          </button>
+        )}
       </div>
     </div>
   );

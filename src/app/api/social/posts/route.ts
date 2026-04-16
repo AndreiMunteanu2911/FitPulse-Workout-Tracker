@@ -1,5 +1,50 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/helper/supabaseServer";
+import { resolveExercises } from "@/helper/resolveExercises";
+
+function capitalize(str: string) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+async function generateWorkoutSummary(supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>, workoutId: string): Promise<string | null> {
+  const { data: workout } = await supabase
+    .from("workouts")
+    .select("*, workout_exercises(*, sets(*))")
+    .eq("id", workoutId)
+    .single();
+
+  if (!workout || !workout.workout_exercises?.length) return null;
+
+  const exerciseIds = workout.workout_exercises.map((we: { exercise_id: string }) => we.exercise_id);
+  const exerciseMap = await resolveExercises(supabase, exerciseIds);
+
+  const lines: string[] = [];
+  lines.push(`🏋️ ${capitalize(workout.name)}`);
+
+  for (const we of workout.workout_exercises) {
+    const exercise = exerciseMap.get(we.exercise_id);
+    const name = exercise ? capitalize(exercise.name) : we.exercise_id;
+    const setsCount = we.sets?.length || 0;
+    const topSet = we.sets?.reduce((best: { reps: number; weight: number } | null, s: { reps: number; weight: number }) =>
+      !s ? s : !best ? s : s.reps * s.weight > best.reps * best.weight ? s : best, null as { reps: number; weight: number } | null);
+
+    if (setsCount > 0 && topSet) {
+      lines.push(`• ${name}  ${setsCount}×${topSet.reps}  ${topSet.weight}kg`);
+    } else {
+      lines.push(`• ${name}  ${setsCount} sets`);
+    }
+  }
+
+  const totalVolume = workout.workout_exercises.reduce((sum: number, we: { sets: { reps: number; weight: number }[] }) =>
+    sum + (we.sets || []).reduce((s: number, set: { reps: number; weight: number }) => s + set.reps * set.weight, 0), 0);
+
+  if (totalVolume > 0) {
+    const volLabel = totalVolume >= 1000 ? `${(totalVolume / 1000).toFixed(1)}k` : totalVolume.toString();
+    lines.push(`📊 Total Volume: ${volLabel} kg`);
+  }
+
+  return lines.join("\n");
+}
 
 export async function POST(req: NextRequest) {
   const supabase = await createSupabaseServerClient();
@@ -45,12 +90,32 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Post must have content, image, or workout" }, { status: 400 });
   }
 
+  let workout_summary: string | null = null;
+  if (workout_id) {
+    workout_summary = await generateWorkoutSummary(supabase, workout_id);
+  }
+
   const { data, error } = await supabase
     .from("posts")
-    .insert({ user_id: user.id, content, image_url, workout_id })
-    .select("*, user_stats(display_name)")
+    .insert({ user_id: user.id, content, image_url, workout_summary })
+    .select("*")
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ post: { ...data, likes_count: 0, comments_count: 0, liked_by_me: false } });
+
+  const { data: userStats } = await supabase
+    .from("user_stats")
+    .select("display_name")
+    .eq("user_id", user.id)
+    .single();
+
+  return NextResponse.json({
+    post: {
+      ...data,
+      user_stats: userStats ?? { display_name: null },
+      likes_count: 0,
+      comments_count: 0,
+      liked_by_me: false,
+    },
+  });
 }

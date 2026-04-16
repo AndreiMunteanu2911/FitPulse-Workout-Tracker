@@ -11,9 +11,8 @@ export async function GET() {
     .from("posts")
     .select(`
       *,
-      user_stats(display_name),
       post_likes(id, user_id),
-      post_comments(id, user_id, content, created_at, user_stats(display_name))
+      post_comments(id, user_id, content, created_at)
     `)
     .order("created_at", { ascending: false })
     .limit(50);
@@ -21,6 +20,29 @@ export async function GET() {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   const posts = postsData || [];
+
+  const userIds = [...new Set(posts.map((p) => p.user_id))] as string[];
+  const userStatsMap = new Map<string, { display_name: string | null }>();
+  if (userIds.length > 0) {
+    const { data: userStats } = await supabase
+      .from("user_stats")
+      .select("user_id, display_name")
+      .in("user_id", userIds);
+    userStats?.forEach((stat) => userStatsMap.set(stat.user_id, stat));
+  }
+
+  const commentUserIds = [
+    ...new Set(
+      (postsData ?? []).flatMap((p) => (p.post_comments ?? []).map((c: { user_id: string }) => c.user_id))
+    ),
+  ] as string[];
+  if (commentUserIds.length > 0) {
+    const { data: commentUserStats } = await supabase
+      .from("user_stats")
+      .select("user_id, display_name")
+      .in("user_id", commentUserIds);
+    commentUserStats?.forEach((stat) => userStatsMap.set(stat.user_id, stat));
+  }
 
   const workoutIds = [...new Set(posts.map((p) => p.workout_id).filter(Boolean))] as string[];
 
@@ -62,6 +84,11 @@ export async function GET() {
 
   const enriched = posts.map((post) => ({
     ...post,
+    user_stats: userStatsMap.get(post.user_id) ?? { display_name: null },
+    post_comments: (post.post_comments ?? []).map((c: { user_id: string }) => ({
+      ...c,
+      user_stats: userStatsMap.get(c.user_id) ?? { display_name: null },
+    })),
     likes_count: (post.post_likes ?? []).length,
     comments_count: (post.post_comments ?? []).length,
     liked_by_me: (post.post_likes ?? []).some((l: { user_id: string }) => l.user_id === user.id),

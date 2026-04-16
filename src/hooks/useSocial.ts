@@ -1,6 +1,6 @@
 "use client";
 
-import type { Post, Friendship, UserSearchResult } from "@/types";
+import type { Post, Friendship, UserSearchResult, PostComment } from "@/types";
 
 export function useSocial() {
   const fetchFeed = async (): Promise<Post[]> => {
@@ -83,6 +83,24 @@ export function useSocial() {
     return data.liked as boolean;
   };
 
+  const addComment = async (postId: string, content: string): Promise<PostComment> => {
+    const res = await fetch(`/api/social/posts/${postId}/comment`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to add comment");
+    return data.comment;
+  };
+
+  const fetchComments = async (postId: string, limit = 10, offset = 0): Promise<{ comments: PostComment[]; total: number }> => {
+    const res = await fetch(`/api/social/posts/${postId}/comment?limit=${limit}&offset=${offset}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to fetch comments");
+    return { comments: data.comments || [], total: data.total || 0 };
+  };
+
   return {
     fetchFeed,
     fetchFriendships,
@@ -91,5 +109,7 @@ export function useSocial() {
     searchUsers,
     createPost,
     toggleLike,
+    addComment,
+    fetchComments,
   };
 }
