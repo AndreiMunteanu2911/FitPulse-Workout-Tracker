@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { Post, PostComment } from "@/types";
-import { Heart, MessageCircle, User, Send, Maximize2 } from "lucide-react";
+import { Heart, MessageCircle, User, Send, Maximize2, Trash2 } from "lucide-react";
 import PostWorkoutCard from "./PostWorkoutCard";
 import ImageModal from "../ImageModal";
 import { useSocial } from "@/hooks/useSocial";
@@ -10,6 +10,8 @@ import { useSocial } from "@/hooks/useSocial";
 interface PostCardProps {
   post: Post;
   onLike: (postId: string) => Promise<void>;
+  onDelete: (postId: string) => void;
+  currentUserId: string;
 }
 
 function timeAgo(dateStr: string): string {
@@ -33,8 +35,8 @@ function getInitials(name: string): string {
     .slice(0, 2);
 }
 
-export default function PostCard({ post, onLike }: PostCardProps) {
-  const { addComment, fetchComments } = useSocial();
+export default function PostCard({ post, onLike, onDelete, currentUserId }: PostCardProps) {
+  const { addComment, fetchComments, deleteComment } = useSocial();
   const [liking, setLiking] = useState(false);
   const [comments, setComments] = useState<PostComment[]>(post.post_comments || []);
   const [totalComments, setTotalComments] = useState(post.comments_count || 0);
@@ -44,7 +46,9 @@ export default function PostCard({ post, onLike }: PostCardProps) {
   const [submitting, setSubmitting] = useState(false);
   const [showCommentInput, setShowCommentInput] = useState(false);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
+  const [deletingComment, setDeletingComment] = useState<string | null>(null);
 
+  const isPostOwner = currentUserId === post.user_id;
   const displayName = post.user_stats?.display_name || "Unknown User";
   const initials = getInitials(displayName);
 
@@ -74,6 +78,20 @@ export default function PostCard({ post, onLike }: PostCardProps) {
     }
   };
 
+  const handleDeleteComment = async (commentId: string) => {
+    if (deletingComment) return;
+    setDeletingComment(commentId);
+    try {
+      await deleteComment(commentId);
+      setComments((prev) => prev.filter((c) => c.id !== commentId));
+      setTotalComments((prev) => Math.max(prev - 1, 0));
+    } catch {
+      // handle error silently
+    } finally {
+      setDeletingComment(null);
+    }
+  };
+
   const loadMoreComments = async () => {
     const { comments: moreComments, total } = await fetchComments(post.id, 10, visibleCount);
     setComments((prev) => [...prev, ...moreComments]);
@@ -95,6 +113,14 @@ export default function PostCard({ post, onLike }: PostCardProps) {
             <p className="text-sm font-semibold text-[var(--foreground)] truncate">{displayName}</p>
             <p className="text-xs text-[var(--muted-foreground)]">{timeAgo(post.created_at!)}</p>
           </div>
+          {isPostOwner && (
+            <button
+              onClick={() => onDelete(post.id)}
+              className="p-1.5 text-[var(--muted-foreground)] hover:text-[var(--color-destructive)] transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
         {post.content && (
@@ -124,7 +150,7 @@ export default function PostCard({ post, onLike }: PostCardProps) {
         {showComments && visibleComments.length > 0 && (
           <div className="mt-3 space-y-2">
             {visibleComments.map((comment) => (
-              <div key={comment.id} className="flex items-start gap-2">
+              <div key={comment.id} className="flex items-start gap-2 group">
                 <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[var(--primary-400)] to-[var(--primary-600)] flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
                   {getInitials(comment.user_stats?.display_name || "?")}
                 </div>
@@ -141,6 +167,15 @@ export default function PostCard({ post, onLike }: PostCardProps) {
                     {comment.content}
                   </p>
                 </div>
+                {currentUserId === comment.user_id && (
+                  <button
+                    onClick={() => handleDeleteComment(comment.id)}
+                    disabled={deletingComment === comment.id}
+                    className="p-1 text-[var(--muted-foreground)] hover:text-[var(--color-destructive)] transition-colors"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                )}
               </div>
             ))}
             {hasMore && (
