@@ -11,6 +11,7 @@ import { usePersonalRecords } from "@/hooks/usePersonalRecords";
 import PersonalRecordCard from "@/components/PersonalRecordCard";
 import ExerciseStatsTab from "@/components/ExerciseStatsTab";
 import FormChecker from "@/components/FormChecker";
+import FormHistoryPanel from "@/components/FormHistoryPanel";
 import type { Exercise, PersonalRecord, ExerciseFormRules } from "@/types";
 import { ChevronLeft, Sparkles, Camera } from "lucide-react";
 
@@ -38,6 +39,7 @@ export default function ExerciseDetailsPage() {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<"description" | "stats">("description");
     const [showFormChecker, setShowFormChecker] = useState(false);
+    const [formHistoryKey, setFormHistoryKey] = useState(0);
     const { fetchExercise } = useExercises();
     const { fetchPersonalRecords } = usePersonalRecords();
 
@@ -258,6 +260,11 @@ export default function ExerciseDetailsPage() {
                                 <p className="text-xs text-[var(--muted-foreground)]">Use your camera to get real-time form feedback</p>
                             </div>
                         </button>
+
+                        {/* Recent form sessions */}
+                        <div className="mt-4">
+                            <FormHistoryPanel key={formHistoryKey} exerciseId={id as string} />
+                        </div>
                     </div>
                 )}
             </div>
@@ -268,7 +275,10 @@ export default function ExerciseDetailsPage() {
                     exerciseId={exercise.exercise_id}
                     exerciseName={exercise.name}
                     formRules={(exercise as Exercise & { form_rules?: ExerciseFormRules | null }).form_rules ?? null}
-                    onClose={() => setShowFormChecker(false)}
+                    onClose={() => {
+                        setShowFormChecker(false);
+                        setFormHistoryKey((k) => k + 1);
+                    }}
                 />
             )}
         </ProtectedWrapper>

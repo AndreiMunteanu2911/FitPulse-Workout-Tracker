@@ -210,21 +210,22 @@ export class TempoTracker {
   checkRep(angle: number, minAngle: number, maxAngle: number): boolean {
     const now = performance.now();
 
-    // Track whether the angle was in range on the previous frame
+    // Read previous-frame state before modifying anything
     const wasInRange = this.state.lastWasInRange;
     const inRange = this.isInRange(angle, minAngle, maxAngle);
 
-    // Always update the previous-frame state
-    this.state.lastWasInRange = inRange;
-
-    // Count a rep when transitioning from outside → inside range, respecting cooldown
+    // Count a rep on outside→inside transition; enforce minimum cooldown between reps
+    let counted = false;
     if (!wasInRange && inRange && now - this.state.phaseStartTime >= this.thresholdWindow) {
       this.state.lastRepCount++;
       this.state.repTimestamps.push(now);
       this.state.phaseStartTime = now;
-      return true;
+      counted = true;
     }
-    return false;
+
+    // Update previous-frame state for the next call
+    this.state.lastWasInRange = inRange;
+    return counted;
   }
 
   private isInRange(angle: number, min: number, max: number): boolean {
