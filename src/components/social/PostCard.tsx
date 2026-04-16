@@ -135,8 +135,8 @@ export default function PostCard({ post, onLike, onDelete, currentUserId }: Post
               className="w-full object-cover max-h-80"
             />
             <button
-              onClick={() => setExpandedImage(post.image_url)}
-              className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors"
+                onClick={() => setExpandedImage(post.image_url ?? null)}
+                className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors"
             >
               <Maximize2 className="w-4 h-4" />
             </button>
