@@ -147,7 +147,7 @@ export default function PostCard({ post, onLike }: PostCardProps) {
         )}
       </div>
 
-      <div className="px-4 py-2.5 border-t border-[var(--border)]">
+      <div className="px-4 py-2.5">
         <div className="flex items-center gap-4 mb-2">
           <button
             onClick={handleLike}
@@ -159,14 +159,14 @@ export default function PostCard({ post, onLike }: PostCardProps) {
             }`}
           >
             <Heart className={`w-4 h-4 ${post.liked_by_me ? "fill-current" : ""}`} />
-            <span>{post.likes_count || 0}</span>
+            <span>{post.likes_count || 0} Likes</span>
           </button>
           <button
             onClick={() => setShowComments(!showComments)}
             className="flex items-center gap-1.5 text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
           >
             <MessageCircle className="w-4 h-4" />
-            <span>{totalComments}</span>
+            <span>{totalComments} Comments</span>
           </button>
         </div>
 

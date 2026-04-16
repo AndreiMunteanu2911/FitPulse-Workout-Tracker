@@ -2,16 +2,19 @@ interface PostWorkoutCardProps {
   workoutSummary: string;
 }
 
+function capitalize(str: string) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
 export default function PostWorkoutCard({ workoutSummary }: PostWorkoutCardProps) {
   const lines = workoutSummary.split("\n");
-  const title = lines[0];
+  const title = lines[0].replace(/^🏋️\s*/, "");
   const exerciseLines = lines.slice(1).filter((l) => !l.startsWith("📊"));
-  const volumeLine = lines.find((l) => l.startsWith("📊"));
 
   return (
-    <div className="mt-3 rounded-[var(--radius-md)] bg-gradient-to-br from-[var(--primary-500)]/5 to-[var(--lime-green)]/5 border border-[var(--border)] overflow-hidden">
-      <div className="px-4 py-3 bg-gradient-to-r from-[var(--primary-500)]/10 to-transparent border-b border-[var(--border)]">
-        <h3 className="text-sm font-bold text-[var(--foreground)]">{title}</h3>
+    <div className="mt-3 rounded-[var(--radius-sm)] bg-[var(--surface-raised)] overflow-hidden">
+      <div className="px-4 py-2.5 bg-gradient-to-r from-[var(--primary-500)] to-[var(--primary-400)]">
+        <h3 className="text-sm font-bold text-white">{capitalize(title)}</h3>
       </div>
 
       <div className="px-4 py-3 space-y-1.5">
@@ -33,12 +36,6 @@ export default function PostWorkoutCard({ workoutSummary }: PostWorkoutCardProps
           );
         })}
       </div>
-
-      {volumeLine && (
-        <div className="px-4 py-2.5 border-t border-[var(--border)] bg-[var(--surface-raised)]">
-          <p className="text-xs font-semibold text-[var(--foreground)]">{volumeLine}</p>
-        </div>
-      )}
     </div>
   );
 }
