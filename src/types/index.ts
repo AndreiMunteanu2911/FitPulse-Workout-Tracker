@@ -229,3 +229,30 @@ export interface RestTimerState {
   workoutExerciseId?: string; // which exercise card
   setId?: string;            // exact set row to render timer under
 }
+
+// ── Blog ───────────────────────────────────────────────────────────────────────
+
+export interface BlogPost {
+  id: string;
+  title: string;
+  content: string;
+  image_url?: string | null;
+  author_id: string;
+  created_at?: string;
+  updated_at?: string;
+  likes_count?: number;
+  comments_count?: number;
+  liked_by_me?: boolean;
+}
+
+export interface BlogComment {
+  id: string;
+  blog_post_id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+  user?: {
+    display_name: string;
+    avatar_url: string | null;
+  };
+}

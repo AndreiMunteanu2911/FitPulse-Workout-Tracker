@@ -4,13 +4,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { LayoutDashboard, History, Dumbbell, Library, User, Sparkles, Shield, Users } from "lucide-react";
+import { LayoutDashboard, History, Dumbbell, Library, User, Sparkles, Shield, Users, Newspaper } from "lucide-react";
 
 const tabs = [
   { name: "Dashboard",  href: "/dashboard",  Icon: LayoutDashboard },
   { name: "History",    href: "/history",    Icon: History          },
   { name: "Workout",    href: "/workout",    Icon: Dumbbell         },
   { name: "Exercises",  href: "/exercises",  Icon: Library          },
+  { name: "Blog",       href: "/blog",       Icon: Newspaper        },
   { name: "Social",     href: "/social",     Icon: Users            },
   { name: "AI Coach",   href: "/ai-coach",   Icon: Sparkles         },
   { name: "Profile",    href: "/profile",    Icon: User             },
