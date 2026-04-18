@@ -240,4 +240,19 @@ export interface BlogPost {
   author_id: string;
   created_at?: string;
   updated_at?: string;
+  likes_count?: number;
+  comments_count?: number;
+  liked_by_me?: boolean;
+}
+
+export interface BlogComment {
+  id: string;
+  blog_post_id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+  user?: {
+    display_name: string;
+    avatar_url: string | null;
+  };
 }

@@ -7,14 +7,45 @@ export async function GET(
 ) {
   const { id } = await params;
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const { data: post, error } = await supabase
     .from("blog_posts")
     .select("*")
     .eq("id", id)
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ data });
+
+  const { count: likesCount } = await supabase
+    .from("blog_likes")
+    .select("*", { count: "exact", head: true })
+    .eq("blog_post_id", id);
+
+  const { count: commentsCount } = await supabase
+    .from("blog_comments")
+    .select("*", { count: "exact", head: true })
+    .eq("blog_post_id", id);
+
+  let liked_by_me = false;
+  if (user) {
+    const { data: like } = await supabase
+      .from("blog_likes")
+      .select("id")
+      .eq("blog_post_id", id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    liked_by_me = !!like;
+  }
+
+  return NextResponse.json({ 
+    data: {
+      ...post,
+      likes_count: likesCount || 0,
+      comments_count: commentsCount || 0,
+      liked_by_me,
+    }
+  });
 }
 
 export async function PATCH(
