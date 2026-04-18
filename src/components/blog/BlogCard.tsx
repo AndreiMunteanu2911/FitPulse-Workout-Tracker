@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { BlogPost } from "@/types";
-import { Calendar, Edit2, Trash2, ArrowRight } from "lucide-react";
+import { Calendar, Edit2, Trash2, ArrowRight, Heart, MessageCircle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -13,6 +14,9 @@ interface BlogCardProps {
 }
 
 export default function BlogCard({ post, isAdmin, onEdit, onDelete }: BlogCardProps) {
+  const [liked, setLiked] = useState(post.liked_by_me ?? false);
+  const [likesCount, setLikesCount] = useState(post.likes_count ?? 0);
+
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return "Unknown";
     return new Intl.DateTimeFormat("en-US", {
@@ -20,6 +24,22 @@ export default function BlogCard({ post, isAdmin, onEdit, onDelete }: BlogCardPr
       day: "numeric",
       year: "numeric",
     }).format(new Date(dateStr));
+  };
+
+  const handleLike = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    try {
+      const res = await fetch(`/api/blog/${post.id}/like`, { method: "POST" });
+      const data = await res.json();
+      if (!data.error) {
+        setLiked(data.liked);
+        setLikesCount(data.liked ? likesCount + 1 : likesCount - 1);
+      }
+    } catch (err) {
+      console.error("Failed to like post:", err);
+    }
   };
 
   return (
@@ -41,37 +61,57 @@ export default function BlogCard({ post, isAdmin, onEdit, onDelete }: BlogCardPr
         </p>
         
         <div className="flex items-center justify-between mt-auto pt-4 border-t border-[var(--border)]">
-          <Link 
-            href={`/blog/${post.id}`}
-            className="flex items-center gap-2 text-[var(--primary-500)] text-sm font-bold whitespace-nowrap"
-          >
-            Read More
-            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-          </Link>
-          
-          {isAdmin && (
-            <div className="flex items-center gap-1">
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  onEdit?.(post);
-                }}
-                className="p-2 text-[var(--muted-foreground)] hover:text-[var(--primary-500)] hover:bg-[var(--surface-raised)] rounded-full transition-colors"
-              >
-                <Edit2 className="w-4 h-4" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  onDelete?.(post.id);
-                }}
-                className="p-2 text-[var(--muted-foreground)] hover:text-[var(--color-destructive)] hover:bg-[var(--color-destructive-bg)] rounded-full transition-colors"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          )}
+          <div className="flex items-center gap-4">
+            <Link 
+              href={`/blog/${post.id}`}
+              className="flex items-center gap-2 text-[var(--primary-500)] text-sm font-bold whitespace-nowrap"
+            >
+              Read More
+              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+            </Link>
+            
+            <button
+              onClick={handleLike}
+              className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${liked ? "text-[var(--color-destructive)]" : "text-[var(--muted-foreground)] hover:text-[var(--color-destructive)]"}`}
+            >
+              <Heart className={`w-4 h-4 ${liked ? "fill-current" : ""}`} />
+              <span>{likesCount}</span>
+            </button>
+            
+            <Link 
+              href={`/blog/${post.id}`}
+              className="flex items-center gap-1.5 text-sm font-medium text-[var(--muted-foreground)] hover:text-[var(--primary-500)] transition-colors"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span>{post.comments_count ?? 0}</span>
+            </Link>
+          </div>
         </div>
+        
+        {isAdmin && (
+          <div className="flex items-center gap-4 pt-3 border-t border-[var(--border)] mt-3">
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                onEdit?.(post);
+              }}
+              className="flex items-center gap-1.5 text-sm text-[var(--muted-foreground)] hover:text-[var(--primary-500)] transition-colors"
+            >
+              <Edit2 className="w-4 h-4" />
+              <span>Edit</span>
+            </button>
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                onDelete?.(post.id);
+              }}
+              className="flex items-center gap-1.5 text-sm text-[var(--muted-foreground)] hover:text-[var(--color-destructive)] transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>Delete</span>
+            </button>
+          </div>
+        )}
       </div>
       {post.image_url && (
         <Link href={`/blog/${post.id}`} className="relative w-[40%] h-auto min-h-[180px] flex-shrink-0 overflow-hidden">
