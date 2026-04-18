@@ -11,6 +11,8 @@ interface UseWebcamOptions {
   resolution?: "hd" | "vga";
   /** Facing mode: "user" (front) or "environment" (back). Default: "user" */
   facingMode?: "user" | "environment";
+  /** Camera zoom level. 1 = no zoom, >1 = zoom in, <1 = zoom out. Default: 1 */
+  zoom?: number;
 }
 
 interface UseWebcamReturn {
@@ -37,6 +39,7 @@ export function useWebcam({
   deviceId,
   resolution = "hd",
   facingMode = "user",
+  zoom = 1,
 }: UseWebcamOptions = {}): UseWebcamReturn {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -65,6 +68,17 @@ export function useWebcam({
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
 
+      if (zoom !== 1) {
+        const videoTrack = stream.getVideoTracks()[0];
+        if (videoTrack) {
+          const capabilities = videoTrack.getCapabilities?.() as MediaTrackCapabilities & { zoom?: { min: number; max: number } };
+          if (capabilities?.zoom) {
+            const clampedZoom = Math.max(capabilities.zoom.min, Math.min(capabilities.zoom.max, zoom));
+            await videoTrack.applyConstraints({ advanced: [{ zoom: clampedZoom }] });
+          }
+        }
+      }
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await new Promise<void>((resolve) => {
@@ -91,7 +105,7 @@ export function useWebcam({
     } finally {
       setIsLoading(false);
     }
-  }, [deviceId, resolution, facingMode]);
+  }, [deviceId, resolution, facingMode, zoom]);
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {

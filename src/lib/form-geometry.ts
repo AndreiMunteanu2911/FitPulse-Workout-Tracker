@@ -156,20 +156,6 @@ export function detectCameraAngle(
 
   if (!lShoulder || !rShoulder || !lHip || !rHip) return "not-detected";
 
-  // Check shoulder overlap (front/back view detection)
-  const shoulderXDiff = Math.abs(lShoulder.x - rShoulder.x);
-  const hipXDiff = Math.abs(lHip.x - rHip.x);
-
-  if (shoulderXDiff < overlapThreshold && hipXDiff < overlapThreshold) {
-    // Determine front vs back by checking nose position relative to shoulders
-    const nose = landmarks[0];
-    const shoulderMidX = (lShoulder.x + rShoulder.x) / 2;
-    if (nose && Math.abs(nose.x - shoulderMidX) < overlapThreshold) {
-      return "front-view";
-    }
-    return "back-view";
-  }
-
   // Check if body is too small in frame (too far from camera)
   const bodyHeight = Math.abs(landmarks[0].y - landmarks[23].y);
   if (bodyHeight < 0.15) return "too-far";
