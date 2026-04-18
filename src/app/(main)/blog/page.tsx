@@ -89,8 +89,8 @@ export default function BlogPage() {
   return (
     <ProtectedWrapper>
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
-          <div>
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10">
+          <div className="flex-1">
             <h1 className="text-3xl font-extrabold text-[var(--foreground)] tracking-tight" style={{ fontFamily: "var(--font-poppins)" }}>
               Fitness Blog
             </h1>
@@ -99,8 +99,8 @@ export default function BlogPage() {
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-            <div className="relative w-full sm:w-64 md:w-72 lg:w-80">
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4 w-full lg:w-auto">
+            <div className="relative w-full lg:w-72">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-[var(--muted-foreground)] pointer-events-none z-10" />
               <input
                   type="text"
@@ -116,7 +116,7 @@ export default function BlogPage() {
                   setEditingPost(null);
                   setIsModalOpen(true);
                 }}
-                className="flex items-center justify-center gap-2 whitespace-nowrap"
+                className="flex items-center justify-center gap-2 whitespace-nowrap w-full lg:w-auto"
               >
                 <Plus className="w-4.5 h-4.5" />
                 New Post
@@ -126,7 +126,7 @@ export default function BlogPage() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {[1, 2, 3].map((i) => (
               <div key={i} className="h-[400px] bg-[var(--surface-raised)] animate-pulse rounded-[var(--radius-lg)]" />
             ))}
