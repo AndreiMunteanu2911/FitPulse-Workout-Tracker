@@ -54,9 +54,16 @@ function AchievementBadge({ achievement }: { achievement: Achievement }) {
         {achievement.name}
       </span>
       {unlocked && (
-        <span className="text-[9px] font-bold text-[var(--primary-500)] bg-[var(--primary-50)] dark:bg-[var(--primary-100)] rounded px-1.5 py-0.5">
-          +{achievement.xpReward} XP
-        </span>
+        <div className="flex flex-col gap-1 items-center">
+          <span className="text-[9px] font-bold text-[var(--primary-500)] bg-[var(--primary-50)] dark:bg-[var(--primary-100)] rounded px-1.5 py-0.5">
+            +{achievement.xpReward} XP
+          </span>
+          {achievement.coresReward && (
+            <span className="text-[9px] font-bold text-yellow-600 bg-yellow-50 dark:bg-yellow-900/30 rounded px-1.5 py-0.5 flex items-center gap-0.5">
+              +{achievement.coresReward} <Star className="w-2 h-2 fill-current" />
+            </span>
+          )}
+        </div>
       )}
     </div>
   );

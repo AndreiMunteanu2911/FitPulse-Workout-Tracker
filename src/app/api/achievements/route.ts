@@ -6,12 +6,13 @@ import {
   levelFromXP,
   xpForLevel,
   xpProgress,
+  coresForLevel,
 } from "@/lib/gamification";
 
 interface SetRow { weight: number; reps: number }
 interface WorkoutExerciseRow { exercise_id?: string; sets?: SetRow[] }
 interface WorkoutRow { workout_date: string; workout_exercises?: WorkoutExerciseRow[] }
-interface UserStatsRow { total_xp: number }
+interface UserStatsRow { total_xp: number; level: number; cores_balance: number }
 
 /**
  * POST /api/achievements
@@ -103,13 +104,41 @@ export async function POST(request: Request) {
   // ── 3. Read current total_xp then upsert user_stats ──────────────────────
   const { data: statsRow } = await supabase
     .from("user_stats")
-    .select("total_xp")
+    .select("total_xp, level")
     .eq("user_id", user.id)
     .single();
 
+  const oldLevel = (statsRow as any)?.level ?? 1;
   const currentXP  = (statsRow as UserStatsRow | null)?.total_xp ?? 0;
   const newTotalXP = currentXP + definition.xpReward;
   const newLevel   = levelFromXP(newTotalXP);
+
+  // ── 3b. Add level up core reward if any ──────────────────────────────────
+  const levelUpRewards: { amount: number, level: number }[] = [];
+  if (newLevel > oldLevel) {
+    for (let l = oldLevel + 1; l <= newLevel; l++) {
+      const reward = coresForLevel(l);
+      if (reward > 0) {
+        levelUpRewards.push({ amount: reward, level: l });
+        await supabase.from("premium_currency_transactions").insert({
+          user_id: user.id,
+          amount: reward,
+          type: 'level_up',
+          description: `Level Up: Level ${l}`
+        });
+      }
+    }
+  }
+
+  // ── 3a. Add core reward if any ──────────────────────────────────────────
+  if (definition.coresReward && definition.coresReward > 0) {
+    await supabase.from("premium_currency_transactions").insert({
+      user_id: user.id,
+      amount: definition.coresReward,
+      type: 'achievement',
+      description: `Achievement: ${definition.name}`
+    });
+  }
 
   const { error: upsertError } = await supabase
     .from("user_stats")

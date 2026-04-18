@@ -152,6 +152,7 @@ export interface Achievement {
   unlockedAt?: string | null;
   /** Non-null when the user has clicked "Claim" and the XP has been banked */
   claimedAt?: string | null;
+  coresReward?: number;
 }
 
 export interface GamificationStats {
@@ -162,6 +163,45 @@ export interface GamificationStats {
   xpProgress: number; // 0–100 %
   achievements: Achievement[];
   currentStreak: number;
+  cores_balance?: number;
+}
+
+// ── Shop ───────────────────────────────────────────────────────────────────────
+
+export interface Product {
+  id: string;
+  name: string;
+  description: string | null;
+  price_usd: number | null;
+  price_cores: number | null;
+  image_url: string | null;
+  stock_quantity: number;
+  is_physical: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Order {
+  id: string;
+  user_id: string;
+  product_id: string | null;
+  amount_usd: number | null;
+  amount_cores: number | null;
+  status: 'pending' | 'completed' | 'cancelled' | 'shipped';
+  stripe_session_id: string | null;
+  shipping_address: any | null;
+  created_at?: string;
+  updated_at?: string;
+  product?: Product;
+}
+
+export interface PremiumCurrencyTransaction {
+  id: string;
+  user_id: string;
+  amount: number;
+  type: 'purchase' | 'achievement' | 'level_up' | 'admin_adjustment';
+  description: string | null;
+  created_at?: string;
 }
 
 // ── Social ────────────────────────────────────────────────────────────────────
