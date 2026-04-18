@@ -23,43 +23,30 @@ export default function BlogCard({ post, isAdmin, onEdit, onDelete }: BlogCardPr
   };
 
   return (
-    <div className="bg-[var(--surface)] rounded-[var(--radius-lg)] overflow-hidden border border-none transition-all hover:border-[var(--primary-400)]/30 group flex flex-col h-full">
-      {post.image_url && (
-        <Link href={`/blog/${post.id}`} className="relative h-52 w-full overflow-hidden">
-          <Image
-            src={post.image_url}
-            alt={post.title}
-            fill
-            className="object-cover transition-transform duration-500 group-hover:scale-110"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-            <span className="text-white text-xs font-bold uppercase tracking-wider">Read Article</span>
-          </div>
-        </Link>
-      )}
-      <div className="p-6 flex flex-col flex-1">
-        <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest text-[var(--muted-foreground)] mb-3">
+    <div className="bg-[var(--surface)] rounded-[var(--radius-lg)] overflow-hidden border border-none transition-all hover:border-[var(--primary-400)]/30 group flex flex-row h-full">
+      <div className="p-6 flex flex-col flex-1 w-[60%]">
+        <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-[var(--muted-foreground)] mb-2">
           <div className="flex items-center gap-1.5">
             <Calendar className="w-3 h-3" />
             {formatDate(post.created_at)}
           </div>
         </div>
         <Link href={`/blog/${post.id}`}>
-          <h3 className="text-xl font-bold text-[var(--foreground)] mb-3 line-clamp-2 group-hover:text-[var(--primary-600)] transition-colors leading-tight" style={{ fontFamily: "var(--font-poppins)" }}>
+          <h3 className="text-lg font-bold text-[var(--foreground)] mb-2 line-clamp-2 group-hover:text-[var(--primary-500)] transition-colors leading-tight" style={{ fontFamily: "var(--font-poppins)" }}>
             {post.title}
           </h3>
         </Link>
-        <p className="text-[var(--muted-foreground)] text-sm line-clamp-3 mb-6 leading-relaxed flex-1">
+        <p className="text-[var(--muted-foreground)] text-sm line-clamp-2 mb-4 leading-relaxed">
           {post.content}
         </p>
         
-        <div className="flex items-center justify-between mt-auto pt-5 border-t border-[var(--border)]">
+        <div className="flex items-center justify-between mt-auto pt-4 border-t border-[var(--border)]">
           <Link 
             href={`/blog/${post.id}`}
-            className="flex items-center gap-1.5 text-[var(--primary-500)] text-sm font-bold hover:gap-2.5 transition-all"
+            className="flex items-center gap-2 text-[var(--primary-500)] text-sm font-bold whitespace-nowrap"
           >
             Read More
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           </Link>
           
           {isAdmin && (
@@ -86,6 +73,16 @@ export default function BlogCard({ post, isAdmin, onEdit, onDelete }: BlogCardPr
           )}
         </div>
       </div>
+      {post.image_url && (
+        <Link href={`/blog/${post.id}`} className="relative w-[40%] h-auto min-h-[180px] flex-shrink-0 overflow-hidden">
+          <Image
+            src={post.image_url}
+            alt={post.title}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-110"
+          />
+        </Link>
+      )}
     </div>
   );
 }

@@ -23,11 +23,25 @@ export async function PATCH(
 ) {
   const guard = await requireAdmin();
   if ("error" in guard) return guard.error;
-  const { supabase } = guard;
+  const { supabase, user } = guard;
 
   const { id } = await params;
 
   try {
+    const { data: post, error: fetchError } = await supabase
+      .from("blog_posts")
+      .select("author_id")
+      .eq("id", id)
+      .single();
+
+    if (fetchError || !post) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+
+    if (post.author_id !== user.id) {
+      return NextResponse.json({ error: "You can only edit your own posts" }, { status: 403 });
+    }
+
     const formData = await req.formData();
     const title = formData.get("title") as string | null;
     const content = formData.get("content") as string | null;
@@ -77,18 +91,25 @@ export async function DELETE(
 ) {
   const guard = await requireAdmin();
   if ("error" in guard) return guard.error;
-  const { supabase } = guard;
+  const { supabase, user } = guard;
 
   const { id } = await params;
 
-  // Optional: delete image from storage
-  const { data: post } = await supabase
+  const { data: post, error: fetchError } = await supabase
     .from("blog_posts")
-    .select("image_url")
+    .select("author_id, image_url")
     .eq("id", id)
     .single();
 
-  if (post?.image_url) {
+  if (fetchError || !post) {
+    return NextResponse.json({ error: "Post not found" }, { status: 404 });
+  }
+
+  if (post.author_id !== user.id) {
+    return NextResponse.json({ error: "You can only delete your own posts" }, { status: 403 });
+  }
+
+  if (post.image_url) {
     const urlParts = post.image_url.split("/storage/v1/object/public/blog-images/");
     if (urlParts.length > 1) {
       const filePath = urlParts[1];
