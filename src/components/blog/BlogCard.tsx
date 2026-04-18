@@ -61,7 +61,7 @@ export default function BlogCard({ post, isAdmin, onEdit, onDelete }: BlogCardPr
         </p>
         
         <div className="flex items-center justify-between mt-auto pt-4 border-t border-[var(--border)]">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             <Link 
               href={`/blog/${post.id}`}
               className="flex items-center gap-2 text-[var(--primary-500)] text-sm font-bold whitespace-nowrap"
