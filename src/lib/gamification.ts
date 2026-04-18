@@ -24,24 +24,32 @@ export function xpProgress(xp: number): number {
   return Math.min(100, Math.round(((xp - start) / (end - start)) * 100));
 }
 
+export function coresForLevel(level: number): number {
+  if (level <= 1) return 0;
+  // Award 10 cores per level, with a bonus every 5 levels
+  const base = 10;
+  const bonus = level % 5 === 0 ? 50 : 0;
+  return base + bonus;
+}
+
 // ── Achievement definitions ───────────────────────────────────────────────────
 // These mirror the `achievements` catalogue table seeded in schema.sql.
 // `icon` is a Lucide component name — rendered in the UI via a lookup map.
 export const ACHIEVEMENT_DEFINITIONS = [
-  { id: "first_workout",  name: "First Step",       description: "Complete your first workout",         icon: "Dumbbell",            xpReward:   50, category: "workouts" },
-  { id: "workouts_5",     name: "Warm Up",           description: "Complete 5 workouts",                icon: "Activity",            xpReward:  100, category: "workouts" },
-  { id: "workouts_10",    name: "Getting Serious",   description: "Complete 10 workouts",               icon: "TrendingUp",          xpReward:  200, category: "workouts" },
-  { id: "workouts_25",    name: "Dedicated",         description: "Complete 25 workouts",               icon: "Star",                xpReward:  300, category: "workouts" },
-  { id: "workouts_100",   name: "Century Club",      description: "Complete 100 workouts",              icon: "Award",               xpReward: 1000, category: "workouts" },
-  { id: "streak_3",       name: "Hat Trick",         description: "Maintain a 3-day workout streak",    icon: "Zap",                 xpReward:   75, category: "streaks"  },
-  { id: "streak_7",       name: "On Fire",           description: "Maintain a 7-day workout streak",    icon: "Flame",               xpReward:  150, category: "streaks"  },
-  { id: "streak_30",      name: "Unstoppable",       description: "Maintain a 30-day workout streak",   icon: "Rocket",              xpReward:  500, category: "streaks"  },
-  { id: "pr_1",           name: "Record Setter",     description: "Set your first personal record",     icon: "Trophy",              xpReward:   75, category: "records"  },
-  { id: "pr_5",           name: "PR Crusher",        description: "Set 5 personal records",             icon: "Target",              xpReward:  150, category: "records"  },
-  { id: "pr_10",          name: "Record Breaker",    description: "Set 10 personal records",            icon: "Medal",               xpReward:  300, category: "records"  },
-  { id: "volume_10k",     name: "Iron Starter",      description: "Lift 10,000 kg total volume",        icon: "BarChart2",           xpReward:  100, category: "volume"   },
-  { id: "volume_50k",     name: "Heavy Lifter",      description: "Lift 50,000 kg total volume",        icon: "ChartBarIncreasing",  xpReward:  250, category: "volume"   },
-  { id: "volume_100k",    name: "Volume King",       description: "Lift 100,000 kg total volume",       icon: "Crown",               xpReward:  500, category: "volume"   },
+  { id: "first_workout",  name: "First Step",       description: "Complete your first workout",         icon: "Dumbbell",            xpReward:   50, coresReward:  10, category: "workouts" },
+  { id: "workouts_5",     name: "Warm Up",           description: "Complete 5 workouts",                icon: "Activity",            xpReward:  100, coresReward:  20, category: "workouts" },
+  { id: "workouts_10",    name: "Getting Serious",   description: "Complete 10 workouts",               icon: "TrendingUp",          xpReward:  200, coresReward:  40, category: "workouts" },
+  { id: "workouts_25",    name: "Dedicated",         description: "Complete 25 workouts",               icon: "Star",                xpReward:  300, coresReward:  60, category: "workouts" },
+  { id: "workouts_100",   name: "Century Club",      description: "Complete 100 workouts",              icon: "Award",               xpReward: 1000, coresReward: 200, category: "workouts" },
+  { id: "streak_3",       name: "Hat Trick",         description: "Maintain a 3-day workout streak",    icon: "Zap",                 xpReward:   75, coresReward:  15, category: "streaks"  },
+  { id: "streak_7",       name: "On Fire",           description: "Maintain a 7-day workout streak",    icon: "Flame",               xpReward:  150, coresReward:  30, category: "streaks"  },
+  { id: "streak_30",      name: "Unstoppable",       description: "Maintain a 30-day workout streak",   icon: "Rocket",              xpReward:  500, coresReward: 100, category: "streaks"  },
+  { id: "pr_1",           name: "Record Setter",     description: "Set your first personal record",     icon: "Trophy",              xpReward:   75, coresReward:  15, category: "records"  },
+  { id: "pr_5",           name: "PR Crusher",        description: "Set 5 personal records",             icon: "Target",              xpReward:  150, coresReward:  30, category: "records"  },
+  { id: "pr_10",          name: "Record Breaker",    description: "Set 10 personal records",            icon: "Medal",               xpReward:  300, coresReward:  60, category: "records"  },
+  { id: "volume_10k",     name: "Iron Starter",      description: "Lift 10,000 kg total volume",        icon: "BarChart2",           xpReward:  100, coresReward:  20, category: "volume"   },
+  { id: "volume_50k",     name: "Heavy Lifter",      description: "Lift 50,000 kg total volume",        icon: "ChartBarIncreasing",  xpReward:  250, coresReward:  50, category: "volume"   },
+  { id: "volume_100k",    name: "Volume King",       description: "Lift 100,000 kg total volume",       icon: "Crown",               xpReward:  500, coresReward: 100, category: "volume"   },
 ] as const;
 
 // ── Achievement unlock condition check ────────────────────────────────────────
