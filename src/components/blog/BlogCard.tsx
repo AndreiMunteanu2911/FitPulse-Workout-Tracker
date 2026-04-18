@@ -23,7 +23,7 @@ export default function BlogCard({ post, isAdmin, onEdit, onDelete }: BlogCardPr
   };
 
   return (
-    <div className="bg-white dark:bg-[#1C1C1E] rounded-[var(--radius-lg)] overflow-hidden border border-[var(--border-color)] transition-all hover:shadow-lg hover:border-[var(--primary-400)]/30 group flex flex-col h-full">
+    <div className="bg-[var(--surface)] rounded-[var(--radius-lg)] overflow-hidden border border-none transition-all hover:border-[var(--primary-400)]/30 group flex flex-col h-full">
       {post.image_url && (
         <Link href={`/blog/${post.id}`} className="relative h-52 w-full overflow-hidden">
           <Image
@@ -56,7 +56,7 @@ export default function BlogCard({ post, isAdmin, onEdit, onDelete }: BlogCardPr
         <div className="flex items-center justify-between mt-auto pt-5 border-t border-[var(--border)]">
           <Link 
             href={`/blog/${post.id}`}
-            className="flex items-center gap-1.5 text-[var(--primary-600)] text-sm font-bold hover:gap-2.5 transition-all"
+            className="flex items-center gap-1.5 text-[var(--primary-500)] text-sm font-bold hover:gap-2.5 transition-all"
           >
             Read More
             <ArrowRight className="w-4 h-4" />
@@ -69,7 +69,7 @@ export default function BlogCard({ post, isAdmin, onEdit, onDelete }: BlogCardPr
                   e.preventDefault();
                   onEdit?.(post);
                 }}
-                className="p-2 text-[var(--text-secondary)] hover:text-[var(--indigo-600)] hover:bg-[var(--indigo-50)] rounded-full transition-colors"
+                className="p-2 text-[var(--muted-foreground)] hover:text-[var(--primary-500)] hover:bg-[var(--surface-raised)] rounded-full transition-colors"
               >
                 <Edit2 className="w-4 h-4" />
               </button>
@@ -78,7 +78,7 @@ export default function BlogCard({ post, isAdmin, onEdit, onDelete }: BlogCardPr
                   e.preventDefault();
                   onDelete?.(post.id);
                 }}
-                className="p-2 text-[var(--text-secondary)] hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                className="p-2 text-[var(--muted-foreground)] hover:text-[var(--color-destructive)] hover:bg-[var(--color-destructive-bg)] rounded-full transition-colors"
               >
                 <Trash2 className="w-4 h-4" />
               </button>

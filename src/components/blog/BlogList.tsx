@@ -13,8 +13,8 @@ interface BlogListProps {
 export default function BlogList({ posts, isAdmin, onEdit, onDelete }: BlogListProps) {
   if (posts.length === 0) {
     return (
-      <div className="text-center py-12 bg-white dark:bg-[#1C1C1E] rounded-[var(--radius-lg)] border border-[var(--border-color)]">
-        <p className="text-[var(--text-secondary)]">No blog posts found.</p>
+      <div className="text-center py-12 bg-[var(--surface)] rounded-[var(--radius-lg)]">
+        <p className="text-[var(--muted-foreground)]">No blog posts found.</p>
       </div>
     );
   }
