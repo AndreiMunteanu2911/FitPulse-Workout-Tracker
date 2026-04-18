@@ -8,9 +8,13 @@ const nextConfig: NextConfig = {
         hostname: "static.exercisedb.dev",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "qcywxceqsopfxpoukaxn.supabase.co",
+        pathname: "/**",
+      },
     ],
   },
-  /* config options here */
 };
 
 export default nextConfig;

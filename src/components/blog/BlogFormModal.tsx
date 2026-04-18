@@ -75,8 +75,8 @@ export default function BlogFormModal({
   };
 
   return (
-    <ModalWrapper isOpen={isOpen} onClose={onClose} containerClassName="max-w-2xl p-6">
-      <div className="flex items-center justify-between mb-6 relative">
+    <ModalWrapper isOpen={isOpen} onClose={onClose} containerClassName="max-w-2xl max-h-[90vh] p-6 overflow-y-auto">
+      <div className="flex items-center justify-between mb-4 relative">
         <h2 className="text-xl font-bold text-[var(--foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>
           {initialData ? "Edit Blog Post" : "Create New Blog Post"}
         </h2>
@@ -85,14 +85,14 @@ export default function BlogFormModal({
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block mb-2 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">
             Cover Image
           </label>
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="relative h-56 rounded-[var(--radius-lg)] overflow-hidden cursor-pointer border-2 border-dashed border-[var(--border)] hover:border-[var(--primary-400)] transition-all group bg-[var(--surface-raised)]"
+            className="relative max-h-[30vh] rounded-[var(--radius-lg)] overflow-hidden cursor-pointer border-2 border-dashed border-[var(--border)] hover:border-[var(--primary-400)] transition-all group bg-[var(--surface-raised)]"
           >
             {preview ? (
               <>
@@ -139,7 +139,7 @@ export default function BlogFormModal({
           <textarea
             required
             rows={10}
-            className="input w-full resize-none leading-relaxed"
+            className="input w-full resize-none leading-relaxed max-h-[30vh]"
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Share your thoughts, tips, or updates..."
