@@ -52,14 +52,6 @@ function CameraGuideOverlay({ status }: { status: CameraViewStatus }) {
   if (status === "good" || status === "calibrating") return null;
 
   const messages: Record<string, { title: string; desc: string }> = {
-    "front-view": {
-      title: "Front view detected",
-      desc: "Move to the side so the camera sees your profile view.",
-    },
-    "back-view": {
-      title: "Back view detected",
-      desc: "Move to the side so the camera sees your profile view.",
-    },
     "too-far": {
       title: "Too far from camera",
       desc: "Move closer so your full body fills most of the frame.",
@@ -227,6 +219,7 @@ function FeedbackPanel({ feedback, repCount, formScore }: {
 export default function FormChecker({ exerciseId, exerciseName, formRules, onClose }: FormCheckerProps) {
   const { videoRef, isReady, isLoading, error: camError, startCamera, stopCamera } = useWebcam({
     facingMode: "environment",
+    zoom: 0.7,
   });
 
   const canvasContainerRef = useRef<HTMLDivElement | null>(null);
