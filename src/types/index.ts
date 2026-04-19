@@ -183,6 +183,58 @@ export interface GamificationStats {
   currentStreak: number;
 }
 
+// ── Social ────────────────────────────────────────────────────────────────────
+
+export interface Friendship {
+  id: string;
+  user_id: string;
+  friend_id: string;
+  status: "pending" | "accepted";
+  created_at?: string;
+  updated_at?: string;
+  user_stats?: { display_name: string | null };
+  friend_stats?: { display_name: string | null };
+}
+
+export interface Post {
+  id: string;
+  user_id: string;
+  content?: string | null;
+  image_url?: string | null;
+  workout_summary?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  user_stats?: { display_name: string | null };
+  post_likes?: PostLike[];
+  post_comments?: PostComment[];
+  likes_count?: number;
+  comments_count?: number;
+  liked_by_me?: boolean;
+}
+
+export interface PostLike {
+  id: string;
+  post_id: string;
+  user_id: string;
+  created_at?: string;
+}
+
+export interface PostComment {
+  id: string;
+  post_id: string;
+  user_id: string;
+  content: string;
+  created_at?: string;
+  updated_at?: string;
+  user_stats?: { display_name: string | null };
+}
+
+export interface UserSearchResult {
+  user_id: string;
+  display_name: string | null;
+  friendship_status?: "none" | "pending_sent" | "pending_received" | "accepted";
+}
+
 // ── Rest Timer ─────────────────────────────────────────────────────────────────
 
 export type ExerciseType = "compound" | "isolation";
@@ -195,4 +247,31 @@ export interface RestTimerState {
   exerciseType: ExerciseType;
   workoutExerciseId?: string; // which exercise card
   setId?: string;            // exact set row to render timer under
+}
+
+// ── Blog ───────────────────────────────────────────────────────────────────────
+
+export interface BlogPost {
+  id: string;
+  title: string;
+  content: string;
+  image_url?: string | null;
+  author_id: string;
+  created_at?: string;
+  updated_at?: string;
+  likes_count?: number;
+  comments_count?: number;
+  liked_by_me?: boolean;
+}
+
+export interface BlogComment {
+  id: string;
+  blog_post_id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+  user?: {
+    display_name: string;
+    avatar_url: string | null;
+  };
 }
