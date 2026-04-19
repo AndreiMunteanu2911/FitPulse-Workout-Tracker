@@ -148,7 +148,6 @@ export interface GamificationStats {
   xpProgress: number; // 0–100 %
   achievements: Achievement[];
   currentStreak: number;
-  cores_balance?: number;
 }
 
 export interface Achievement {
@@ -158,21 +157,11 @@ export interface Achievement {
   /** Lucide icon component name, e.g. "Trophy", "Flame" */
   icon: string;
   xpReward: number;
-  coresReward?: number;
   category: "workouts" | "streaks" | "records" | "volume";
   /** Non-null when workout conditions are met */
   unlockedAt?: string | null;
   /** Non-null when the user has clicked "Claim" and the XP has been banked */
   claimedAt?: string | null;
-}
-
-export interface PremiumCurrencyTransaction {
-  id: string;
-  user_id: string;
-  amount: number;
-  type: 'purchase' | 'achievement' | 'level_up' | 'admin_adjustment' | 'top_up';
-  description: string | null;
-  created_at?: string;
 }
 
 // ── Shop ───────────────────────────────────────────────────────────────────────
@@ -182,7 +171,6 @@ export interface Product {
   name: string;
   description: string | null;
   price_usd: number | null;
-  price_cores: number | null;
   image_url: string | null;
   stock_quantity: number;
   is_physical: boolean;
@@ -195,10 +183,9 @@ export interface Order {
   user_id: string;
   product_id: string | null;
   amount_usd: number | null;
-  amount_cores: number | null;
   status: 'pending' | 'completed' | 'cancelled' | 'shipped';
   stripe_session_id: string | null;
-  shipping_address: any | null;
+  shipping_address: Record<string, unknown> | null;
   created_at?: string;
   updated_at?: string;
   product?: Product;

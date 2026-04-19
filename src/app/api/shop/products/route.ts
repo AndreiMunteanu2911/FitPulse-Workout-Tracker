@@ -6,7 +6,6 @@ type ProductFormPayload = {
   name: string;
   description: string | null;
   price_usd: number | null;
-  price_cores: number | null;
   image_url: string | null;
   stock_quantity: number;
   is_physical: boolean;
@@ -49,7 +48,6 @@ async function parseProductFormData(req: NextRequest): Promise<ProductFormPayloa
     name: (formData.get("name") as string) || "",
     description: (formData.get("description") as string | null) || null,
     price_usd: formData.get("price_usd") ? parseFloat(formData.get("price_usd") as string) : null,
-    price_cores: formData.get("price_cores") ? parseInt(formData.get("price_cores") as string) : null,
     image_url: (formData.get("image_url") as string | null) || null,
     stock_quantity: formData.get("stock_quantity") ? parseInt(formData.get("stock_quantity") as string) : 0,
     is_physical: formData.get("is_physical") === "true",
@@ -90,7 +88,6 @@ export async function POST(req: NextRequest) {
         name: payload.name,
         description: payload.description,
         price_usd: payload.price_usd,
-        price_cores: payload.price_cores,
         image_url,
         stock_quantity: payload.stock_quantity,
         is_physical: payload.is_physical,
@@ -139,7 +136,6 @@ export async function PUT(req: NextRequest) {
         name: payload.name,
         description: payload.description,
         price_usd: payload.price_usd,
-        price_cores: payload.price_cores,
         image_url,
         stock_quantity: payload.stock_quantity,
         is_physical: payload.is_physical,

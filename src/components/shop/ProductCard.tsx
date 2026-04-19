@@ -2,7 +2,7 @@
 
 import { Product } from "@/types";
 import Button from "@/components/Button";
-import { Gem, ShoppingBag } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 
 interface ProductCardProps {
   product: Product;
@@ -53,12 +53,6 @@ export default function ProductCard({ product, onBuy }: ProductCardProps) {
         <div className="flex items-end justify-between gap-4">
           <div className="space-y-1">
             {product.price_usd && <p className="text-lg font-black text-[var(--foreground)]">${product.price_usd}</p>}
-            {product.price_cores && (
-              <p className="inline-flex items-center gap-1.5 text-sm font-bold text-[var(--primary-600)] dark:text-[var(--primary-400)]">
-                <Gem className="h-4 w-4" />
-                {product.price_cores} Cores
-              </p>
-            )}
           </div>
 
           <Button

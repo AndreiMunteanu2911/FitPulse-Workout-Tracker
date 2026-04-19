@@ -1,5 +1,5 @@
 -- =============================================================================
--- Migration 013: user_stats (XP bank, role, + profile fields for onboarding)
+-- Migration 013: user_stats
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS public.user_stats (
@@ -13,7 +13,6 @@ CREATE TABLE IF NOT EXISTS public.user_stats (
   birthday            DATE,
   gender              TEXT CHECK (gender IN ('male', 'female', 'other')),
   height_cm           NUMERIC(5,1),
-  cores_balance       INTEGER      NOT NULL DEFAULT 0,
   onboarding_done     BOOLEAN      NOT NULL DEFAULT FALSE,
   created_at          TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
   updated_at          TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
@@ -22,16 +21,13 @@ CREATE TABLE IF NOT EXISTS public.user_stats (
 
 ALTER TABLE public.user_stats ENABLE ROW LEVEL SECURITY;
 
--- Users can read their own stats (including role)
 CREATE POLICY "own_user_stats" ON public.user_stats
-  USING  (auth.uid() = user_id)
+  USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
--- Anyone can read the role column (needed for admin checks via auth.uid())
 CREATE POLICY "read_user_roles" ON public.user_stats
   FOR SELECT USING (true);
 
--- Only admins can change role values (admins can promote/demote users)
 CREATE POLICY "admins_manage_roles" ON public.user_stats
   FOR UPDATE USING (
     EXISTS (
@@ -41,12 +37,10 @@ CREATE POLICY "admins_manage_roles" ON public.user_stats
     )
   );
 
--- Trigger for auto-updating updated_at
 CREATE OR REPLACE TRIGGER trg_user_stats_updated_at
   BEFORE UPDATE ON public.user_stats
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
--- Auto-create user_stats row when a new auth user is created
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -63,25 +57,3 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_new_user();
-
--- Keep the reusable trigger function here so fresh installs get the schema logic
--- in the base user-stats migration.
-CREATE OR REPLACE FUNCTION public.update_cores_balance()
-RETURNS TRIGGER AS $$
-BEGIN
-  IF TG_OP = 'INSERT' THEN
-    UPDATE public.user_stats
-    SET cores_balance = cores_balance + NEW.amount
-    WHERE user_id = NEW.user_id;
-  ELSIF TG_OP = 'DELETE' THEN
-    UPDATE public.user_stats
-    SET cores_balance = cores_balance - OLD.amount
-    WHERE user_id = OLD.user_id;
-  ELSIF TG_OP = 'UPDATE' THEN
-    UPDATE public.user_stats
-    SET cores_balance = cores_balance - OLD.amount + NEW.amount
-    WHERE user_id = NEW.user_id;
-  END IF;
-  RETURN NULL;
-END;
-$$ LANGUAGE plpgsql;

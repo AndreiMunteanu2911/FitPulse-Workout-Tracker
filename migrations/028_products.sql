@@ -2,8 +2,7 @@ CREATE TABLE products (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     name TEXT NOT NULL,
     description TEXT,
-    price_usd DECIMAL(10, 2), -- Price in real money (can be null if only for cores)
-    price_cores INTEGER,       -- Price in cores (can be null if only for real money)
+    price_usd DECIMAL(10, 2),
     image_url TEXT,
     stock_quantity INTEGER DEFAULT 0,
     is_physical BOOLEAN DEFAULT FALSE,

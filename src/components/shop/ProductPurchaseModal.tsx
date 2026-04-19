@@ -3,7 +3,7 @@
 import { Product } from "@/types";
 import ModalWrapper from "@/components/ModalWrapper";
 import Button from "@/components/Button";
-import { Gem, Info, ShoppingBag, X } from "lucide-react";
+import { ShoppingBag, X } from "lucide-react";
 
 interface ProductPurchaseModalProps {
     isOpen: boolean;
