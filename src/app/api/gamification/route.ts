@@ -12,7 +12,7 @@ interface SetRow { weight: number; reps: number }
 interface WorkoutExerciseRow { exercise_id?: string; sets?: SetRow[] }
 interface WorkoutRow { workout_date: string; workout_exercises?: WorkoutExerciseRow[] }
 interface UserAchievementRow { achievement_id: string; unlocked_at: string }
-interface UserStatsRow { total_xp: number; level: number; cores_balance: number }
+interface UserStatsRow { total_xp: number; level: number }
 
 export async function GET() {
   const supabase = await createSupabaseServerClient();
@@ -81,12 +81,11 @@ export async function GET() {
   // ── 2. Read user_stats from DB (total_xp is the authoritative source of truth)
   const { data: statsRow } = await supabase
     .from("user_stats")
-    .select("total_xp, level, cores_balance")
+    .select("total_xp, level")
     .eq("user_id", user.id)
     .single();
 
   const totalXP = (statsRow as UserStatsRow | null)?.total_xp ?? 0;
-  const cores_balance = (statsRow as UserStatsRow | null)?.cores_balance ?? 0;
   const level   = levelFromXP(totalXP);
 
   // ── 3. Read which achievements the user has already claimed (from user_achievements)
@@ -121,7 +120,6 @@ export async function GET() {
       xpProgress:        xpProgress(totalXP),
       achievements,
       currentStreak,
-      cores_balance,
     },
   });
 }

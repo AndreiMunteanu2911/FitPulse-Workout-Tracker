@@ -62,7 +62,6 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, product }:
       formData.append("name", name);
       formData.append("description", description);
       formData.append("price_usd", priceUsd);
-
       formData.append("stock_quantity", stockQuantity);
       formData.append("is_physical", String(isPhysical));
       if (selectedFile) {
@@ -159,11 +158,6 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, product }:
             <div className="grid gap-2">
               <label className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--muted-foreground)]">Price (USD)</label>
               <input className="input" type="number" step="0.01" value={priceUsd} onChange={(e) => setPriceUsd(e.target.value)} placeholder="0.00" />
-            </div>
-
-            <div className="grid gap-2">
-              <label className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--muted-foreground)]">Price (Cores)</label>
-              <input className="input" type="number" value={priceCores} onChange={(e) => setPriceCores(e.target.value)} placeholder="0" />
             </div>
 
             <div className="grid gap-2">

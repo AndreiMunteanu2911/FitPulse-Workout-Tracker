@@ -5,7 +5,7 @@ import ProtectedWrapper from "@/components/ProtectedWrapper";
 import Button from "@/components/Button";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Product } from "@/types";
-import { Plus, Package, ShoppingBag, Trash2, Edit2, Gem } from "lucide-react";
+import { Plus, Package, ShoppingBag, Trash2, Edit2 } from "lucide-react";
 import ProductFormModal from "@/components/shop/ProductFormModal";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import ConfirmDeleteModal from "@/components/admin/ConfirmDeleteModal";
@@ -162,11 +162,6 @@ export default function AdminShopPage() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="space-y-1">
                       {product.price_usd && <p className="text-sm font-medium text-[var(--foreground)]">${product.price_usd}</p>}
-                      {product.price_cores && (
-                        <p className="inline-flex items-center gap-1.5 text-xs font-bold text-[var(--primary-600)] dark:text-[var(--primary-400)]">
-                          <Gem className="h-3 w-3" /> {product.price_cores}
-                        </p>
-                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -253,11 +248,6 @@ export default function AdminShopPage() {
                       <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">Price</p>
                       <div className="mt-1 space-y-1">
                         {product.price_usd && <p className="text-sm font-medium text-[var(--foreground)]">${product.price_usd}</p>}
-                        {product.price_cores && (
-                          <p className="inline-flex items-center gap-1 text-xs font-bold text-[var(--primary-600)] dark:text-[var(--primary-400)]">
-                            <Gem className="h-3 w-3" /> {product.price_cores}
-                          </p>
-                        )}
                       </div>
                     </div>
                     <div className="rounded-[var(--radius-sm)] bg-[var(--surface-raised)] px-3 py-2">

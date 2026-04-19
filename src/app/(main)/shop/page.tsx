@@ -5,10 +5,9 @@ import { useSearchParams } from "next/navigation";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Product } from "@/types";
-import { ShoppingBag, Gem, CheckCircle2, XCircle } from "lucide-react";
+import { ShoppingBag, CheckCircle2, XCircle } from "lucide-react";
 import ProductCard from "@/components/shop/ProductCard";
 import ProductPurchaseModal from "@/components/shop/ProductPurchaseModal";
-import Button from "@/components/Button";
 
 
 export default function ShopPage() {
@@ -49,7 +48,6 @@ export default function ShopPage() {
 
 
 
-  // Logic for purchasing a specific product
   const handleProductPurchase = async () => {
       if (!selectedProduct) return;
       setPurchaseLoading(true);

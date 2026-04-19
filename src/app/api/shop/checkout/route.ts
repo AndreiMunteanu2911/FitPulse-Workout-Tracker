@@ -2,6 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/helper/stripe";
 import { createSupabaseServerClient } from "@/helper/supabaseServer";
 
+const DEFAULT_ALLOWED_COUNTRIES = [
+  "US",
+  "CA",
+  "GB",
+  "AU",
+  "DE",
+  "FR",
+  "NL",
+  "BE",
+  "ES",
+  "IT",
+  "PT",
+  "RO",
+];
+
 export async function POST(req: NextRequest) {
   const supabase = await createSupabaseServerClient();
   const {
@@ -40,6 +55,7 @@ export async function POST(req: NextRequest) {
     .insert({
       user_id: user.id,
       product_id: product.id,
+      amount_usd: Number(product.price_usd) * quantity,
       status: "pending",
       payment_method: "stripe",
     })
@@ -51,12 +67,18 @@ export async function POST(req: NextRequest) {
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(req.url).origin;
+  const allowedCountries = (process.env.STRIPE_ALLOWED_SHIPPING_COUNTRIES || "")
+    .split(",")
+    .map((country) => country.trim().toUpperCase())
+    .filter(Boolean);
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
     success_url: `${baseUrl}/checkout-success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${baseUrl}/shop?canceled=1`,
     shipping_address_collection: product.is_physical
-      ? { allowed_countries: ["US"] }
+      ? {
+        allowed_countries: allowedCountries.length > 0 ? allowedCountries : DEFAULT_ALLOWED_COUNTRIES,
+      }
       : undefined,
     metadata: {
       type: "product-order",

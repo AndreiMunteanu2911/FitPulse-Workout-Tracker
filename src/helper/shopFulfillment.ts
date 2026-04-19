@@ -1,6 +1,7 @@
 import type { Stripe } from "stripe";
+import { getSupabaseAdminClient } from "@/helper/supabaseAdmin";
 
-type SupabaseAdmin = any;
+type SupabaseAdmin = ReturnType<typeof getSupabaseAdminClient>;
 
 type StripeCheckoutSession = Pick<
   Stripe.Checkout.Session,
@@ -28,16 +29,30 @@ export async function fulfillStripeProductOrder(
     return { status: "already_processed" as const };
   }
 
-  const shippingAddress = session.shipping_details ?? session.customer_details?.address ?? null;
+  const quantity = Math.max(1, Number(session.metadata?.quantity || 1));
+  const { data: productRow, error: productError } = await supabaseAdmin
+    .from("products")
+    .select("price_usd")
+    .eq("id", existingOrder.product_id)
+    .maybeSingle();
+
+  if (productError) throw productError;
+
+  const shippingAddress =
+    session.shipping_details?.address ??
+    session.customer_details?.address ??
+    null;
+
+  const amountUsd = productRow?.price_usd == null ? null : Number(productRow.price_usd) * quantity;
 
   const { data: updatedOrder, error: updateError } = await supabaseAdmin
     .from("orders")
     .update({
       status: "completed",
+      amount_usd: amountUsd,
       shipping_address: shippingAddress,
       payment_method: "stripe",
       stripe_session_id: session.id,
-
     })
     .eq("id", orderId)
     .select("id, product_id")
@@ -46,18 +61,18 @@ export async function fulfillStripeProductOrder(
   if (updateError) throw updateError;
   if (!updatedOrder?.product_id) return { status: "ignored", reason: "missing_product_id" as const };
 
-  const { data: product, error: productError } = await supabaseAdmin
+  const { data: stockProduct, error: stockProductError } = await supabaseAdmin
     .from("products")
     .select("stock_quantity")
     .eq("id", updatedOrder.product_id)
     .maybeSingle();
 
-  if (productError) throw productError;
+  if (stockProductError) throw stockProductError;
 
-  if (product) {
+  if (stockProduct) {
     const { error: stockError } = await supabaseAdmin
       .from("products")
-      .update({ stock_quantity: Math.max(0, Number(product.stock_quantity || 0) - 1) })
+      .update({ stock_quantity: Math.max(0, Number(stockProduct.stock_quantity || 0) - quantity) })
       .eq("id", updatedOrder.product_id);
 
     if (stockError) throw stockError;
@@ -72,5 +87,3 @@ export async function fulfillStripeProductOrder(
     stripeSessionId: session.id,
   };
 }
-
-

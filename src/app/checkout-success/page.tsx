@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "@/components/Button";
-import { Gem, Package, ShoppingBag } from "lucide-react";
+import { Package, ShoppingBag } from "lucide-react";
 
 type ConfirmResponse = {
   paymentStatus?: string | null;
@@ -61,18 +61,7 @@ export default function CheckoutSuccessPage() {
   }, [router, sessionId]);
 
   const summary = useMemo(() => {
-    const metadataType = result?.metadata?.type;
-
-    if (metadataType === "cores-pack") {
-      const cores = Number(result?.metadata?.cores || 0);
-      return {
-        title: "Cores purchase complete",
-        description: cores > 0 ? `${cores} Cores were purchased successfully.` : "Your Cores purchase was successful.",
-        icon: <Gem className="h-6 w-6 text-[var(--primary-600)]" />,
-      };
-    }
-
-    if (metadataType === "product-order") {
+    if (result?.metadata?.type === "product-order") {
       return {
         title: "Order complete",
         description: "Your product purchase was successful.",
