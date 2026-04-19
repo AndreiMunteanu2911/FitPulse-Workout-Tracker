@@ -10,7 +10,7 @@ type AdminOrder = {
   id: string;
   status: string;
   payment_method?: string | null;
-  amount_cores?: number | null;
+
   stripe_session_id?: string | null;
   shipping_address?: unknown;
   created_at?: string;
@@ -58,7 +58,7 @@ export default function AdminOrdersPage() {
               <th className="px-5 py-4 text-xs font-bold uppercase tracking-[0.2em] text-[var(--muted-foreground)]">Product</th>
               <th className="px-5 py-4 text-xs font-bold uppercase tracking-[0.2em] text-[var(--muted-foreground)]">Method</th>
               <th className="px-5 py-4 text-xs font-bold uppercase tracking-[0.2em] text-[var(--muted-foreground)]">Shipping</th>
-              <th className="px-5 py-4 text-xs font-bold uppercase tracking-[0.2em] text-[var(--muted-foreground)]">Cores</th>
+
               <th className="px-5 py-4 text-xs font-bold uppercase tracking-[0.2em] text-[var(--muted-foreground)]">Stripe Session</th>
             </tr>
           </thead>
@@ -91,7 +91,7 @@ export default function AdminOrdersPage() {
                     "None"
                   )}
                 </td>
-                <td className="px-5 py-4 text-sm text-[var(--foreground)]">{order.amount_cores ?? "—"}</td>
+
                 <td className="px-5 py-4 text-xs text-[var(--muted-foreground)] break-all">{order.stripe_session_id || "—"}</td>
               </tr>
             ))}
@@ -114,10 +114,7 @@ export default function AdminOrdersPage() {
                 <p className="text-xs uppercase tracking-[0.18em] text-[var(--muted-foreground)]">Shipping</p>
                 <p className="mt-1 text-[var(--foreground)]">{order.shipping_address ? "Captured" : "None"}</p>
               </div>
-              <div className="rounded-[var(--radius-sm)] bg-[var(--surface-raised)] p-3">
-                <p className="text-xs uppercase tracking-[0.18em] text-[var(--muted-foreground)]">Cores</p>
-                <p className="mt-1 text-[var(--foreground)]">{order.amount_cores ?? "—"}</p>
-              </div>
+
             </div>
           </article>
         ))}

@@ -37,7 +37,7 @@ export async function fulfillStripeProductOrder(
       shipping_address: shippingAddress,
       payment_method: "stripe",
       stripe_session_id: session.id,
-      amount_cores: null,
+
     })
     .eq("id", orderId)
     .select("id, product_id")
@@ -73,79 +73,4 @@ export async function fulfillStripeProductOrder(
   };
 }
 
-export async function fulfillCoresProductOrder(
-  supabaseAdmin: SupabaseAdmin,
-  input: {
-    userId: string;
-    productId: string;
-    shippingAddress: unknown;
-  },
-) {
-  const { userId, productId, shippingAddress } = input;
 
-  const { data: product, error: productError } = await supabaseAdmin
-    .from("products")
-    .select("id, price_cores, stock_quantity, is_physical")
-    .eq("id", productId)
-    .maybeSingle();
-
-  if (productError) throw productError;
-  if (!product) return { status: "ignored" as const, reason: "product_not_found" as const };
-
-  const totalCores = Number(product.price_cores || 0);
-  if (totalCores <= 0) return { status: "ignored" as const, reason: "product_has_no_cores_price" as const };
-
-  const { data: statsRow, error: statsError } = await supabaseAdmin
-    .from("user_stats")
-    .select("cores_balance")
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (statsError) throw statsError;
-
-  const currentBalance = Number(statsRow?.cores_balance || 0);
-  if (currentBalance < totalCores) {
-    return { status: "ignored" as const, reason: "insufficient_cores" as const };
-  }
-
-  const { data: order, error: orderError } = await supabaseAdmin
-    .from("orders")
-    .insert({
-      user_id: userId,
-      product_id: productId,
-      status: "completed",
-      shipping_address: product.is_physical ? shippingAddress ?? null : null,
-      payment_method: "cores",
-      amount_cores: totalCores,
-      stripe_session_id: null,
-    })
-    .select("id")
-    .single();
-
-  if (orderError) throw orderError;
-
-  const { error: balanceError } = await supabaseAdmin
-    .from("user_stats")
-    .update({ cores_balance: currentBalance - totalCores })
-    .eq("user_id", userId);
-
-  if (balanceError) throw balanceError;
-
-  if (product.is_physical) {
-    const { error: stockError } = await supabaseAdmin
-      .from("products")
-      .update({ stock_quantity: Math.max(0, Number(product.stock_quantity || 0) - 1) })
-      .eq("id", productId);
-
-    if (stockError) throw stockError;
-  }
-
-  return {
-    status: "processed" as const,
-    paymentMethod: "cores" as const,
-    orderId: order.id as string,
-    productId,
-    amountCores: totalCores,
-    shippingAddress: product.is_physical ? shippingAddress ?? null : null,
-  };
-}

@@ -17,7 +17,6 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, product }:
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [priceUsd, setPriceUsd] = useState("");
-  const [priceCores, setPriceCores] = useState("");
   const [stockQuantity, setStockQuantity] = useState("0");
   const [isPhysical, setIsPhysical] = useState(false);
   const [imageUrl, setImageUrl] = useState("");
@@ -32,7 +31,7 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, product }:
     setName(product?.name || "");
     setDescription(product?.description || "");
     setPriceUsd(product?.price_usd?.toString() || "");
-    setPriceCores(product?.price_cores?.toString() || "");
+
     setStockQuantity(product?.stock_quantity?.toString() || "0");
     setIsPhysical(product?.is_physical || false);
     setImageUrl(product?.image_url || "");
@@ -63,7 +62,7 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, product }:
       formData.append("name", name);
       formData.append("description", description);
       formData.append("price_usd", priceUsd);
-      formData.append("price_cores", priceCores);
+
       formData.append("stock_quantity", stockQuantity);
       formData.append("is_physical", String(isPhysical));
       if (selectedFile) {

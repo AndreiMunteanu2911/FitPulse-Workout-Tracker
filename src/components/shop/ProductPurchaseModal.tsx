@@ -6,25 +6,21 @@ import Button from "@/components/Button";
 import { Gem, Info, ShoppingBag, X } from "lucide-react";
 
 interface ProductPurchaseModalProps {
-    isOpen: boolean; // Added to interface
+    isOpen: boolean;
     product: Product | null;
-    coresBalance: number;
     loading: boolean;
     onClose: () => void;
-    onPurchase: (method: "stripe" | "cores") => void;
+    onPurchase: () => void;
 }
 
 export default function ProductPurchaseModal({
-                                                 isOpen, // Added
+                                                 isOpen,
                                                  product,
-                                                 coresBalance,
                                                  loading,
                                                  onClose,
                                                  onPurchase,
                                              }: ProductPurchaseModalProps) {
     if (!product) return null;
-
-    const canBuyWithCores = !!product.price_cores && coresBalance >= product.price_cores;
 
     return (
         <ModalWrapper isOpen={isOpen} onClose={() => !loading && onClose()} containerClassName="max-w-2xl max-h-[calc(100vh-1.5rem)] overflow-y-auto overflow-hidden p-0">
@@ -65,7 +61,7 @@ export default function ProductPurchaseModal({
                         <div className="grid gap-3">
                             {product.price_usd && (
                                 <button
-                                    onClick={() => onPurchase("stripe")}
+                                    onClick={onPurchase}
                                     disabled={loading}
                                     className="flex items-center justify-between rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-raised)] p-4 text-left transition-colors hover:border-[var(--primary-400)] disabled:opacity-50"
                                 >
@@ -76,32 +72,7 @@ export default function ProductPurchaseModal({
                                     <p className="text-base font-bold text-[var(--foreground)]">${product.price_usd}</p>
                                 </button>
                             )}
-
-                            {product.price_cores && (
-                                <button
-                                    onClick={() => onPurchase("cores")}
-                                    disabled={loading || !canBuyWithCores}
-                                    className="flex items-center justify-between rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-raised)] p-4 text-left transition-colors hover:border-yellow-400 disabled:opacity-50"
-                                >
-                                    <div>
-                                        <p className="font-semibold text-[var(--foreground)]">Pay with Cores</p>
-                                        <p className="text-xs text-[var(--muted-foreground)]">Balance: {coresBalance}</p>
-                                    </div>
-                                    <p className="inline-flex items-center gap-1.5 text-base font-bold text-[var(--primary-600)] dark:text-[var(--primary-400)]">
-                                        <Gem className="h-5 w-5" />
-                                        {product.price_cores}
-                                    </p>
-                                </button>
-                            )}
                         </div>
-
-                        {product.price_cores && !canBuyWithCores && (
-                            <div className="flex items-start gap-3 rounded-[var(--radius-md)] border border-blue-500/20 bg-blue-500/10 p-4">
-                                <p className="text-xs font-medium text-blue-700 dark:text-blue-300">
-                                    You need {product.price_cores - coresBalance} more Cores. Keep training and earning achievements to unlock it.
-                                </p>
-                            </div>
-                        )}
                     </div>
 
                     <div className="mt-auto border-t border-[var(--border)] p-6">
