@@ -408,8 +408,8 @@ export default function ProfilePage() {
                                     {darkMode ? <Sun className="w-4 h-4 text-[var(--primary-600)]" /> : <Moon className="w-4 h-4 text-[var(--primary-600)]" />}
                                 </div>
                                 <div>
-                                    <p className="text-sm font-semibold text-[var(--foreground)]">{darkMode ? "Light Mode" : "Dark Mode"}</p>
-                                    <p className="text-xs text-[var(--muted-foreground)]">Toggle app appearance</p>
+                                    <p className="text-sm font-semibold text-[var(--foreground)]">{"Dark Mode"}</p>
+                                    <p className="text-xs text-[var(--muted-foreground)]">Toggle dark mode</p>
                                 </div>
                             </div>
                             <ToggleSwitch checked={darkMode} onChange={toggleDarkMode} size="sm" />
