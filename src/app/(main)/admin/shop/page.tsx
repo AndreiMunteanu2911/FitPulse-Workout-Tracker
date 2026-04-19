@@ -5,24 +5,19 @@ import ProtectedWrapper from "@/components/ProtectedWrapper";
 import Button from "@/components/Button";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Product } from "@/types";
-import { Plus, Package, ShoppingBag, Trash2, Edit2, Star, DollarSign, Image as ImageIcon, Upload } from "lucide-react";
-import ModalWrapper from "@/components/ModalWrapper";
+import { Plus, Package, ShoppingBag, Trash2, Edit2, Gem } from "lucide-react";
+import ProductFormModal from "@/components/shop/ProductFormModal";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import ConfirmDeleteModal from "@/components/admin/ConfirmDeleteModal";
 
 export default function AdminShopPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    price_usd: "",
-    price_cores: "",
-    image_url: "",
-    stock_quantity: "0",
-    is_physical: false,
-  });
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -41,73 +36,106 @@ export default function AdminShopPage() {
     fetchProducts();
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    try {
-      const payload = new FormData();
-      payload.append("name", formData.name);
-      payload.append("description", formData.description);
-      payload.append("price_usd", formData.price_usd);
-      payload.append("price_cores", formData.price_cores);
-      payload.append("stock_quantity", formData.stock_quantity);
-      payload.append("is_physical", String(formData.is_physical));
-      if (imageFile) payload.append("image", imageFile);
-      if (formData.image_url) payload.append("image_url", formData.image_url);
+  const handleCreateProduct = async (formData: FormData) => {
+    const res = await fetch("/api/shop/products", {
+      method: "POST",
+      body: formData,
+    });
 
-      const res = await fetch("/api/shop/products", {
-        method: "POST",
-        body: payload,
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || "Failed to create product.");
+    }
+
+    fetchProducts();
+  };
+
+  const handleUpdateProduct = async (formData: FormData, productId?: string) => {
+    if (!productId) throw new Error("Missing product ID.");
+
+    const payload = new FormData();
+    payload.append("id", productId);
+    formData.forEach((value, key) => payload.append(key, value));
+
+    const res = await fetch("/api/shop/products", {
+      method: "PUT",
+      body: payload,
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || "Failed to update product.");
+    }
+
+    fetchProducts();
+  };
+
+  const handleDeleteProduct = async () => {
+    if (!deletingProduct) return;
+    setDeleting(true);
+    setDeleteError("");
+
+    try {
+      const res = await fetch(`/api/shop/products?id=${deletingProduct.id}`, {
+        method: "DELETE",
       });
-      if (res.ok) {
-        setIsAddModalOpen(false);
-        setFormData({
-          name: "",
-          description: "",
-          price_usd: "",
-          price_cores: "",
-          image_url: "",
-          stock_quantity: "0",
-          is_physical: false,
-        });
-        setImageFile(null);
-        fetchProducts();
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to delete product.");
       }
+      setDeletingProduct(null);
+      fetchProducts();
     } catch (error) {
-      console.error("Error adding product:", error);
+      setDeleteError(error instanceof Error ? error.message : "Failed to delete product.");
     } finally {
-      setIsSubmitting(false);
+      setDeleting(false);
     }
   };
+
+  const totalProducts = products.length;
+  const physicalProducts = products.filter((product) => product.is_physical).length;
+  const digitalProducts = totalProducts - physicalProducts;
 
   if (loading) return <ProtectedWrapper><LoadingSpinner /></ProtectedWrapper>;
 
   return (
     <ProtectedWrapper>
-      <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-extrabold text-[var(--foreground)] flex items-center gap-3">
-              <Package className="w-8 h-8 text-[var(--primary-500)]" />
-              Manage Shop
-            </h1>
-            <p className="text-[var(--muted-foreground)] mt-1">Add products and manage inventory.</p>
+      <div className="w-full">
+        <AdminPageHeader
+          title="Shop"
+          subtitle="Add products and manage store inventory"
+          action={
+            <Button onClick={() => setIsAddModalOpen(true)}>
+              <Plus className="mr-2 h-5 w-5" />
+              Add Product
+            </Button>
+          }
+        />
+
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          <div className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-5">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--muted-foreground)]">Products</p>
+            <p className="mt-3 text-3xl font-black text-[var(--foreground)]">{totalProducts}</p>
           </div>
-          <Button onClick={() => setIsAddModalOpen(true)} className="flex items-center gap-2">
-            <Plus className="w-5 h-5" />
-            Add Product
-          </Button>
+          <div className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-5">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--muted-foreground)]">Physical</p>
+            <p className="mt-3 text-3xl font-black text-[var(--foreground)]">{physicalProducts}</p>
+          </div>
+          <div className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-5">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--muted-foreground)]">Digital</p>
+            <p className="mt-3 text-3xl font-black text-[var(--foreground)]">{digitalProducts}</p>
+          </div>
         </div>
 
-        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-xl)] overflow-hidden">
-          <table className="w-full text-left">
+        <div className="mt-6 hidden overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] md:block">
+          <table className="w-full table-fixed text-left">
             <thead>
-              <tr className="bg-[var(--surface-raised)] border-b border-[var(--border)]">
-                <th className="px-6 py-4 text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider">Product</th>
-                <th className="px-6 py-4 text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider">Prices</th>
-                <th className="px-6 py-4 text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider">Inventory</th>
-                <th className="px-6 py-4 text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider">Type</th>
-                <th className="px-6 py-4 text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider text-right">Actions</th>
+              <tr className="border-b border-[var(--border)] bg-[var(--surface-raised)]">
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] text-[var(--muted-foreground)]">Product</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] text-[var(--muted-foreground)]">Prices</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] text-[var(--muted-foreground)]">Inventory</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] text-[var(--muted-foreground)]">Type</th>
+                <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-[0.2em] text-[var(--muted-foreground)]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border)]">
@@ -115,7 +143,7 @@ export default function AdminShopPage() {
                 <tr key={product.id} className="hover:bg-[var(--surface-raised)]/50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-[var(--radius-md)] bg-[var(--surface-raised)] border border-[var(--border)] overflow-hidden flex-shrink-0">
+                      <div className="w-12 h-12 rounded-[var(--radius-sm)] bg-[var(--surface-raised)] border border-[var(--border)] overflow-hidden flex-shrink-0">
                         {product.image_url ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={product.image_url} alt="" className="w-full h-full object-cover" />
@@ -125,44 +153,56 @@ export default function AdminShopPage() {
                           </div>
                         )}
                       </div>
-                      <div>
-                        <p className="font-bold text-[var(--foreground)]">{product.name}</p>
-                        <p className="text-xs text-[var(--muted-foreground)] line-clamp-1 max-w-[200px]">{product.description}</p>
+                      <div className="min-w-0">
+                        <p className="font-bold text-[var(--foreground)] truncate">{product.name}</p>
+                        <p className="text-xs text-[var(--muted-foreground)] truncate">{product.description}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="space-y-1">
                       {product.price_usd && <p className="text-sm font-medium text-[var(--foreground)]">${product.price_usd}</p>}
                       {product.price_cores && (
-                        <p className="text-xs font-bold text-yellow-600 dark:text-yellow-500 flex items-center gap-1">
-                          <Star className="w-3 h-3 fill-current" /> {product.price_cores}
+                        <p className="inline-flex items-center gap-1.5 text-xs font-bold text-[var(--primary-600)] dark:text-[var(--primary-400)]">
+                          <Gem className="h-3 w-3" /> {product.price_cores}
                         </p>
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
-                       <span className={`w-2 h-2 rounded-full ${product.stock_quantity > 0 ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                       <span className="text-sm font-medium text-[var(--foreground)]">{product.stock_quantity} in stock</span>
+                      <span className="text-sm font-medium text-[var(--foreground)]">{product.stock_quantity} in stock</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-tighter ${
-                      product.is_physical 
-                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' 
-                        : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                      product.is_physical
+                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                        : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
                     }`}>
-                      {product.is_physical ? 'Physical' : 'Digital'}
+                      {product.is_physical ? "Physical" : "Digital"}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-2">
-                      <button className="p-2 text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors">
-                        <Edit2 className="w-4 h-4" />
+                  <td className="px-6 py-4 text-right whitespace-nowrap">
+                    <div className="flex justify-end gap-1 sm:gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setEditingProduct(product)}
+                        className="group p-2 text-[var(--muted-foreground)] transition-colors hover:text-[var(--primary-600)]"
+                        aria-label={`Edit ${product.name}`}
+                      >
+                        <Edit2 className="h-4 w-4 transition-colors group-hover:text-[var(--primary-600)]" />
                       </button>
-                      <button className="p-2 text-[var(--muted-foreground)] hover:text-red-500 transition-colors">
-                        <Trash2 className="w-4 h-4" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDeletingProduct(product);
+                          setDeleteError("");
+                        }}
+                        className="group p-2 text-[var(--muted-foreground)] transition-colors hover:text-[var(--color-destructive)]"
+                        aria-label={`Delete ${product.name}`}
+                      >
+                        <Trash2 className="h-4 w-4 transition-colors group-hover:text-[var(--color-destructive)]" />
                       </button>
                     </div>
                   </td>
@@ -170,147 +210,118 @@ export default function AdminShopPage() {
               ))}
             </tbody>
           </table>
-          
           {products.length === 0 && (
             <div className="p-12 text-center">
-               <Package className="w-12 h-12 text-[var(--muted-foreground)] mx-auto mb-3 opacity-20" />
-               <p className="text-[var(--muted-foreground)]">No products in the database yet.</p>
+              <Package className="mx-auto mb-3 h-12 w-12 text-[var(--muted-foreground)] opacity-20" />
+              <p className="text-[var(--muted-foreground)]">No products in the database yet.</p>
             </div>
           )}
         </div>
 
-        <ModalWrapper 
-          isOpen={isAddModalOpen} 
-          onClose={() => !isSubmitting && setIsAddModalOpen(false)}
-          containerClassName="max-w-xl p-0"
-        >
-          <div className="p-6 border-b border-[var(--border)]">
-            <h2 className="text-2xl font-bold text-[var(--foreground)]">Add New Product</h2>
-          </div>
-          
-          <form onSubmit={handleSubmit} className="p-6 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2 space-y-1.5">
-                <label className="text-sm font-bold text-[var(--foreground)]">Product Name</label>
-                <input
-                  required
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full bg-[var(--surface-raised)] border border-[var(--border)] rounded-[var(--radius-md)] px-4 py-2 focus:ring-2 focus:ring-[var(--primary-500)] outline-none"
-                  placeholder="e.g. FitPulse T-Shirt"
-                />
-              </div>
-              
-              <div className="col-span-2 space-y-1.5">
-                <label className="text-sm font-bold text-[var(--foreground)]">Description</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full bg-[var(--surface-raised)] border border-[var(--border)] rounded-[var(--radius-md)] px-4 py-2 focus:ring-2 focus:ring-[var(--primary-500)] outline-none min-h-[100px]"
-                  placeholder="Tell us about the product..."
-                />
-              </div>
+        <div className="mt-6 space-y-4 md:hidden">
+          {products.map((product) => (
+            <article key={product.id} className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-4">
+              <div className="flex items-start gap-3">
+                <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface-raised)]">
+                  {product.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={product.image_url} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-[var(--muted-foreground)] opacity-30">
+                      <ShoppingBag className="h-5 w-5" />
+                    </div>
+                  )}
+                </div>
 
-              <div className="space-y-1.5">
-                <label className="text-sm font-bold text-[var(--foreground)] flex items-center gap-1.5">
-                  <DollarSign className="w-3.5 h-3.5" /> Price (USD)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formData.price_usd}
-                  onChange={(e) => setFormData({ ...formData, price_usd: e.target.value })}
-                  className="w-full bg-[var(--surface-raised)] border border-[var(--border)] rounded-[var(--radius-md)] px-4 py-2 focus:ring-2 focus:ring-[var(--primary-500)] outline-none"
-                  placeholder="0.00"
-                />
-              </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-base font-bold text-[var(--foreground)]">{product.name}</p>
+                      <p className="mt-1 line-clamp-2 text-sm text-[var(--muted-foreground)]">{product.description}</p>
+                    </div>
+                    <span className={`shrink-0 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-tighter ${
+                      product.is_physical
+                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                        : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
+                    }`}>
+                      {product.is_physical ? "Physical" : "Digital"}
+                    </span>
+                  </div>
 
-              <div className="space-y-1.5">
-                <label className="text-sm font-bold text-[var(--foreground)] flex items-center gap-1.5">
-                  <Star className="w-3.5 h-3.5" /> Price (Cores)
-                </label>
-                <input
-                  type="number"
-                  value={formData.price_cores}
-                  onChange={(e) => setFormData({ ...formData, price_cores: e.target.value })}
-                  className="w-full bg-[var(--surface-raised)] border border-[var(--border)] rounded-[var(--radius-md)] px-4 py-2 focus:ring-2 focus:ring-[var(--primary-500)] outline-none"
-                  placeholder="0"
-                />
-              </div>
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    <div className="rounded-[var(--radius-sm)] bg-[var(--surface-raised)] px-3 py-2">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">Price</p>
+                      <div className="mt-1 space-y-1">
+                        {product.price_usd && <p className="text-sm font-medium text-[var(--foreground)]">${product.price_usd}</p>}
+                        {product.price_cores && (
+                          <p className="inline-flex items-center gap-1 text-xs font-bold text-[var(--primary-600)] dark:text-[var(--primary-400)]">
+                            <Gem className="h-3 w-3" /> {product.price_cores}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="rounded-[var(--radius-sm)] bg-[var(--surface-raised)] px-3 py-2">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">Stock</p>
+                      <p className="mt-1 text-sm font-medium text-[var(--foreground)]">{product.stock_quantity}</p>
+                    </div>
+                  </div>
 
-              <div className="space-y-1.5 text-center">
-                 <label className="text-sm font-bold text-[var(--foreground)]">Stock Quantity</label>
-                 <input
-                  required
-                  type="number"
-                  value={formData.stock_quantity}
-                  onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
-                  className="w-full bg-[var(--surface-raised)] border border-[var(--border)] rounded-[var(--radius-md)] px-4 py-2 focus:ring-2 focus:ring-[var(--primary-500)] outline-none"
-                />
+                  <div className="mt-3 flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setEditingProduct(product)}
+                      className="group inline-flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-raised)] px-3 py-2 text-sm font-semibold text-[var(--foreground)] transition-colors hover:border-[var(--primary-400)] hover:text-[var(--primary-600)]"
+                    >
+                      <Edit2 className="h-4 w-4 transition-colors group-hover:text-[var(--primary-600)]" />
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDeletingProduct(product);
+                        setDeleteError("");
+                      }}
+                      className="group inline-flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-raised)] px-3 py-2 text-sm font-semibold text-[var(--foreground)] transition-colors hover:border-[var(--color-destructive)] hover:text-[var(--color-destructive)]"
+                    >
+                      <Trash2 className="h-4 w-4 transition-colors group-hover:text-[var(--color-destructive)]" />
+                      Delete
+                    </button>
+                  </div>
+                </div>
               </div>
+            </article>
+          ))}
 
-              <div className="space-y-1.5 flex flex-col justify-end">
-                <label className="flex items-center gap-3 cursor-pointer p-2 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-raised)]">
-                  <input
-                    type="checkbox"
-                    checked={formData.is_physical}
-                    onChange={(e) => setFormData({ ...formData, is_physical: e.target.checked })}
-                    className="w-5 h-5 accent-[var(--primary-500)]"
-                  />
-                  <span className="text-sm font-bold text-[var(--foreground)]">Physical Product</span>
-                </label>
-              </div>
-
-              <div className="col-span-2 space-y-1.5">
-                <label className="text-sm font-bold text-[var(--foreground)] flex items-center gap-1.5">
-                  <ImageIcon className="w-3.5 h-3.5" /> Product Image
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-                  className="w-full bg-[var(--surface-raised)] border border-[var(--border)] rounded-[var(--radius-md)] px-4 py-2 focus:ring-2 focus:ring-[var(--primary-500)] outline-none"
-                />
-                <p className="text-xs text-[var(--muted-foreground)]">
-                  Uploaded images go into the public `product-images` bucket.
-                </p>
-              </div>
-
-              <div className="col-span-2 space-y-1.5">
-                <label className="text-sm font-bold text-[var(--foreground)] flex items-center gap-1.5">
-                  <Upload className="w-3.5 h-3.5" /> Fallback Image URL
-                </label>
-                <input
-                  type="url"
-                  value={formData.image_url}
-                  onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                  className="w-full bg-[var(--surface-raised)] border border-[var(--border)] rounded-[var(--radius-md)] px-4 py-2 focus:ring-2 focus:ring-[var(--primary-500)] outline-none"
-                  placeholder="https://example.com/image.jpg"
-                />
-              </div>
+          {products.length === 0 && (
+            <div className="rounded-[var(--radius-md)] border border-dashed border-[var(--border)] bg-[var(--surface)] p-10 text-center">
+              <Package className="mx-auto mb-3 h-12 w-12 text-[var(--muted-foreground)] opacity-20" />
+              <p className="text-[var(--muted-foreground)]">No products in the database yet.</p>
             </div>
+          )}
+        </div>
 
-            <div className="pt-4 flex gap-3">
-              <Button 
-                type="button"
-                variant="secondary" 
-                block
-                onClick={() => setIsAddModalOpen(false)}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit"
-                block
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Adding..." : "Add Product"}
-              </Button>
-            </div>
-          </form>
-        </ModalWrapper>
+        <ProductFormModal
+          isOpen={isAddModalOpen || !!editingProduct}
+          product={editingProduct}
+          onClose={() => {
+            setIsAddModalOpen(false);
+            setEditingProduct(null);
+          }}
+          onSubmit={editingProduct ? handleUpdateProduct : handleCreateProduct}
+        />
+
+        <ConfirmDeleteModal
+          isOpen={!!deletingProduct}
+          onClose={() => {
+            setDeletingProduct(null);
+            setDeleteError("");
+          }}
+          title="Delete Product"
+          itemName={deletingProduct?.name || ""}
+          onConfirm={handleDeleteProduct}
+          error={deleteError}
+          loading={deleting}
+        />
       </div>
     </ProtectedWrapper>
   );

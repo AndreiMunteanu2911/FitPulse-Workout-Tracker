@@ -199,7 +199,7 @@ export interface PremiumCurrencyTransaction {
   id: string;
   user_id: string;
   amount: number;
-  type: 'purchase' | 'achievement' | 'level_up' | 'admin_adjustment';
+  type: 'purchase' | 'achievement' | 'level_up' | 'admin_adjustment' | 'top_up';
   description: string | null;
   created_at?: string;
 }
