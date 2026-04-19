@@ -5,7 +5,7 @@ import ProtectedWrapper from "@/components/ProtectedWrapper";
 import Button from "@/components/Button";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Product } from "@/types";
-import { Plus, Package, ShoppingBag, Trash2, Edit2, Star, DollarSign, Image as ImageIcon } from "lucide-react";
+import { Plus, Package, ShoppingBag, Trash2, Edit2, Star, DollarSign, Image as ImageIcon, Upload } from "lucide-react";
 import ModalWrapper from "@/components/ModalWrapper";
 
 export default function AdminShopPage() {
@@ -22,6 +22,7 @@ export default function AdminShopPage() {
     stock_quantity: "0",
     is_physical: false,
   });
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -44,15 +45,19 @@ export default function AdminShopPage() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
+      const payload = new FormData();
+      payload.append("name", formData.name);
+      payload.append("description", formData.description);
+      payload.append("price_usd", formData.price_usd);
+      payload.append("price_cores", formData.price_cores);
+      payload.append("stock_quantity", formData.stock_quantity);
+      payload.append("is_physical", String(formData.is_physical));
+      if (imageFile) payload.append("image", imageFile);
+      if (formData.image_url) payload.append("image_url", formData.image_url);
+
       const res = await fetch("/api/shop/products", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          price_usd: formData.price_usd ? parseFloat(formData.price_usd) : null,
-          price_cores: formData.price_cores ? parseInt(formData.price_cores) : null,
-          stock_quantity: parseInt(formData.stock_quantity),
-        }),
+        body: payload,
       });
       if (res.ok) {
         setIsAddModalOpen(false);
@@ -65,6 +70,7 @@ export default function AdminShopPage() {
           stock_quantity: "0",
           is_physical: false,
         });
+        setImageFile(null);
         fetchProducts();
       }
     } catch (error) {
@@ -258,7 +264,22 @@ export default function AdminShopPage() {
 
               <div className="col-span-2 space-y-1.5">
                 <label className="text-sm font-bold text-[var(--foreground)] flex items-center gap-1.5">
-                  <ImageIcon className="w-3.5 h-3.5" /> Image URL
+                  <ImageIcon className="w-3.5 h-3.5" /> Product Image
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                  className="w-full bg-[var(--surface-raised)] border border-[var(--border)] rounded-[var(--radius-md)] px-4 py-2 focus:ring-2 focus:ring-[var(--primary-500)] outline-none"
+                />
+                <p className="text-xs text-[var(--muted-foreground)]">
+                  Uploaded images go into the public `product-images` bucket.
+                </p>
+              </div>
+
+              <div className="col-span-2 space-y-1.5">
+                <label className="text-sm font-bold text-[var(--foreground)] flex items-center gap-1.5">
+                  <Upload className="w-3.5 h-3.5" /> Fallback Image URL
                 </label>
                 <input
                   type="url"

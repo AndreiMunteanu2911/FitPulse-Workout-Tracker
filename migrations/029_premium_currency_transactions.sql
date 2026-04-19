@@ -20,3 +20,9 @@ CREATE POLICY "Admins can view all transactions" ON premium_currency_transaction
             WHERE user_stats.user_id = auth.uid() AND user_stats.role = 'admin'
         )
     );
+
+-- Fresh installs need the trigger created only after the transactions table exists.
+DROP TRIGGER IF EXISTS sync_cores_balance ON premium_currency_transactions;
+CREATE TRIGGER sync_cores_balance
+AFTER INSERT OR UPDATE OR DELETE ON premium_currency_transactions
+FOR EACH ROW EXECUTE FUNCTION update_cores_balance();
