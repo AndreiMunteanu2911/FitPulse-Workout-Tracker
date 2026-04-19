@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/helper/stripe";
 import { getSupabaseAdminClient } from "@/helper/supabaseAdmin";
+import { fulfillStripeProductOrder } from "@/helper/shopFulfillment";
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -19,69 +20,80 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `Webhook Error: ${message}` }, { status: 400 });
   }
 
-  // Handle the event
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as {
       id?: string;
-      metadata?: Record<string, string>;
+      payment_status?: string | null;
+      metadata?: Record<string, string> | null;
       shipping_details?: unknown;
+      customer_details?: unknown;
     };
-    const metadataType = session.metadata?.type;
 
-    if (metadataType === "cores-pack") {
-      const coresAmount = Number(session.metadata?.cores || 0);
+    if (session.metadata?.type === "cores-pack") {
       const userId = session.metadata?.userId;
-      const stripeSessionId = session.id;
+      const coresAmount = Number(session.metadata?.cores || 0);
 
-      if (userId && coresAmount > 0 && stripeSessionId) {
-        await supabaseAdmin.from("premium_currency_transactions").upsert({
-          user_id: userId,
-          amount: coresAmount,
-          type: "top_up",
-          description: `Cores pack purchase: +${coresAmount} Cores`,
-          stripe_session_id: stripeSessionId,
-        } as never, {
-          onConflict: "stripe_session_id",
-          ignoreDuplicates: true,
-        });
-      }
-      return NextResponse.json({ received: true });
-    }
+      if (userId && coresAmount > 0 && session.id) {
+        const { data: existing, error: existingError } = await supabaseAdmin
+          .from("premium_currency_transactions")
+          .select("id")
+          .eq("stripe_session_id", session.id)
+          .maybeSingle();
 
-    const orderId = session.metadata?.orderId;
-    if (!orderId) {
-      return NextResponse.json({ received: true });
-    }
-
-    // Update order status
-    const { data: order, error: oError } = await supabaseAdmin
-      .from("orders")
-      .update({
-        status: "completed",
-        shipping_address: session.shipping_details
-      })
-      .neq("status", "completed")
-      .eq("id", orderId)
-      .select()
-      .maybeSingle();
-
-    if (oError) {
-        console.error("Error updating order:", oError);
-    } else if (!order) {
-        return NextResponse.json({ received: true });
-    } else {
-        // Update stock
-        const { data: product } = await supabaseAdmin
-            .from("products")
-            .select("stock_quantity")
-            .eq("id", order.product_id)
-            .single();
-
-        if (product) {
-            await supabaseAdmin.from("products").update({
-                stock_quantity: Math.max(0, product.stock_quantity - 1)
-            }).eq("id", order.product_id);
+        if (existingError) {
+          console.error("[shop-webhook] cores top-up lookup failed", existingError);
+          return NextResponse.json({ error: "Webhook fulfillment failed." }, { status: 500 });
         }
+
+        if (!existing) {
+          const { error: insertError } = await supabaseAdmin.from("premium_currency_transactions").insert({
+            user_id: userId,
+            amount: coresAmount,
+            type: "top_up",
+            description: `Cores pack purchase: +${coresAmount} Cores`,
+            stripe_session_id: session.id,
+          });
+
+          if (insertError) {
+            console.error("[shop-webhook] cores top-up insert failed", insertError);
+            return NextResponse.json({ error: "Webhook fulfillment failed." }, { status: 500 });
+          }
+
+          const { data: statsRow, error: statsError } = await supabaseAdmin
+            .from("user_stats")
+            .select("cores_balance")
+            .eq("user_id", userId)
+            .maybeSingle();
+
+          if (statsError) {
+            console.error("[shop-webhook] cores top-up stats lookup failed", statsError);
+            return NextResponse.json({ error: "Webhook fulfillment failed." }, { status: 500 });
+          }
+
+          const currentBalance = Number(statsRow?.cores_balance || 0);
+          const { error: updateError } = await supabaseAdmin
+            .from("user_stats")
+            .upsert({
+              user_id: userId,
+              cores_balance: currentBalance + coresAmount,
+            }, { onConflict: "user_id" });
+
+          if (updateError) {
+            console.error("[shop-webhook] cores top-up balance update failed", updateError);
+            return NextResponse.json({ error: "Webhook fulfillment failed." }, { status: 500 });
+          }
+        }
+      }
+    }
+
+    if (session.metadata?.type === "product-order") {
+      try {
+        const result = await fulfillStripeProductOrder(supabaseAdmin, session as never);
+        console.log("[shop-webhook] product fulfilled", result);
+      } catch (error) {
+        console.error("[shop-webhook] product fulfillment failed", error);
+        return NextResponse.json({ error: "Webhook fulfillment failed." }, { status: 500 });
+      }
     }
   }
 
