@@ -11,7 +11,7 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, onBuy }: ProductCardProps) {
   return (
-    <article className="overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] transition-colors hover:bg-[var(--surface-raised)]">
+    <article className="overflow-hidden rounded-[var(--radius-md)] bg-[var(--surface)] transition-colors hover:bg-[var(--surface-raised)]">
       <div className="relative aspect-[4/3] overflow-hidden bg-[var(--surface-raised)]">
         {product.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -46,7 +46,7 @@ export default function ProductCard({ product, onBuy }: ProductCardProps) {
 
       <div className="space-y-4 p-5">
         <div>
-          <h3 className="text-lg font-extrabold text-[var(--foreground)] line-clamp-1">{product.name}</h3>
+          <h3 className="text-lg font-semibold text-[var(--foreground)] line-clamp-1">{product.name}</h3>
           <p className="mt-1.5 line-clamp-2 text-sm leading-6 text-[var(--muted-foreground)]">{product.description}</p>
         </div>
 

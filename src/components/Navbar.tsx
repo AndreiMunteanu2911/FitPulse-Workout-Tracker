@@ -66,12 +66,17 @@ export default function Navbar() {
               <li key={name} className="flex-1">
                 <Link
                   href={href}
-                  className={`flex flex-col items-center justify-center py-2.5 px-1 gap-1 border-t-[3px] transition-all duration-200 ${
+                  className={`relative flex flex-col items-center justify-center py-2.5 px-1 gap-1 transition-all duration-200 ${
                     active
-                      ? "border-t-[var(--lime-green)] bg-[var(--lime-green)] text-[#4A2FC2]"
-                      : "border-t-transparent"
+                      ? "bg-[var(--lime-green)] text-[#4A2FC2]"
+                      : ""
                   }`}
                 >
+                  <span
+                    className={`absolute inset-x-3 top-0 h-0.5 rounded-full transition-opacity duration-200 ${
+                      active ? "bg-[var(--lime-green)] opacity-100" : "bg-transparent opacity-0"
+                    }`}
+                  />
                   <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 ${
                     active ? "bg-[#4A2FC2]/20 scale-105" : ""
                   }`}>
