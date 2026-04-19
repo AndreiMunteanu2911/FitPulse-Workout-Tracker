@@ -1,61 +1,46 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Search, X, CheckCircle, AlertCircle, Eye, Edit3, Save, ChevronLeft, Plus } from "lucide-react";
+import { Search, X, Eye, Edit3, Save, ChevronLeft, Plus, Trash2 } from "lucide-react";
 import Skeleton from "react-loading-skeleton";
 import Button from "@/components/Button";
 import ModalWrapper from "@/components/ModalWrapper";
-
-interface FormRule {
-  name: string;
-  landmarks: number[];
-  description: string;
-  phase: "eccentric" | "concentric" | "both";
-  min: number;
-  max: number;
-  cue: string;
-}
-
-interface TempoRule {
-  eccentricSeconds: number;
-  pauseSeconds: number;
-  concentricSeconds: number;
-}
-
-interface FormRules {
-  rules: FormRule[];
-  tempo?: TempoRule;
-  applicable?: boolean;
-}
+import {
+  FORM_PATTERNS,
+  createEmptyOverrides,
+  getFormPatternById,
+  resolveExerciseFormRules,
+  type FormPatternDefinition,
+} from "@/lib/form-rules";
+import type {
+  ExerciseFormRules,
+  FormRuleApplicability,
+  FormRuleView,
+} from "@/types";
 
 interface Exercise {
   exercise_id: string;
   name: string;
   target_muscles: string[] | null;
   body_parts: string[] | null;
-  form_rules: FormRules | null;
+  form_rules: ExerciseFormRules | null;
 }
 
-// MediaPipe landmark name lookup (Pose 33)
-const LANDMARK_NAMES: Record<number, string> = {
-  0: "Nose", 1: "L Eye In", 2: "L Eye", 3: "L Eye Out", 4: "R Eye In",
-  5: "R Eye", 6: "R Eye Out", 7: "L Ear", 8: "R Ear", 9: "L Mouth", 10: "R Mouth",
-  11: "L Shoulder", 12: "R Shoulder",
-  13: "L Elbow", 14: "R Elbow",
-  15: "L Wrist", 16: "R Wrist",
-  17: "L Pinky", 18: "R Pinky",
-  19: "L Index", 20: "R Index",
-  21: "L Thumb", 22: "R Thumb",
-  23: "L Hip", 24: "R Hip",
-  25: "L Knee", 26: "R Knee",
-  27: "L Ankle", 28: "R Ankle",
-  29: "L Heel", 30: "R Heel",
-  31: "L Foot", 32: "R Foot",
-};
-
-function landmarkLabel(indices: number[]): string {
-  return indices.map((i) => `${i}:${LANDMARK_NAMES[i] ?? "?"}`).join(" → ");
+function createDefaultRules(patternId = FORM_PATTERNS[0]?.id ?? "horizontal_push"): ExerciseFormRules {
+  const pattern = getFormPatternById(patternId) ?? FORM_PATTERNS[0];
+  return {
+    patternId: pattern.id,
+    applicability: pattern.applicability,
+    view: pattern.view,
+    confidence: 0.8,
+    primaryMetric: pattern.primaryMetric,
+    overrides: createEmptyOverrides(),
+    review: {
+      status: "needs_review",
+      notes: "",
+    },
+  };
 }
 
 export default function AdminFormRulesPage() {
@@ -63,25 +48,29 @@ export default function AdminFormRulesPage() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<"all" | "has-rules" | "no-rules" | "not-applicable">("all");
+  const [filter, setFilter] = useState<"all" | "realtime" | "post_set_only" | "not_applicable" | "needs_review">("all");
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
-  // Edit modal
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
-  const [editingRules, setEditingRules] = useState<FormRules | null>(null);
+  const [editingRules, setEditingRules] = useState<ExerciseFormRules | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // View modal
   const [viewingExercise, setViewingExercise] = useState<Exercise | null>(null);
 
   useEffect(() => {
     async function checkAdmin() {
       const sessionRes = await fetch("/api/auth/session");
-      if (!sessionRes.ok) { router.push("/login"); return; }
+      if (!sessionRes.ok) {
+        router.push("/login");
+        return;
+      }
       const session = await sessionRes.json();
-      if (session.user?.role !== "admin") { router.push("/dashboard"); return; }
+      if (session.user?.role !== "admin") {
+        router.push("/dashboard");
+        return;
+      }
       setIsAdmin(true);
     }
     checkAdmin();
@@ -105,12 +94,12 @@ export default function AdminFormRulesPage() {
     if (isAdmin) fetchExercises();
   }, [isAdmin, fetchExercises]);
 
-  const openView = (ex: Exercise) => setViewingExercise(ex);
+  const openView = (exercise: Exercise) => setViewingExercise(exercise);
   const closeView = () => setViewingExercise(null);
 
-  const openEdit = (ex: Exercise) => {
-    setEditingExercise(ex);
-    setEditingRules(ex.form_rules ? JSON.parse(JSON.stringify(ex.form_rules)) : { rules: [] });
+  const openEdit = (exercise: Exercise) => {
+    setEditingExercise(exercise);
+    setEditingRules(exercise.form_rules ? JSON.parse(JSON.stringify(exercise.form_rules)) : createDefaultRules());
     setError("");
     setShowEditModal(true);
   };
@@ -120,12 +109,15 @@ export default function AdminFormRulesPage() {
     setSaving(true);
     setError("");
 
-    // Optimistic update
-    setExercises((prev) => prev.map((ex) => ex.exercise_id === editingExercise.exercise_id ? { ...ex, form_rules: editingRules } : ex));
+    setExercises((prev) =>
+      prev.map((exercise) =>
+        exercise.exercise_id === editingExercise.exercise_id
+          ? { ...exercise, form_rules: editingRules }
+          : exercise,
+      ),
+    );
     setShowEditModal(false);
-    setSaving(false);
 
-    // Persist
     try {
       const res = await fetch(`/api/admin/exercises/${editingExercise.exercise_id}/form-rules`, {
         method: "PUT",
@@ -138,72 +130,89 @@ export default function AdminFormRulesPage() {
       }
     } catch {
       setError("Network error");
+    } finally {
+      setSaving(false);
     }
   };
 
-  const addRule = () => {
+  const updateRuleThreshold = (index: number, field: "ruleId" | "min" | "max", value: string | number) => {
     if (!editingRules) return;
-    const newRule: FormRule = {
-      name: "New Rule",
-      landmarks: [0, 0, 0],
-      description: "",
-      phase: "both",
-      min: 0,
-      max: 180,
-      cue: "Adjust your form",
-    };
-    setEditingRules({ ...editingRules, rules: [...editingRules.rules, newRule] });
+    const next = [...editingRules.overrides.ruleThresholds];
+    const current = next[index] ?? { ruleId: "", min: undefined, max: undefined };
+    next[index] = { ...current, [field]: value };
+    setEditingRules({
+      ...editingRules,
+      overrides: { ...editingRules.overrides, ruleThresholds: next },
+    });
   };
 
-  const updateRule = (index: number, field: keyof FormRule, value: any) => {
+  const updateCueOverride = (index: number, field: "ruleId" | "cue", value: string) => {
     if (!editingRules) return;
-    const updated = [...editingRules.rules];
-    updated[index] = { ...updated[index], [field]: value };
-    setEditingRules({ ...editingRules, rules: updated });
+    const next = [...editingRules.overrides.cueOverrides];
+    const current = next[index] ?? { ruleId: "", cue: "" };
+    next[index] = { ...current, [field]: value };
+    setEditingRules({
+      ...editingRules,
+      overrides: { ...editingRules.overrides, cueOverrides: next },
+    });
   };
 
-  const updateLandmark = (ruleIndex: number, landmarkIndex: number, value: number) => {
+  const removeRuleThreshold = (index: number) => {
     if (!editingRules) return;
-    const updated = [...editingRules.rules];
-    const landmarks = [...updated[ruleIndex].landmarks];
-    landmarks[landmarkIndex] = value;
-    updated[ruleIndex] = { ...updated[ruleIndex], landmarks };
-    setEditingRules({ ...editingRules, rules: updated });
+    setEditingRules({
+      ...editingRules,
+      overrides: {
+        ...editingRules.overrides,
+        ruleThresholds: editingRules.overrides.ruleThresholds.filter((_, i) => i !== index),
+      },
+    });
   };
 
-  const removeRule = (index: number) => {
+  const removeCueOverride = (index: number) => {
     if (!editingRules) return;
-    const updated = editingRules.rules.filter((_, i) => i !== index);
-    setEditingRules({ ...editingRules, rules: updated });
+    setEditingRules({
+      ...editingRules,
+      overrides: {
+        ...editingRules.overrides,
+        cueOverrides: editingRules.overrides.cueOverrides.filter((_, i) => i !== index),
+      },
+    });
   };
 
-  // Filtering
-  const filtered = exercises.filter((ex) => {
-    const matchesSearch = ex.name.toLowerCase().includes(search.toLowerCase()) ||
-      (ex.target_muscles ?? []).some((m) => m.toLowerCase().includes(search.toLowerCase()));
+  const filtered = exercises.filter((exercise) => {
+    const matchesSearch = exercise.name.toLowerCase().includes(search.toLowerCase())
+      || (exercise.target_muscles ?? []).some((muscle) => muscle.toLowerCase().includes(search.toLowerCase()));
 
+    const formRules = exercise.form_rules;
     let matchesFilter = true;
-    if (filter === "has-rules") matchesFilter = !!(ex.form_rules && ex.form_rules.applicable !== false && (ex.form_rules.rules?.length ?? 0) > 0);
-    else if (filter === "no-rules") matchesFilter = !ex.form_rules || (ex.form_rules.rules?.length ?? 0) === 0;
-    else if (filter === "not-applicable") matchesFilter = ex.form_rules?.applicable === false;
+    if (filter === "realtime") matchesFilter = formRules?.applicability === "realtime";
+    else if (filter === "post_set_only") matchesFilter = formRules?.applicability === "post_set_only";
+    else if (filter === "not_applicable") matchesFilter = formRules?.applicability === "not_applicable";
+    else if (filter === "needs_review") matchesFilter = !formRules || formRules.review.status === "needs_review";
 
     return matchesSearch && matchesFilter;
   });
 
   const stats = {
     total: exercises.length,
-    withRules: exercises.filter((e) => e.form_rules && e.form_rules.applicable !== false && (e.form_rules.rules?.length ?? 0) > 0).length,
-    notApplicable: exercises.filter((e) => e.form_rules?.applicable === false).length,
-    noRules: exercises.filter((e) => !e.form_rules || (e.form_rules.rules?.length ?? 0) === 0).length,
+    realtime: exercises.filter((exercise) => exercise.form_rules?.applicability === "realtime").length,
+    postSetOnly: exercises.filter((exercise) => exercise.form_rules?.applicability === "post_set_only").length,
+    notApplicable: exercises.filter((exercise) => exercise.form_rules?.applicability === "not_applicable").length,
+    needsReview: exercises.filter((exercise) => !exercise.form_rules || exercise.form_rules.review.status === "needs_review").length,
   };
+
+  const editingPattern = useMemo<FormPatternDefinition | null>(
+    () => (editingRules ? getFormPatternById(editingRules.patternId) : null),
+    [editingRules],
+  );
 
   if (!isAdmin || loading) {
     return (
       <div className="w-full">
         <Skeleton width={100} height={36} className="mb-4" />
         <Skeleton width={240} height={24} className="mb-6" />
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} height={64} className="rounded-lg" />)}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+          {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} height={64} className="rounded-lg" />)}
         </div>
         <div className="space-y-3">
           {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} height={72} className="rounded-lg" />)}
@@ -214,7 +223,6 @@ export default function AdminFormRulesPage() {
 
   return (
     <div className="w-full">
-      {/* Back button + title */}
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={() => router.push("/admin/exercises")}
@@ -223,32 +231,34 @@ export default function AdminFormRulesPage() {
           <ChevronLeft className="w-5 h-5 text-[var(--muted-foreground)]" />
         </button>
         <div>
-          <h1 className="text-xl font-bold text-[var(--foreground)]">Form Rules Review</h1>
-          <p className="text-sm text-[var(--muted-foreground)]">Review and edit AI-generated form checking rules</p>
+          <h1 className="text-xl font-bold text-[var(--foreground)]">Pattern Form Rules</h1>
+          <p className="text-sm text-[var(--muted-foreground)]">Review exercise pattern mapping and overrides</p>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
         <div className="p-4 rounded-lg bg-[var(--surface-raised)]">
           <p className="text-xs text-[var(--muted-foreground)] uppercase tracking-wider">Total</p>
           <p className="text-2xl font-bold text-[var(--foreground)]">{stats.total}</p>
         </div>
         <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-          <p className="text-xs text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Has Rules</p>
-          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.withRules}</p>
+          <p className="text-xs text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Realtime</p>
+          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.realtime}</p>
+        </div>
+        <div className="p-4 rounded-lg bg-sky-500/10 border border-sky-500/20">
+          <p className="text-xs text-sky-600 dark:text-sky-400 uppercase tracking-wider">Post Set</p>
+          <p className="text-2xl font-bold text-sky-600 dark:text-sky-400">{stats.postSetOnly}</p>
         </div>
         <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20">
-          <p className="text-xs text-amber-600 dark:text-amber-400 uppercase tracking-wider">N/A</p>
+          <p className="text-xs text-amber-600 dark:text-amber-400 uppercase tracking-wider">Not Applicable</p>
           <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.notApplicable}</p>
         </div>
         <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
-          <p className="text-xs text-red-600 dark:text-red-400 uppercase tracking-wider">No Rules</p>
-          <p className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.noRules}</p>
+          <p className="text-xs text-red-600 dark:text-red-400 uppercase tracking-wider">Needs Review</p>
+          <p className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.needsReview}</p>
         </div>
       </div>
 
-      {/* Search + Filter */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" />
@@ -259,61 +269,65 @@ export default function AdminFormRulesPage() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div className="flex gap-2">
-          {(["all", "has-rules", "no-rules", "not-applicable"] as const).map((f) => (
+        <div className="flex gap-2 flex-wrap">
+          {(["all", "realtime", "post_set_only", "not_applicable", "needs_review"] as const).map((value) => (
             <button
-              key={f}
+              key={value}
               className={`px-3 py-2 rounded-[var(--radius-sm)] text-sm font-medium transition-colors ${
-                filter === f
+                filter === value
                   ? "bg-[var(--primary-500)] text-white"
                   : "bg-[var(--surface-raised)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
               }`}
-              onClick={() => setFilter(f)}
+              onClick={() => setFilter(value)}
             >
-              {f === "all" ? "All" : f === "has-rules" ? "Has Rules" : f === "no-rules" ? "No Rules" : "N/A"}
+              {value === "all"
+                ? "All"
+                : value === "post_set_only"
+                  ? "Post Set"
+                  : value === "not_applicable"
+                    ? "Not Applicable"
+                    : value === "needs_review"
+                      ? "Needs Review"
+                      : "Realtime"}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Exercise List */}
       {filtered.length === 0 ? (
         <div className="text-center py-12 text-[var(--muted-foreground)]">
           No exercises match the current filters.
         </div>
       ) : (
         <div className="space-y-3">
-          {filtered.map((ex) => {
-            const ruleCount = ex.form_rules?.applicable === false ? 0 : (ex.form_rules?.rules?.length ?? 0);
-            const isNA = ex.form_rules?.applicable === false;
+          {filtered.map((exercise) => {
+            const resolved = resolveExerciseFormRules(exercise.form_rules);
             return (
               <div
-                key={ex.exercise_id}
+                key={exercise.exercise_id}
                 className="flex items-center justify-between p-4 rounded-lg bg-[var(--surface-raised)] border border-[var(--border)] hover:border-[var(--primary-500)]/30 transition-colors"
               >
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-[var(--foreground)] truncate">{ex.name}</p>
+                  <p className="font-semibold text-[var(--foreground)] truncate">{exercise.name}</p>
                   <p className="text-xs text-[var(--muted-foreground)]">
-                    {isNA ? (
-                      <span className="text-amber-500">Not applicable (cardio/stretch)</span>
-                    ) : ruleCount > 0 ? (
-                      <span className="text-emerald-500">{ruleCount} rules</span>
-                    ) : (
-                      <span className="text-red-400">No rules generated</span>
-                    )}
-                    {ex.form_rules?.tempo && ` · Tempo: ${ex.form_rules.tempo.eccentricSeconds}-${ex.form_rules.tempo.pauseSeconds}-${ex.form_rules.tempo.concentricSeconds}`}
+                    {exercise.form_rules
+                      ? `${resolved?.pattern.label ?? exercise.form_rules.patternId} • ${exercise.form_rules.applicability} • ${Math.round(exercise.form_rules.confidence * 100)}%`
+                      : "No pattern mapping yet"}
+                  </p>
+                  <p className="text-xs text-[var(--muted-foreground)] mt-1">
+                    Review: {exercise.form_rules?.review.status ?? "missing"}
                   </p>
                 </div>
                 <div className="flex gap-2 ml-4">
                   <button
-                    onClick={() => openView(ex)}
+                    onClick={() => openView(exercise)}
                     className="w-8 h-8 rounded-lg hover:bg-[var(--surface-overlay)] flex items-center justify-center transition-colors"
                     title="View rules"
                   >
                     <Eye className="w-4 h-4 text-[var(--muted-foreground)]" />
                   </button>
                   <button
-                    onClick={() => openEdit(ex)}
+                    onClick={() => openEdit(exercise)}
                     className="w-8 h-8 rounded-lg hover:bg-[var(--surface-overlay)] flex items-center justify-center transition-colors"
                     title="Edit rules"
                   >
@@ -326,234 +340,266 @@ export default function AdminFormRulesPage() {
         </div>
       )}
 
-      {/* View Modal */}
       {viewingExercise && (
-        <ModalWrapper isOpen={!!viewingExercise} onClose={closeView} containerClassName="max-w-lg p-6 max-h-[80vh] overflow-y-auto">
+        <ModalWrapper isOpen={!!viewingExercise} onClose={closeView} containerClassName="max-w-2xl p-6 max-h-[80vh] overflow-y-auto">
           <button className="absolute top-3 right-3 w-8 h-8 rounded-full hover:bg-[var(--surface-raised)] flex items-center justify-center" onClick={closeView}>
             <X className="w-4 h-4" />
           </button>
           <h2 className="text-lg font-bold text-[var(--foreground)] mb-1">{viewingExercise.name}</h2>
-          <p className="text-sm text-[var(--muted-foreground)] mb-4">
-            {viewingExercise.form_rules?.applicable === false
-              ? "Form rules not applicable — exercise type doesn't support angle-based checking"
-              : viewingExercise.form_rules?.rules?.length
-                ? `${viewingExercise.form_rules.rules.length} form rules defined`
-                : "No rules generated"}
-          </p>
-
-          {viewingExercise.form_rules?.applicable !== false && viewingExercise.form_rules?.rules?.map((rule, i) => (
-            <div key={i} className="mb-4 p-4 rounded-lg bg-[var(--surface-base)] border border-[var(--border)]">
-              <div className="flex items-center justify-between mb-2">
-                <p className="font-semibold text-[var(--foreground)]">{rule.name}</p>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${
-                  rule.phase === "eccentric" ? "bg-blue-500/10 text-blue-400" :
-                  rule.phase === "concentric" ? "bg-green-500/10 text-green-400" :
-                  "bg-[var(--muted-foreground)]/10 text-[var(--muted-foreground)]"
-                }`}>{rule.phase}</span>
-              </div>
-              <p className="text-xs text-[var(--muted-foreground)] mb-2">{rule.description}</p>
-              <p className="text-xs font-mono bg-[var(--surface-raised)] px-2 py-1 rounded mb-2">
-                {landmarkLabel(rule.landmarks)}
+          {viewingExercise.form_rules ? (
+            <>
+              <p className="text-sm text-[var(--muted-foreground)] mb-4">
+                Pattern: {getFormPatternById(viewingExercise.form_rules.patternId)?.label ?? viewingExercise.form_rules.patternId}
               </p>
-              <div className="flex gap-4 text-sm">
-                <span className="text-[var(--muted-foreground)]">Range: <span className="text-[var(--foreground)] font-medium">{rule.min}°–{rule.max}°</span></span>
+              <div className="p-4 rounded-lg bg-[var(--surface-base)] border border-[var(--border)] mb-4">
+                <p className="font-semibold text-[var(--foreground)] mb-2">Exercise Mapping</p>
+                <p className="text-sm text-[var(--muted-foreground)]">Applicability: {viewingExercise.form_rules.applicability}</p>
+                <p className="text-sm text-[var(--muted-foreground)]">View: {viewingExercise.form_rules.view}</p>
+                <p className="text-sm text-[var(--muted-foreground)]">Confidence: {Math.round(viewingExercise.form_rules.confidence * 100)}%</p>
+                <p className="text-sm text-[var(--muted-foreground)]">Review: {viewingExercise.form_rules.review.status}</p>
+                {viewingExercise.form_rules.review.notes && (
+                  <p className="text-sm text-[var(--foreground)] mt-2">{viewingExercise.form_rules.review.notes}</p>
+                )}
               </div>
-              <p className="text-sm text-[var(--primary-500)] mt-2">💬 "{rule.cue}"</p>
-            </div>
-          ))}
 
-          {viewingExercise.form_rules?.tempo && (
-            <div className="p-4 rounded-lg bg-[var(--surface-base)] border border-[var(--border)]">
-              <p className="font-semibold text-[var(--foreground)] mb-2">Suggested Tempo</p>
-              <div className="flex gap-4 text-sm">
-                <span>Eccentric: <strong>{viewingExercise.form_rules.tempo.eccentricSeconds}s</strong></span>
-                <span>Pause: <strong>{viewingExercise.form_rules.tempo.pauseSeconds}s</strong></span>
-                <span>Concentric: <strong>{viewingExercise.form_rules.tempo.concentricSeconds}s</strong></span>
+              <div className="p-4 rounded-lg bg-[var(--surface-base)] border border-[var(--border)] mb-4">
+                <p className="font-semibold text-[var(--foreground)] mb-3">Inherited Pattern Rules</p>
+                {(getFormPatternById(viewingExercise.form_rules.patternId)?.rules ?? []).map((rule) => (
+                  <div key={rule.id} className="mb-3 last:mb-0">
+                    <p className="text-sm font-medium text-[var(--foreground)]">{rule.id}</p>
+                    <p className="text-xs text-[var(--muted-foreground)]">
+                      {rule.phase} • {rule.min}°-{rule.max}° • {rule.cue}
+                    </p>
+                  </div>
+                ))}
               </div>
-            </div>
+
+              <div className="p-4 rounded-lg bg-[var(--surface-base)] border border-[var(--border)]">
+                <p className="font-semibold text-[var(--foreground)] mb-3">Overrides</p>
+                <pre className="text-xs whitespace-pre-wrap text-[var(--muted-foreground)]">
+                  {JSON.stringify(viewingExercise.form_rules.overrides, null, 2)}
+                </pre>
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-[var(--muted-foreground)]">No rules generated yet.</p>
           )}
         </ModalWrapper>
       )}
 
-      {/* Edit Modal */}
-      <ModalWrapper isOpen={showEditModal} onClose={() => setShowEditModal(false)} containerClassName="max-w-2xl p-6 max-h-[85vh] overflow-y-auto">
+      <ModalWrapper isOpen={showEditModal} onClose={() => setShowEditModal(false)} containerClassName="max-w-3xl p-6 max-h-[85vh] overflow-y-auto">
         <button className="absolute top-3 right-3 w-8 h-8 rounded-full hover:bg-[var(--surface-raised)] flex items-center justify-center" onClick={() => setShowEditModal(false)}>
           <X className="w-4 h-4" />
         </button>
         <h2 className="text-lg font-bold text-[var(--foreground)] mb-1">Edit Rules: {editingExercise?.name}</h2>
-        <p className="text-sm text-[var(--muted-foreground)] mb-4">Adjust AI-generated rules or add new ones</p>
+        <p className="text-sm text-[var(--muted-foreground)] mb-4">Assign a movement pattern and tune exercise overrides</p>
 
         {error && <div className="mb-4 p-3 bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] rounded-[var(--radius-sm)] text-sm font-medium">{error}</div>}
 
         {editingRules && (
           <div className="space-y-4">
-            {/* Applicable toggle */}
-            <div className="flex items-center justify-between p-3 rounded-lg bg-[var(--surface-base)] border border-[var(--border)]">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
-                <p className="font-medium text-[var(--foreground)]">Applicable</p>
-                <p className="text-xs text-[var(--muted-foreground)]">Toggle if this exercise supports angle-based form checking</p>
+                <label className="block mb-1 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Pattern</label>
+                <select
+                  className="input text-sm"
+                  value={editingRules.patternId}
+                  onChange={(e) => {
+                    const pattern = getFormPatternById(e.target.value);
+                    if (!pattern) return;
+                    setEditingRules({
+                      ...editingRules,
+                      patternId: pattern.id,
+                      applicability: pattern.applicability,
+                      view: pattern.view,
+                      primaryMetric: pattern.primaryMetric,
+                    });
+                  }}
+                >
+                  {FORM_PATTERNS.map((pattern) => (
+                    <option key={pattern.id} value={pattern.id}>{pattern.label}</option>
+                  ))}
+                </select>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={editingRules.applicable !== false}
-                  onChange={(e) => setEditingRules({ ...editingRules, applicable: e.target.checked })}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-[var(--muted-foreground)]/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--primary-500)]"></div>
-              </label>
+
+              <div>
+                <label className="block mb-1 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Applicability</label>
+                <select
+                  className="input text-sm"
+                  value={editingRules.applicability}
+                  onChange={(e) => setEditingRules({ ...editingRules, applicability: e.target.value as FormRuleApplicability })}
+                >
+                  <option value="realtime">Realtime</option>
+                  <option value="post_set_only">Post Set Only</option>
+                  <option value="not_applicable">Not Applicable</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block mb-1 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">View</label>
+                <select
+                  className="input text-sm"
+                  value={editingRules.view}
+                  onChange={(e) => setEditingRules({ ...editingRules, view: e.target.value as FormRuleView })}
+                >
+                  <option value="front">Front</option>
+                  <option value="side">Side</option>
+                  <option value="three_quarter">Three Quarter</option>
+                </select>
+              </div>
             </div>
 
-            {editingRules.applicable !== false && (
-              <>
-                {/* Rules */}
-                {editingRules.rules.map((rule, i) => (
-                  <div key={i} className="p-4 rounded-lg bg-[var(--surface-base)] border border-[var(--border)]">
-                    <div className="flex items-center justify-between mb-3">
-                      <input
-                        className="input font-semibold text-sm flex-1 mr-3"
-                        value={rule.name}
-                        onChange={(e) => updateRule(i, "name", e.target.value)}
-                        placeholder="Rule name"
-                      />
-                      <button
-                        onClick={() => removeRule(i)}
-                        className="w-8 h-8 rounded-lg hover:bg-red-500/10 flex items-center justify-center transition-colors flex-shrink-0"
-                        title="Remove rule"
-                      >
-                        <X className="w-4 h-4 text-red-400" />
-                      </button>
-                    </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="block mb-1 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Confidence</label>
+                <input
+                  className="input text-sm"
+                  type="number"
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  value={editingRules.confidence}
+                  onChange={(e) => setEditingRules({ ...editingRules, confidence: parseFloat(e.target.value) || 0 })}
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Review Status</label>
+                <select
+                  className="input text-sm"
+                  value={editingRules.review.status}
+                  onChange={(e) => setEditingRules({ ...editingRules, review: { ...editingRules.review, status: e.target.value as ExerciseFormRules["review"]["status"] } })}
+                >
+                  <option value="ai_generated">AI Generated</option>
+                  <option value="reviewed">Reviewed</option>
+                  <option value="needs_review">Needs Review</option>
+                </select>
+              </div>
+            </div>
 
-                    {/* Landmarks */}
-                    <div className="mb-3">
-                      <label className="block mb-1 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Landmarks (vertex is 2nd)</label>
-                      <div className="flex gap-2">
-                        {rule.landmarks.map((lm, li) => (
-                          <select
-                            key={li}
-                            className="input text-xs flex-1"
-                            value={lm}
-                            onChange={(e) => updateLandmark(i, li, parseInt(e.target.value))}
-                          >
-                            {Array.from({ length: 33 }, (_, idx) => (
-                              <option key={idx} value={idx}>{idx}: {LANDMARK_NAMES[idx] ?? idx}</option>
-                            ))}
-                          </select>
-                        ))}
-                      </div>
-                      <p className="text-xs font-mono text-[var(--muted-foreground)] mt-1">{landmarkLabel(rule.landmarks)}</p>
-                    </div>
+            <div className="p-4 rounded-lg bg-[var(--surface-base)] border border-[var(--border)]">
+              <p className="font-semibold text-[var(--foreground)] mb-2">Primary Metric</p>
+              <p className="text-sm text-[var(--muted-foreground)]">
+                {editingRules.primaryMetric.kind} • [{editingRules.primaryMetric.landmarks.join(", ")}]
+              </p>
+            </div>
 
-                    <div className="mb-3">
-                      <label className="block mb-1 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Description</label>
-                      <input
-                        className="input text-sm"
-                        value={rule.description}
-                        onChange={(e) => updateRule(i, "description", e.target.value)}
-                        placeholder="What this checks"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-3 mb-3">
+            {editingPattern && (
+              <div className="p-4 rounded-lg bg-[var(--surface-base)] border border-[var(--border)]">
+                <p className="font-semibold text-[var(--foreground)] mb-3">Inherited Pattern Rules</p>
+                {editingPattern.rules.map((rule) => {
+                  const disabled = editingRules.overrides.disabledRuleIds.includes(rule.id);
+                  return (
+                    <div key={rule.id} className="flex items-start justify-between gap-3 py-2 border-b border-[var(--border)] last:border-b-0">
                       <div>
-                        <label className="block mb-1 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Phase</label>
-                        <select
-                          className="input text-sm"
-                          value={rule.phase}
-                          onChange={(e) => updateRule(i, "phase", e.target.value)}
-                        >
-                          <option value="both">Both</option>
-                          <option value="eccentric">Eccentric</option>
-                          <option value="concentric">Concentric</option>
-                        </select>
+                        <p className="text-sm font-medium text-[var(--foreground)]">{rule.id}</p>
+                        <p className="text-xs text-[var(--muted-foreground)]">
+                          {rule.phase} • {rule.min}°-{rule.max}° • {rule.cue}
+                        </p>
                       </div>
-                      <div>
-                        <label className="block mb-1 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Min (°)</label>
+                      <label className="text-xs text-[var(--muted-foreground)] flex items-center gap-2">
                         <input
-                          className="input text-sm"
-                          type="number"
-                          min={0}
-                          max={180}
-                          value={rule.min}
-                          onChange={(e) => updateRule(i, "min", parseInt(e.target.value) || 0)}
+                          type="checkbox"
+                          checked={!disabled}
+                          onChange={(e) => {
+                            const next = new Set(editingRules.overrides.disabledRuleIds);
+                            if (!e.target.checked) next.add(rule.id);
+                            else next.delete(rule.id);
+                            setEditingRules({
+                              ...editingRules,
+                              overrides: {
+                                ...editingRules.overrides,
+                                disabledRuleIds: Array.from(next),
+                              },
+                            });
+                          }}
                         />
-                      </div>
-                      <div>
-                        <label className="block mb-1 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Max (°)</label>
-                        <input
-                          className="input text-sm"
-                          type="number"
-                          min={0}
-                          max={180}
-                          value={rule.max}
-                          onChange={(e) => updateRule(i, "max", parseInt(e.target.value) || 180)}
-                        />
-                      </div>
+                        Enabled
+                      </label>
                     </div>
-
-                    <div>
-                      <label className="block mb-1 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Cue (shown to user)</label>
-                      <input
-                        className="input text-sm"
-                        value={rule.cue}
-                        onChange={(e) => updateRule(i, "cue", e.target.value)}
-                        placeholder="Short instruction when out of range"
-                        maxLength={60}
-                      />
-                    </div>
-                  </div>
-                ))}
-
-                {/* Tempo */}
-                {editingRules.tempo && (
-                  <div className="p-4 rounded-lg bg-[var(--surface-base)] border border-[var(--border)]">
-                    <p className="font-semibold text-[var(--foreground)] mb-3">Suggested Tempo</p>
-                    <div className="grid grid-cols-3 gap-3">
-                      <div>
-                        <label className="block mb-1 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Eccentric (s)</label>
-                        <input
-                          className="input text-sm"
-                          type="number"
-                          min={0}
-                          step={0.5}
-                          value={editingRules.tempo.eccentricSeconds}
-                          onChange={(e) => setEditingRules({ ...editingRules, tempo: { ...editingRules.tempo!, eccentricSeconds: parseFloat(e.target.value) || 0 } })}
-                        />
-                      </div>
-                      <div>
-                        <label className="block mb-1 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Pause (s)</label>
-                        <input
-                          className="input text-sm"
-                          type="number"
-                          min={0}
-                          step={0.5}
-                          value={editingRules.tempo.pauseSeconds}
-                          onChange={(e) => setEditingRules({ ...editingRules, tempo: { ...editingRules.tempo!, pauseSeconds: parseFloat(e.target.value) || 0 } })}
-                        />
-                      </div>
-                      <div>
-                        <label className="block mb-1 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Concentric (s)</label>
-                        <input
-                          className="input text-sm"
-                          type="number"
-                          min={0}
-                          step={0.5}
-                          value={editingRules.tempo.concentricSeconds}
-                          onChange={(e) => setEditingRules({ ...editingRules, tempo: { ...editingRules.tempo!, concentricSeconds: parseFloat(e.target.value) || 0 } })}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <Button variant="secondary" onClick={addRule} block>
-                  <Plus className="w-4 h-4 mr-2" /> Add Rule
-                </Button>
-              </>
+                  );
+                })}
+              </div>
             )}
 
-            {/* Save */}
+            <div className="p-4 rounded-lg bg-[var(--surface-base)] border border-[var(--border)]">
+              <div className="flex items-center justify-between mb-3">
+                <p className="font-semibold text-[var(--foreground)]">Threshold Overrides</p>
+                <Button
+                  variant="secondary"
+                  onClick={() => setEditingRules({
+                    ...editingRules,
+                    overrides: {
+                      ...editingRules.overrides,
+                      ruleThresholds: [...editingRules.overrides.ruleThresholds, { ruleId: "", min: undefined, max: undefined }],
+                    },
+                  })}
+                >
+                  <Plus className="w-4 h-4 mr-2" /> Add
+                </Button>
+              </div>
+              <div className="space-y-3">
+                {editingRules.overrides.ruleThresholds.map((override, index) => (
+                  <div key={`${override.ruleId}-${index}`} className="grid grid-cols-1 md:grid-cols-4 gap-2 items-center">
+                    <select className="input text-sm" value={override.ruleId} onChange={(e) => updateRuleThreshold(index, "ruleId", e.target.value)}>
+                      <option value="">Select rule</option>
+                      {(editingPattern?.rules ?? []).map((rule) => (
+                        <option key={rule.id} value={rule.id}>{rule.id}</option>
+                      ))}
+                    </select>
+                    <input className="input text-sm" type="number" placeholder="Min" value={override.min ?? ""} onChange={(e) => updateRuleThreshold(index, "min", parseFloat(e.target.value))} />
+                    <input className="input text-sm" type="number" placeholder="Max" value={override.max ?? ""} onChange={(e) => updateRuleThreshold(index, "max", parseFloat(e.target.value))} />
+                    <button className="w-10 h-10 rounded-lg hover:bg-red-500/10 flex items-center justify-center" onClick={() => removeRuleThreshold(index)}>
+                      <Trash2 className="w-4 h-4 text-red-400" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-4 rounded-lg bg-[var(--surface-base)] border border-[var(--border)]">
+              <div className="flex items-center justify-between mb-3">
+                <p className="font-semibold text-[var(--foreground)]">Cue Overrides</p>
+                <Button
+                  variant="secondary"
+                  onClick={() => setEditingRules({
+                    ...editingRules,
+                    overrides: {
+                      ...editingRules.overrides,
+                      cueOverrides: [...editingRules.overrides.cueOverrides, { ruleId: "", cue: "" }],
+                    },
+                  })}
+                >
+                  <Plus className="w-4 h-4 mr-2" /> Add
+                </Button>
+              </div>
+              <div className="space-y-3">
+                {editingRules.overrides.cueOverrides.map((override, index) => (
+                  <div key={`${override.ruleId}-${index}`} className="grid grid-cols-1 md:grid-cols-3 gap-2 items-center">
+                    <select className="input text-sm" value={override.ruleId} onChange={(e) => updateCueOverride(index, "ruleId", e.target.value)}>
+                      <option value="">Select rule</option>
+                      {(editingPattern?.rules ?? []).map((rule) => (
+                        <option key={rule.id} value={rule.id}>{rule.id}</option>
+                      ))}
+                    </select>
+                    <input className="input text-sm md:col-span-1" value={override.cue} onChange={(e) => updateCueOverride(index, "cue", e.target.value)} placeholder="Custom cue" />
+                    <button className="w-10 h-10 rounded-lg hover:bg-red-500/10 flex items-center justify-center" onClick={() => removeCueOverride(index)}>
+                      <Trash2 className="w-4 h-4 text-red-400" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block mb-1 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Review Notes</label>
+              <textarea
+                className="input text-sm min-h-24"
+                value={editingRules.review.notes ?? ""}
+                onChange={(e) => setEditingRules({ ...editingRules, review: { ...editingRules.review, notes: e.target.value } })}
+                placeholder="Optional notes about the AI-generated mapping"
+              />
+            </div>
+
             <div className="flex gap-3 pt-2">
               <Button variant="secondary" onClick={() => setShowEditModal(false)} block>Cancel</Button>
               <Button onClick={handleSave} disabled={saving} block>

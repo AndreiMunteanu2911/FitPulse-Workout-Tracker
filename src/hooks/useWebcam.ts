@@ -74,7 +74,9 @@ export function useWebcam({
           const capabilities = videoTrack.getCapabilities?.() as MediaTrackCapabilities & { zoom?: { min: number; max: number } };
           if (capabilities?.zoom) {
             const clampedZoom = Math.max(capabilities.zoom.min, Math.min(capabilities.zoom.max, zoom));
-            await videoTrack.applyConstraints({ advanced: [{ zoom: clampedZoom }] });
+            await videoTrack.applyConstraints({
+              advanced: [{ zoom: clampedZoom } as MediaTrackConstraintSet],
+            });
           }
         }
       }

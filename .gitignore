@@ -55,3 +55,6 @@ next-env.d.ts
 /PLAN.md
 /references/
 /screens/
+/exercises_rows.csv
+/rule_prompt.txt
+/exercise_rows_form_rules_800.csv

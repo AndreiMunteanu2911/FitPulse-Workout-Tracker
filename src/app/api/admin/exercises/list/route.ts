@@ -9,11 +9,9 @@ export async function GET(req: NextRequest) {
   const guard = await requireAdmin();
   if ("error" in guard) return guard.error;
   const { supabase } = guard;
+  void req;
 
-  const { searchParams } = new URL(req.url);
-  const include = searchParams.get("include");
-
-  let query = supabase
+  const query = supabase
     .from("exercises")
     .select("exercise_id, name, target_muscles, body_parts, equipments, instructions, form_rules", { count: "exact" })
     .not("exercise_id", "like", "custom_%")

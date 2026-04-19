@@ -25,22 +25,53 @@ export interface Exercise {
   form_rules?: ExerciseFormRules | null;
 }
 
+export type FormRuleApplicability = "realtime" | "post_set_only" | "not_applicable";
+export type FormRuleView = "front" | "side" | "three_quarter";
+export type FormRulePhase = "eccentric" | "concentric" | "both";
+export type FormRuleSeverity = "error" | "warning" | "info";
+export type PrimaryMetricKind = "angle";
+export type PrimaryMetricPhaseLogic =
+  | "flexion_extension"
+  | "extension_flexion"
+  | "pull_raise_lower"
+  | "cyclic";
+
+export interface FormRulePrimaryMetric {
+  kind: PrimaryMetricKind;
+  landmarks: [number, number, number];
+  phaseLogic?: PrimaryMetricPhaseLogic;
+}
+
+export interface FormRuleThresholdOverride {
+  ruleId: string;
+  min?: number;
+  max?: number;
+}
+
+export interface FormRuleCueOverride {
+  ruleId: string;
+  cue: string;
+}
+
+export interface ExerciseFormRuleOverrideSet {
+  disabledRuleIds: string[];
+  ruleThresholds: FormRuleThresholdOverride[];
+  cueOverrides: FormRuleCueOverride[];
+}
+
+export interface ExerciseFormRuleReview {
+  status: "ai_generated" | "reviewed" | "needs_review";
+  notes?: string;
+}
+
 export interface ExerciseFormRules {
-  rules: Array<{
-    name: string;
-    landmarks: number[];
-    description: string;
-    phase: "eccentric" | "concentric" | "both";
-    min: number;
-    max: number;
-    cue: string;
-  }>;
-  tempo?: {
-    eccentricSeconds: number;
-    pauseSeconds: number;
-    concentricSeconds: number;
-  };
-  applicable?: boolean;
+  patternId: string;
+  applicability: FormRuleApplicability;
+  view: FormRuleView;
+  confidence: number;
+  primaryMetric: FormRulePrimaryMetric;
+  overrides: ExerciseFormRuleOverrideSet;
+  review: ExerciseFormRuleReview;
 }
 
 export interface Set {

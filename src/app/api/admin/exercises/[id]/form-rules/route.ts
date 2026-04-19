@@ -4,6 +4,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/helper/supabaseServer";
+import { exerciseFormRulesSchema } from "@/lib/validations";
 
 export async function PUT(
   req: NextRequest,
@@ -21,9 +22,20 @@ export async function PUT(
     return NextResponse.json({ error: "form_rules is required" }, { status: 400 });
   }
 
+  const parsed = exerciseFormRulesSchema.safeParse(form_rules);
+  if (!parsed.success) {
+    return NextResponse.json(
+      {
+        error: "Invalid form_rules payload",
+        details: parsed.error.flatten(),
+      },
+      { status: 400 },
+    );
+  }
+
   const { data, error } = await supabase
     .from("exercises")
-    .update({ form_rules })
+    .update({ form_rules: parsed.data })
     .eq("exercise_id", id)
     .select("exercise_id, name, form_rules")
     .single();
