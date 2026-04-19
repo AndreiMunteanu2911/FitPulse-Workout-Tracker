@@ -5,7 +5,7 @@ import Link from "next/link";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import Skeleton from "react-loading-skeleton";
 import XPLevelCard from "@/components/XPLevelCard";
-import type { Achievement, GamificationStats } from "@/types";
+import type { Achievement } from "@/types";
 import {
   ArrowLeft,
   Trophy,
@@ -225,20 +225,19 @@ function CategorySection({ category, achievements, onClaim, claimingId }: {
 }
 
 // ── Page ───────────────────────────────────────────────────────────────────────
-export default function AchievementsPage() {
-  const [gamification, setGamification] = useState<GamificationStats | null>(null);
-  const [loading, setLoading]           = useState(true);
-  const [error, setError]               = useState<string | null>(null);
-  const [claimingId, setClaimingId]     = useState<string | null>(null);
-  const [claimError, setClaimError]     = useState<string | null>(null);
+const [achievements, setAchievements] = useState<Achievement[]>([]);
+const [loading, setLoading]           = useState(true);
+const [error, setError]               = useState<string | null>(null);
+const [claimingId, setClaimingId]     = useState<string | null>(null);
+const [claimError, setClaimError]     = useState<string | null>(null);
 
-  useEffect(() => {
-    fetch("/api/gamification")
-      .then((r) => (r.ok ? r.json() : Promise.reject(r.statusText)))
-      .then((d) => setGamification(d.gamification))
-      .catch((e) => setError(typeof e === "string" ? e : "Failed to load"))
-      .finally(() => setLoading(false));
-  }, []);
+useEffect(() => {
+  fetch("/api/achievements")
+    .then((r) => (r.ok ? r.json() : Promise.reject(r.statusText)))
+    .then((d) => setAchievements(d.achievements || []))
+    .catch((e) => setError(typeof e === "string" ? e : "Failed to load"))
+    .finally(() => setLoading(false));
+}, []);
 
   const handleClaim = useCallback(async (achievementId: string) => {
     setClaimingId(achievementId);
@@ -267,31 +266,22 @@ export default function AchievementsPage() {
       };
 
       // Update local state in-place — no full-page reload needed
-      setGamification((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          totalXP:           result.totalXP,
-          level:             result.level,
-          xpForCurrentLevel: result.xpForCurrentLevel,
-          xpForNextLevel:    result.xpForNextLevel,
-          xpProgress:        result.xpProgress,
-          achievements: prev.achievements.map((a) =>
-            a.id === result.achievementId ? { ...a, claimedAt: result.claimedAt } : a,
-          ),
-        };
+      setAchievements((prev) => {
+        return prev.map((a) =>
+          a.id === result.achievementId ? { ...a, claimedAt: result.claimedAt } : a,
+        );
       });
     } catch (e) {
       setClaimError(e instanceof Error ? e.message : "Claim failed");
     } finally {
       setClaimingId(null);
     }
-  }, []);
+  }, [setAchievements]);
 
   const categories: CategoryKey[] = ["workouts", "streaks", "records", "volume"];
-  const totalClaimed     = gamification?.achievements.filter((a) => !!a.claimedAt).length ?? 0;
-  const totalAchievements = gamification?.achievements.length ?? 0;
-  const claimableCount   = gamification?.achievements.filter((a) => !!a.unlockedAt && !a.claimedAt).length ?? 0;
+  const totalClaimed     = achievements.filter((a) => !!a.claimedAt).length;
+  const totalAchievements = achievements.length;
+  const claimableCount   = achievements.filter((a) => !!a.unlockedAt && !a.claimedAt).length;
 
   return (
     <ProtectedWrapper>
@@ -310,7 +300,7 @@ export default function AchievementsPage() {
               <Trophy className="w-6 h-6 text-[var(--primary-500)]" />
               Achievements
             </h1>
-            {!loading && gamification && (
+            {!loading && (
               <p className="text-sm text-[var(--muted-foreground)] mt-0.5">
                 {totalClaimed} / {totalAchievements} claimed
                 {claimableCount > 0 && (
@@ -347,11 +337,10 @@ export default function AchievementsPage() {
           </div>
         )}
 
-        {!loading && gamification && (
+        {!loading && (
           <>
-            <XPLevelCard gamification={gamification} />
             {categories.map((cat) => {
-              const items = gamification.achievements.filter((a) => a.category === cat);
+              const items = achievements.filter((a) => a.category === cat);
               return (
                 <CategorySection
                   key={cat}

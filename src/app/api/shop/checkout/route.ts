@@ -42,7 +42,6 @@ export async function POST(req: NextRequest) {
       product_id: product.id,
       status: "pending",
       payment_method: "stripe",
-      amount_cores: null,
     })
     .select("id")
     .single();

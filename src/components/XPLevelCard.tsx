@@ -8,7 +8,7 @@ interface XPLevelCardProps {
 }
 
 export default function XPLevelCard({ gamification }: XPLevelCardProps) {
-  const { level, totalXP, xpForCurrentLevel, xpForNextLevel, xpProgress, currentStreak, cores_balance } = gamification;
+  const { level, totalXP, xpForCurrentLevel, xpForNextLevel, xpProgress, currentStreak } = gamification;
 
   const xpInLevel = totalXP - xpForCurrentLevel;
   const xpNeeded = xpForNextLevel - xpForCurrentLevel;
@@ -52,11 +52,6 @@ export default function XPLevelCard({ gamification }: XPLevelCardProps) {
             {` day${currentStreak === 1 ? "" : "s"} streak`}
           </span>
         )}
-
-        <span className="flex items-center gap-1.5 border-l border-[var(--border)] pl-4">
-          <Star className="w-4 h-4 text-yellow-500 fill-current" />
-          <span className="font-semibold text-[var(--foreground)]">{(cores_balance || 0).toLocaleString()}</span> Cores
-        </span>
 
         <span className="ml-auto text-right">
           {(xpForNextLevel - totalXP).toLocaleString()} XP to Level {level + 1}

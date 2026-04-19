@@ -32,6 +32,7 @@ export function coresForLevel(level: number): number {
   return base + bonus;
 }
 
+
 // ── Achievement definitions ───────────────────────────────────────────────────
 // These mirror the `achievements` catalogue table seeded in schema.sql.
 // `icon` is a Lucide component name — rendered in the UI via a lookup map.

@@ -140,21 +140,6 @@ export interface PersonalRecord {
 
 // ── Gamification ──────────────────────────────────────────────────────────────
 
-export interface Achievement {
-  id: string;
-  name: string;
-  description: string;
-  /** Lucide icon component name, e.g. "Trophy", "Flame" */
-  icon: string;
-  xpReward: number;
-  category: "workouts" | "streaks" | "records" | "volume";
-  /** Non-null when workout conditions are met */
-  unlockedAt?: string | null;
-  /** Non-null when the user has clicked "Claim" and the XP has been banked */
-  claimedAt?: string | null;
-  coresReward?: number;
-}
-
 export interface GamificationStats {
   totalXP: number;
   level: number;
@@ -164,6 +149,30 @@ export interface GamificationStats {
   achievements: Achievement[];
   currentStreak: number;
   cores_balance?: number;
+}
+
+export interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  /** Lucide icon component name, e.g. "Trophy", "Flame" */
+  icon: string;
+  xpReward: number;
+  coresReward?: number;
+  category: "workouts" | "streaks" | "records" | "volume";
+  /** Non-null when workout conditions are met */
+  unlockedAt?: string | null;
+  /** Non-null when the user has clicked "Claim" and the XP has been banked */
+  claimedAt?: string | null;
+}
+
+export interface PremiumCurrencyTransaction {
+  id: string;
+  user_id: string;
+  amount: number;
+  type: 'purchase' | 'achievement' | 'level_up' | 'admin_adjustment' | 'top_up';
+  description: string | null;
+  created_at?: string;
 }
 
 // ── Shop ───────────────────────────────────────────────────────────────────────
@@ -195,14 +204,6 @@ export interface Order {
   product?: Product;
 }
 
-export interface PremiumCurrencyTransaction {
-  id: string;
-  user_id: string;
-  amount: number;
-  type: 'purchase' | 'achievement' | 'level_up' | 'admin_adjustment' | 'top_up';
-  description: string | null;
-  created_at?: string;
-}
 
 // ── Social ────────────────────────────────────────────────────────────────────
 
