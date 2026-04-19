@@ -127,12 +127,10 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
+    const previousImageUrl = existing.image_url as string | null;
     let image_url = payload.image_url;
     if (payload.image && payload.image.size > 0) {
       image_url = await uploadProductImage(supabase, payload.image);
-      if (existing.image_url !== image_url) {
-        await deleteStoredProductImage(supabase, existing.image_url);
-      }
     }
 
     const { data, error } = await supabase
@@ -151,6 +149,11 @@ export async function PUT(req: NextRequest) {
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    if (previousImageUrl !== image_url) {
+      await deleteStoredProductImage(supabase, previousImageUrl);
+    }
+
     return NextResponse.json({ product: data });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to update product.";
