@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
   // Handle the event
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as {
+      id?: string;
       metadata?: Record<string, string>;
       shipping_details?: unknown;
     };
@@ -30,13 +31,18 @@ export async function POST(req: NextRequest) {
     if (metadataType === "cores-pack") {
       const coresAmount = Number(session.metadata?.cores || 0);
       const userId = session.metadata?.userId;
+      const stripeSessionId = session.id;
 
-      if (userId && coresAmount > 0) {
-        await supabaseAdmin.from("premium_currency_transactions").insert({
+      if (userId && coresAmount > 0 && stripeSessionId) {
+        await supabaseAdmin.from("premium_currency_transactions").upsert({
           user_id: userId,
           amount: coresAmount,
           type: "top_up",
           description: `Cores pack purchase: +${coresAmount} Cores`,
+          stripe_session_id: stripeSessionId,
+        } as never, {
+          onConflict: "stripe_session_id",
+          ignoreDuplicates: true,
         });
       }
       return NextResponse.json({ received: true });
@@ -54,12 +60,15 @@ export async function POST(req: NextRequest) {
         status: "completed",
         shipping_address: session.shipping_details
       })
+      .neq("status", "completed")
       .eq("id", orderId)
       .select()
-      .single();
+      .maybeSingle();
 
     if (oError) {
         console.error("Error updating order:", oError);
+    } else if (!order) {
+        return NextResponse.json({ received: true });
     } else {
         // Update stock
         const { data: product } = await supabaseAdmin
