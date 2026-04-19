@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/helper/stripe";
-import { supabaseAdmin } from "@/helper/supabaseAdmin";
+import { getSupabaseAdminClient } from "@/helper/supabaseAdmin";
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 export async function POST(req: NextRequest) {
+  const supabaseAdmin = getSupabaseAdminClient();
   const body = await req.text();
   const sig = req.headers.get("stripe-signature") as string;
 
