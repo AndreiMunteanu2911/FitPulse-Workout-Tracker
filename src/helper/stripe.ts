@@ -1,11 +1,11 @@
-import Stripe from 'stripe';
+import Stripe from "stripe";
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  // We allow it to be missing during build time or if not provided yet, 
-  // but it will throw when used if missing.
-  console.warn('STRIPE_SECRET_KEY is not set in environment variables');
+const secretKey = process.env.STRIPE_SECRET_KEY;
+
+if (!secretKey) {
+  throw new Error("STRIPE_SECRET_KEY is required.");
 }
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-01-27' as any,
-});
+// Let Stripe use the account/default API version instead of pinning a version
+// that may not exist in the current test or sandbox environment.
+export const stripe = new Stripe(secretKey);
