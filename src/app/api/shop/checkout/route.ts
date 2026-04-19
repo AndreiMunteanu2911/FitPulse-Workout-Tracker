@@ -15,7 +15,15 @@ const DEFAULT_ALLOWED_COUNTRIES = [
   "IT",
   "PT",
   "RO",
-];
+] as const;
+
+type CheckoutCreateParams = Parameters<typeof stripe.checkout.sessions.create>[0];
+type AllowedCountry = (typeof DEFAULT_ALLOWED_COUNTRIES)[number];
+type CheckoutCreateParamsWithShipping = NonNullable<CheckoutCreateParams> & {
+  shipping_address_collection?: {
+    allowed_countries: AllowedCountry[];
+  };
+};
 
 export async function POST(req: NextRequest) {
   const supabase = await createSupabaseServerClient();
@@ -70,15 +78,15 @@ export async function POST(req: NextRequest) {
   const allowedCountries = (process.env.STRIPE_ALLOWED_SHIPPING_COUNTRIES || "")
     .split(",")
     .map((country) => country.trim().toUpperCase())
-    .filter(Boolean);
-  const session = await stripe.checkout.sessions.create({
+    .filter(Boolean) as AllowedCountry[];
+  const sessionParams: CheckoutCreateParamsWithShipping = {
     mode: "payment",
     success_url: `${baseUrl}/checkout-success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${baseUrl}/shop?canceled=1`,
     shipping_address_collection: product.is_physical
       ? {
-        allowed_countries: allowedCountries.length > 0 ? allowedCountries : DEFAULT_ALLOWED_COUNTRIES,
-      }
+          allowed_countries: (allowedCountries.length > 0 ? allowedCountries : DEFAULT_ALLOWED_COUNTRIES) as AllowedCountry[],
+        }
       : undefined,
     metadata: {
       type: "product-order",
@@ -101,7 +109,9 @@ export async function POST(req: NextRequest) {
         },
       },
     ],
-  });
+  };
+
+  const session = await stripe.checkout.sessions.create(sessionParams as CheckoutCreateParams);
 
   const { error: sessionUpdateError } = await supabase
     .from("orders")

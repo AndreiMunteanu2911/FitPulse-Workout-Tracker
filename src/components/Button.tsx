@@ -49,7 +49,12 @@ export default function Button({
     ].filter(Boolean).join(" ");
 
     if (asChild && React.isValidElement(children)) {
-        const child = children as ReactElement<{ className?: string }>;
+        const child = children as ReactElement<{
+            className?: string;
+            onClick?: React.MouseEventHandler<HTMLElement>;
+            disabled?: boolean;
+            "aria-label"?: string;
+        }>;
         return React.cloneElement(child, {
             ...props,
             onClick,

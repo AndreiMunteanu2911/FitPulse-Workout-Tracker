@@ -88,7 +88,7 @@ export default function CoachTextWindow({
                 name: ex.name,
                 sets: ex.sets,
               }))}
-              onStart={onWorkoutStart}
+              onStartAction={onWorkoutStart}
             />
           )}
 
