@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState, use, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { BlogPost, BlogComment } from "@/types";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
+import { useAuthSession } from "@/components/AuthSessionProvider";
 import Button from "@/components/Button";
 import { ArrowLeft, Calendar, Loader2, Heart, MessageCircle, Send, Trash2 } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 
 export default function BlogPostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -20,16 +20,23 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
   const [comments, setComments] = useState<BlogComment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const { user } = useAuthSession();
+
+  const fetchComments = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/blog/${id}/comments`);
+      const { comments: data } = await res.json();
+      setComments(data || []);
+    } catch (error) {
+      console.error("Failed to fetch comments:", error);
+    }
+  }, [id]);
 
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        const [postRes, sessionRes] = await Promise.all([
-          fetch(`/api/blog/${id}`),
-          fetch("/api/auth/session")
-        ]);
+        const postRes = await fetch(`/api/blog/${id}`);
         const { data } = await postRes.json();
-        const { user } = await sessionRes.json();
         
         setPost(data);
         setCurrentUser(user?.id || null);
@@ -45,17 +52,7 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
     };
     fetchPost();
     fetchComments();
-  }, [id]);
-
-  const fetchComments = async () => {
-    try {
-      const res = await fetch(`/api/blog/${id}/comments`);
-      const { comments: data } = await res.json();
-      setComments(data || []);
-    } catch (error) {
-      console.error("Failed to fetch comments:", error);
-    }
-  };
+  }, [fetchComments, id, user?.id]);
 
   const handleLike = async () => {
     try {
@@ -147,7 +144,7 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
            <ArrowLeft className="w-8 h-8 text-[var(--muted-foreground)]" />
         </div>
         <h2 className="text-2xl font-bold text-[var(--foreground)] mb-2">Post Not Found</h2>
-        <p className="text-[var(--muted-foreground)] mb-8 max-w-md">The blog post you're looking for might have been moved or deleted.</p>
+        <p className="text-[var(--muted-foreground)] mb-8 max-w-md">The blog post you&apos;re looking for might have been moved or deleted.</p>
         <Button onClick={() => router.push("/blog")} variant="primary">Back to Blog</Button>
       </div>
     );

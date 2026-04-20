@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
+import { useAuthSession } from "@/components/AuthSessionProvider";
 import PostCard from "@/components/social/PostCard";
 import CreatePostModal from "@/components/social/CreatePostModal";
 import FriendManagement from "@/components/social/FriendManagement";
@@ -14,11 +15,12 @@ export default function SocialPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [friendships, setFriendships] = useState<Friendship[]>([]);
   const [recentWorkouts, setRecentWorkouts] = useState<Workout[]>([]);
-  const [currentUserId, setCurrentUserId] = useState<string>("");
   const [loadingFeed, setLoadingFeed] = useState(true);
   const [loadingFriends, setLoadingFriends] = useState(true);
   const [showCreatePost, setShowCreatePost] = useState(false);
   const { fetchFeed, fetchFriendships, createPost, toggleLike, deletePost } = useSocial();
+  const { user } = useAuthSession();
+  const currentUserId = user?.id ?? "";
 
   const loadFeed = useCallback(async () => {
     setLoadingFeed(true);
@@ -47,11 +49,6 @@ export default function SocialPage() {
   }, []);
 
   useEffect(() => {
-    fetch("/api/auth/session")
-      .then((r) => r.json())
-      .then((d) => { if (d.user?.id) setCurrentUserId(d.user.id); })
-      .catch(() => {});
-
     fetch("/api/workouts")
       .then((r) => r.json())
       .then((d) => { if (d.workouts) setRecentWorkouts(d.workouts.slice(0, 10)); })

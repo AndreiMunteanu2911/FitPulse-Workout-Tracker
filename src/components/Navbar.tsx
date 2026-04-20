@@ -3,19 +3,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useAuthSession } from "@/components/AuthSessionProvider";
 import { getDesktopNavItems, getMobileNavItems } from "@/lib/navigation";
 
 export default function Navbar() {
   const pathname = usePathname();
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    fetch("/api/auth/session")
-      .then((r) => r.json())
-      .then((d) => setIsAdmin(d.user?.role === "admin"))
-      .catch(() => {});
-  }, []);
+  const { isAdmin } = useAuthSession();
 
   const desktopTabs = getDesktopNavItems(isAdmin);
   const mobileTabs = getMobileNavItems();

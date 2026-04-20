@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { type LucideIcon } from "lucide-react";
+import { useAuthSession } from "@/components/AuthSessionProvider";
 import { getDashboardShortcutItems } from "@/lib/navigation";
 
 type ShortcutMeta = {
@@ -36,14 +36,7 @@ type ShortcutItem = {
 };
 
 export default function DashboardShortcuts() {
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    fetch("/api/auth/session")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => setIsAdmin(Boolean(data?.user?.role === "admin")))
-      .catch(() => setIsAdmin(false));
-  }, []);
+  const { isAdmin } = useAuthSession();
 
   const shortcuts = getDashboardShortcutItems(isAdmin);
 

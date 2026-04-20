@@ -10,6 +10,7 @@ import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import EmptyState from "@/components/admin/EmptyState";
 import TemplateCard from "@/components/admin/TemplateCard";
 import ConfirmDeleteModal from "@/components/admin/ConfirmDeleteModal";
+import { useAuthSession } from "@/components/AuthSessionProvider";
 
 interface Template {
   id: string;
@@ -24,7 +25,7 @@ export default function AdminTemplatesPage() {
   const router = useRouter();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const { isAdmin, isAuthenticated } = useAuthSession();
 
   // Create modal
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -37,17 +38,6 @@ export default function AdminTemplatesPage() {
   // Delete modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingTemplate, setDeletingTemplate] = useState<Template | null>(null);
-
-  useEffect(() => {
-    async function checkAdmin() {
-      const sessionRes = await fetch("/api/auth/session");
-      if (!sessionRes.ok) { router.push("/login"); return; }
-      const session = await sessionRes.json();
-      if (session.user?.role !== "admin") { router.push("/dashboard"); return; }
-      setIsAdmin(true);
-    }
-    checkAdmin();
-  }, [router]);
 
   const fetchTemplates = useCallback(async () => {
     try {
@@ -65,6 +55,12 @@ export default function AdminTemplatesPage() {
   useEffect(() => {
     if (isAdmin) fetchTemplates();
   }, [isAdmin, fetchTemplates]);
+
+  useEffect(() => {
+    if (isAuthenticated && !isAdmin) {
+      router.push("/dashboard");
+    }
+  }, [isAuthenticated, isAdmin, router]);
 
   const addExerciseField = () => setFormExerciseIds([...formExerciseIds, ""]);
   const removeExerciseField = (idx: number) => setFormExerciseIds(formExerciseIds.filter((_, i) => i !== idx));
@@ -140,6 +136,8 @@ export default function AdminTemplatesPage() {
       setError("Network error");
     }
   };
+
+  if (isAuthenticated && !isAdmin) return null;
 
   if (!isAdmin || loading) {
     return (

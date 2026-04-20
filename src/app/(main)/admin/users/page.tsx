@@ -2,13 +2,14 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Search, User } from "lucide-react";
+import { User } from "lucide-react";
 import Skeleton from "react-loading-skeleton";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import SearchInput from "@/components/admin/SearchInput";
 import EmptyState from "@/components/admin/EmptyState";
 import UserCard from "@/components/admin/UserCard";
 import RoleChangeModal from "@/components/admin/RoleChangeModal";
+import { useAuthSession } from "@/components/AuthSessionProvider";
 
 interface UserInfo {
   user_id: string;
@@ -23,25 +24,14 @@ export default function AdminUsersPage() {
   const router = useRouter();
   const [users, setUsers] = useState<UserInfo[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [search, setSearch] = useState("");
+  const { isAdmin, isAuthenticated } = useAuthSession();
 
   // Role change modal
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [changingUser, setChangingUser] = useState<UserInfo | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    async function checkAdmin() {
-      const sessionRes = await fetch("/api/auth/session");
-      if (!sessionRes.ok) { router.push("/login"); return; }
-      const session = await sessionRes.json();
-      if (session.user?.role !== "admin") { router.push("/dashboard"); return; }
-      setIsAdmin(true);
-    }
-    checkAdmin();
-  }, [router]);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -59,6 +49,12 @@ export default function AdminUsersPage() {
   useEffect(() => {
     if (isAdmin) fetchUsers();
   }, [isAdmin, fetchUsers]);
+
+  useEffect(() => {
+    if (isAuthenticated && !isAdmin) {
+      router.push("/dashboard");
+    }
+  }, [isAuthenticated, isAdmin, router]);
 
   const openRoleChange = (user: UserInfo) => {
     setChangingUser(user);
@@ -95,6 +91,8 @@ export default function AdminUsersPage() {
       setError("Network error");
     }
   };
+
+  if (isAuthenticated && !isAdmin) return null;
 
   if (!isAdmin || loading) {
     return (

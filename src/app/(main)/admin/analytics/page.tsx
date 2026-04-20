@@ -10,6 +10,7 @@ import TimeRangeSelector from "@/components/admin/TimeRangeSelector";
 import DailyWorkoutsChart from "@/components/admin/DailyWorkoutsChart";
 import TopExercisesList from "@/components/admin/TopExercisesList";
 import EmptyState from "@/components/admin/EmptyState";
+import { useAuthSession } from "@/components/AuthSessionProvider";
 
 interface AnalyticsData {
   totalUsers: number;
@@ -26,19 +27,8 @@ export default function AdminAnalyticsPage() {
   const router = useRouter();
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [days, setDays] = useState(30);
-
-  useEffect(() => {
-    async function checkAdmin() {
-      const sessionRes = await fetch("/api/auth/session");
-      if (!sessionRes.ok) { router.push("/login"); return; }
-      const session = await sessionRes.json();
-      if (session.user?.role !== "admin") { router.push("/dashboard"); return; }
-      setIsAdmin(true);
-    }
-    checkAdmin();
-  }, [router]);
+  const { isAdmin, isAuthenticated } = useAuthSession();
 
   const fetchData = useCallback(async () => {
     try {
@@ -56,6 +46,14 @@ export default function AdminAnalyticsPage() {
   useEffect(() => {
     if (isAdmin) fetchData();
   }, [isAdmin, fetchData]);
+
+  useEffect(() => {
+    if (isAuthenticated && !isAdmin) {
+      router.push("/dashboard");
+    }
+  }, [isAuthenticated, isAdmin, router]);
+
+  if (isAuthenticated && !isAdmin) return null;
 
   if (!isAdmin || loading) {
     return (
