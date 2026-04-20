@@ -14,6 +14,9 @@ CREATE TABLE IF NOT EXISTS public.exercises (
 );
 
 ALTER TABLE public.exercises ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.exercises
+    ADD COLUMN IF NOT EXISTS form_rules JSONB;
+
 
 -- Standard exercises are publicly readable (custom exercises don't live here)
 CREATE POLICY "exercises_public_read" ON public.exercises
