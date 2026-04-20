@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Search, X, Eye, Edit3, Save, ChevronLeft, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, ChevronLeft, Edit3, Eye, Loader2, Plus, Save, Search, Sparkles, Trash2, X } from "lucide-react";
 import Skeleton from "react-loading-skeleton";
 import Button from "@/components/Button";
 import ModalWrapper from "@/components/ModalWrapper";
+import BulkAiGeneratedConfirmModal from "@/components/admin/BulkAiGeneratedConfirmModal";
 import { useAuthSession } from "@/components/AuthSessionProvider";
 import {
   FORM_PATTERNS,
@@ -57,11 +58,14 @@ export default function AdminFormRulesPage() {
   const [editingRules, setEditingRules] = useState<ExerciseFormRules | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [bulkSaving, setBulkSaving] = useState(false);
+  const [bulkError, setBulkError] = useState("");
+  const [showBulkConfirmModal, setShowBulkConfirmModal] = useState(false);
 
   const [viewingExercise, setViewingExercise] = useState<Exercise | null>(null);
 
-  const fetchExercises = useCallback(async () => {
-    setLoading(true);
+  const fetchExercises = useCallback(async (options?: { silent?: boolean }) => {
+    if (!options?.silent) setLoading(true);
     try {
       const res = await fetch("/api/admin/exercises/list");
       if (res.ok) {
@@ -71,7 +75,7 @@ export default function AdminFormRulesPage() {
     } catch {
       // ignore
     }
-    setLoading(false);
+    if (!options?.silent) setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -122,6 +126,55 @@ export default function AdminFormRulesPage() {
       setError("Network error");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const needsReviewCount = useMemo(
+    () => exercises.filter((exercise) => exercise.form_rules?.review.status === "needs_review").length,
+    [exercises],
+  );
+
+  const handleBulkAiGenerated = async () => {
+    if (bulkSaving || needsReviewCount === 0) return;
+    setBulkSaving(true);
+    setBulkError("");
+
+    try {
+      const res = await fetch("/api/admin/exercises/form-rules/bulk", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json.error || "Failed to update review status");
+      }
+
+      const updatedIds = new Set<string>(json.updated_exercise_ids ?? []);
+      if (updatedIds.size > 0) {
+        setExercises((prev) =>
+          prev.map((exercise) =>
+            updatedIds.has(exercise.exercise_id) && exercise.form_rules
+              ? {
+                  ...exercise,
+                  form_rules: {
+                    ...exercise.form_rules,
+                    review: {
+                      ...exercise.form_rules.review,
+                      status: "ai_generated",
+                    },
+                  },
+                }
+              : exercise,
+          ),
+        );
+      }
+
+      await fetchExercises({ silent: true });
+    } catch (err) {
+      setBulkError(err instanceof Error ? err.message : "Failed to update review status");
+    } finally {
+      setBulkSaving(false);
+      setShowBulkConfirmModal(false);
     }
   };
 
@@ -215,18 +268,48 @@ export default function AdminFormRulesPage() {
 
   return (
     <div className="w-full">
-      <div className="flex items-center gap-3 mb-6">
-        <button
-          onClick={() => router.push("/admin/exercises")}
-          className="w-9 h-9 rounded-lg bg-[var(--surface-raised)] hover:bg-[var(--surface-overlay)] flex items-center justify-center transition-colors"
-        >
-          <ChevronLeft className="w-5 h-5 text-[var(--muted-foreground)]" />
-        </button>
-        <div>
-          <h1 className="text-xl font-bold text-[var(--foreground)]">Pattern Form Rules</h1>
-          <p className="text-sm text-[var(--muted-foreground)]">Review exercise pattern mapping and overrides</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center mb-6">
+        <div className="flex items-center gap-3 min-w-0">
+          <button
+            onClick={() => router.push("/admin/exercises")}
+            className="w-9 h-9 rounded-lg bg-[var(--surface-raised)] hover:bg-[var(--surface-overlay)] flex items-center justify-center transition-colors"
+          >
+            <ChevronLeft className="w-5 h-5 text-[var(--muted-foreground)]" />
+          </button>
+          <div>
+            <h1 className="text-xl font-bold text-[var(--foreground)]">Pattern Form Rules</h1>
+            <p className="text-sm text-[var(--muted-foreground)]">Review exercise pattern mapping and overrides</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 sm:ml-auto">
+          <Button
+            variant="secondary"
+            onClick={() => setShowBulkConfirmModal(true)}
+            disabled={bulkSaving || needsReviewCount === 0}
+            className="gap-2 whitespace-nowrap"
+          >
+            {bulkSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+            Mark {needsReviewCount} AI Generated
+          </Button>
         </div>
       </div>
+
+      <BulkAiGeneratedConfirmModal
+        isOpen={showBulkConfirmModal}
+        needsReviewCount={needsReviewCount}
+        isSaving={bulkSaving}
+        onClose={() => setShowBulkConfirmModal(false)}
+        onConfirm={handleBulkAiGenerated}
+      />
+
+      {bulkError && (
+        <div className="mb-4 rounded-lg border border-[var(--color-destructive)]/20 bg-[var(--color-destructive-bg)] px-4 py-3 text-sm font-medium text-[var(--color-destructive)]">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{bulkError}</span>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
         <div className="p-4 rounded-lg bg-[var(--surface-raised)]">

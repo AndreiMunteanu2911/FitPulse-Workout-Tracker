@@ -34,3 +34,34 @@ CREATE POLICY "admins_manage_exercises" ON public.exercises
 
 -- Legacy: clean up any custom_% rows that were mirrored to satisfy old FK constraints
 DELETE FROM public.exercises WHERE exercise_id LIKE 'custom_%';
+
+CREATE OR REPLACE FUNCTION public.admin_mark_needs_review_form_rules_ai_generated()
+RETURNS TABLE(exercise_id text)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM public.user_stats
+    WHERE user_stats.user_id = auth.uid()
+      AND user_stats.role = 'admin'
+  ) THEN
+    RAISE EXCEPTION 'Forbidden';
+END IF;
+
+RETURN QUERY
+UPDATE public.exercises
+SET form_rules = jsonb_set(
+        form_rules,
+        '{review,status}',
+        to_jsonb('ai_generated'::text),
+        false
+                 )
+WHERE exercise_id NOT LIKE 'custom_%'
+  AND form_rules IS NOT NULL
+  AND form_rules->'review'->>'status' = 'needs_review'
+    RETURNING exercise_id;
+END;
+$$;
