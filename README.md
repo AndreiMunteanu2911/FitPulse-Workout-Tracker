@@ -369,10 +369,14 @@ An "Admin Dashboard" card appears on the main `/dashboard` page **only** for use
    **Optional: AI Coach** — To enable the AI-powered fitness coach, add your OpenRouter API key (free tier, no credit card required):
    ```env
    OPENROUTER_API_KEY=sk-or-your-key-here
-   OPENROUTER_CHAT_MODEL=qwen/qwen3.6-plus:free
-   OPENROUTER_FALLBACK_MODEL=stepfun/step-3.5-flash:free
+   OPENROUTER_CHAT_MODEL=qwen/qwen3-next-80b-a3b-instruct:free
+   OPENROUTER_FALLBACK_MODEL=qwen/qwen3-coder:free
+   OPENROUTER_FALLBACK_MODEL_2=stepfun/step-3.5-flash:free
+   OPENROUTER_FALLBACK_MODEL_LAST=openrouter/free
    OPENROUTER_EMBEDDING_MODEL=nvidia/llama-nemotron-embed-vl-1b-v2:free
    ```
+   The app also has built-in free-model fallbacks, so a missing env var or a
+   temporarily unavailable provider should not break the deployed coach.
    Get your key at [openrouter.ai/keys](https://openrouter.ai/keys).
 
 4. **Run database migrations**

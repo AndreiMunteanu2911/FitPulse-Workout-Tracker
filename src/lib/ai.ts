@@ -1,35 +1,50 @@
-// ── OpenRouter API Client ────────────────────────────────────────────────────
+// OpenRouter API client.
 // Server-only module. Never import this in a "use client" component.
 //
-// Supports up to 5 models in a fallback chain (1 primary + 4 fallbacks).
-// ─────────────────────────────────────────────────────────────────────────────
+// Env-configured models are tried first, then a built-in free-model chain so
+// production does not depend on every Vercel variable being present.
 
 export const OPENROUTER_BASE = "https://openrouter.ai/api/v1";
 
-function requireEnv(name: string): string | undefined {
-  return process.env[name];
-}
-
 function resolveEnvList(...keys: string[]): string[] {
-  return keys.map((k) => process.env[k]).filter(Boolean) as string[];
+  return keys.map((key) => process.env[key]).filter(Boolean) as string[];
 }
 
-/** Ordered list of chat models to try (primary first, then fallbacks). */
-export const CHAT_MODELS = resolveEnvList(
-  "OPENROUTER_CHAT_MODEL",
-  "OPENROUTER_FALLBACK_MODEL",
-  "OPENROUTER_FALLBACK_MODEL_2",
-  "OPENROUTER_FALLBACK_MODEL_3",
-  "OPENROUTER_FALLBACK_MODEL_4",
-  "OPENROUTER_FALLBACK_MODEL_5",
-  "OPENROUTER_FALLBACK_MODEL_6",
-  "OPENROUTER_FALLBACK_MODEL_LAST",
-);
+function dedupeModels(models: string[]): string[] {
+  return [...new Set(models.filter(Boolean))];
+}
+
+const DEFAULT_CHAT_MODELS = [
+  "qwen/qwen3-next-80b-a3b-instruct:free",
+  "qwen/qwen3-coder:free",
+  "minimax/minimax-m2.5:free",
+  "openai/gpt-oss-20b:free",
+  "google/gemma-3-4b-it:free",
+  "meta-llama/llama-3.2-3b-instruct:free",
+  "openrouter/free",
+];
+
+/** Ordered list of chat models to try, env first and built-in fallbacks last. */
+export const CHAT_MODELS = dedupeModels([
+  ...resolveEnvList(
+    "OPENROUTER_CHAT_MODEL",
+    "OPENROUTER_FALLBACK_MODEL",
+    "OPENROUTER_FALLBACK_MODEL_2",
+    "OPENROUTER_FALLBACK_MODEL_3",
+    "OPENROUTER_FALLBACK_MODEL_4",
+    "OPENROUTER_FALLBACK_MODEL_5",
+    "OPENROUTER_FALLBACK_MODEL_6",
+    "OPENROUTER_FALLBACK_MODEL_LAST",
+  ),
+  ...DEFAULT_CHAT_MODELS,
+]);
 
 export const MODELS = {
-  chat:      requireEnv("OPENROUTER_CHAT_MODEL")!,
-  fallback:  requireEnv("OPENROUTER_FALLBACK_MODEL")!,
-  embedding: requireEnv("OPENROUTER_EMBEDDING_MODEL")!,
+  chat: process.env.OPENROUTER_CHAT_MODEL ?? DEFAULT_CHAT_MODELS[0],
+  fallback: process.env.OPENROUTER_FALLBACK_MODEL ?? DEFAULT_CHAT_MODELS[1],
+  embedding:
+    process.env.OPENROUTER_EMBEDDING_MODEL ??
+    "nvidia/llama-nemotron-embed-vl-1b-v2:free",
 } as const;
 
 export interface ChatMessage {
@@ -44,59 +59,35 @@ export interface ChatOptions {
   tools?: Record<string, unknown>[];
 }
 
-// ── Helper: try each model in order until one succeeds ───────────────────────
-
 async function tryWithFallbacks<T>(
   models: string[],
   fn: (model: string) => Promise<T>,
   label: string,
-  messages: ChatMessage[],
-  options: ChatOptions,
 ): Promise<T> {
   let lastErr: unknown;
 
   for (let i = 0; i < models.length; i++) {
     const model = models[i];
     if (i > 0) {
-      console.warn(
-        `[OpenRouter] ${label} — trying fallback #${i}: "${model}"`,
-      );
+      console.warn(`[OpenRouter] ${label} - trying fallback #${i}: "${model}"`);
     }
+
     try {
       return await fn(model);
     } catch (err) {
       lastErr = err;
       console.warn(
-        `[OpenRouter] ${label} — model "${model}" failed:`,
+        `[OpenRouter] ${label} - model "${model}" failed:`,
         err instanceof Error ? err.message : err,
       );
     }
   }
 
-  // All models exhausted
   console.error(
-    `[OpenRouter] ${label} — all ${models.length} models failed. Last error:`,
+    `[OpenRouter] ${label} - all ${models.length} models failed. Last error:`,
     lastErr,
   );
   throw lastErr;
-}
-
-// ── Non-streaming chat with automatic fallback ──────────────────────────────
-export async function callOpenRouter(
-  messages: ChatMessage[],
-  options: ChatOptions = {},
-): Promise<string> {
-  const preferredModels = options.model
-    ? [options.model, ...CHAT_MODELS.filter((m) => m !== options.model)]
-    : CHAT_MODELS;
-
-  return tryWithFallbacks(
-    preferredModels,
-    (model) => callOpenRouterInternal(messages, { ...options, model }),
-    "chat",
-    messages,
-    options,
-  );
 }
 
 async function callOpenRouterInternal(
@@ -138,47 +129,19 @@ async function callOpenRouterInternal(
   return content;
 }
 
-// ── Streaming chat with automatic fallback ──────────────────────────────────
-export function streamOpenRouter(
+export async function callOpenRouter(
   messages: ChatMessage[],
   options: ChatOptions = {},
-): ReadableStream<Uint8Array> {
+): Promise<string> {
   const preferredModels = options.model
-    ? [options.model, ...CHAT_MODELS.filter((m) => m !== options.model)]
+    ? [options.model, ...CHAT_MODELS.filter((model) => model !== options.model)]
     : CHAT_MODELS;
 
-  const encoder = new TextEncoder();
-
-  return new ReadableStream({
-    async start(controller) {
-      for (let i = 0; i < preferredModels.length; i++) {
-        const model = preferredModels[i];
-        if (i > 0) {
-          console.warn(
-            `[OpenRouter] stream — trying fallback #${i}: "${model}"`,
-          );
-        }
-        try {
-          await streamModel(controller, encoder, messages, { ...options, model });
-          return; // Success — we're done
-        } catch (err) {
-          console.warn(
-            `[OpenRouter] stream — model "${model}" failed:`,
-            err instanceof Error ? err.message : err,
-          );
-          // Continue to next fallback
-        }
-      }
-
-      // All models exhausted
-      controller.enqueue(
-        encoder.encode(
-          `data: ${JSON.stringify({ error: "All chat models failed. Try again later." })}\n\n`,
-        ),
-      );
-      controller.close();
-    },
-  });
+  return tryWithFallbacks(
+    preferredModels,
+    (model) => callOpenRouterInternal(messages, { ...options, model }),
+    "chat",
+  );
 }
 
 async function streamModel(
@@ -229,7 +192,7 @@ async function streamModel(
 
     buffer += decoder.decode(value, { stream: true });
     const lines = buffer.split("\n");
-    buffer = lines.pop() ?? ""; // keep incomplete line in buffer
+    buffer = lines.pop() ?? "";
 
     for (const line of lines) {
       const trimmed = line.trim();
@@ -239,17 +202,14 @@ async function streamModel(
         controller.close();
         return;
       }
+
       try {
         const parsed = JSON.parse(data);
         const delta = parsed.choices?.[0]?.delta?.content;
         if (delta) {
-          controller.enqueue(
-            encoder.encode(
-              `data: ${JSON.stringify({ delta })}\n\n`,
-            ),
-          );
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ delta })}\n\n`));
         }
-        // Capture tool call arguments if present
+
         const toolCall = parsed.choices?.[0]?.delta?.tool_calls?.[0];
         if (toolCall?.function?.arguments) {
           controller.enqueue(
@@ -267,7 +227,47 @@ async function streamModel(
   controller.close();
 }
 
-// ── Embedding generation ─────────────────────────────────────────────────────
+export function streamOpenRouter(
+  messages: ChatMessage[],
+  options: ChatOptions = {},
+): ReadableStream<Uint8Array> {
+  const preferredModels = options.model
+    ? [options.model, ...CHAT_MODELS.filter((model) => model !== options.model)]
+    : CHAT_MODELS;
+
+  const encoder = new TextEncoder();
+
+  return new ReadableStream({
+    async start(controller) {
+      for (let i = 0; i < preferredModels.length; i++) {
+        const model = preferredModels[i];
+        if (i > 0) {
+          console.warn(
+            `[OpenRouter] stream - trying fallback #${i}: "${model}"`,
+          );
+        }
+
+        try {
+          await streamModel(controller, encoder, messages, { ...options, model });
+          return;
+        } catch (err) {
+          console.warn(
+            `[OpenRouter] stream - model "${model}" failed:`,
+            err instanceof Error ? err.message : err,
+          );
+        }
+      }
+
+      controller.enqueue(
+        encoder.encode(
+          `data: ${JSON.stringify({ error: "All chat models failed. Try again later." })}\n\n`,
+        ),
+      );
+      controller.close();
+    },
+  });
+}
+
 export async function generateEmbedding(
   text: string,
 ): Promise<number[]> {
@@ -300,6 +300,5 @@ export async function generateEmbedding(
   const json = await res.json();
   const embedding = json.data?.[0]?.embedding;
   if (!embedding) throw new Error("Empty embedding response from OpenRouter");
-  // Truncate to 1024 dims (HNSW index limit is 2000; Nemotron outputs 2048)
   return (embedding as number[]).slice(0, 1024);
 }
