@@ -1,10 +1,6 @@
-// ── Form Score Logging ──────────────────────────────────────────────────────
-// POST /api/form-logs — Log a form checking session
-// GET  /api/form-logs?exerciseId=xxx — Get form history for an exercise
-// ─────────────────────────────────────────────────────────────────────────────
-
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/helper/supabaseServer";
+import { formSessionAnalysisSchema } from "@/lib/validations";
 
 export async function POST(req: NextRequest) {
   const supabase = await createSupabaseServerClient();
@@ -12,23 +8,23 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
-  const { exercise_id, score, reps, duration_ms, feedback_notes } = body;
-
-  if (!exercise_id || score === undefined) {
-    return NextResponse.json({ error: "exercise_id and score are required" }, { status: 400 });
+  const parsed = formSessionAnalysisSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({
+      error: "Invalid form session payload",
+      details: parsed.error.flatten(),
+    }, { status: 400 });
   }
 
+  const { exercise_id, ...analysis } = parsed.data;
   const { data, error } = await supabase
     .from("form_logs")
     .insert({
       user_id: user.id,
       exercise_id,
-      score,
-      reps: reps ?? 0,
-      duration_ms: duration_ms ?? 0,
-      feedback_notes: feedback_notes ?? null,
+      ...analysis,
     })
-    .select()
+    .select("*")
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -42,7 +38,7 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const exerciseId = searchParams.get("exerciseId");
-  const limit = parseInt(searchParams.get("limit") ?? "20");
+  const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") ?? "20", 10)));
 
   let query = supabase
     .from("form_logs")

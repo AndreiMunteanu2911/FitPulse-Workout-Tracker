@@ -74,6 +74,97 @@ export interface ExerciseFormRules {
   review: ExerciseFormRuleReview;
 }
 
+export interface FormSessionFeedbackItem {
+  type: FormRuleSeverity;
+  message: string;
+  landmarkIndices?: number[];
+  source?: "rule" | "tempo" | "stability" | "symmetry" | "spine" | "coach";
+  ruleId?: string;
+  timestampMs?: number;
+}
+
+export interface FormLandmarkSample {
+  timestampMs: number;
+  landmarks: Array<{
+    index: number;
+    x: number;
+    y: number;
+    z: number;
+    visibility: number;
+  }>;
+}
+
+export interface FormMetricSample {
+  timestampMs: number;
+  angle: number;
+  phase: Exclude<FormRulePhase, "both"> | "unknown";
+}
+
+export interface FormRepMetric {
+  repIndex: number;
+  startMs: number;
+  endMs: number;
+  durationMs: number;
+  eccentricMs: number;
+  concentricMs: number;
+  topPauseMs: number;
+  bottomPauseMs: number;
+  minAngle: number;
+  maxAngle: number;
+  score: number;
+  feedback: FormSessionFeedbackItem[];
+  tempoFlags: string[];
+}
+
+export type FormAnalysisStatus = "local_only" | "cloud_pending" | "cloud_complete" | "cloud_failed";
+
+export interface FormCoachingResult {
+  summary: string;
+  top_cues: string[];
+  rep_observations: string[];
+  confidence: number;
+  needs_human_rule_review: boolean;
+}
+
+export interface FormWorstSegment {
+  startMs: number;
+  endMs: number;
+  repIndex?: number;
+  score: number;
+  feedback: FormSessionFeedbackItem[];
+  samples: FormLandmarkSample[];
+}
+
+export interface FormSessionAnalysis {
+  score: number;
+  realtime_score: number;
+  postset_score: number;
+  reps: number;
+  duration_ms: number;
+  detector_version: string;
+  rules_confidence: number;
+  analysis_status: FormAnalysisStatus;
+  feedback_summary: string;
+  feedback_json: {
+    topIssues: FormSessionFeedbackItem[];
+    realtime: FormSessionFeedbackItem[];
+    postset: FormSessionFeedbackItem[];
+    coaching?: FormCoachingResult | null;
+  };
+  rep_metrics_json: FormRepMetric[];
+  landmark_stream_json: FormLandmarkSample[];
+  worst_segment_json: FormWorstSegment | null;
+  used_cloud_coach: boolean;
+  cloud_model?: string | null;
+}
+
+export interface FormLog extends FormSessionAnalysis {
+  id: string;
+  user_id: string;
+  exercise_id: string;
+  created_at: string;
+}
+
 export interface Set {
   id: string;
   workout_exercise_id?: string;

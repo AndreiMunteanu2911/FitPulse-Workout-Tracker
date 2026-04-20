@@ -119,7 +119,7 @@ export function detectCameraAngle(
   if (!nose || !lShoulder || !rShoulder || !lHip || !rHip) return "not-detected";
 
   const bodyHeight = Math.abs(nose.y - ((lHip.y + rHip.y) / 2));
-  if (bodyHeight < 0.18) return "too-far";
+  if (bodyHeight < 0.15) return "too-far";
 
   const shoulderWidth = Math.abs(lShoulder.x - rShoulder.x);
 
@@ -180,8 +180,8 @@ export class TempoTracker {
     lastRepTime: 0,
   };
 
-  private readonly cooldownMs = 450;
-  private readonly hysteresis = 6;
+  private readonly cooldownMs = 350;
+  private readonly hysteresis = 10;
 
   checkRep(
     angle: number,
@@ -193,11 +193,13 @@ export class TempoTracker {
     const angleDelta = this.state.lastAngle === null ? 0 : angle - this.state.lastAngle;
     this.state.lastAngle = angle;
 
-    if (Math.abs(angleDelta) < 1.5) return false;
+    if (Math.abs(angleDelta) < 0.9) return false;
 
     const movingTowardMin = phaseLogic === "flexion_extension" || phaseLogic === "cyclic"
       ? angleDelta < 0
-      : angleDelta > 0;
+      : phaseLogic === "extension_flexion"
+        ? angleDelta > 0
+        : angleDelta < 0;
 
     this.state.phase = movingTowardMin ? "eccentric" : "concentric";
 
@@ -302,10 +304,20 @@ export function projectLandmark(
   landmark: NormalizedLandmark,
   canvasWidth: number,
   canvasHeight: number,
+  sourceWidth?: number,
+  sourceHeight?: number,
 ): { x: number; y: number } {
+  const baseWidth = sourceWidth && sourceWidth > 0 ? sourceWidth : canvasWidth;
+  const baseHeight = sourceHeight && sourceHeight > 0 ? sourceHeight : canvasHeight;
+  const scale = Math.max(canvasWidth / baseWidth, canvasHeight / baseHeight);
+  const renderedWidth = baseWidth * scale;
+  const renderedHeight = baseHeight * scale;
+  const offsetX = (canvasWidth - renderedWidth) / 2;
+  const offsetY = (canvasHeight - renderedHeight) / 2;
+
   return {
-    x: (1 - landmark.x) * canvasWidth,
-    y: landmark.y * canvasHeight,
+    x: ((1 - landmark.x) * renderedWidth) + offsetX,
+    y: (landmark.y * renderedHeight) + offsetY,
   };
 }
 
@@ -313,8 +325,14 @@ export function projectAllLandmarks(
   landmarks: NormalizedLandmark[],
   canvasWidth: number,
   canvasHeight: number,
+  sourceWidth?: number,
+  sourceHeight?: number,
 ): Array<{ x: number; y: number } | null> {
-  return landmarks.map((landmark) => (landmark ? projectLandmark(landmark, canvasWidth, canvasHeight) : null));
+  return landmarks.map((landmark) => (
+    landmark
+      ? projectLandmark(landmark, canvasWidth, canvasHeight, sourceWidth, sourceHeight)
+      : null
+  ));
 }
 
 export const POSE_CONNECTIONS: [number, number][] = [
