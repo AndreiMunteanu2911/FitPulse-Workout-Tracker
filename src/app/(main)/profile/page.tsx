@@ -14,13 +14,13 @@ import WorkoutCalendar from "@/components/WorkoutCalendar";
 import NumberPicker from "@/components/NumberPicker";
 import DatePicker from "@/components/DatePicker";
 import ModalWrapper from "@/components/ModalWrapper";
+import { useAuthSession } from "@/components/AuthSessionProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useWeightLogs } from "@/hooks/useWeightLogs";
 import { useProgressPhotos } from "@/hooks/useProgressPhotos";
 import type { User, WeightLog, ProgressPhoto } from "@/types";
 import {
-  User as UserIcon,
   Scale,
   Calendar as CalendarIcon,
   Camera,
@@ -29,13 +29,10 @@ import {
   ImageIcon,
   Moon,
   Sun,
-  Zap,
-  Ruler,
   Pencil,
   X,
   Save,
   Loader2,
-  Heart,
 } from "lucide-react";
 
 function formatDate(dateStr: string | null): string {
@@ -55,12 +52,6 @@ function calcAge(birthday: string | null): number | null {
   const m = today.getMonth() - birth.getMonth();
   if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
   return age;
-}
-
-function bmi(weightKg: number | null, heightCm: number | null): number | null {
-  if (!weightKg || !heightCm || heightCm === 0) return null;
-  const hm = heightCm / 100;
-  return Math.round((weightKg / (hm * hm)) * 10) / 10;
 }
 
 // ── Edit Profile Modal ────────────────────────────────────────────────────────
@@ -184,10 +175,11 @@ function EditProfileModal({
 
 export default function ProfilePage() {
     const router = useRouter();
-    const { logout, getSession } = useAuth();
+    const { logout } = useAuth();
     const { profile, fetchProfile, updateProfile } = useUserProfile();
     const { fetchWeights, addWeight, deleteWeight } = useWeightLogs();
     const { fetchProgressPhotos, addProgressPhoto, deleteProgressPhoto } = useProgressPhotos();
+    const { user: sessionUser, refreshSession } = useAuthSession();
 
     const [user, setUser] = useState<User | null>(null);
     const [weights, setWeights] = useState<WeightLog[]>([]);
@@ -219,18 +211,21 @@ export default function ProfilePage() {
     };
 
     useEffect(() => {
-        const getUser = async () => {
-            const userData = await getSession();
-            if (userData) setUser({ id: userData.id ?? "", email: userData.email ?? "", ...userData });
-            await fetchProfile();
-        };
-        getUser();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+        setUser(sessionUser ?? null);
+    }, [sessionUser]);
+
+    useEffect(() => {
+        if (sessionUser) {
+            void fetchProfile();
+        }
+    }, [sessionUser, fetchProfile]);
 
     const loadData = useCallback(async () => {
         setLoading(true);
-        if (!user) return;
+        if (!user) {
+            setLoading(false);
+            return;
+        }
         try {
             const [weightData, photoData, datesRes] = await Promise.all([
                 fetchWeights(),
@@ -315,7 +310,6 @@ export default function ProfilePage() {
     const age = calcAge(profile?.birthday ?? null);
     // Latest weight from weight_logs
     const latestWeight = weights.length > 0 ? weights[weights.length - 1].weight : null;
-    const bmiValue = bmi(latestWeight, profile?.height_cm ?? null);
     const userInitial = displayName[0]?.toUpperCase() ?? "?";
 
     if (loading) {
@@ -541,11 +535,8 @@ export default function ProfilePage() {
                     onSave={async (data) => {
                         const ok = await updateProfile(data);
                         if (ok) {
-                            const res = await fetch("/api/auth/session");
-                            if (res.ok) {
-                                const json = await res.json();
-                                setUser(json.user);
-                            }
+                            const nextUser = await refreshSession();
+                            if (nextUser) setUser(nextUser);
                         }
                         return ok;
                     }}

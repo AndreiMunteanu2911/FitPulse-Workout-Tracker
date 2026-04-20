@@ -1,24 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/Button";
 import { Dumbbell, TrendingUp, Heart } from "lucide-react";
+import { useAuthSession } from "@/components/AuthSessionProvider";
 
 export default function OnboardingCompletePage() {
   const router = useRouter();
-  const [userName, setUserName] = useState("there");
-
-  useEffect(() => {
-    const fetchName = async () => {
-      const res = await fetch("/api/auth/session");
-      if (res.ok) {
-        const json = await res.json();
-        setUserName(json.user?.display_name?.split(" ")[0] || "there");
-      }
-    };
-    fetchName();
-  }, []);
+  const { user } = useAuthSession();
+  const userName = user?.display_name?.split(" ")[0] || "there";
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-6 pb-8">

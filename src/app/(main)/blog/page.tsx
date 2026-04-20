@@ -5,22 +5,22 @@ import BlogList from "@/components/blog/BlogList";
 import BlogFormModal from "@/components/blog/BlogFormModal";
 import Button from "@/components/Button";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
+import { useAuthSession } from "@/components/AuthSessionProvider";
 import { BlogPost } from "@/types";
-import { Plus, Search, Loader2 } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import ConfirmDeleteModal from "@/components/admin/ConfirmDeleteModal";
 
 export default function BlogPage() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const { isAdmin } = useAuthSession();
 
   useEffect(() => {
     fetchPosts();
-    checkAdmin();
   }, []);
 
   const fetchPosts = async () => {
@@ -33,16 +33,6 @@ export default function BlogPage() {
       console.error("Failed to fetch posts:", error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const checkAdmin = async () => {
-    try {
-      const res = await fetch("/api/auth/session");
-      const { user } = await res.json();
-      setIsAdmin(user?.role === "admin");
-    } catch (error) {
-      console.error("Failed to check admin status:", error);
     }
   };
 

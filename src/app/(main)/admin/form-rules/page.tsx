@@ -6,6 +6,7 @@ import { Search, X, Eye, Edit3, Save, ChevronLeft, Plus, Trash2 } from "lucide-r
 import Skeleton from "react-loading-skeleton";
 import Button from "@/components/Button";
 import ModalWrapper from "@/components/ModalWrapper";
+import { useAuthSession } from "@/components/AuthSessionProvider";
 import {
   FORM_PATTERNS,
   createEmptyOverrides,
@@ -49,7 +50,7 @@ export default function AdminFormRulesPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "realtime" | "post_set_only" | "not_applicable" | "needs_review">("all");
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const { isAdmin, isAuthenticated } = useAuthSession();
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
@@ -58,23 +59,6 @@ export default function AdminFormRulesPage() {
   const [error, setError] = useState("");
 
   const [viewingExercise, setViewingExercise] = useState<Exercise | null>(null);
-
-  useEffect(() => {
-    async function checkAdmin() {
-      const sessionRes = await fetch("/api/auth/session");
-      if (!sessionRes.ok) {
-        router.push("/login");
-        return;
-      }
-      const session = await sessionRes.json();
-      if (session.user?.role !== "admin") {
-        router.push("/dashboard");
-        return;
-      }
-      setIsAdmin(true);
-    }
-    checkAdmin();
-  }, [router]);
 
   const fetchExercises = useCallback(async () => {
     setLoading(true);
@@ -93,6 +77,12 @@ export default function AdminFormRulesPage() {
   useEffect(() => {
     if (isAdmin) fetchExercises();
   }, [isAdmin, fetchExercises]);
+
+  useEffect(() => {
+    if (isAuthenticated && !isAdmin) {
+      router.push("/dashboard");
+    }
+  }, [isAuthenticated, isAdmin, router]);
 
   const openView = (exercise: Exercise) => setViewingExercise(exercise);
   const closeView = () => setViewingExercise(null);
@@ -205,6 +195,8 @@ export default function AdminFormRulesPage() {
     () => (editingRules ? getFormPatternById(editingRules.patternId) : null),
     [editingRules],
   );
+
+  if (isAuthenticated && !isAdmin) return null;
 
   if (!isAdmin || loading) {
     return (

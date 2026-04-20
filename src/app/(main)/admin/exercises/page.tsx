@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Search, X, RefreshCw } from "lucide-react";
+import { Plus, X, RefreshCw } from "lucide-react";
 import Skeleton from "react-loading-skeleton";
 import Button from "@/components/Button";
 import ModalWrapper from "@/components/ModalWrapper";
@@ -12,6 +12,7 @@ import EmptyState from "@/components/admin/EmptyState";
 import ExerciseListCard from "@/components/admin/ExerciseListCard";
 import ConfirmDeleteModal from "@/components/admin/ConfirmDeleteModal";
 import { Dumbbell } from "lucide-react";
+import { useAuthSession } from "@/components/AuthSessionProvider";
 
 /**
  * Generate a 7-character alphanumeric ID matching the existing exercise ID format.
@@ -39,7 +40,7 @@ export default function AdminExercisesPage() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const { isAdmin, isAuthenticated } = useAuthSession();
 
   // Modal state
   const [showAddModal, setShowAddModal] = useState(false);
@@ -58,17 +59,6 @@ export default function AdminExercisesPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    async function checkAdmin() {
-      const sessionRes = await fetch("/api/auth/session");
-      if (!sessionRes.ok) { router.push("/login"); return; }
-      const session = await sessionRes.json();
-      if (session.user?.role !== "admin") { router.push("/dashboard"); return; }
-      setIsAdmin(true);
-    }
-    checkAdmin();
-  }, [router]);
-
   const fetchExercises = useCallback(async () => {
     try {
       const res = await fetch("/api/exercises");
@@ -85,6 +75,12 @@ export default function AdminExercisesPage() {
   useEffect(() => {
     if (isAdmin) fetchExercises();
   }, [isAdmin, fetchExercises]);
+
+  useEffect(() => {
+    if (isAuthenticated && !isAdmin) {
+      router.push("/dashboard");
+    }
+  }, [isAuthenticated, isAdmin, router]);
 
   const openAdd = () => {
     setFormExerciseId(generateExerciseId());
@@ -216,6 +212,8 @@ export default function AdminExercisesPage() {
       setError("Network error");
     }
   };
+
+  if (isAuthenticated && !isAdmin) return null;
 
   if (!isAdmin || loading) {
     return (

@@ -8,6 +8,7 @@ import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminStatCard from "@/components/admin/AdminStatCard";
 import AdminNavCard from "@/components/admin/AdminNavCard";
 import TimeRangeSelector from "@/components/admin/TimeRangeSelector";
+import { useAuthSession } from "@/components/AuthSessionProvider";
 
 interface AdminStats {
   totalUsers: number;
@@ -28,19 +29,13 @@ const adminLinks = [
 
 export default function AdminPage() {
   const router = useRouter();
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState(30);
+  const { isAdmin, isAuthenticated } = useAuthSession();
 
   useEffect(() => {
     async function load() {
-      const sessionRes = await fetch("/api/auth/session");
-      if (!sessionRes.ok) { router.push("/login"); return; }
-      const session = await sessionRes.json();
-      if (session.user?.role !== "admin") { router.push("/dashboard"); return; }
-      setIsAdmin(true);
-
       const res = await fetch(`/api/admin/analytics?days=${days}`);
       if (res.ok) {
         const json = await res.json();
@@ -48,8 +43,18 @@ export default function AdminPage() {
       }
       setLoading(false);
     }
-    load();
-  }, [router, days]);
+    if (isAdmin) {
+      load();
+    }
+  }, [isAdmin, days]);
+
+  useEffect(() => {
+    if (isAuthenticated && !isAdmin) {
+      router.push("/dashboard");
+    }
+  }, [isAuthenticated, isAdmin, router]);
+
+  if (isAuthenticated && !isAdmin) return null;
 
   if (loading) {
     return (
@@ -71,8 +76,6 @@ export default function AdminPage() {
       </div>
     );
   }
-
-  if (!isAdmin) return null;
 
   return (
     <div className="w-full">
