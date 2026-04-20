@@ -13,7 +13,7 @@ let poseLandmarker: PoseLandmarker | null = null;
 let initializingPromise: Promise<PoseLandmarker> | null = null;
 
 const WASM_URL = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.17/wasm";
-const TASK_URL = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task";
+const TASK_URL = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/1/pose_landmarker_heavy.task";
 
 /**
  * Initialize the MediaPipe Pose Landmarker.

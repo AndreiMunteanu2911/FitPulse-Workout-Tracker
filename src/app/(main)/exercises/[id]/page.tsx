@@ -12,6 +12,7 @@ import PersonalRecordCard from "@/components/PersonalRecordCard";
 import ExerciseStatsTab from "@/components/ExerciseStatsTab";
 import FormChecker from "@/components/FormChecker";
 import FormHistoryPanel from "@/components/FormHistoryPanel";
+import Button from "@/components/Button";
 import type { Exercise, PersonalRecord, ExerciseFormRules } from "@/types";
 import { ChevronLeft, Sparkles, Camera } from "lucide-react";
 
@@ -248,18 +249,31 @@ export default function ExerciseDetailsPage() {
                 {/* Check My Form Button — shown in description tab for non-custom exercises */}
                 {activeTab === "description" && !exercise.is_custom && (
                     <div className="mb-6">
-                        <button
-                            onClick={() => setShowFormChecker(true)}
-                            className="w-full p-4 rounded-lg bg-gradient-to-r from-violet-500/10 to-blue-500/10 border border-violet-500/20 hover:border-violet-500/40 transition-colors text-left flex items-center gap-3"
-                        >
-                            <div className="w-10 h-10 rounded-full bg-violet-500/20 flex items-center justify-center flex-shrink-0">
-                                <Camera className="w-5 h-5 text-violet-400" />
+                        <div className="w-full rounded-[var(--radius-lg)] bg-[var(--surface)] px-4 py-4 shadow-[var(--shadow-xs)]">
+                            <div className="flex items-center gap-4">
+                                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)]">
+                                    <Camera className="h-5 w-5 text-white" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <p
+                                        className="text-base font-bold text-[var(--foreground)]"
+                                        style={{ fontFamily: "var(--font-poppins)" }}
+                                    >
+                                        Check My Form
+                                    </p>
+                                    <p className="mt-0.5 text-sm text-[var(--muted-foreground)]">
+                                        Use your camera to get real-time feedback and a post-set coach review.
+                                    </p>
+                                </div>
+                                <Button
+                                    onClick={() => setShowFormChecker(true)}
+                                    variant="primary"
+                                    className="flex-shrink-0 px-5 py-2 text-sm sm:px-5 sm:py-2"
+                                >
+                                    Go
+                                </Button>
                             </div>
-                            <div>
-                                <p className="font-semibold text-[var(--foreground)]">Check My Form</p>
-                                <p className="text-xs text-[var(--muted-foreground)]">Use your camera to get real-time form feedback</p>
-                            </div>
-                        </button>
+                        </div>
 
                         {/* Recent form sessions */}
                         <div className="mt-4">

@@ -1,5 +1,5 @@
 -- =============================================================================
--- Migration 018: Add form_rules column to exercises
+-- Migration 028: Add form_rules column to exercises
 -- =============================================================================
 -- Stores AI-generated form checking rules as JSONB.
 -- Schema: { rules: [{ landmarks: [number, number, number], min: number, max: number, cue: string }] }
