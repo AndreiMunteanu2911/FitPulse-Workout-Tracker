@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import type { NormalizedLandmark, PoseLandmarker } from "@mediapipe/tasks-vision";
 import { Camera, X, RotateCcw, AlertTriangle, CheckCircle, Loader2, Info } from "lucide-react";
 import Button from "@/components/Button";
@@ -37,12 +37,14 @@ interface FormCheckerProps {
   onClose: () => void;
 }
 
+type FormCheckerCameraStatus = CameraViewStatus | "calibrating";
+
 function CameraGuideOverlay({
   status,
   calibrationMessage,
   showCalibration,
 }: {
-  status: CameraViewStatus | "calibrating";
+  status: FormCheckerCameraStatus;
   calibrationMessage: string;
   showCalibration: boolean;
 }) {
@@ -256,7 +258,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
   const animationFrameRef = useRef<number>(0);
   const loopActiveRef = useRef(false);
 
-  const [cameraStatus, setCameraStatus] = useState<CameraViewStatus>("calibrating");
+  const [cameraStatus, setCameraStatus] = useState<FormCheckerCameraStatus>("calibrating");
   const [landmarks, setLandmarks] = useState<NormalizedLandmark[] | null>(null);
   const [feedback, setFeedback] = useState<FormFeedback[]>([]);
   const [repCount, setRepCount] = useState(0);
@@ -271,16 +273,22 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
   const scoreHistoryRef = useRef<number[]>([]);
   const ruleFailureCountsRef = useRef<Record<string, number>>({});
   const calibrationFramesRef = useRef(0);
+  const isCalibratedRef = useRef(false);
   const sessionStartRef = useRef(performance.now());
   const sessionStartedRef = useRef(false);
   const [isSaving, setIsSaving] = useState(false);
   const [sessionSaved, setSessionSaved] = useState(false);
 
-  const resolvedRules = resolveExerciseFormRules(formRules);
+  const resolvedRules = useMemo(() => resolveExerciseFormRules(formRules), [formRules]);
   const hasUnsavedData = !isRunning && sessionStartedRef.current && (repCount > 0 || formScore < 100) && !sessionSaved;
   const rulesNotApplicable = resolvedRules?.applicability === "not_applicable";
   const postSetOnly = resolvedRules?.applicability === "post_set_only";
   const hasRealtimeRules = resolvedRules?.applicability === "realtime" && resolvedRules.rules.length > 0;
+
+  const updateCalibrationState = useCallback((value: boolean) => {
+    isCalibratedRef.current = value;
+    setIsCalibrated(value);
+  }, []);
 
   const getRequiredLandmarks = useCallback((rules: ResolvedExerciseFormRules | null): number[] => {
     if (!rules) return [11, 12, 23, 24, 25, 26, 27, 28];
@@ -356,7 +364,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
         || calibrationVariance > 0.003
       ) {
         calibrationFramesRef.current = 0;
-        setIsCalibrated(false);
+        updateCalibrationState(false);
         setCameraStatus(angleStatus === "good" ? "calibrating" : angleStatus);
         if (angleStatus !== "good") {
           setCalibrationMessage("Adjust your camera so the expected view stays visible.");
@@ -370,7 +378,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
         return;
       }
 
-      if (!isCalibrated) {
+      if (!isCalibratedRef.current) {
         calibrationFramesRef.current += 1;
         setCameraStatus("calibrating");
         setCalibrationMessage("Great, stay steady for a second...");
@@ -379,7 +387,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
           animationFrameRef.current = requestAnimationFrame(detectionLoop);
           return;
         }
-        setIsCalibrated(true);
+        updateCalibrationState(true);
       }
 
       setCameraStatus("good");
@@ -494,7 +502,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
 
       animationFrameRef.current = requestAnimationFrame(detectionLoop);
     });
-  }, [videoRef, isReady, resolvedRules, hasRealtimeRules]);
+  }, [videoRef, isReady, resolvedRules, hasRealtimeRules, getRequiredLandmarks, updateCalibrationState]);
 
   useEffect(() => {
     if (isRunning && isReady && detectorRef.current) {
@@ -504,7 +512,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
       scoreHistoryRef.current = [];
       ruleFailureCountsRef.current = {};
       calibrationFramesRef.current = 0;
-      setIsCalibrated(false);
+      updateCalibrationState(false);
       setCameraStatus("calibrating");
       setCalibrationMessage("Hold still while we lock in your pose.");
       setRepCount(0);
@@ -521,7 +529,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
         animationFrameRef.current = 0;
       }
     };
-  }, [isRunning, isReady, detectionLoop]);
+  }, [isRunning, isReady, detectionLoop, updateCalibrationState]);
 
   useEffect(() => () => {
     loopActiveRef.current = false;
@@ -555,7 +563,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
     scoreHistoryRef.current = [];
     ruleFailureCountsRef.current = {};
     calibrationFramesRef.current = 0;
-    setIsCalibrated(false);
+    updateCalibrationState(false);
     setCameraStatus("calibrating");
     setCalibrationMessage("Hold still while we lock in your pose.");
     setRepCount(0);

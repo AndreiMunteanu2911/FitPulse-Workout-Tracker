@@ -92,11 +92,11 @@ export interface WorkoutExerciseSummary {
 export function WorkoutActionCard({
   workoutName,
   exercises,
-  onStart,
+  onStartAction,
 }: {
   workoutName: string;
   exercises: WorkoutExerciseSummary[];
-  onStart: () => void;
+  onStartAction: () => void;
 }) {
   return (
     <motion.div
@@ -129,7 +129,7 @@ export function WorkoutActionCard({
       </ul>
 
       <button
-        onClick={onStart}
+        onClick={onStartAction}
         className="w-full py-3 px-4 rounded-[var(--radius-sm)] bg-[var(--primary-600)] hover:bg-[var(--primary-700)] text-white text-sm font-semibold transition-colors flex items-center justify-center gap-2"
       >
         <Dumbbell className="w-4 h-4" />

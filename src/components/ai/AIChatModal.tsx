@@ -195,7 +195,7 @@ export default function AIChatModal({ onWorkoutStart }: AIChatModalProps) {
                           name: ex.name,
                           sets: ex.sets,
                         }))}
-                        onStart={handleWorkoutStart}
+                        onStartAction={handleWorkoutStart}
                       />
                     )}
 
