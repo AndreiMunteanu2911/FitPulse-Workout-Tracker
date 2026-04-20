@@ -6,7 +6,6 @@ import ModalWrapper from "@/components/ModalWrapper";
 
 interface BulkAiGeneratedConfirmModalProps {
   isOpen: boolean;
-  needsReviewCount: number;
   isSaving: boolean;
   onClose: () => void;
   onConfirm: () => void;
@@ -14,7 +13,6 @@ interface BulkAiGeneratedConfirmModalProps {
 
 export default function BulkAiGeneratedConfirmModal({
   isOpen,
-  needsReviewCount,
   isSaving,
   onClose,
   onConfirm,
@@ -39,8 +37,8 @@ export default function BulkAiGeneratedConfirmModal({
 
       <h2 className="text-lg font-bold text-[var(--foreground)]">Mark all needs review as AI Generated?</h2>
       <p className="mt-2 text-sm text-[var(--muted-foreground)]">
-        This will update {needsReviewCount} exercise{needsReviewCount === 1 ? "" : "s"} that currently have
-        `needs_review` status. Exercises without form rules will be skipped.
+        This will update every exercise that currently has `needs_review` status. Exercises without form rules will be
+        skipped.
       </p>
 
       <div className="mt-5 flex gap-3">

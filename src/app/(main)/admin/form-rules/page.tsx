@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, ChevronLeft, Edit3, Eye, Loader2, Plus, Save, Search, Sparkles, Trash2, X } from "lucide-react";
 import Skeleton from "react-loading-skeleton";
@@ -20,6 +20,8 @@ import type {
   FormRuleApplicability,
   FormRuleView,
 } from "@/types";
+
+const PAGE_SIZE = 100;
 
 interface Exercise {
   exercise_id: string;
@@ -49,6 +51,9 @@ export default function AdminFormRulesPage() {
   const router = useRouter();
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "realtime" | "post_set_only" | "not_applicable" | "needs_review">("all");
   const { isAdmin, isAuthenticated } = useAuthSession();
@@ -61,26 +66,68 @@ export default function AdminFormRulesPage() {
   const [bulkSaving, setBulkSaving] = useState(false);
   const [bulkError, setBulkError] = useState("");
   const [showBulkConfirmModal, setShowBulkConfirmModal] = useState(false);
+  const [listError, setListError] = useState("");
 
   const [viewingExercise, setViewingExercise] = useState<Exercise | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
-  const fetchExercises = useCallback(async (options?: { silent?: boolean }) => {
-    if (!options?.silent) setLoading(true);
+  const fetchExercises = useCallback(async (options?: { append?: boolean; offset?: number }) => {
+    const append = options?.append ?? false;
+    const offset = options?.offset ?? 0;
+
+    if (append) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+      setListError("");
+    }
+
     try {
-      const res = await fetch("/api/admin/exercises/list");
+      const res = await fetch(`/api/admin/exercises/list?limit=${PAGE_SIZE}&offset=${offset}`);
       if (res.ok) {
         const json = await res.json();
-        setExercises(json.exercises);
+        const nextExercises = (json.exercises ?? []) as Exercise[];
+        setExercises((prev) => (append ? [...prev, ...nextExercises] : nextExercises));
+        setTotalCount(Number.isFinite(json.total_count) ? json.total_count : nextExercises.length);
+        setHasMore(Boolean(json.has_more));
+        setListError("");
+      } else {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json.error || "Failed to load exercises");
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      setListError(err instanceof Error ? err.message : "Failed to load exercises");
     }
-    if (!options?.silent) setLoading(false);
+    if (append) {
+      setLoadingMore(false);
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
     if (isAdmin) fetchExercises();
   }, [isAdmin, fetchExercises]);
+
+  useEffect(() => {
+    if (!isAdmin || loading || loadingMore || !hasMore) return;
+
+    const sentinel = loadMoreRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry?.isIntersecting && !loading && !loadingMore && hasMore) {
+          void fetchExercises({ append: true, offset: exercises.length });
+        }
+      },
+      { root: null, rootMargin: "400px 0px", threshold: 0.01 },
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [fetchExercises, hasMore, isAdmin, loading, loadingMore, exercises.length]);
 
   useEffect(() => {
     if (isAuthenticated && !isAdmin) {
@@ -129,13 +176,8 @@ export default function AdminFormRulesPage() {
     }
   };
 
-  const needsReviewCount = useMemo(
-    () => exercises.filter((exercise) => exercise.form_rules?.review.status === "needs_review").length,
-    [exercises],
-  );
-
   const handleBulkAiGenerated = async () => {
-    if (bulkSaving || needsReviewCount === 0) return;
+    if (bulkSaving) return;
     setBulkSaving(true);
     setBulkError("");
 
@@ -169,7 +211,6 @@ export default function AdminFormRulesPage() {
         );
       }
 
-      await fetchExercises({ silent: true });
     } catch (err) {
       setBulkError(err instanceof Error ? err.message : "Failed to update review status");
     } finally {
@@ -285,18 +326,17 @@ export default function AdminFormRulesPage() {
           <Button
             variant="secondary"
             onClick={() => setShowBulkConfirmModal(true)}
-            disabled={bulkSaving || needsReviewCount === 0}
+            disabled={bulkSaving}
             className="gap-2 whitespace-nowrap"
           >
             {bulkSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-            Mark {needsReviewCount} AI Generated
+            Mark All AI Generated
           </Button>
         </div>
       </div>
 
       <BulkAiGeneratedConfirmModal
         isOpen={showBulkConfirmModal}
-        needsReviewCount={needsReviewCount}
         isSaving={bulkSaving}
         onClose={() => setShowBulkConfirmModal(false)}
         onConfirm={handleBulkAiGenerated}
@@ -311,9 +351,23 @@ export default function AdminFormRulesPage() {
         </div>
       )}
 
+      {listError && (
+        <div className="mb-4 rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm font-medium text-amber-700 dark:text-amber-300">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{listError}</span>
+          </div>
+        </div>
+      )}
+
+      <p className="mb-3 text-xs text-[var(--muted-foreground)]">
+        Showing {exercises.length} of {totalCount || exercises.length} loaded exercises. Scroll near the bottom to load
+        more.
+      </p>
+
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
         <div className="p-4 rounded-lg bg-[var(--surface-raised)]">
-          <p className="text-xs text-[var(--muted-foreground)] uppercase tracking-wider">Total</p>
+          <p className="text-xs text-[var(--muted-foreground)] uppercase tracking-wider">Loaded</p>
           <p className="text-2xl font-bold text-[var(--foreground)]">{stats.total}</p>
         </div>
         <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
@@ -412,6 +466,14 @@ export default function AdminFormRulesPage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      <div ref={loadMoreRef} className="h-10" aria-hidden="true" />
+      {loadingMore && (
+        <div className="flex items-center justify-center py-4 text-sm text-[var(--muted-foreground)]">
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Loading more exercises...
         </div>
       )}
 
