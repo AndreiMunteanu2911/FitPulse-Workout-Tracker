@@ -10,7 +10,7 @@ import {
   Maximize2,
   Trash2,
 } from "lucide-react";
-import { useAIChat, type WorkoutAction } from "@/hooks/useAIChat";
+import { useAIChat } from "@/hooks/useAIChat";
 import MessageBubble, { WorkoutActionCard } from "./MessageBubble";
 import QuickSuggestions from "./QuickSuggestions";
 
@@ -183,7 +183,6 @@ export default function AIChatModal({ onWorkoutStart }: AIChatModalProps) {
                           i === messages.length - 1 &&
                           msg.role === "assistant"
                         }
-                        onWorkoutStart={handleWorkoutStart}
                       />
                     ))}
 

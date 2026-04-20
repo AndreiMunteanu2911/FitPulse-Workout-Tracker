@@ -1,5 +1,5 @@
 -- =============================================================================
--- Migration 013: user_stats (XP bank, role, + profile fields for onboarding)
+-- Migration 013: user_stats
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS public.user_stats (
@@ -21,16 +21,13 @@ CREATE TABLE IF NOT EXISTS public.user_stats (
 
 ALTER TABLE public.user_stats ENABLE ROW LEVEL SECURITY;
 
--- Users can read their own stats (including role)
 CREATE POLICY "own_user_stats" ON public.user_stats
-  USING  (auth.uid() = user_id)
+  USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
--- Anyone can read the role column (needed for admin checks via auth.uid())
 CREATE POLICY "read_user_roles" ON public.user_stats
   FOR SELECT USING (true);
 
--- Only admins can change role values (admins can promote/demote users)
 CREATE POLICY "admins_manage_roles" ON public.user_stats
   FOR UPDATE USING (
     EXISTS (
@@ -40,12 +37,10 @@ CREATE POLICY "admins_manage_roles" ON public.user_stats
     )
   );
 
--- Trigger for auto-updating updated_at
 CREATE OR REPLACE TRIGGER trg_user_stats_updated_at
   BEFORE UPDATE ON public.user_stats
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
--- Auto-create user_stats row when a new auth user is created
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN

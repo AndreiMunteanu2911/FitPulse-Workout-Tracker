@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Dumbbell, Users, LayoutTemplate, BarChart3, Shield, Brain } from "lucide-react";
+import { Dumbbell, Users, LayoutTemplate, BarChart3, Shield, Brain, ShoppingBag, Package } from "lucide-react";
 import Skeleton from "react-loading-skeleton";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminStatCard from "@/components/admin/AdminStatCard";
@@ -22,6 +22,8 @@ const adminLinks = [
   { href: "/admin/users", title: "Users", desc: "View and manage user accounts and roles", icon: Users, color: "bg-[var(--primary-600)]" },
   { href: "/admin/templates", title: "Templates", desc: "Create and edit official workout templates", icon: LayoutTemplate, color: "bg-[var(--primary-700)]" },
   { href: "/admin/analytics", title: "Analytics", desc: "Platform-wide usage metrics and charts", icon: BarChart3, color: "bg-[var(--primary-400)]" },
+  { href: "/admin/shop", title: "Shop", desc: "Add products and manage store inventory", icon: ShoppingBag, color: "bg-[var(--primary-800)]" },
+  { href: "/admin/orders", title: "Orders", desc: "Review purchases and update fulfillment status", icon: Package, color: "bg-[var(--primary-500)]" },
 ];
 
 export default function AdminPage() {

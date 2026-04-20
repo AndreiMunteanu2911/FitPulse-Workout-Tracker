@@ -1,5 +1,5 @@
 'use client';
-import React, { type ButtonHTMLAttributes } from "react";
+import React, { type ButtonHTMLAttributes, type ReactElement, type ReactNode } from "react";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     variant?:
@@ -10,6 +10,8 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
         | "danger";
     ariaLabel?: string;
     block?: boolean;
+    asChild?: boolean;
+    children: ReactNode;
 }
 
 export default function Button({
@@ -20,6 +22,7 @@ export default function Button({
                                    onClick,
                                    children,
                                    className = "",
+                                   asChild,
                                    ...props
                                }: ButtonProps) {
     const base =
@@ -38,18 +41,36 @@ export default function Button({
             "bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] hover:bg-[var(--color-destructive-bg)] dark:bg-[var(--color-destructive-bg)] dark:text-[var(--color-destructive)] hover:opacity-90",
     };
 
+    const classes = [
+        base,
+        variants[variant],
+        block ? "w-full" : "",
+        className,
+    ].filter(Boolean).join(" ");
+
+    if (asChild && React.isValidElement(children)) {
+        const child = children as ReactElement<{
+            className?: string;
+            onClick?: React.MouseEventHandler<HTMLElement>;
+            disabled?: boolean;
+            "aria-label"?: string;
+        }>;
+        return React.cloneElement(child, {
+            ...props,
+            onClick,
+            disabled,
+            "aria-label": ariaLabel,
+            className: [classes, child.props.className].filter(Boolean).join(" "),
+        });
+    }
+
     return (
         <button
             type="button"
             aria-label={ariaLabel}
             disabled={disabled}
             onClick={onClick}
-            className={[
-                base,
-                variants[variant],
-                block ? "w-full" : "",
-                className,
-            ].filter(Boolean).join(" ")}
+            className={classes}
             {...props}
         >
             {children}

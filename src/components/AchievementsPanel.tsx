@@ -2,14 +2,14 @@
 
 import type { Achievement } from "@/types";
 import {
-  Trophy, Dumbbell, Activity, TrendingUp, Star, Award,
+  Trophy, Dumbbell, Activity, TrendingUp, Award,
   Zap, Flame, Rocket, Target, Medal, BarChart2, Crown,
   type LucideIcon,
 } from "lucide-react";
 import { ChartBarIncreasing } from "lucide-react";
 
 const ICON_MAP: Record<string, LucideIcon> = {
-  Dumbbell, Activity, TrendingUp, Star, Award,
+  Dumbbell, Activity, TrendingUp, Award,
   Zap, Flame, Rocket, Trophy, Target, Medal,
   BarChart2, ChartBarIncreasing, Crown,
 };
@@ -54,9 +54,11 @@ function AchievementBadge({ achievement }: { achievement: Achievement }) {
         {achievement.name}
       </span>
       {unlocked && (
-        <span className="text-[9px] font-bold text-[var(--primary-500)] bg-[var(--primary-50)] dark:bg-[var(--primary-100)] rounded px-1.5 py-0.5">
-          +{achievement.xpReward} XP
-        </span>
+        <div className="flex flex-col gap-1 items-center">
+          <span className="text-[9px] font-bold text-[var(--primary-500)] bg-[var(--primary-50)] dark:bg-[var(--primary-100)] rounded px-1.5 py-0.5">
+            +{achievement.xpReward} XP
+          </span>
+        </div>
       )}
     </div>
   );

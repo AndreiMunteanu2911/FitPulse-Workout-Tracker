@@ -11,7 +11,7 @@ import {
 interface SetRow { weight: number; reps: number }
 interface WorkoutExerciseRow { exercise_id?: string; sets?: SetRow[] }
 interface WorkoutRow { workout_date: string; workout_exercises?: WorkoutExerciseRow[] }
-interface UserStatsRow { total_xp: number }
+interface UserStatsRow { total_xp: number; level: number }
 
 /**
  * POST /api/achievements
@@ -40,7 +40,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unknown achievement" }, { status: 404 });
   }
 
-  // ── 1. Verify unlock conditions are currently met ─────────────────────────
   const { data: workouts, error: wErr } = await supabase
     .from("workouts")
     .select("workout_date, workout_exercises (exercise_id, sets (weight, reps))")
@@ -66,16 +65,21 @@ export async function POST(request: Request) {
     });
   });
 
-  const uniqueDates = [
-    ...new Set(rows.map((w) => w.workout_date)),
-  ].sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+  const uniqueDates = [...new Set(rows.map((w) => w.workout_date))].sort(
+    (a, b) => new Date(b).getTime() - new Date(a).getTime(),
+  );
 
   let longestStreak = 0;
   if (uniqueDates.length > 0) {
     let temp = 1;
     for (let i = 1; i < uniqueDates.length; i++) {
       const diff = (new Date(uniqueDates[i - 1]).getTime() - new Date(uniqueDates[i]).getTime()) / MS_PER_DAY;
-      if (diff === 1) { temp++; } else { longestStreak = Math.max(longestStreak, temp); temp = 1; }
+      if (diff === 1) {
+        temp++;
+      } else {
+        longestStreak = Math.max(longestStreak, temp);
+        temp = 1;
+      }
     }
     longestStreak = Math.max(longestStreak, temp);
   }
@@ -86,30 +90,27 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Achievement conditions not yet met" }, { status: 403 });
   }
 
-  // ── 2. Insert into user_achievements (unique constraint blocks double-claim) ─
   const unlockedAt = new Date().toISOString();
   const { error: insertError } = await supabase
     .from("user_achievements")
     .insert({ user_id: user.id, achievement_id: achievementId, unlocked_at: unlockedAt });
 
   if (insertError) {
-    // 23505 = unique_violation → already claimed
     if (insertError.code === "23505") {
       return NextResponse.json({ error: "Achievement already claimed" }, { status: 409 });
     }
     return NextResponse.json({ error: insertError.message }, { status: 500 });
   }
 
-  // ── 3. Read current total_xp then upsert user_stats ──────────────────────
   const { data: statsRow } = await supabase
     .from("user_stats")
-    .select("total_xp")
+    .select("total_xp, level")
     .eq("user_id", user.id)
     .single();
 
-  const currentXP  = (statsRow as UserStatsRow | null)?.total_xp ?? 0;
+  const currentXP = (statsRow as UserStatsRow | null)?.total_xp ?? 0;
   const newTotalXP = currentXP + definition.xpReward;
-  const newLevel   = levelFromXP(newTotalXP);
+  const newLevel = levelFromXP(newTotalXP);
 
   const { error: upsertError } = await supabase
     .from("user_stats")
@@ -123,14 +124,14 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({
-    success:          true,
+    success: true,
     achievementId,
-    claimedAt:        unlockedAt,
-    xpEarned:         definition.xpReward,
-    totalXP:          newTotalXP,
-    level:            newLevel,
+    claimedAt: unlockedAt,
+    xpEarned: definition.xpReward,
+    totalXP: newTotalXP,
+    level: newLevel,
     xpForCurrentLevel: xpForLevel(newLevel),
-    xpForNextLevel:   xpForLevel(newLevel + 1),
-    xpProgress:       xpProgress(newTotalXP),
+    xpForNextLevel: xpForLevel(newLevel + 1),
+    xpProgress: xpProgress(newTotalXP),
   });
 }

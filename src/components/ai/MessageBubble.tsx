@@ -10,7 +10,6 @@ interface MessageBubbleProps {
   content: string;
   isStreaming?: boolean;
   isExpired?: boolean;
-  onWorkoutStart?: () => void;
   onWorkoutRecreate?: () => void;
   workoutName?: string;
   workoutExercises?: { name: string; sets: { reps: number; weight: number }[] }[];
@@ -21,7 +20,6 @@ export default function MessageBubble({
   content,
   isStreaming = false,
   isExpired = false,
-  onWorkoutStart,
   onWorkoutRecreate,
   workoutName,
   workoutExercises,
