@@ -10,8 +10,11 @@ import { useExercises } from "@/hooks/useExercises";
 import { usePersonalRecords } from "@/hooks/usePersonalRecords";
 import PersonalRecordCard from "@/components/PersonalRecordCard";
 import ExerciseStatsTab from "@/components/ExerciseStatsTab";
-import type { Exercise, PersonalRecord } from "@/types";
-import { ChevronLeft, Sparkles } from "lucide-react";
+import FormChecker from "@/components/FormChecker";
+import FormHistoryPanel from "@/components/FormHistoryPanel";
+import Button from "@/components/Button";
+import type { Exercise, PersonalRecord, ExerciseFormRules } from "@/types";
+import { ChevronLeft, Sparkles, Camera } from "lucide-react";
 
 function ExerciseThumbnail({ src }: { src: string }) {
     const [loaded, setLoaded] = useState(false);
@@ -36,6 +39,8 @@ export default function ExerciseDetailsPage() {
     const [personalRecord, setPersonalRecord] = useState<PersonalRecord | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<"description" | "stats">("description");
+    const [showFormChecker, setShowFormChecker] = useState(false);
+    const [formHistoryKey, setFormHistoryKey] = useState(0);
     const { fetchExercise } = useExercises();
     const { fetchPersonalRecords } = usePersonalRecords();
 
@@ -240,7 +245,56 @@ export default function ExerciseDetailsPage() {
                         <ExerciseStatsTab exerciseId={id as string} />
                     </div>
                 )}
+
+                {/* Check My Form Button — shown in description tab for non-custom exercises */}
+                {activeTab === "description" && !exercise.is_custom && (
+                    <div className="mb-6">
+                        <div className="w-full rounded-[var(--radius-lg)] bg-[var(--surface)] px-4 py-4 shadow-[var(--shadow-xs)]">
+                            <div className="flex items-center gap-4">
+                                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)]">
+                                    <Camera className="h-5 w-5 text-white" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <p
+                                        className="text-base font-bold text-[var(--foreground)]"
+                                        style={{ fontFamily: "var(--font-poppins)" }}
+                                    >
+                                        Check My Form
+                                    </p>
+                                    <p className="mt-0.5 text-sm text-[var(--muted-foreground)]">
+                                        Use your camera to get real-time feedback and a post-set coach review.
+                                    </p>
+                                </div>
+                                <Button
+                                    onClick={() => setShowFormChecker(true)}
+                                    variant="primary"
+                                    className="flex-shrink-0 px-5 py-2 text-sm sm:px-5 sm:py-2"
+                                >
+                                    Go
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* Recent form sessions */}
+                        <div className="mt-4">
+                            <FormHistoryPanel key={formHistoryKey} exerciseId={id as string} />
+                        </div>
+                    </div>
+                )}
             </div>
+
+            {/* Full-screen Form Checker */}
+            {showFormChecker && (
+                <FormChecker
+                    exerciseId={exercise.exercise_id}
+                    exerciseName={exercise.name}
+                    formRules={(exercise as Exercise & { form_rules?: ExerciseFormRules | null }).form_rules ?? null}
+                    onClose={() => {
+                        setShowFormChecker(false);
+                        setFormHistoryKey((k) => k + 1);
+                    }}
+                />
+            )}
         </ProtectedWrapper>
     );
 }

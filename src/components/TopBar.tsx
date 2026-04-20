@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 
@@ -80,9 +81,58 @@ function getPageTitle(pathname: string): string {
     .join(" ");
 }
 
+function beautifySegment(segment: string): string {
+  return decodeURIComponent(segment)
+    .split(/[-_]/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
 export default function TopBar() {
   const pathname = usePathname();
-  const title = getPageTitle(pathname);
+  const [exerciseTitle, setExerciseTitle] = useState<string | null>(null);
+
+  useEffect(() => {
+    const match = pathname.match(/^\/exercises\/([^/]+)$/);
+    if (!match) {
+      setExerciseTitle(null);
+      return;
+    }
+
+    const exerciseId = match[1];
+    let cancelled = false;
+
+    const loadExerciseTitle = async () => {
+      try {
+        const response = await fetch(`/api/exercises/${exerciseId}`);
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to fetch exercise");
+        }
+
+        const nextTitle =
+          typeof data.exercise?.name === "string" && data.exercise.name.trim()
+            ? beautifySegment(data.exercise.name)
+            : beautifySegment(exerciseId);
+
+        if (!cancelled) {
+          setExerciseTitle(nextTitle);
+        }
+      } catch {
+        if (!cancelled) {
+          setExerciseTitle(beautifySegment(exerciseId));
+        }
+      }
+    };
+
+    void loadExerciseTitle();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname]);
+
+  const title = exerciseTitle ?? getPageTitle(pathname);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-20 md:hidden h-11 flex items-center justify-between px-5 bg-gradient-to-r from-[#5E3FDE] to-[#896CFE]">

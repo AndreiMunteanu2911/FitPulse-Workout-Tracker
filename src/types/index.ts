@@ -22,6 +22,147 @@ export interface Exercise {
   description?: string;
   created_at?: string;
   is_custom?: boolean;
+  form_rules?: ExerciseFormRules | null;
+}
+
+export type FormRuleApplicability = "realtime" | "post_set_only" | "not_applicable";
+export type FormRuleView = "front" | "side" | "three_quarter";
+export type FormRulePhase = "eccentric" | "concentric" | "both";
+export type FormRuleSeverity = "error" | "warning" | "info";
+export type PrimaryMetricKind = "angle";
+export type PrimaryMetricPhaseLogic =
+  | "flexion_extension"
+  | "extension_flexion"
+  | "pull_raise_lower"
+  | "cyclic";
+
+export interface FormRulePrimaryMetric {
+  kind: PrimaryMetricKind;
+  landmarks: [number, number, number];
+  phaseLogic?: PrimaryMetricPhaseLogic;
+}
+
+export interface FormRuleThresholdOverride {
+  ruleId: string;
+  min?: number;
+  max?: number;
+}
+
+export interface FormRuleCueOverride {
+  ruleId: string;
+  cue: string;
+}
+
+export interface ExerciseFormRuleOverrideSet {
+  disabledRuleIds: string[];
+  ruleThresholds: FormRuleThresholdOverride[];
+  cueOverrides: FormRuleCueOverride[];
+}
+
+export interface ExerciseFormRuleReview {
+  status: "ai_generated" | "reviewed" | "needs_review";
+  notes?: string;
+}
+
+export interface ExerciseFormRules {
+  patternId: string;
+  applicability: FormRuleApplicability;
+  view: FormRuleView;
+  confidence: number;
+  primaryMetric: FormRulePrimaryMetric;
+  overrides: ExerciseFormRuleOverrideSet;
+  review: ExerciseFormRuleReview;
+}
+
+export interface FormSessionFeedbackItem {
+  type: FormRuleSeverity;
+  message: string;
+  landmarkIndices?: number[];
+  source?: "rule" | "tempo" | "stability" | "symmetry" | "spine" | "coach";
+  ruleId?: string;
+  timestampMs?: number;
+}
+
+export interface FormLandmarkSample {
+  timestampMs: number;
+  landmarks: Array<{
+    index: number;
+    x: number;
+    y: number;
+    z: number;
+    visibility: number;
+  }>;
+}
+
+export interface FormMetricSample {
+  timestampMs: number;
+  angle: number;
+  phase: Exclude<FormRulePhase, "both"> | "unknown";
+}
+
+export interface FormRepMetric {
+  repIndex: number;
+  startMs: number;
+  endMs: number;
+  durationMs: number;
+  eccentricMs: number;
+  concentricMs: number;
+  topPauseMs: number;
+  bottomPauseMs: number;
+  minAngle: number;
+  maxAngle: number;
+  score: number;
+  feedback: FormSessionFeedbackItem[];
+  tempoFlags: string[];
+}
+
+export type FormAnalysisStatus = "local_only" | "cloud_pending" | "cloud_complete" | "cloud_failed";
+
+export interface FormCoachingResult {
+  summary: string;
+  top_cues: string[];
+  rep_observations: string[];
+  confidence: number;
+  needs_human_rule_review: boolean;
+}
+
+export interface FormWorstSegment {
+  startMs: number;
+  endMs: number;
+  repIndex?: number;
+  score: number;
+  feedback: FormSessionFeedbackItem[];
+  samples: FormLandmarkSample[];
+}
+
+export interface FormSessionAnalysis {
+  score: number;
+  realtime_score: number;
+  postset_score: number;
+  reps: number;
+  duration_ms: number;
+  detector_version: string;
+  rules_confidence: number;
+  analysis_status: FormAnalysisStatus;
+  feedback_summary: string;
+  feedback_json: {
+    topIssues: FormSessionFeedbackItem[];
+    realtime: FormSessionFeedbackItem[];
+    postset: FormSessionFeedbackItem[];
+    coaching?: FormCoachingResult | null;
+  };
+  rep_metrics_json: FormRepMetric[];
+  landmark_stream_json: FormLandmarkSample[];
+  worst_segment_json: FormWorstSegment | null;
+  used_cloud_coach: boolean;
+  cloud_model?: string | null;
+}
+
+export interface FormLog extends FormSessionAnalysis {
+  id: string;
+  user_id: string;
+  exercise_id: string;
+  created_at: string;
 }
 
 export interface Set {

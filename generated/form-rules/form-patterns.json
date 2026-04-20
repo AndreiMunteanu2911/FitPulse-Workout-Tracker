@@ -1,0 +1,697 @@
+[
+  {
+    "id": "horizontal_push",
+    "label": "Horizontal Push",
+    "applicability": "realtime",
+    "view": "side",
+    "primaryMetric": {
+      "kind": "angle",
+      "landmarks": [
+        11,
+        13,
+        15
+      ],
+      "phaseLogic": "flexion_extension"
+    },
+    "rules": [
+      {
+        "id": "elbow_depth",
+        "landmarks": [
+          11,
+          13,
+          15
+        ],
+        "phase": "eccentric",
+        "min": 45,
+        "max": 120,
+        "severity": "error",
+        "holdFrames": 6,
+        "visibilityThreshold": 0.6,
+        "cue": "Lower with control"
+      },
+      {
+        "id": "lockout_control",
+        "landmarks": [
+          11,
+          13,
+          15
+        ],
+        "phase": "concentric",
+        "min": 140,
+        "max": 180,
+        "severity": "warning",
+        "holdFrames": 6,
+        "visibilityThreshold": 0.6,
+        "cue": "Finish the press"
+      }
+    ],
+    "universalChecks": {
+      "spine": true,
+      "symmetry": false,
+      "stability": true
+    },
+    "tempo": {
+      "eccentricSeconds": 2,
+      "pauseSeconds": 0,
+      "concentricSeconds": 1
+    }
+  },
+  {
+    "id": "vertical_push",
+    "label": "Vertical Push",
+    "applicability": "realtime",
+    "view": "side",
+    "primaryMetric": {
+      "kind": "angle",
+      "landmarks": [
+        11,
+        13,
+        15
+      ],
+      "phaseLogic": "extension_flexion"
+    },
+    "rules": [
+      {
+        "id": "press_lockout",
+        "landmarks": [
+          11,
+          13,
+          15
+        ],
+        "phase": "concentric",
+        "min": 145,
+        "max": 180,
+        "severity": "warning",
+        "holdFrames": 5,
+        "visibilityThreshold": 0.6,
+        "cue": "Press overhead fully"
+      },
+      {
+        "id": "rack_depth",
+        "landmarks": [
+          11,
+          13,
+          15
+        ],
+        "phase": "eccentric",
+        "min": 55,
+        "max": 120,
+        "severity": "warning",
+        "holdFrames": 5,
+        "visibilityThreshold": 0.6,
+        "cue": "Bring elbows under hands"
+      }
+    ],
+    "universalChecks": {
+      "spine": true,
+      "symmetry": true,
+      "stability": true
+    },
+    "tempo": {
+      "eccentricSeconds": 2,
+      "pauseSeconds": 0,
+      "concentricSeconds": 1
+    }
+  },
+  {
+    "id": "horizontal_pull",
+    "label": "Horizontal Pull",
+    "applicability": "realtime",
+    "view": "side",
+    "primaryMetric": {
+      "kind": "angle",
+      "landmarks": [
+        11,
+        13,
+        15
+      ],
+      "phaseLogic": "extension_flexion"
+    },
+    "rules": [
+      {
+        "id": "row_squeeze",
+        "landmarks": [
+          11,
+          13,
+          15
+        ],
+        "phase": "concentric",
+        "min": 45,
+        "max": 105,
+        "severity": "warning",
+        "holdFrames": 5,
+        "visibilityThreshold": 0.6,
+        "cue": "Pull elbow farther back"
+      },
+      {
+        "id": "controlled_reach",
+        "landmarks": [
+          11,
+          13,
+          15
+        ],
+        "phase": "eccentric",
+        "min": 125,
+        "max": 180,
+        "severity": "warning",
+        "holdFrames": 5,
+        "visibilityThreshold": 0.6,
+        "cue": "Reach without shrugging"
+      }
+    ],
+    "universalChecks": {
+      "spine": true,
+      "symmetry": true,
+      "stability": true
+    },
+    "tempo": {
+      "eccentricSeconds": 2,
+      "pauseSeconds": 0,
+      "concentricSeconds": 1
+    }
+  },
+  {
+    "id": "vertical_pull",
+    "label": "Vertical Pull",
+    "applicability": "realtime",
+    "view": "front",
+    "primaryMetric": {
+      "kind": "angle",
+      "landmarks": [
+        11,
+        13,
+        15
+      ],
+      "phaseLogic": "extension_flexion"
+    },
+    "rules": [
+      {
+        "id": "pull_height",
+        "landmarks": [
+          11,
+          13,
+          15
+        ],
+        "phase": "concentric",
+        "min": 45,
+        "max": 110,
+        "severity": "warning",
+        "holdFrames": 5,
+        "visibilityThreshold": 0.6,
+        "cue": "Pull elbows lower"
+      },
+      {
+        "id": "dead_hang",
+        "landmarks": [
+          11,
+          13,
+          15
+        ],
+        "phase": "eccentric",
+        "min": 140,
+        "max": 180,
+        "severity": "warning",
+        "holdFrames": 5,
+        "visibilityThreshold": 0.6,
+        "cue": "Lower to a full hang"
+      }
+    ],
+    "universalChecks": {
+      "spine": true,
+      "symmetry": true,
+      "stability": true
+    },
+    "tempo": {
+      "eccentricSeconds": 2,
+      "pauseSeconds": 0,
+      "concentricSeconds": 1
+    }
+  },
+  {
+    "id": "squat",
+    "label": "Squat",
+    "applicability": "realtime",
+    "view": "side",
+    "primaryMetric": {
+      "kind": "angle",
+      "landmarks": [
+        23,
+        25,
+        27
+      ],
+      "phaseLogic": "flexion_extension"
+    },
+    "rules": [
+      {
+        "id": "depth_control",
+        "landmarks": [
+          23,
+          25,
+          27
+        ],
+        "phase": "eccentric",
+        "min": 60,
+        "max": 130,
+        "severity": "warning",
+        "holdFrames": 6,
+        "visibilityThreshold": 0.65,
+        "cue": "Sit deeper with control"
+      },
+      {
+        "id": "stand_tall",
+        "landmarks": [
+          23,
+          25,
+          27
+        ],
+        "phase": "concentric",
+        "min": 145,
+        "max": 180,
+        "severity": "warning",
+        "holdFrames": 6,
+        "visibilityThreshold": 0.65,
+        "cue": "Finish standing tall"
+      }
+    ],
+    "universalChecks": {
+      "spine": true,
+      "symmetry": true,
+      "stability": true
+    },
+    "tempo": {
+      "eccentricSeconds": 3,
+      "pauseSeconds": 0,
+      "concentricSeconds": 1
+    }
+  },
+  {
+    "id": "hinge",
+    "label": "Hip Hinge",
+    "applicability": "realtime",
+    "view": "side",
+    "primaryMetric": {
+      "kind": "angle",
+      "landmarks": [
+        11,
+        23,
+        25
+      ],
+      "phaseLogic": "flexion_extension"
+    },
+    "rules": [
+      {
+        "id": "hip_back",
+        "landmarks": [
+          11,
+          23,
+          25
+        ],
+        "phase": "eccentric",
+        "min": 45,
+        "max": 120,
+        "severity": "warning",
+        "holdFrames": 6,
+        "visibilityThreshold": 0.65,
+        "cue": "Push hips back more"
+      },
+      {
+        "id": "finish_hips",
+        "landmarks": [
+          11,
+          23,
+          25
+        ],
+        "phase": "concentric",
+        "min": 150,
+        "max": 180,
+        "severity": "warning",
+        "holdFrames": 6,
+        "visibilityThreshold": 0.65,
+        "cue": "Drive hips through"
+      }
+    ],
+    "universalChecks": {
+      "spine": true,
+      "symmetry": false,
+      "stability": true
+    },
+    "tempo": {
+      "eccentricSeconds": 3,
+      "pauseSeconds": 0,
+      "concentricSeconds": 1
+    }
+  },
+  {
+    "id": "lunge",
+    "label": "Lunge",
+    "applicability": "realtime",
+    "view": "side",
+    "primaryMetric": {
+      "kind": "angle",
+      "landmarks": [
+        23,
+        25,
+        27
+      ],
+      "phaseLogic": "flexion_extension"
+    },
+    "rules": [
+      {
+        "id": "front_knee_depth",
+        "landmarks": [
+          23,
+          25,
+          27
+        ],
+        "phase": "eccentric",
+        "min": 65,
+        "max": 120,
+        "severity": "warning",
+        "holdFrames": 6,
+        "visibilityThreshold": 0.65,
+        "cue": "Lower the front knee more"
+      },
+      {
+        "id": "return_to_start",
+        "landmarks": [
+          23,
+          25,
+          27
+        ],
+        "phase": "concentric",
+        "min": 145,
+        "max": 180,
+        "severity": "warning",
+        "holdFrames": 6,
+        "visibilityThreshold": 0.65,
+        "cue": "Push back to start"
+      }
+    ],
+    "universalChecks": {
+      "spine": true,
+      "symmetry": true,
+      "stability": true
+    },
+    "tempo": {
+      "eccentricSeconds": 2,
+      "pauseSeconds": 0,
+      "concentricSeconds": 1
+    }
+  },
+  {
+    "id": "curl",
+    "label": "Curl",
+    "applicability": "realtime",
+    "view": "side",
+    "primaryMetric": {
+      "kind": "angle",
+      "landmarks": [
+        11,
+        13,
+        15
+      ],
+      "phaseLogic": "extension_flexion"
+    },
+    "rules": [
+      {
+        "id": "top_squeeze",
+        "landmarks": [
+          11,
+          13,
+          15
+        ],
+        "phase": "concentric",
+        "min": 25,
+        "max": 80,
+        "severity": "warning",
+        "holdFrames": 5,
+        "visibilityThreshold": 0.6,
+        "cue": "Curl a bit higher"
+      },
+      {
+        "id": "full_extension",
+        "landmarks": [
+          11,
+          13,
+          15
+        ],
+        "phase": "eccentric",
+        "min": 135,
+        "max": 180,
+        "severity": "warning",
+        "holdFrames": 5,
+        "visibilityThreshold": 0.6,
+        "cue": "Lower all the way down"
+      }
+    ],
+    "universalChecks": {
+      "spine": true,
+      "symmetry": true,
+      "stability": true
+    },
+    "tempo": {
+      "eccentricSeconds": 2,
+      "pauseSeconds": 0,
+      "concentricSeconds": 1
+    }
+  },
+  {
+    "id": "triceps_extension",
+    "label": "Triceps Extension",
+    "applicability": "realtime",
+    "view": "side",
+    "primaryMetric": {
+      "kind": "angle",
+      "landmarks": [
+        11,
+        13,
+        15
+      ],
+      "phaseLogic": "flexion_extension"
+    },
+    "rules": [
+      {
+        "id": "deep_bend",
+        "landmarks": [
+          11,
+          13,
+          15
+        ],
+        "phase": "eccentric",
+        "min": 45,
+        "max": 110,
+        "severity": "warning",
+        "holdFrames": 5,
+        "visibilityThreshold": 0.6,
+        "cue": "Bend elbows more"
+      },
+      {
+        "id": "strong_lockout",
+        "landmarks": [
+          11,
+          13,
+          15
+        ],
+        "phase": "concentric",
+        "min": 145,
+        "max": 180,
+        "severity": "warning",
+        "holdFrames": 5,
+        "visibilityThreshold": 0.6,
+        "cue": "Straighten the elbows"
+      }
+    ],
+    "universalChecks": {
+      "spine": true,
+      "symmetry": true,
+      "stability": true
+    },
+    "tempo": {
+      "eccentricSeconds": 2,
+      "pauseSeconds": 0,
+      "concentricSeconds": 1
+    }
+  },
+  {
+    "id": "lateral_raise",
+    "label": "Lateral Raise",
+    "applicability": "realtime",
+    "view": "front",
+    "primaryMetric": {
+      "kind": "angle",
+      "landmarks": [
+        23,
+        11,
+        13
+      ],
+      "phaseLogic": "pull_raise_lower"
+    },
+    "rules": [
+      {
+        "id": "raise_height",
+        "landmarks": [
+          23,
+          11,
+          13
+        ],
+        "phase": "concentric",
+        "min": 65,
+        "max": 110,
+        "severity": "warning",
+        "holdFrames": 5,
+        "visibilityThreshold": 0.6,
+        "cue": "Lift to shoulder height"
+      },
+      {
+        "id": "controlled_lower",
+        "landmarks": [
+          23,
+          11,
+          13
+        ],
+        "phase": "eccentric",
+        "min": 5,
+        "max": 45,
+        "severity": "warning",
+        "holdFrames": 5,
+        "visibilityThreshold": 0.6,
+        "cue": "Lower with control"
+      }
+    ],
+    "universalChecks": {
+      "spine": true,
+      "symmetry": true,
+      "stability": true
+    },
+    "tempo": {
+      "eccentricSeconds": 2,
+      "pauseSeconds": 0,
+      "concentricSeconds": 1
+    }
+  },
+  {
+    "id": "calf_raise",
+    "label": "Calf Raise",
+    "applicability": "realtime",
+    "view": "side",
+    "primaryMetric": {
+      "kind": "angle",
+      "landmarks": [
+        25,
+        27,
+        31
+      ],
+      "phaseLogic": "cyclic"
+    },
+    "rules": [
+      {
+        "id": "top_plantarflexion",
+        "landmarks": [
+          25,
+          27,
+          31
+        ],
+        "phase": "concentric",
+        "min": 70,
+        "max": 120,
+        "severity": "warning",
+        "holdFrames": 4,
+        "visibilityThreshold": 0.6,
+        "cue": "Raise onto the toes"
+      },
+      {
+        "id": "full_lower",
+        "landmarks": [
+          25,
+          27,
+          31
+        ],
+        "phase": "eccentric",
+        "min": 120,
+        "max": 170,
+        "severity": "warning",
+        "holdFrames": 4,
+        "visibilityThreshold": 0.6,
+        "cue": "Lower the heels fully"
+      }
+    ],
+    "universalChecks": {
+      "spine": false,
+      "symmetry": true,
+      "stability": true
+    },
+    "tempo": {
+      "eccentricSeconds": 2,
+      "pauseSeconds": 0,
+      "concentricSeconds": 1
+    }
+  },
+  {
+    "id": "carry",
+    "label": "Carry",
+    "applicability": "post_set_only",
+    "view": "front",
+    "primaryMetric": {
+      "kind": "angle",
+      "landmarks": [
+        11,
+        13,
+        15
+      ],
+      "phaseLogic": "cyclic"
+    },
+    "rules": [
+      {
+        "id": "carry_posture",
+        "landmarks": [
+          11,
+          23,
+          25
+        ],
+        "phase": "both",
+        "min": 150,
+        "max": 180,
+        "severity": "warning",
+        "holdFrames": 8,
+        "visibilityThreshold": 0.65,
+        "cue": "Stay tall while walking"
+      }
+    ],
+    "universalChecks": {
+      "spine": true,
+      "symmetry": true,
+      "stability": true
+    },
+    "tempo": {
+      "eccentricSeconds": 0,
+      "pauseSeconds": 0,
+      "concentricSeconds": 0
+    }
+  },
+  {
+    "id": "mobility",
+    "label": "Mobility / Stretch",
+    "applicability": "not_applicable",
+    "view": "side",
+    "primaryMetric": {
+      "kind": "angle",
+      "landmarks": [
+        11,
+        13,
+        15
+      ],
+      "phaseLogic": "cyclic"
+    },
+    "rules": [],
+    "universalChecks": {
+      "spine": false,
+      "symmetry": false,
+      "stability": false
+    },
+    "tempo": {
+      "eccentricSeconds": 0,
+      "pauseSeconds": 0,
+      "concentricSeconds": 0
+    }
+  }
+]
