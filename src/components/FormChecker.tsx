@@ -457,6 +457,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
   const [coachingLoading, setCoachingLoading] = useState(false);
   const [coachingError, setCoachingError] = useState("");
   const [startingDetection, setStartingDetection] = useState(false);
+  const COACHING_TIMEOUT_MS = 180000;
 
   const tempoTrackerRef = useRef(new TempoTracker());
   const jitterDetectorRef = useRef(new JitterDetector());
@@ -486,6 +487,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
   const rulesNotApplicable = resolvedRules?.applicability === "not_applicable";
   const postSetOnly = resolvedRules?.applicability === "post_set_only";
   const hasRealtimeRules = resolvedRules?.applicability === "realtime" && resolvedRules.rules.length > 0;
+  const showFullHeightReview = Boolean(sessionAnalysis && sessionSaved && !isSaving);
 
   const updateCalibrationState = useCallback((value: boolean) => {
     isCalibratedRef.current = value;
@@ -605,10 +607,13 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
 
     setCoachingLoading(true);
     setCoachingError("");
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), COACHING_TIMEOUT_MS);
     try {
       const response = await fetch("/api/form-logs/coaching", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
           exerciseName,
           formRules,
@@ -627,14 +632,21 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
         cloudModel: payload.model ?? null,
       };
     } catch (error) {
-      setCoachingError(error instanceof Error ? error.message : "Detailed coaching unavailable.");
+      const message =
+        error instanceof DOMException && error.name === "AbortError"
+          ? "AI coach timed out. Showing the local review instead."
+          : error instanceof Error
+            ? error.message
+            : "Detailed coaching unavailable.";
+      setCoachingError(message);
       return { coaching: null, cloudModel: null };
     } finally {
+      window.clearTimeout(timeoutId);
       setCoachingLoading(false);
     }
   }, [exerciseName, formRules]);
 
-  const persistSession = useCallback(async (analysis: FormSessionAnalysis) => {
+  const persistSession = useCallback(async (analysis: FormSessionAnalysis): Promise<boolean> => {
     setIsSaving(true);
     try {
       const response = await fetch("/api/form-logs", {
@@ -650,9 +662,11 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
         throw new Error(payload.error ?? "Failed to save session");
       }
       setSessionSaved(true);
+      return true;
     } catch (error) {
       console.error("Failed to save form session:", error);
       setSessionSaved(false);
+      return false;
     } finally {
       setIsSaving(false);
     }
@@ -662,27 +676,11 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
     if (!sessionStartedRef.current || finalizingRef.current) return;
     finalizingRef.current = true;
 
-    const durationMs = Math.round(performance.now() - sessionStartRef.current);
-    const rulesConfidence = resolvedRules?.confidence ?? formRules?.confidence ?? 0;
-    const realtimeFeedback = dedupeFeedback(realtimeFeedbackLogRef.current).slice(0, 20);
-    const localAnalysis = buildSessionAnalysis({
-      durationMs,
-      realtimeScore: getRunningRepAverage(completedRepMetricsRef.current),
-      rulesConfidence,
-      reps: repCountRef.current,
-      realtimeFeedback,
-      repMetrics: completedRepMetricsRef.current,
-      landmarkStream: recorderRef.current?.getSamples() ?? [],
-      recorder: recorderRef.current ?? new LandmarkStreamRecorder(getRequiredLandmarks(resolvedRules)),
-      coaching: null,
-      usedCloudCoach: shouldUseCloudCoaching(formRules, { score: getRunningRepAverage(completedRepMetricsRef.current), rules_confidence: rulesConfidence, reps: repCountRef.current }),
-      cloudModel: null,
-    });
-
-    let finalAnalysis = localAnalysis;
-    const { coaching, cloudModel } = await maybeRequestCoaching(localAnalysis);
-    if (coaching) {
-      finalAnalysis = buildSessionAnalysis({
+    try {
+      const durationMs = Math.round(performance.now() - sessionStartRef.current);
+      const rulesConfidence = resolvedRules?.confidence ?? formRules?.confidence ?? 0;
+      const realtimeFeedback = dedupeFeedback(realtimeFeedbackLogRef.current).slice(0, 20);
+      const localAnalysis = buildSessionAnalysis({
         durationMs,
         realtimeScore: getRunningRepAverage(completedRepMetricsRef.current),
         rulesConfidence,
@@ -691,23 +689,47 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
         repMetrics: completedRepMetricsRef.current,
         landmarkStream: recorderRef.current?.getSamples() ?? [],
         recorder: recorderRef.current ?? new LandmarkStreamRecorder(getRequiredLandmarks(resolvedRules)),
-        coaching,
-        usedCloudCoach: true,
-        cloudModel,
+        coaching: null,
+        usedCloudCoach: shouldUseCloudCoaching(formRules, { score: getRunningRepAverage(completedRepMetricsRef.current), rules_confidence: rulesConfidence, reps: repCountRef.current }),
+        cloudModel: null,
       });
-    } else if (localAnalysis.used_cloud_coach) {
-      finalAnalysis = {
-        ...localAnalysis,
-        analysis_status: "cloud_failed",
-        cloud_model: cloudModel,
-      };
-    }
 
-    setSessionAnalysis(finalAnalysis);
-    await persistSession(finalAnalysis);
-    sessionStartedRef.current = false;
-    finalizingRef.current = false;
-  }, [formRules, getRequiredLandmarks, maybeRequestCoaching, persistSession, resolvedRules]);
+      let finalAnalysis = localAnalysis;
+      const { coaching, cloudModel } = await maybeRequestCoaching(localAnalysis);
+      if (coaching) {
+        finalAnalysis = buildSessionAnalysis({
+          durationMs,
+          realtimeScore: getRunningRepAverage(completedRepMetricsRef.current),
+          rulesConfidence,
+          reps: repCountRef.current,
+          realtimeFeedback,
+          repMetrics: completedRepMetricsRef.current,
+          landmarkStream: recorderRef.current?.getSamples() ?? [],
+          recorder: recorderRef.current ?? new LandmarkStreamRecorder(getRequiredLandmarks(resolvedRules)),
+          coaching,
+          usedCloudCoach: true,
+          cloudModel,
+        });
+      } else if (localAnalysis.used_cloud_coach) {
+        finalAnalysis = {
+          ...localAnalysis,
+          analysis_status: "cloud_failed",
+          cloud_model: cloudModel,
+        };
+      }
+
+      const didSave = await persistSession(finalAnalysis);
+      if (didSave) {
+        setSessionAnalysis(finalAnalysis);
+      } else {
+        setSessionAnalysis(null);
+        void startCamera();
+      }
+      sessionStartedRef.current = false;
+    } finally {
+      finalizingRef.current = false;
+    }
+  }, [formRules, getRequiredLandmarks, maybeRequestCoaching, persistSession, resolvedRules, startCamera]);
 
   const detectionLoop = useCallback(() => {
     if (!loopActiveRef.current) return;
@@ -980,7 +1002,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
 
       animationFrameRef.current = requestAnimationFrame(detectionLoop);
     });
-  }, [videoRef, isReady, resolvedRules, hasRealtimeRules, getCalibrationLandmarks, getVisibleRatio, updateCalibrationState, isRunning]);
+  }, [videoRef, isReady, resolvedRules, hasRealtimeRules, getCalibrationLandmarks, getVisibleRatio, updateCalibrationState, isRunning, startingDetection]);
 
   useEffect(() => {
     if (isRunning && isReady && detectorRef.current) {
@@ -997,6 +1019,17 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
     };
   }, [isRunning, isReady, detectionLoop]);
 
+  useEffect(() => {
+    if (!showFullHeightReview) return;
+
+    loopActiveRef.current = false;
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = 0;
+    }
+    stopCamera();
+  }, [showFullHeightReview, stopCamera]);
+
   useEffect(() => () => {
     loopActiveRef.current = false;
     stopCamera();
@@ -1008,6 +1041,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
     if (isRunning) {
       loopActiveRef.current = false;
       setIsRunning(false);
+      stopCamera();
       await finalizeSession();
       return;
     }
@@ -1029,12 +1063,14 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
     sessionStartedRef.current = false;
     setStartingDetection(false);
     resetSessionState();
+    void startCamera();
   };
 
   const handleClose = async () => {
     if (isRunning) {
       loopActiveRef.current = false;
       setIsRunning(false);
+      stopCamera();
       await finalizeSession();
     }
     setStartingDetection(false);
@@ -1089,70 +1125,90 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
         </div>
       </div>
 
-      <div ref={canvasContainerRef} className="flex-1 relative bg-black overflow-hidden">
-        <video
-          ref={videoRef as React.RefObject<HTMLVideoElement>}
-          className="absolute inset-0 w-full h-full object-cover"
-          autoPlay
-          playsInline
-          muted
-          style={{ transform: "scaleX(-1)" }}
-        />
-
-        <SkeletonCanvas
-          landmarks={landmarks}
-          feedback={feedback}
-          canvasWidth={canvasSize.width}
-          canvasHeight={canvasSize.height}
-          sourceWidth={videoSize.width}
-          sourceHeight={videoSize.height}
-        />
-        <CameraGuideOverlay
-          status={cameraStatus}
-          calibrationMessage={calibrationMessage}
-          showCalibration={isRunning && !isCalibrated}
-        />
-
-        {isRunning && (rulesNotApplicable || postSetOnly) && cameraStatus === "good" && (
-          <div className="absolute top-4 left-4 right-4 z-20">
-            <div className="flex items-start gap-2 bg-amber-900/80 backdrop-blur-sm border border-amber-500/30 rounded-lg px-3 py-2">
-              <Info className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-amber-300 leading-snug">
-                This exercise relies on post-set review. We will still record the movement pattern locally.
+      {showFullHeightReview ? (
+        <div className="flex-1 min-h-0 overflow-y-auto bg-[var(--surface)]">
+          <div className="min-h-full flex flex-col">
+            <div className="px-4 py-4 bg-[var(--surface-overlay)] border-b border-[var(--border)]">
+              <div className="flex items-center gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs uppercase tracking-wider text-[var(--muted-foreground)]">Post-set review</p>
+                  <h3 className="text-base font-bold text-[var(--foreground)] truncate">Coach analysis complete</h3>
+                </div>
+              </div>
+              <p className="mt-2 text-sm text-[var(--muted-foreground)]">
+                The camera has been stopped. Review the full set breakdown below before starting again.
               </p>
             </div>
-          </div>
-        )}
 
-        {isRunning && cameraStatus === "good" && isCalibrated && (
-          <FeedbackPanel feedback={feedback} repCount={repCount} formScore={formScore} />
-        )}
-
-        {(isLoading || (!detectorReady && !camError && !isRunning)) && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 z-20 gap-3">
-            <Loader2 className="w-8 h-8 text-white animate-spin" />
-            <p className="text-sm text-white/60">
-              {isLoading ? "Starting camera..." : "Loading AI model..."}
-            </p>
-          </div>
-        )}
-
-        {camError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black z-20">
-            <div className="text-center px-6">
-              <Camera className="w-12 h-12 text-red-400 mx-auto mb-3" />
-              <p className="font-bold text-white mb-1">Camera Error</p>
-              <p className="text-sm text-white/60 mb-4">{camError}</p>
-              <Button onClick={startCamera}>Try Again</Button>
+            <div className="flex-1 min-h-0">
+              <SessionSummaryCard analysis={sessionAnalysis} coachingLoading={coachingLoading} coachingError={coachingError} />
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div ref={canvasContainerRef} className="flex-1 min-h-0 relative bg-black overflow-hidden">
+          <video
+            ref={videoRef as React.RefObject<HTMLVideoElement>}
+            className="absolute inset-0 w-full h-full object-cover"
+            autoPlay
+            playsInline
+            muted
+            style={{ transform: "scaleX(-1)" }}
+          />
+
+          <SkeletonCanvas
+            landmarks={landmarks}
+            feedback={feedback}
+            canvasWidth={canvasSize.width}
+            canvasHeight={canvasSize.height}
+            sourceWidth={videoSize.width}
+            sourceHeight={videoSize.height}
+          />
+          <CameraGuideOverlay
+            status={cameraStatus}
+            calibrationMessage={calibrationMessage}
+            showCalibration={isRunning && !isCalibrated}
+          />
+
+          {isRunning && (rulesNotApplicable || postSetOnly) && cameraStatus === "good" && (
+            <div className="absolute top-4 left-4 right-4 z-20">
+              <div className="flex items-start gap-2 bg-amber-900/80 backdrop-blur-sm border border-amber-500/30 rounded-lg px-3 py-2">
+                <Info className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-300 leading-snug">
+                  This exercise relies on post-set review. We will still record the movement pattern locally.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {isRunning && cameraStatus === "good" && isCalibrated && (
+            <FeedbackPanel feedback={feedback} repCount={repCount} formScore={formScore} />
+          )}
+
+          {(isLoading || (!detectorReady && !camError && !isRunning)) && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 z-20 gap-3">
+              <Loader2 className="w-8 h-8 text-white animate-spin" />
+              <p className="text-sm text-white/60">
+                {isLoading ? "Starting camera..." : "Loading AI model..."}
+              </p>
+            </div>
+          )}
+
+          {camError && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black z-20">
+              <div className="text-center px-6">
+                <Camera className="w-12 h-12 text-red-400 mx-auto mb-3" />
+                <p className="font-bold text-white mb-1">Camera Error</p>
+                <p className="text-sm text-white/60 mb-4">{camError}</p>
+                <Button onClick={startCamera}>Try Again</Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <StartupOverlay visible={startingDetection} />
       <ReviewOverlay visible={isReviewing} />
-
-      <SessionSummaryCard analysis={sessionAnalysis} coachingLoading={coachingLoading} coachingError={coachingError} />
 
       <div className="px-4 py-4 bg-[var(--surface-overlay)] border-t border-[var(--border)] z-20">
         <div className="flex gap-3 items-center">
