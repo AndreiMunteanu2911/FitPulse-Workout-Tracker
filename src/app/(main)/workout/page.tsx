@@ -59,7 +59,6 @@ export default function WorkoutPage() {
     const [showDiscardSetsModal, setShowDiscardSetsModal] = useState(false);
     const [discardInfo, setDiscardInfo] = useState({ incompleteSetCount: 0, emptyExerciseCount: 0 });
     const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
-    const [showTemplates, setShowTemplates] = useState(false);
     const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
     const [editingTemplate, setEditingTemplate] = useState<WorkoutTemplate | null>(null);
     const [templateToDelete, setTemplateToDelete] = useState<WorkoutTemplate | null>(null);
@@ -227,7 +226,7 @@ export default function WorkoutPage() {
 
             const optimisticExercises: WorkoutExercise[] = templateExercises
                 .filter((te) => te.exercise_id)
-                .map((te, i) => ({
+                .map((te) => ({
                     id: crypto.randomUUID(),
                     exercise_id: te.exercise_id,
                     exercise: te.exercise as Exercise,
@@ -395,7 +394,6 @@ export default function WorkoutPage() {
         setShowDiscardSetsModal(false);
 
         // Optimistic: remove bad sets and exercises from UI immediately
-        const finishingWorkoutId = workoutId;
         const exercisesToKeep: WorkoutExercise[] = [];
         for (const exercise of workoutExercises) {
             const validSets = exercise.sets.filter(isValidSet);
@@ -810,8 +808,8 @@ export default function WorkoutPage() {
                         />
                         {noDraftFound && !workoutStarted && (
                             <div className="text-center py-16 bg-[var(--surface)] rounded-[var(--radius-lg)] mb-6">
-                                <div className="w-20 h-20 mx-auto mb-5 rounded-[var(--radius-lg)] bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
-                                    <Zap className="w-10 h-10 text-[var(--primary-600)] dark:text-[var(--primary-700)]" />
+                                <div className="w-20 h-20 mx-auto mb-5 rounded-full bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)] flex items-center justify-center">
+                                    <Zap className="w-10 h-10 text-white" />
                                 </div>
                                 <h3 className="text-xl font-bold text-[var(--foreground)] mb-1" style={{ fontFamily: "var(--font-poppins)" }}>Ready to train?</h3>
                                 <p className="text-sm text-[var(--muted-foreground)] mb-6">Start a new workout or use a template.</p>

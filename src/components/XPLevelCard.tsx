@@ -1,7 +1,7 @@
 "use client";
 
 import type { GamificationStats } from "@/types";
-import { Zap, Flame } from "lucide-react";
+import { Zap, Flame, Star } from "lucide-react";
 
 interface XPLevelCardProps {
   gamification: GamificationStats;
@@ -46,7 +46,7 @@ export default function XPLevelCard({ gamification }: XPLevelCardProps) {
         </span>
 
         {currentStreak > 0 && (
-          <span className="flex items-center gap-1.5">
+          <span className="flex items-center gap-1.5 border-l border-[var(--border)] pl-4">
             <Flame className="w-4 h-4 text-[var(--lime-green)]" />
             <span className="font-semibold text-[var(--foreground)]">{currentStreak}</span>
             {` day${currentStreak === 1 ? "" : "s"} streak`}

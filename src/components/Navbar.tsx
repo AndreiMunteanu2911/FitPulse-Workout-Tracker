@@ -4,21 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { LayoutDashboard, History, Dumbbell, Library, User, Sparkles, Shield, Users, Newspaper } from "lucide-react";
-
-const tabs = [
-  { name: "Dashboard",  href: "/dashboard",  Icon: LayoutDashboard },
-  { name: "History",    href: "/history",    Icon: History          },
-  { name: "Workout",    href: "/workout",    Icon: Dumbbell         },
-  { name: "Exercises",  href: "/exercises",  Icon: Library          },
-  { name: "Blog",       href: "/blog",       Icon: Newspaper        },
-  { name: "Social",     href: "/social",     Icon: Users            },
-  { name: "AI Coach",   href: "/ai-coach",   Icon: Sparkles         },
-  { name: "Profile",    href: "/profile",    Icon: User             },
-];
-
-// Mobile tabs exclude AI Coach (only shown on dashboard on mobile)
-const mobileTabs = tabs.filter((t) => t.name !== "AI Coach");
+import { getDesktopNavItems, getMobileNavItems } from "@/lib/navigation";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -31,15 +17,12 @@ export default function Navbar() {
       .catch(() => {});
   }, []);
 
-  const desktopTabs = isAdmin
-    ? [...tabs, { name: "Admin", href: "/admin", Icon: Shield }]
-    : tabs;
+  const desktopTabs = getDesktopNavItems(isAdmin);
+  const mobileTabs = getMobileNavItems();
 
   return (
     <>
-      {/* ── Desktop Sidebar ─────────────────────────────── */}
       <nav className="hidden md:flex w-60 sticky top-0 h-screen flex-col bg-gradient-to-b from-[#5E3FDE] to-[#896CFE] text-white z-20">
-        {/* Logo */}
         <div className="flex items-center gap-2.5 px-5 pt-6 pb-8">
           <div className="w-9 h-9 rounded-[var(--radius-sm)] bg-white flex items-center justify-center flex-shrink-0 overflow-hidden">
             <Image src="/assets/logo.png" alt="FitPulse" width={24} height={24} className="object-contain" />
@@ -49,7 +32,6 @@ export default function Navbar() {
           </h1>
         </div>
 
-        {/* Nav items */}
         <ul className="flex flex-col flex-1 overflow-y-auto">
           {desktopTabs.map(({ name, href, Icon }) => {
             const active = pathname === href;
@@ -76,7 +58,6 @@ export default function Navbar() {
         </ul>
       </nav>
 
-      {/* ── Mobile Bottom Tab Bar ────────────────────────── */}
       <nav className="fixed bottom-0 left-0 right-0 md:hidden z-20 bg-[#5E3FDE] text-white">
         <ul className="flex">
           {mobileTabs.map(({ name, href, Icon }) => {
@@ -85,12 +66,17 @@ export default function Navbar() {
               <li key={name} className="flex-1">
                 <Link
                   href={href}
-                  className={`flex flex-col items-center justify-center py-2.5 px-1 gap-1 border-t-[3px] transition-all duration-200 ${
+                  className={`relative flex flex-col items-center justify-center py-2.5 px-1 gap-1 transition-all duration-200 ${
                     active
-                      ? "border-t-[var(--lime-green)] bg-[var(--lime-green)] text-[#4A2FC2]"
-                      : "border-t-transparent"
+                      ? "bg-[var(--lime-green)] text-[#4A2FC2]"
+                      : ""
                   }`}
                 >
+                  <span
+                    className={`absolute inset-x-3 top-0 h-0.5 rounded-full transition-opacity duration-200 ${
+                      active ? "bg-[var(--lime-green)] opacity-100" : "bg-transparent opacity-0"
+                    }`}
+                  />
                   <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 ${
                     active ? "bg-[#4A2FC2]/20 scale-105" : ""
                   }`}>

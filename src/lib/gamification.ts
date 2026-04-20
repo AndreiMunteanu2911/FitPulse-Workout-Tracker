@@ -24,6 +24,7 @@ export function xpProgress(xp: number): number {
   return Math.min(100, Math.round(((xp - start) / (end - start)) * 100));
 }
 
+
 // ── Achievement definitions ───────────────────────────────────────────────────
 // These mirror the `achievements` catalogue table seeded in schema.sql.
 // `icon` is a Lucide component name — rendered in the UI via a lookup map.
