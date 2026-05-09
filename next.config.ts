@@ -1,5 +1,5 @@
 import type { NextConfig } from "next";
-import { getAndroidDevHost, isProductionAppEnv } from "./config/app-env";
+import { getAndroidDevHost, isProductionAppEnv } from "./src/config/app-env";
 
 const allowedDevOrigins = isProductionAppEnv() ? [] : [getAndroidDevHost(), "10.0.2.2"];
 

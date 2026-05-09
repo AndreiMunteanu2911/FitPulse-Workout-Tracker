@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getWebAppBaseUrl } from "../../../../config/app-env";
+import { getWebAppBaseUrl } from "@/config/app-env";
 import { stripe } from "@/helper/stripe";
 import { createSupabaseServerClient } from "@/helper/supabaseServer";
 
