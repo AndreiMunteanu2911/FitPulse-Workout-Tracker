@@ -5,7 +5,7 @@ import {
   getAppEnv,
   getProductionAppUrl,
   isProductionAppEnv,
-} from "./config/app-env";
+} from "./src/config/app-env";
 
 const appEnv = getAppEnv();
 const productionUrl = getProductionAppUrl();
