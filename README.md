@@ -2,7 +2,7 @@
 
 [Live deployment](https://fitpulseam.vercel.app)
 
-FitPulse is a mobile-first fitness platform for logging workouts, tracking progress, reviewing lifting form, building habits, and sharing training updates with a community. It is built with Next.js App Router, React 19, Supabase, Tailwind CSS, Framer Motion, Recharts, Stripe, and MediaPipe.
+FitPulse is a mobile-first fitness platform for logging workouts, tracking progress, reviewing lifting form, building habits, and sharing training updates with a community. It is built with Next.js App Router, React 19, Supabase, Tailwind CSS, Framer Motion, Recharts, Stripe, MediaPipe, and a Capacitor-based Android shell.
 
 ## Overview
 
@@ -123,6 +123,7 @@ This README focuses on the implementation surface: route groups, feature domains
 | Styling | Tailwind CSS v4, CSS variables, custom theme tokens |
 | Animation | Framer Motion |
 | Charts | Recharts |
+| Android shell | Capacitor 8 |
 | Database | Supabase PostgreSQL |
 | Auth | Supabase Auth with `@supabase/ssr` |
 | Storage | Supabase Storage |
@@ -145,6 +146,7 @@ This README focuses on the implementation surface: route groups, feature domains
 - Admin access is enforced by the `role` field in `user_stats` and the `requireAdmin()` helper.
 - The UI is responsive: desktop uses a sticky left sidebar and content area, while mobile uses a fixed top bar and bottom tab navigation.
 - Theme preference is persisted and applied without a flash of the wrong theme.
+- Android builds use Capacitor as a native container. In production the Android app boots into a branded shell and forwards users into the hosted FitPulse app. In development the Android emulator can point directly at a local Next.js dev server.
 - Shared domain logic lives in `src/lib/`:
   - `ai.ts`, `rag-context.ts`, `rag-intent.ts`, and `workout-generator.ts` implement the AI coach and draft workout generation.
   - `form-rules.ts`, `form-analysis.ts`, `form-coaching.ts`, `form-geometry.ts`, and `pose-detector.ts` implement the form checker pipeline.
@@ -177,6 +179,12 @@ npm install
 Copy `.env.example` to `.env.local` and fill in the values for your environment.
 
 ```env
+# App environment
+CAP_APP_ENV=development
+NEXT_PUBLIC_APP_ENV=development
+NEXT_PUBLIC_PRODUCTION_APP_URL=https://fitpulseam.vercel.app
+CAP_ANDROID_DEV_SERVER_URL=http://10.0.2.2:3000
+
 # Supabase
 SUPABASE_URL=https://<your-project-ref>.supabase.co
 SUPABASE_ANON_KEY=<your-anon-key>
@@ -200,13 +208,38 @@ OPENROUTER_EMBEDDING_MODEL=nvidia/llama-nemotron-embed-vl-1b-v2:free
 # Stripe
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_ALLOWED_SHIPPING_COUNTRIES=US,CA,GB,AU,DE,FR,NL,BE,ES,IT,PT,RO
 ```
 
 Notes:
 
+- `CAP_APP_ENV` / `NEXT_PUBLIC_APP_ENV` control whether Capacitor should behave as a local development shell or a production shell.
+- `NEXT_PUBLIC_PRODUCTION_APP_URL` is the hosted FitPulse URL the Android app should use outside of local development.
+- `CAP_ANDROID_DEV_SERVER_URL` is the Android emulator address for your local Next.js server. `10.0.2.2` maps back to your host machine from the emulator.
 - The client Supabase helper uses the `NEXT_PUBLIC_*` variables.
 - Server routes and admin helpers use the non-public Supabase variables.
 - The AI coach and form coaching can fall back through built-in models if your preferred OpenRouter model is unavailable.
+
+### Environment modes
+
+For local web and Android emulator work:
+
+```env
+CAP_APP_ENV=development
+NEXT_PUBLIC_APP_ENV=development
+NEXT_PUBLIC_PRODUCTION_APP_URL=https://fitpulseam.vercel.app
+CAP_ANDROID_DEV_SERVER_URL=http://10.0.2.2:3000
+```
+
+For production / Vercel:
+
+```env
+CAP_APP_ENV=production
+NEXT_PUBLIC_APP_ENV=production
+NEXT_PUBLIC_PRODUCTION_APP_URL=https://fitpulseam.vercel.app
+```
+
+On Vercel, copy the values from `.env.production` into the Production environment and replace the placeholder secrets with your real production keys.
 
 ### Database setup
 
@@ -237,6 +270,53 @@ npm run dev
 
 Then open [http://localhost:3000](http://localhost:3000).
 
+### Run the Android app
+
+Capacitor and the Android project are already set up in this repository.
+
+For local Android emulator development:
+
+1. Start the Next.js dev server.
+
+```bash
+pnpm dev
+```
+
+2. Sync the Android project.
+
+```bash
+pnpm exec cap sync android
+```
+
+3. Open the Android project in Android Studio.
+
+```bash
+pnpm exec cap open android
+```
+
+4. Run the `app` target on an emulator or connected device.
+
+Notes:
+
+- Local Android development uses `CAP_ANDROID_DEV_SERVER_URL`, which defaults to `http://10.0.2.2:3000`.
+- `10.0.2.2` is the Android emulator alias for your host machine.
+- Stripe checkout on Android opens in the native browser/custom tab rather than staying inside the WebView.
+- Progress photo capture uses Capacitor Camera on Android.
+- The realtime form checker relies on `getUserMedia` and MediaPipe in the WebView. That feature requires an HTTPS context. It may not work from local cleartext emulator dev (`http://10.0.2.2:3000`) and should be validated against a hosted HTTPS build for full parity.
+
+### Build the Android shell for production
+
+1. Set the app environment to production in your local env or CI env.
+2. Sync the Android project:
+
+```bash
+pnpm exec cap sync android
+```
+
+3. Build and sign from Android Studio or your Gradle release pipeline.
+
+In production mode the Android app uses the branded Capacitor shell and forwards users into the hosted FitPulse app at `NEXT_PUBLIC_PRODUCTION_APP_URL`.
+
 ## Scripts
 
 | Script | Purpose |
@@ -247,6 +327,8 @@ Then open [http://localhost:3000](http://localhost:3000).
 | `npm run lint` | Run ESLint |
 | `npm run form-rules:generate` | Generate form rule data |
 | `npm run form-rules:import` | Import generated form rules |
+| `pnpm exec cap sync android` | Sync Capacitor config and assets into the Android project |
+| `pnpm exec cap open android` | Open the Android project in Android Studio |
 
 ## Database Notes
 

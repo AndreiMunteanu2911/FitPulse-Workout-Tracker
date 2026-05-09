@@ -3,6 +3,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useRef, useEffect, useState, useCallback } from "react";
+import { isNativePlatform } from "@/lib/mobile";
 
 interface UseWebcamOptions {
   /** Preferred camera device ID */
@@ -54,6 +55,27 @@ export function useWebcam({
     setError(null);
 
     try {
+      const hasMediaDevices = typeof navigator !== "undefined" && typeof navigator.mediaDevices !== "undefined";
+      const hasGetUserMedia = hasMediaDevices && typeof navigator.mediaDevices.getUserMedia === "function";
+      const isSecure = typeof window !== "undefined" ? window.isSecureContext : false;
+      const isLocalBrowser =
+        typeof window !== "undefined" &&
+        (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+
+      if (!hasGetUserMedia) {
+        if (isNativePlatform() && !isSecure) {
+          throw new Error(
+            "Realtime camera access requires HTTPS inside the Android WebView. Local http://10.0.2.2 development does not support the form checker camera.",
+          );
+        }
+
+        if (!isSecure && !isLocalBrowser) {
+          throw new Error("Camera access requires a secure HTTPS context.");
+        }
+
+        throw new Error("This browser runtime does not expose the MediaDevices camera API.");
+      }
+
       const constraints: MediaStreamConstraints = {
         video: {
           ...(deviceId
@@ -96,6 +118,12 @@ export function useWebcam({
       const message = err instanceof Error ? err.message : "Failed to access camera";
       if (message.includes("Permission denied") || message.includes("NotAllowedError")) {
         setError("Camera permission denied. Please allow camera access in your browser settings.");
+      } else if (message.includes("requires HTTPS")) {
+        setError(message);
+      } else if (message.includes("secure HTTPS context")) {
+        setError(message);
+      } else if (message.includes("MediaDevices camera API")) {
+        setError(message);
       } else if (message.includes("NotFound") || message.includes("DevicesNotFoundError")) {
         setError("No camera found on this device.");
       } else if (message.includes("NotReadable") || message.includes("TrackStartError")) {

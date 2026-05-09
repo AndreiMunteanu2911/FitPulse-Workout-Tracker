@@ -59,3 +59,7 @@ next-env.d.ts
 /rule_prompt.txt
 /exercise_rows_form_rules_800.csv
 /scripts/
+/android/.gradle/
+/android/build/
+/android/app/build/
+/android/local.properties
