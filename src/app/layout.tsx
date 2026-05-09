@@ -4,6 +4,7 @@ import { SkeletonTheme } from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import "./globals.css";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import MobileRuntimeBridge from "@/components/MobileRuntimeBridge";
 import ThemeProvider from "@/components/ThemeProvider";
 import { themeInitScript } from "@/lib/theme-init";
 
@@ -40,6 +41,7 @@ export default function RootLayout({
       </head>
       <body className={`${poppins.variable} ${leagueSpartan.variable}`}>
         <ThemeProvider>
+          <MobileRuntimeBridge />
           <ErrorBoundary>
             <SkeletonTheme
               borderRadius="var(--radius-md)"

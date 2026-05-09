@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { openCheckoutUrl, isNativePlatform, MOBILE_APP_SCHEME } from "@/lib/mobile";
 import { useSearchParams } from "next/navigation";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -20,7 +21,7 @@ export default function ShopPage() {
 
   const searchParams = useSearchParams();
   const success = searchParams.get("success");
-  const cancelled = searchParams.get("cancelled");
+  const cancelled = searchParams.get("cancelled") ?? searchParams.get("canceled");
 
   useEffect(() => {
     if (success) {
@@ -56,12 +57,17 @@ export default function ShopPage() {
           const res = await fetch("/api/shop/checkout", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ productId: selectedProduct.id, method: "stripe" }),
+              body: JSON.stringify({
+                productId: selectedProduct.id,
+                method: "stripe",
+                nativeApp: isNativePlatform(),
+                appScheme: MOBILE_APP_SCHEME,
+              }),
           });
           const data = await res.json();
 
           if (data.url) {
-              window.location.href = data.url;
+              await openCheckoutUrl(data.url);
           } else if (res.ok) {
               setMessage({ type: "success", text: "Purchase successful!" });
               setIsPurchaseModalOpen(false);
