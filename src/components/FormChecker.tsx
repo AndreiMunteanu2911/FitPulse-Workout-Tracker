@@ -99,54 +99,71 @@ function SessionSummaryCard({
   if (!analysis) return null;
   const coaching = analysis.feedback_json.coaching;
   const topIssues = analysis.feedback_json.topIssues.slice(0, 3);
+  const scoreColor = analysis.score >= 80
+    ? "text-emerald-500"
+    : analysis.score >= 60
+      ? "text-amber-500"
+      : "text-red-500";
 
   return (
-    <div className="px-4 py-4 bg-[var(--surface)] border-t border-[var(--border)] space-y-3">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold text-[var(--foreground)]">Post-set analysis</p>
-          <p className="text-xs text-[var(--muted-foreground)]">{analysis.feedback_summary || "Session analyzed locally."}</p>
+    <div className="space-y-4 p-4 sm:p-5">
+      <section className="rounded-[var(--radius-lg)] bg-[var(--surface)] p-4 sm:p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>
+              Set review
+            </p>
+            <h3 className="mt-1 text-lg font-extrabold text-[var(--foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>
+              Form analysis
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-[var(--muted-foreground)]">
+              {analysis.feedback_summary || "Session analyzed locally."}
+            </p>
+          </div>
+          <div className="flex h-20 w-20 flex-shrink-0 flex-col items-center justify-center rounded-[var(--radius-lg)] bg-[var(--surface-raised)]">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Final</p>
+            <p className={`text-2xl font-extrabold leading-none ${scoreColor}`}>{analysis.score}%</p>
+          </div>
         </div>
-        <div className="text-right">
-          <p className="text-xs text-[var(--muted-foreground)] uppercase tracking-wider">Final</p>
-          <p className="text-lg font-bold text-[var(--foreground)]">{analysis.score}%</p>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-3 gap-2 text-xs">
-        <div className="rounded-lg bg-[var(--surface-raised)] px-3 py-2">
-          <p className="text-[var(--muted-foreground)]">Realtime</p>
-          <p className="font-semibold text-[var(--foreground)]">{analysis.realtime_score}%</p>
+        <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
+          <div className="rounded-[var(--radius-md)] bg-[var(--surface-raised)] px-3 py-3">
+            <p className="text-[var(--muted-foreground)]">Realtime</p>
+            <p className="mt-1 font-bold text-[var(--foreground)]">{analysis.realtime_score}%</p>
+          </div>
+          <div className="rounded-[var(--radius-md)] bg-[var(--surface-raised)] px-3 py-3">
+            <p className="text-[var(--muted-foreground)]">Post-set</p>
+            <p className="mt-1 font-bold text-[var(--foreground)]">{analysis.postset_score}%</p>
+          </div>
+          <div className="rounded-[var(--radius-md)] bg-[var(--surface-raised)] px-3 py-3">
+            <p className="text-[var(--muted-foreground)]">Reps</p>
+            <p className="mt-1 font-bold text-[var(--foreground)]">{analysis.reps}</p>
+          </div>
         </div>
-        <div className="rounded-lg bg-[var(--surface-raised)] px-3 py-2">
-          <p className="text-[var(--muted-foreground)]">Post-set</p>
-          <p className="font-semibold text-[var(--foreground)]">{analysis.postset_score}%</p>
-        </div>
-        <div className="rounded-lg bg-[var(--surface-raised)] px-3 py-2">
-          <p className="text-[var(--muted-foreground)]">Detector</p>
-          <p className="font-semibold text-[var(--foreground)] text-[11px]">{FORM_DETECTOR_VERSION}</p>
-        </div>
-      </div>
+      </section>
 
       {topIssues.length > 0 && (
-        <div className="space-y-2">
+        <section className="rounded-[var(--radius-lg)] bg-[var(--surface)] p-4 sm:p-5">
+          <p className="mb-3 text-sm font-bold text-[var(--foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>
+            Main cues
+          </p>
           {topIssues.map((item, index) => (
-            <div key={`${item.message}-${index}`} className="text-sm text-[var(--foreground)] flex items-start gap-2">
+            <div key={`${item.message}-${index}`} className="flex items-start gap-2 py-1.5 text-sm text-[var(--foreground)]">
               <AlertTriangle className={`w-4 h-4 mt-0.5 flex-shrink-0 ${item.type === "error" ? "text-red-400" : item.type === "warning" ? "text-amber-400" : "text-sky-400"}`} />
               <span>{item.message}</span>
             </div>
           ))}
-        </div>
+        </section>
       )}
 
-      <div className="rounded-lg bg-[var(--surface-raised)] px-3 py-3">
+      <section className="rounded-[var(--radius-lg)] bg-[var(--surface)] p-4 sm:p-5">
         <div className="flex items-center gap-2 mb-2">
-          <p className="text-sm font-semibold text-[var(--foreground)]">AI Coach review</p>
-          {coachingLoading && <Loader2 className="w-3.5 h-3.5 animate-spin text-[var(--muted-foreground)]" />}
+          <p className="text-sm font-bold text-[var(--foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>AI Coach review</p>
+          {coachingLoading && <Loader2 className="w-3.5 h-3.5 animate-spin text-[var(--primary-500)]" />}
         </div>
         {coaching ? (
           <div className="space-y-2">
-            <p className="text-sm text-[var(--foreground)]">{coaching.summary}</p>
+            <p className="text-sm leading-relaxed text-[var(--foreground)]">{coaching.summary}</p>
             {coaching.top_cues.slice(0, 3).map((cue, index) => (
               <p key={`${cue}-${index}`} className="text-xs text-[var(--muted-foreground)]">- {cue}</p>
             ))}
@@ -158,7 +175,11 @@ function SessionSummaryCard({
             {analysis.used_cloud_coach ? "Reviewing your set..." : "Local-only summary used for this set."}
           </p>
         )}
-      </div>
+      </section>
+
+      <p className="px-1 text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">
+        Detector {FORM_DETECTOR_VERSION}
+      </p>
     </div>
   );
 }
@@ -225,27 +246,28 @@ function getRunningRepAverage(repMetrics: FormRepMetric[]): number {
 
 function getActiveFeedbackPenalty(items: FormFeedback[]): number {
   const penalty = items.reduce((sum, item) => {
-    if (item.type === "error") return sum + 10;
-    if (item.type === "warning") return sum + 5;
+    if (item.type === "error") return sum + 12;
+    if (item.type === "warning") return sum + 6;
     return sum;
   }, 0);
-  return Math.min(30, penalty);
+  return Math.min(32, penalty);
 }
 
 function getAccumulatedFeedbackPenalty(state: FeedbackPenaltyState): number {
-  return Math.min(45, Math.round((state.errorEvents * 2.5) + (state.warningEvents * 1.25)));
+  return Math.min(24, Math.round((state.errorEvents * 1.1) + (state.warningEvents * 0.45)));
 }
 
 function getAdjustedRunningScore(rawScore: number, activeFeedback: FormFeedback[], penaltyState: FeedbackPenaltyState): number {
   if (rawScore <= 0) return 0;
-  const penalty = Math.max(getActiveFeedbackPenalty(activeFeedback), getAccumulatedFeedbackPenalty(penaltyState));
+  const penalty = Math.min(42, getActiveFeedbackPenalty(activeFeedback) + getAccumulatedFeedbackPenalty(penaltyState));
   return Math.max(0, rawScore - penalty);
 }
 
 function applyFeedbackPenaltyToAnalysis(analysis: FormSessionAnalysis, penaltyState: FeedbackPenaltyState): FormSessionAnalysis {
   if (analysis.reps <= 0) return analysis;
-  const adjustedRealtimeScore = getAdjustedRunningScore(analysis.realtime_score, [], penaltyState);
-  const adjustedFinalScore = Math.min(analysis.score, adjustedRealtimeScore);
+  const accumulatedPenalty = getAccumulatedFeedbackPenalty(penaltyState);
+  const adjustedRealtimeScore = Math.max(0, analysis.realtime_score - accumulatedPenalty);
+  const adjustedFinalScore = Math.max(0, analysis.score - accumulatedPenalty);
   return {
     ...analysis,
     score: adjustedFinalScore,
@@ -253,10 +275,24 @@ function applyFeedbackPenaltyToAnalysis(analysis: FormSessionAnalysis, penaltySt
   };
 }
 
+function recordFeedbackPenalty(
+  penaltyState: FeedbackPenaltyState,
+  timestampMs: number,
+  items: FormFeedback[],
+): FeedbackPenaltyState {
+  if (timestampMs - penaltyState.lastSampleMs < 300) return penaltyState;
+  return {
+    errorEvents: penaltyState.errorEvents + items.filter((item) => item.type === "error").length,
+    warningEvents: penaltyState.warningEvents + items.filter((item) => item.type === "warning").length,
+    lastSampleMs: timestampMs,
+  };
+}
+
 export default function FormChecker({ exerciseId, exerciseName, formRules, onClose }: FormCheckerProps) {
   const { videoRef, isReady, isLoading, error: camError, startCamera, stopCamera } = useWebcam({
     facingMode: "environment",
     zoom: 0.7,
+    autoStart: false,
   });
 
   const canvasContainerRef = useRef<HTMLDivElement | null>(null);
@@ -317,6 +353,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
   const tempoCueExpiryRef = useRef(0);
   const tempTempoFeedbackRef = useRef<FormFeedback[]>([]);
   const finalizingRef = useRef(false);
+  const reviewModeRef = useRef(false);
   const scoringWarmupUntilRef = useRef(0);
   const observedPrimaryRangeRef = useRef<{ min: number; max: number }>({
     min: Number.POSITIVE_INFINITY,
@@ -413,7 +450,17 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
     };
   }, []);
 
+  useEffect(() => {
+    if (!reviewModeRef.current) {
+      void startCamera();
+    }
+    return () => {
+      stopCamera();
+    };
+  }, [startCamera, stopCamera]);
+
   const resetSessionState = useCallback(() => {
+    reviewModeRef.current = false;
     tempoTrackerRef.current.reset();
     jitterDetectorRef.current.reset();
     landmarkSmootherRef.current.reset();
@@ -572,11 +619,14 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
 
       const didSave = await persistSession(finalAnalysis);
       if (didSave) {
+        reviewModeRef.current = true;
         setSessionAnalysis(finalAnalysis);
         stopCamera();
       } else {
         setSessionAnalysis(null);
-        void startCamera();
+        if (!reviewModeRef.current) {
+          void startCamera();
+        }
       }
       sessionStartedRef.current = false;
     } finally {
@@ -722,6 +772,17 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
           }
         }
         const timestampMs = Math.max(0, Math.round(performance.now() - sessionStartRef.current));
+        if (isRunning && trackingLost && completedRepMetricsRef.current.length > 0) {
+          const trackingPenalty: FormFeedback = {
+            type: "warning",
+            message: "Tracking interrupted",
+            source: "stability",
+            timestampMs,
+          };
+          feedbackPenaltyRef.current = recordFeedbackPenalty(feedbackPenaltyRef.current, timestampMs, [trackingPenalty]);
+          const runningAverage = getRunningRepAverage(completedRepMetricsRef.current);
+          setFormScore(getAdjustedRunningScore(runningAverage, [trackingPenalty], feedbackPenaltyRef.current));
+        }
         commitStableFeedback(stableFeedbackRef.current.items, timestampMs, trackingLost);
         animationFrameRef.current = requestAnimationFrame(detectionLoop);
         return;
@@ -765,6 +826,17 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
           setCalibrationMessage("Keep your torso and the working joints visible in frame.");
         } else {
           setCalibrationMessage("Hold still for a moment so tracking can stabilize.");
+        }
+        if (isRunning && sustainedBadFrame && completedRepMetricsRef.current.length > 0) {
+          const calibrationPenalty: FormFeedback = {
+            type: "warning",
+            message: angleStatus === "good" ? "Movement is too unstable to score cleanly" : "Camera angle drifted",
+            source: "stability",
+            timestampMs,
+          };
+          feedbackPenaltyRef.current = recordFeedbackPenalty(feedbackPenaltyRef.current, timestampMs, [calibrationPenalty]);
+          const runningAverage = getRunningRepAverage(completedRepMetricsRef.current);
+          setFormScore(getAdjustedRunningScore(runningAverage, [calibrationPenalty], feedbackPenaltyRef.current));
         }
         commitStableFeedback(stableFeedbackRef.current.items, timestampMs, false);
         animationFrameRef.current = requestAnimationFrame(detectionLoop);
@@ -956,12 +1028,8 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
       const activeScoredFeedback = stableFeedbackRef.current.items.filter(
         (item) => item.type === "error" || item.type === "warning",
       );
-      if (isRunning && !isScoringWarmup && timestampMs - feedbackPenaltyRef.current.lastSampleMs >= 250) {
-        feedbackPenaltyRef.current = {
-          errorEvents: feedbackPenaltyRef.current.errorEvents + activeScoredFeedback.filter((item) => item.type === "error").length,
-          warningEvents: feedbackPenaltyRef.current.warningEvents + activeScoredFeedback.filter((item) => item.type === "warning").length,
-          lastSampleMs: timestampMs,
-        };
+      if (isRunning && !isScoringWarmup) {
+        feedbackPenaltyRef.current = recordFeedbackPenalty(feedbackPenaltyRef.current, timestampMs, activeScoredFeedback);
       }
       const runningAverage = getRunningRepAverage(completedRepMetricsRef.current);
       if (runningAverage > 0) {
@@ -1064,6 +1132,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
   useEffect(() => {
     if (!showFullHeightReview) return;
 
+    reviewModeRef.current = true;
     loopActiveRef.current = false;
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
@@ -1088,6 +1157,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
       return;
     }
 
+    reviewModeRef.current = false;
     resetSessionState();
     sessionStartRef.current = performance.now();
     sessionStartedRef.current = true;
@@ -1099,6 +1169,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
   };
 
   const handleReset = () => {
+    reviewModeRef.current = false;
     loopActiveRef.current = false;
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
@@ -1112,6 +1183,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
   };
 
   const handleClose = async () => {
+    reviewModeRef.current = true;
     if (isRunning) {
       loopActiveRef.current = false;
       setIsRunning(false);
@@ -1179,18 +1251,17 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
       </div>
 
       {showFullHeightReview ? (
-        <div className="flex-1 min-h-0 overflow-y-auto bg-[var(--surface)]">
+        <div className="flex-1 min-h-0 overflow-y-auto bg-[var(--background)]">
           <div className="min-h-full flex flex-col">
-            <div className="px-4 py-4 bg-[var(--surface-overlay)] border-b border-[var(--border)]">
+            <div className="px-4 py-4 bg-[var(--surface)] border-b border-[var(--border)]">
               <div className="flex items-center gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs uppercase tracking-wider text-[var(--muted-foreground)]">Post-set review</p>
-                  <h3 className="text-base font-bold text-[var(--foreground)] truncate">Coach analysis complete</h3>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Post-set review</p>
+                  <h3 className="text-base font-extrabold text-[var(--foreground)] truncate" style={{ fontFamily: "var(--font-poppins)" }}>
+                    Coach analysis complete
+                  </h3>
                 </div>
               </div>
-              <p className="mt-2 text-sm text-[var(--muted-foreground)]">
-                The camera has been stopped. Review the full set breakdown below before starting again.
-              </p>
             </div>
 
             <div className="flex-1 min-h-0">
