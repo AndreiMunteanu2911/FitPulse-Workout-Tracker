@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Activity, ChevronDown, ChevronUp } from "lucide-react";
-import Skeleton from "react-loading-skeleton";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import type { FormLog } from "@/types";
 
 interface FormHistoryPanelProps {
@@ -59,10 +59,8 @@ export default function FormHistoryPanel({ exerciseId }: FormHistoryPanelProps) 
 
   if (loading) {
     return (
-      <div className="space-y-2">
-        {[0, 1, 2].map((i) => (
-          <Skeleton key={i} height={84} className="rounded-lg" />
-        ))}
+      <div className="flex min-h-32 items-center justify-center">
+        <LoadingSpinner size={6} />
       </div>
     );
   }

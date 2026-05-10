@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
-import Skeleton from "react-loading-skeleton";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import Link from "next/link";
 import ModalWrapper from "@/components/ModalWrapper";
 import Button from "@/components/Button";
@@ -353,34 +353,8 @@ export default function WorkoutDetailPage() {
     if (loading) {
         return (
             <ProtectedWrapper>
-                <div className="w-full">
-                    <div className="page-header mb-6">
-                        <Skeleton width={180} height={28} className="mb-2" />
-                        <Skeleton width={200} />
-                    </div>
-                    <div className="grid grid-cols-3 gap-3 mb-6">
-                        <Skeleton height={80} className="rounded-lg" />
-                        <Skeleton height={80} className="rounded-lg" />
-                        <Skeleton height={80} className="rounded-lg" />
-                    </div>
-                    <div className="space-y-4">
-                        {Array.from({ length: 3 }).map((_, i) => (
-                            <div key={i} className="bg-[var(--surface)] rounded-[var(--radius-md)] p-5">
-                                <Skeleton width={120} className="mb-3" />
-                                <div className="grid grid-cols-[2.5rem_3.5rem_1fr_1fr_5rem] gap-2">
-                                    {Array.from({ length: 3 }).map((_, j) => (
-                                        <React.Fragment key={j}>
-                                            <Skeleton height={32} />
-                                            <Skeleton height={32} />
-                                            <Skeleton height={32} />
-                                            <Skeleton height={32} />
-                                            <Skeleton height={32} />
-                                        </React.Fragment>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                <div className="flex min-h-[18rem] w-full items-center justify-center">
+                    <LoadingSpinner />
                 </div>
             </ProtectedWrapper>
         );

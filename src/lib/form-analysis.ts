@@ -225,9 +225,9 @@ export function buildFeedbackSummary(
   postsetFeedback: FormSessionFeedbackItem[],
   coaching: FormCoachingResult | null,
 ): string {
+  void coaching;
   const merged = dedupeFeedback([...realtimeFeedback, ...postsetFeedback]);
   const topMessages = merged.slice(0, 3).map((item) => item.message);
-  if (coaching?.summary) topMessages.unshift(coaching.summary);
   return topMessages.slice(0, 3).join(" ");
 }
 

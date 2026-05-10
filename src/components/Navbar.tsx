@@ -51,7 +51,7 @@ export default function Navbar() {
         </ul>
       </nav>
 
-      <nav className="fixed bottom-0 left-0 right-0 md:hidden z-20 bg-[#5E3FDE]/95 text-white shadow-[0_-12px_34px_rgba(94,63,222,0.25)] backdrop-blur-xl">
+      <nav className="fixed bottom-0 left-0 right-0 md:hidden z-20 bg-[#5E3FDE]/95 pb-[env(safe-area-inset-bottom)] text-white shadow-[0_-12px_34px_rgba(94,63,222,0.25)] backdrop-blur-xl">
         <ul className="flex">
           {mobileTabs.map(({ name, href, Icon }) => {
             const active = pathname === href;
@@ -59,7 +59,7 @@ export default function Navbar() {
               <li key={name} className="flex-1">
                 <Link
                   href={href}
-                  className={`relative flex flex-col items-center justify-center py-2.5 px-1 gap-1 transition-all duration-200 ${
+                  className={`relative flex min-h-[4.25rem] flex-col items-center justify-center gap-1 px-1 py-2 transition-all duration-200 ${
                     active
                       ? "bg-[var(--lime-green)] text-[#4A2FC2]"
                       : "hover:bg-white/[0.08]"

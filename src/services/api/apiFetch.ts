@@ -19,8 +19,17 @@ export type ApiFetchOptions = RequestInit & {
 };
 
 async function parseResponseBody(response: Response): Promise<unknown> {
+  const contentType = response.headers.get("content-type") ?? "";
   const text = await response.text();
   if (!text) return null;
+
+  if (contentType.includes("application/json")) {
+    try {
+      return JSON.parse(text);
+    } catch {
+      return null;
+    }
+  }
 
   try {
     return JSON.parse(text);
@@ -29,10 +38,24 @@ async function parseResponseBody(response: Response): Promise<unknown> {
   }
 }
 
+function getFallbackErrorMessage(response: Response): string {
+  if (response.status === 404) return "Endpoint not found. Please refresh and try again.";
+  if (response.status === 405) return "This action is not allowed here. Please refresh and try again.";
+  if (response.status >= 500) return "Server error. Please try again.";
+  return "Request failed. Please try again.";
+}
+
 function getErrorMessage(body: unknown, fallback: string): string {
   if (body && typeof body === "object" && "error" in body) {
     const value = (body as { error?: unknown }).error;
     if (typeof value === "string" && value.trim()) return value;
+  }
+
+  if (typeof body === "string") {
+    const trimmed = body.trim();
+    if (trimmed && !trimmed.startsWith("<!DOCTYPE") && !trimmed.startsWith("<html")) {
+      return trimmed.slice(0, 180);
+    }
   }
 
   return fallback;
@@ -64,7 +87,7 @@ export async function apiFetch<T>(input: RequestInfo | URL, options: ApiFetchOpt
       throw new AuthRedirectError();
     }
 
-    throw new AppError(getErrorMessage(body, "Request failed. Please try again."));
+    throw new AppError(getErrorMessage(body, getFallbackErrorMessage(response)));
   }
 
   return body as T;

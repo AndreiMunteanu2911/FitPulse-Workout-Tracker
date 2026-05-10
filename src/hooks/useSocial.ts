@@ -85,7 +85,11 @@ export function useSocial(): UseSocialResult {
   }
 
   async function toggleLike(postId: string): Promise<boolean> {
-    const data = await apiFetch<{ liked: boolean }>(`/api/social/posts/${postId}/like`, { method: "POST" });
+    const data = await apiFetch<{ liked: boolean }>(`/api/social/posts/${postId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "toggle_like" }),
+    });
     return data.liked as boolean;
   }
 

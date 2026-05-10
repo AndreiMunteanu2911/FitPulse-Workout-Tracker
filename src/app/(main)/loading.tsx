@@ -1,20 +1,9 @@
-import Skeleton from "react-loading-skeleton";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 export default function Loading() {
   return (
-    <div className="min-h-[60vh] w-full p-8 space-y-4">
-      <Skeleton width={160} height={32} className="mb-6" />
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} height={80} className="rounded-lg" />
-        ))}
-      </div>
-      <Skeleton height={200} className="rounded-lg" />
-      <div className="space-y-3">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton key={i} height={60} className="rounded-lg" />
-        ))}
-      </div>
+    <div className="flex min-h-[60vh] w-full items-center justify-center p-8">
+      <LoadingSpinner />
     </div>
   );
 }

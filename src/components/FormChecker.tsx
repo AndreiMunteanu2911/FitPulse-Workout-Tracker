@@ -2,17 +2,36 @@
 
 import { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import type { NormalizedLandmark, PoseLandmarker } from "@mediapipe/tasks-vision";
-import { Camera, X, RotateCcw, AlertTriangle, CheckCircle, Loader2, Info } from "lucide-react";
+import { X, RotateCcw, AlertTriangle, CheckCircle, Loader2 } from "lucide-react";
 import Button from "@/components/Button";
+import {
+  CameraErrorOverlay,
+  CameraGuideOverlay,
+  FeedbackPanel,
+  PostSetModeNotice,
+  ReviewOverlay,
+  PoseCanvas,
+  StartupOverlay,
+} from "@/components/form-checker/FormCheckerPanels";
+import {
+  getSeverityRank,
+  toJointStatus,
+  type DetectionCadenceConfig,
+  type FormCheckerCameraStatus,
+  type FormFeedback,
+  type JointStatusMap,
+  type StableFeedbackState,
+  type TrackedRuleState,
+} from "@/components/form-checker/types";
 import { useWebcam } from "@/hooks/useWebcam";
 import { initPoseDetector, detectPose, releasePoseDetector } from "@/lib/pose-detector";
+import { apiFetch } from "@/services/api/apiFetch";
 import type {
   ExerciseFormRules,
   FormCoachingResult,
   FormMetricSample,
   FormRepMetric,
   FormSessionAnalysis,
-  FormSessionFeedbackItem,
 } from "@/types";
 import {
   areLandmarksVisible,
@@ -23,11 +42,8 @@ import {
   getSymmetryChecks,
   checkSpinalAlignment,
   LandmarkSmoother,
-  projectAllLandmarks,
-  POSE_CONNECTIONS,
   TempoTracker,
   JitterDetector,
-  type CameraViewStatus,
 } from "@/lib/form-geometry";
 import { resolveExerciseFormRules, type ResolvedExerciseFormRules, type ResolvedFormRule } from "@/lib/form-rules";
 import {
@@ -49,44 +65,11 @@ interface FormCheckerProps {
   onClose: () => void;
 }
 
-type FormCheckerCameraStatus = CameraViewStatus | "calibrating";
-type FormFeedback = FormSessionFeedbackItem;
-type JointVisualStatus = "neutral" | "warning" | "error";
-
-interface TrackedRuleState {
-  failFrames: number;
-  passFrames: number;
-  active: boolean;
-  lastSeenMs: number;
-  severity: FormFeedback["type"];
-  feedback: FormFeedback | null;
-}
-
-interface StableJointStatus {
-  status: JointVisualStatus;
-  expiresAt: number;
-}
-
-type JointStatusMap = Record<number, StableJointStatus>;
-
-interface StableFeedbackState {
-  items: FormFeedback[];
-  jointStatusMap: JointStatusMap;
-  trackingInterrupted: boolean;
-  recentRepDetectedUntilMs: number;
-}
-
-interface DetectionCadenceConfig {
-  targetFps: number;
-  minFrameIntervalMs: number;
-  missingPoseGraceFrames: number;
-  enterCalibrationFrames: number;
-  exitCalibrationFrames: number;
-  feedbackTtlMs: number;
-  clearFrames: number;
-  minRepRangeDegrees: number;
-  primaryLossResetFrames: number;
-}
+type FeedbackPenaltyState = {
+  errorEvents: number;
+  warningEvents: number;
+  lastSampleMs: number;
+};
 
 const DETECTION_CONFIG: DetectionCadenceConfig = {
   targetFps: 28,
@@ -100,248 +83,8 @@ const DETECTION_CONFIG: DetectionCadenceConfig = {
   primaryLossResetFrames: 8,
 };
 
-function getSeverityRank(status: JointVisualStatus): number {
-  if (status === "error") return 2;
-  if (status === "warning") return 1;
-  return 0;
-}
-
-function toJointStatus(type: FormFeedback["type"]): JointVisualStatus {
-  if (type === "error") return "error";
-  if (type === "warning") return "warning";
-  return "neutral";
-}
-
 function getStableFeedbackKey(items: FormFeedback[]): string {
   return items.map((item) => `${item.type}:${item.message}`).join("|");
-}
-
-function getPointVisualStatus(jointStatusMap: JointStatusMap, index: number, now: number): JointVisualStatus {
-  const visual = jointStatusMap[index];
-  if (!visual || visual.expiresAt < now) return "neutral";
-  return visual.status;
-}
-
-function getSegmentVisualStatus(jointStatusMap: JointStatusMap, a: number, b: number, now: number): JointVisualStatus {
-  const first = getPointVisualStatus(jointStatusMap, a, now);
-  const second = getPointVisualStatus(jointStatusMap, b, now);
-  return getSeverityRank(first) >= getSeverityRank(second) ? first : second;
-}
-
-function getSkeletonColor(status: JointVisualStatus, alpha: number): string {
-  if (status === "error") return `rgba(239, 68, 68, ${alpha})`;
-  if (status === "warning") return `rgba(245, 158, 11, ${alpha})`;
-  return `rgba(59, 130, 246, ${alpha})`;
-}
-
-function CameraGuideOverlay({
-  status,
-  calibrationMessage,
-  showCalibration,
-}: {
-  status: FormCheckerCameraStatus;
-  calibrationMessage: string;
-  showCalibration: boolean;
-}) {
-  if (status === "good") return null;
-  if (status === "calibrating" && !showCalibration) return null;
-
-  const messages: Record<string, { title: string; desc: string }> = {
-    calibrating: {
-      title: "Calibrating",
-      desc: calibrationMessage,
-    },
-    "too-far": {
-      title: "Too far from camera",
-      desc: "Move closer so your full body fills most of the frame.",
-    },
-    "not-detected": {
-      title: "No pose detected",
-      desc: "Make sure your full body is visible and there is adequate lighting.",
-    },
-    "front-view": {
-      title: "Adjust camera angle",
-      desc: "A side or three-quarter camera angle works better for this exercise.",
-    },
-    "back-view": {
-      title: "Turn toward the camera",
-      desc: "Make sure the exercise stays visible from the expected angle.",
-    },
-  };
-
-  const msg = messages[status] ?? messages["not-detected"];
-
-  return (
-    <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-20">
-      <div className="bg-[var(--surface-overlay)] rounded-xl p-6 max-w-sm mx-4 text-center border border-[var(--border)]">
-        <AlertTriangle className="w-10 h-10 text-amber-400 mx-auto mb-3" />
-        <p className="font-bold text-[var(--foreground)] mb-1">{msg.title}</p>
-        <p className="text-sm text-[var(--muted-foreground)]">{msg.desc}</p>
-      </div>
-    </div>
-  );
-}
-
-function SkeletonCanvas({
-  landmarks,
-  jointStatusMap,
-  canvasWidth,
-  canvasHeight,
-  sourceWidth,
-  sourceHeight,
-}: {
-  landmarks: NormalizedLandmark[] | null;
-  jointStatusMap: JointStatusMap;
-  canvasWidth: number;
-  canvasHeight: number;
-  sourceWidth: number;
-  sourceHeight: number;
-}) {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-    if (!landmarks) return;
-
-    const projected = projectAllLandmarks(landmarks, canvasWidth, canvasHeight, sourceWidth, sourceHeight);
-    const now = performance.now();
-
-    ctx.lineWidth = 3;
-    for (const [a, b] of POSE_CONNECTIONS) {
-      const pa = projected[a];
-      const pb = projected[b];
-      if (!pa || !pb) continue;
-
-      const visibility = Math.min(landmarks[a]?.visibility ?? 0, landmarks[b]?.visibility ?? 0);
-      const alpha = Math.max(0.18, Math.min(0.85, 0.25 + (visibility * 0.6)));
-      const status = getSegmentVisualStatus(jointStatusMap, a, b, now);
-      ctx.strokeStyle = getSkeletonColor(status, alpha);
-      ctx.beginPath();
-      ctx.moveTo(pa.x, pa.y);
-      ctx.lineTo(pb.x, pb.y);
-      ctx.stroke();
-    }
-
-    for (let i = 0; i < projected.length; i += 1) {
-      const point = projected[i];
-      if (!point) continue;
-      const status = getPointVisualStatus(jointStatusMap, i, now);
-      const visibility = landmarks[i]?.visibility ?? 0;
-      const alpha = Math.max(0.25, Math.min(0.95, 0.3 + (visibility * 0.65)));
-      ctx.beginPath();
-      ctx.arc(point.x, point.y, status === "neutral" ? 4 : 6, 0, 2 * Math.PI);
-      ctx.fillStyle = getSkeletonColor(status, alpha);
-      ctx.fill();
-    }
-  }, [landmarks, canvasWidth, canvasHeight, jointStatusMap, sourceWidth, sourceHeight]);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      width={canvasWidth}
-      height={canvasHeight}
-      className="absolute inset-0 z-10 pointer-events-none"
-    />
-  );
-}
-
-const MAX_VISIBLE_CUES = 3;
-
-function FeedbackPanel({
-  feedback,
-  repCount,
-  formScore,
-  trackingInterrupted,
-  recentRepDetected,
-}: {
-  feedback: FormFeedback[];
-  repCount: number;
-  formScore: number;
-  trackingInterrupted: boolean;
-  recentRepDetected: boolean;
-}) {
-  const errors = feedback.filter((item) => item.type === "error");
-  const warnings = feedback.filter((item) => item.type === "warning");
-  const infos = feedback.filter((item) => item.type === "info");
-  const visibleCues = [...errors, ...warnings, ...infos].slice(0, MAX_VISIBLE_CUES);
-  const hasRepScore = repCount > 0;
-
-  return (
-    <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/85 via-black/50 to-transparent z-[15]">
-      <div className="flex items-end justify-between mb-2">
-        <div className="flex flex-col gap-1 flex-1 min-w-0 pr-4">
-          {visibleCues.length === 0 ? (
-            <div className="flex items-center gap-2 transition-all duration-200">
-              {trackingInterrupted ? (
-                <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />
-              ) : (
-                <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-              )}
-              <span className={`text-sm font-semibold ${trackingInterrupted ? "text-amber-300" : "text-emerald-300"}`}>
-                {trackingInterrupted ? "Tracking interrupted" : recentRepDetected ? "Rep detected" : "Tracking"}
-              </span>
-            </div>
-          ) : (
-            visibleCues.map((cue, index) => (
-              <div key={`${cue.message}-${index}`} className="flex items-center gap-2 transition-all duration-200">
-                <AlertTriangle
-                  className={`w-4 h-4 flex-shrink-0 ${
-                    cue.type === "error" ? "text-red-400" : cue.type === "warning" ? "text-amber-400" : "text-sky-400"
-                  }`}
-                />
-                <span
-                  className={`text-sm font-medium leading-tight ${
-                    cue.type === "error"
-                      ? "text-red-300"
-                      : cue.type === "warning"
-                        ? "text-amber-300"
-                        : "text-sky-300"
-                  }`}
-                >
-                  {cue.message}
-                </span>
-              </div>
-            ))
-          )}
-        </div>
-
-        <div className="flex items-center gap-4 flex-shrink-0">
-          <div className="text-right">
-            <p className="text-[10px] text-white/60 uppercase tracking-wider">Reps</p>
-            <p className="text-xl font-bold text-white leading-none">{repCount}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-[10px] text-white/60 uppercase tracking-wider">Score</p>
-            <p
-              className={`text-xl font-bold leading-none ${
-                !hasRepScore ? "text-white/70" : formScore >= 80 ? "text-emerald-400" : formScore >= 60 ? "text-amber-400" : "text-red-400"
-              }`}
-            >
-              {hasRepScore ? `${formScore}%` : "--"}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all duration-500 ${
-            !hasRepScore ? "bg-white/30" : formScore >= 80 ? "bg-emerald-400" : formScore >= 60 ? "bg-amber-400" : "bg-red-400"
-          }`}
-          style={{ width: `${hasRepScore ? formScore : 12}%` }}
-        />
-      </div>
-      {!hasRepScore && (
-        <p className="mt-2 text-xs text-white/60">Detecting first rep...</p>
-      )}
-    </div>
-  );
 }
 
 function SessionSummaryCard({
@@ -405,7 +148,7 @@ function SessionSummaryCard({
           <div className="space-y-2">
             <p className="text-sm text-[var(--foreground)]">{coaching.summary}</p>
             {coaching.top_cues.slice(0, 3).map((cue, index) => (
-              <p key={`${cue}-${index}`} className="text-xs text-[var(--muted-foreground)]">• {cue}</p>
+              <p key={`${cue}-${index}`} className="text-xs text-[var(--muted-foreground)]">- {cue}</p>
             ))}
           </div>
         ) : coachingError ? (
@@ -415,42 +158,6 @@ function SessionSummaryCard({
             {analysis.used_cloud_coach ? "Reviewing your set..." : "Local-only summary used for this set."}
           </p>
         )}
-      </div>
-    </div>
-  );
-}
-
-function ReviewOverlay({
-  visible,
-}: {
-  visible: boolean;
-}) {
-  if (!visible) return null;
-
-  return (
-    <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-overlay)] px-6 py-5 text-center">
-        <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-sky-400" />
-        <p className="text-sm font-semibold text-[var(--foreground)]">Reviewing your set...</p>
-        <p className="mt-1 text-xs text-[var(--muted-foreground)]">Please wait while we finish the post-set analysis.</p>
-      </div>
-    </div>
-  );
-}
-
-function StartupOverlay({
-  visible,
-}: {
-  visible: boolean;
-}) {
-  if (!visible) return null;
-
-  return (
-    <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-overlay)] px-6 py-5 text-center">
-        <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-sky-400" />
-        <p className="text-sm font-semibold text-[var(--foreground)]">Starting detection...</p>
-        <p className="mt-1 text-xs text-[var(--muted-foreground)]">Please wait while the camera and pose tracking warm up.</p>
       </div>
     </div>
   );
@@ -516,6 +223,36 @@ function getRunningRepAverage(repMetrics: FormRepMetric[]): number {
   return Math.round(repMetrics.reduce((sum, rep) => sum + rep.score, 0) / repMetrics.length);
 }
 
+function getActiveFeedbackPenalty(items: FormFeedback[]): number {
+  const penalty = items.reduce((sum, item) => {
+    if (item.type === "error") return sum + 10;
+    if (item.type === "warning") return sum + 5;
+    return sum;
+  }, 0);
+  return Math.min(30, penalty);
+}
+
+function getAccumulatedFeedbackPenalty(state: FeedbackPenaltyState): number {
+  return Math.min(45, Math.round((state.errorEvents * 2.5) + (state.warningEvents * 1.25)));
+}
+
+function getAdjustedRunningScore(rawScore: number, activeFeedback: FormFeedback[], penaltyState: FeedbackPenaltyState): number {
+  if (rawScore <= 0) return 0;
+  const penalty = Math.max(getActiveFeedbackPenalty(activeFeedback), getAccumulatedFeedbackPenalty(penaltyState));
+  return Math.max(0, rawScore - penalty);
+}
+
+function applyFeedbackPenaltyToAnalysis(analysis: FormSessionAnalysis, penaltyState: FeedbackPenaltyState): FormSessionAnalysis {
+  if (analysis.reps <= 0) return analysis;
+  const adjustedRealtimeScore = getAdjustedRunningScore(analysis.realtime_score, [], penaltyState);
+  const adjustedFinalScore = Math.min(analysis.score, adjustedRealtimeScore);
+  return {
+    ...analysis,
+    score: adjustedFinalScore,
+    realtime_score: adjustedRealtimeScore,
+  };
+}
+
 export default function FormChecker({ exerciseId, exerciseName, formRules, onClose }: FormCheckerProps) {
   const { videoRef, isReady, isLoading, error: camError, startCamera, stopCamera } = useWebcam({
     facingMode: "environment",
@@ -575,6 +312,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
   const currentRepFeedbackRef = useRef<FormFeedback[]>([]);
   const completedRepMetricsRef = useRef<FormRepMetric[]>([]);
   const realtimeFeedbackLogRef = useRef<FormFeedback[]>([]);
+  const feedbackPenaltyRef = useRef<FeedbackPenaltyState>({ errorEvents: 0, warningEvents: 0, lastSampleMs: 0 });
   const recorderRef = useRef<LandmarkStreamRecorder | null>(null);
   const tempoCueExpiryRef = useRef(0);
   const tempTempoFeedbackRef = useRef<FormFeedback[]>([]);
@@ -707,6 +445,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
     currentRepFeedbackRef.current = [];
     completedRepMetricsRef.current = [];
     realtimeFeedbackLogRef.current = [];
+    feedbackPenaltyRef.current = { errorEvents: 0, warningEvents: 0, lastSampleMs: 0 };
     tempTempoFeedbackRef.current = [];
     tempoCueExpiryRef.current = 0;
     scoringWarmupUntilRef.current = 0;
@@ -733,7 +472,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
     const controller = new AbortController();
     const timeoutId = window.setTimeout(() => controller.abort(), COACHING_TIMEOUT_MS);
     try {
-      const response = await fetch("/api/form-logs/coaching", {
+      const payload = await apiFetch<{ coaching?: FormCoachingResult | null; model?: string | null }>("/api/form-logs/coaching", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         signal: controller.signal,
@@ -743,13 +482,6 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
           analysis,
         }),
       });
-
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        throw new Error(payload.error ?? "Coach request failed");
-      }
-
-      const payload = await response.json();
       return {
         coaching: payload.coaching ?? null,
         cloudModel: payload.model ?? null,
@@ -772,7 +504,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
   const persistSession = useCallback(async (analysis: FormSessionAnalysis): Promise<boolean> => {
     setIsSaving(true);
     try {
-      const response = await fetch("/api/form-logs", {
+      await apiFetch("/api/form-logs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -780,10 +512,6 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
           ...analysis,
         }),
       });
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        throw new Error(payload.error ?? "Failed to save session");
-      }
       setSessionSaved(true);
       return true;
     } catch (error) {
@@ -803,9 +531,10 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
       const durationMs = Math.round(performance.now() - sessionStartRef.current);
       const rulesConfidence = resolvedRules?.confidence ?? formRules?.confidence ?? 0;
       const realtimeFeedback = dedupeFeedback(realtimeFeedbackLogRef.current).slice(0, 20);
-      const localAnalysis = buildSessionAnalysis({
+      const rawRealtimeScore = getRunningRepAverage(completedRepMetricsRef.current);
+      const localAnalysis = applyFeedbackPenaltyToAnalysis(buildSessionAnalysis({
         durationMs,
-        realtimeScore: getRunningRepAverage(completedRepMetricsRef.current),
+        realtimeScore: rawRealtimeScore,
         rulesConfidence,
         reps: repCountRef.current,
         realtimeFeedback,
@@ -813,16 +542,16 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
         landmarkStream: recorderRef.current?.getSamples() ?? [],
         recorder: recorderRef.current ?? new LandmarkStreamRecorder(getRequiredLandmarks(resolvedRules)),
         coaching: null,
-        usedCloudCoach: shouldUseCloudCoaching(formRules, { score: getRunningRepAverage(completedRepMetricsRef.current), rules_confidence: rulesConfidence, reps: repCountRef.current }),
+        usedCloudCoach: shouldUseCloudCoaching(formRules, { score: rawRealtimeScore, rules_confidence: rulesConfidence, reps: repCountRef.current }),
         cloudModel: null,
-      });
+      }), feedbackPenaltyRef.current);
 
       let finalAnalysis = localAnalysis;
       const { coaching, cloudModel } = await maybeRequestCoaching(localAnalysis);
       if (coaching) {
-        finalAnalysis = buildSessionAnalysis({
+        finalAnalysis = applyFeedbackPenaltyToAnalysis(buildSessionAnalysis({
           durationMs,
-          realtimeScore: getRunningRepAverage(completedRepMetricsRef.current),
+          realtimeScore: rawRealtimeScore,
           rulesConfidence,
           reps: repCountRef.current,
           realtimeFeedback,
@@ -832,7 +561,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
           coaching,
           usedCloudCoach: true,
           cloudModel,
-        });
+        }), feedbackPenaltyRef.current);
       } else if (localAnalysis.used_cloud_coach) {
         finalAnalysis = {
           ...localAnalysis,
@@ -844,6 +573,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
       const didSave = await persistSession(finalAnalysis);
       if (didSave) {
         setSessionAnalysis(finalAnalysis);
+        stopCamera();
       } else {
         setSessionAnalysis(null);
         void startCamera();
@@ -851,8 +581,9 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
       sessionStartedRef.current = false;
     } finally {
       finalizingRef.current = false;
+      setStartingDetection(false);
     }
-  }, [formRules, getRequiredLandmarks, maybeRequestCoaching, persistSession, resolvedRules, startCamera]);
+  }, [formRules, getRequiredLandmarks, maybeRequestCoaching, persistSession, resolvedRules, startCamera, stopCamera]);
 
   const commitStableFeedback = useCallback((items: FormFeedback[], timestampMs: number, trackingLost = false) => {
     const now = performance.now();
@@ -1222,6 +953,21 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
       const dedupedFeedback = dedupeFeedback(currentFeedback);
       commitStableFeedback(dedupedFeedback, timestampMs, false);
 
+      const activeScoredFeedback = stableFeedbackRef.current.items.filter(
+        (item) => item.type === "error" || item.type === "warning",
+      );
+      if (isRunning && !isScoringWarmup && timestampMs - feedbackPenaltyRef.current.lastSampleMs >= 250) {
+        feedbackPenaltyRef.current = {
+          errorEvents: feedbackPenaltyRef.current.errorEvents + activeScoredFeedback.filter((item) => item.type === "error").length,
+          warningEvents: feedbackPenaltyRef.current.warningEvents + activeScoredFeedback.filter((item) => item.type === "warning").length,
+          lastSampleMs: timestampMs,
+        };
+      }
+      const runningAverage = getRunningRepAverage(completedRepMetricsRef.current);
+      if (runningAverage > 0) {
+        setFormScore(getAdjustedRunningScore(runningAverage, activeScoredFeedback, feedbackPenaltyRef.current));
+      }
+
       currentRepFeedbackRef.current = dedupeFeedback([
         ...currentRepFeedbackRef.current,
         ...stableFeedbackRef.current.items,
@@ -1251,7 +997,11 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
           );
           if (repMetric) {
             completedRepMetricsRef.current.push(repMetric);
-            setFormScore(getRunningRepAverage(completedRepMetricsRef.current));
+            setFormScore(getAdjustedRunningScore(
+              getRunningRepAverage(completedRepMetricsRef.current),
+              activeScoredFeedback,
+              feedbackPenaltyRef.current,
+            ));
             if (repMetric.tempoFlags.length > 0) {
               tempTempoFeedbackRef.current = repMetric.tempoFlags.map((flag) => ({
                 type: flag === "eccentric_too_fast" ? "warning" : "info",
@@ -1342,6 +1092,9 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
     sessionStartRef.current = performance.now();
     sessionStartedRef.current = true;
     setStartingDetection(true);
+    if (!isReady) {
+      await startCamera();
+    }
     setIsRunning(true);
   };
 
@@ -1370,6 +1123,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
   };
 
   const startButtonLabel = () => {
+    if (showFullHeightReview) return "Start Again";
     if (isRunning) return "Finish Set";
     if (!detectorReady || !isReady) return "Loading...";
     if (cameraStatus === "not-detected") return "Waiting for pose...";
@@ -1378,9 +1132,14 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
     return "Start Detection";
   };
 
-  const isButtonLoading = (!isReady || !detectorReady) && !isRunning;
+  const isButtonLoading = !showFullHeightReview && (!isReady || !detectorReady) && !isRunning;
   const isReviewing = coachingLoading || isSaving;
   const isBusy = isReviewing || startingDetection;
+  const primaryActionDisabled =
+    rulesNotApplicable
+    || isBusy
+    || !detectorReady
+    || (!showFullHeightReview && (!isReady || cameraStatus === "not-detected"));
 
   return (
     <div className="fixed inset-0 z-50 bg-black flex flex-col">
@@ -1403,6 +1162,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
             disabled={isBusy}
             className="w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
             title="Reset session"
+            aria-label="Reset session"
           >
             <RotateCcw className="w-4 h-4 text-white" />
           </button>
@@ -1411,6 +1171,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
             disabled={isBusy}
             className="w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
             title="Close"
+            aria-label="Close form checker"
           >
             <X className="w-4 h-4 text-white" />
           </button>
@@ -1448,7 +1209,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
             style={{ transform: "scaleX(-1)" }}
           />
 
-          <SkeletonCanvas
+          <PoseCanvas
             landmarks={landmarks}
             jointStatusMap={jointStatusMap}
             canvasWidth={canvasSize.width}
@@ -1463,14 +1224,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
           />
 
           {isRunning && (rulesNotApplicable || postSetOnly) && cameraStatus === "good" && (
-            <div className="absolute top-4 left-4 right-4 z-20">
-              <div className="flex items-start gap-2 bg-amber-900/80 backdrop-blur-sm border border-amber-500/30 rounded-lg px-3 py-2">
-                <Info className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-amber-300 leading-snug">
-                  This exercise relies on post-set review. We will still record the movement pattern locally.
-                </p>
-              </div>
-            </div>
+            <PostSetModeNotice />
           )}
 
           {isRunning && cameraStatus === "good" && isCalibrated && (
@@ -1493,14 +1247,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
           )}
 
           {camError && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black z-20">
-              <div className="text-center px-6">
-                <Camera className="w-12 h-12 text-red-400 mx-auto mb-3" />
-                <p className="font-bold text-white mb-1">Camera Error</p>
-                <p className="text-sm text-white/60 mb-4">{camError}</p>
-                <Button onClick={startCamera}>Try Again</Button>
-              </div>
-            </div>
+            <CameraErrorOverlay error={camError} onRetry={startCamera} />
           )}
         </div>
       )}
@@ -1512,7 +1259,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
         <div className="flex gap-3 items-center">
           <Button
             onClick={handleToggle}
-            disabled={!isReady || !detectorReady || cameraStatus === "not-detected" || rulesNotApplicable || isBusy}
+            disabled={primaryActionDisabled}
             className="flex-1"
           >
             {isButtonLoading ? (
