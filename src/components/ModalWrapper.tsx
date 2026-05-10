@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -29,25 +29,42 @@ export default function ModalWrapper({
         setMounted(true);
     }, []);
 
-    const variants = {
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                onClose();
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [isOpen, onClose]);
+
+    const variants = useMemo(() => ({
         center: {
-            initial: { y: "100vh", opacity: 0 },
+            initial: { y: 18, scale: 0.98, opacity: 0 },
             animate: { y: 0, opacity: 1 },
-            exit: { y: "100vh", opacity: 0 },
+            exit: { y: 12, scale: 0.98, opacity: 0 },
         },
         bottom: {
             initial: { y: "100vh" },
             animate: { y: 0 },
             exit: { y: "100vh" },
         },
-    };
+    }), []);
 
-    // Determine alignment classes based on position
     const alignmentClasses = position === "bottom"
-        ? "items-end pb-0"
-        : "items-center p-4";
+        ? "items-end px-0 pb-0"
+        : "items-center p-4 sm:p-6";
 
-    // Determine border radius classes based on position
     const borderRadiusClasses = position === "bottom"
         ? "rounded-t-[var(--radius-lg)]"
         : "rounded-[var(--radius-lg)]";
@@ -64,6 +81,8 @@ export default function ModalWrapper({
                     key="modal-overlay"
                     className={`fixed inset-0 flex justify-center bg-black/60 backdrop-blur-sm ${alignmentClasses} ${className}`}
                     style={{ zIndex }}
+                    role="dialog"
+                    aria-modal="true"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -71,7 +90,7 @@ export default function ModalWrapper({
                 >
                     <motion.div
                         key="modal-container"
-                        className={`bg-[var(--surface)] relative flex w-full flex-col ${borderRadiusClasses} ${containerClassName}`}
+                        className={`relative flex max-h-[calc(100dvh-2rem)] w-full flex-col overflow-hidden bg-[var(--surface)] shadow-[var(--shadow-lg)] ${borderRadiusClasses} ${containerClassName}`}
                         style={{ willChange: "transform" }}
                         onClick={(e) => e.stopPropagation()}
                         initial={variants[position].initial}

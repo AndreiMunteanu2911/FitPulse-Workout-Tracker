@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, ChevronLeft, Edit3, Eye, Loader2, Plus, Save, Search, Sparkles, Trash2, X } from "lucide-react";
-import Skeleton from "react-loading-skeleton";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import Button from "@/components/Button";
 import ModalWrapper from "@/components/ModalWrapper";
 import BulkAiGeneratedConfirmModal from "@/components/admin/BulkAiGeneratedConfirmModal";
@@ -83,7 +83,7 @@ export default function AdminFormRulesPage() {
     }
 
     try {
-      const res = await fetch(`/api/admin/exercises/list?limit=${PAGE_SIZE}&offset=${offset}`);
+      const res = await fetch(`/api/admin/exercises?limit=${PAGE_SIZE}&offset=${offset}`);
       if (res.ok) {
         const json = await res.json();
         const nextExercises = (json.exercises ?? []) as Exercise[];
@@ -294,15 +294,8 @@ export default function AdminFormRulesPage() {
 
   if (!isAdmin || loading) {
     return (
-      <div className="w-full">
-        <Skeleton width={100} height={36} className="mb-4" />
-        <Skeleton width={240} height={24} className="mb-6" />
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
-          {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} height={64} className="rounded-lg" />)}
-        </div>
-        <div className="space-y-3">
-          {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} height={72} className="rounded-lg" />)}
-        </div>
+      <div className="flex min-h-[18rem] w-full items-center justify-center">
+        <LoadingSpinner />
       </div>
     );
   }

@@ -1,4 +1,3 @@
-import Skeleton from "react-loading-skeleton";
 import { useState } from "react";
 import type { WorkoutExercise } from "@/types";
 
@@ -21,7 +20,7 @@ function ExerciseThumbnail({ src }: { src: string }) {
     const [loaded, setLoaded] = useState(false);
     return (
         <div className="relative w-full h-full bg-[var(--surface-raised)] overflow-hidden">
-            {!loaded && <Skeleton className="absolute inset-0" />}
+            {!loaded && <div className="absolute inset-0 bg-[var(--surface-raised)]" />}
             <img
                 src={src}
                 alt=""

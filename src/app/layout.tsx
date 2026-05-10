@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import { Poppins, League_Spartan } from "next/font/google";
-import { SkeletonTheme } from "react-loading-skeleton";
-import "react-loading-skeleton/dist/skeleton.css";
 import "./globals.css";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import MobileRuntimeBridge from "@/components/MobileRuntimeBridge";
@@ -43,12 +41,7 @@ export default function RootLayout({
         <ThemeProvider>
           <MobileRuntimeBridge />
           <ErrorBoundary>
-            <SkeletonTheme
-              borderRadius="var(--radius-md)"
-              duration={1.5}
-            >
-              {children}
-            </SkeletonTheme>
+            {children}
           </ErrorBoundary>
         </ThemeProvider>
       </body>

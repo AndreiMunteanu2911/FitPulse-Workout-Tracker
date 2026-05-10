@@ -1,5 +1,8 @@
 "use client";
 
+import { useCallback } from "react";
+import { apiFetch } from "@/services/api/apiFetch";
+
 export interface WorkoutTemplate {
   id: string;
   user_id: string;
@@ -26,58 +29,48 @@ export interface TemplateExercise {
 }
 
 export function useWorkoutTemplates() {
-  const fetchTemplates = async (): Promise<WorkoutTemplate[]> => {
-    const res = await fetch("/api/templates");
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to fetch templates");
+  const fetchTemplates = useCallback(async (): Promise<WorkoutTemplate[]> => {
+    const data = await apiFetch<{ templates?: WorkoutTemplate[] }>("/api/templates");
     return data.templates || [];
-  };
+  }, []);
 
-  const fetchTemplate = async (templateId: string): Promise<WorkoutTemplate> => {
-    const res = await fetch(`/api/templates?templateId=${encodeURIComponent(templateId)}`);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to fetch template");
+  const fetchTemplate = useCallback(async (templateId: string): Promise<WorkoutTemplate> => {
+    const data = await apiFetch<{ template: WorkoutTemplate }>(`/api/templates?templateId=${encodeURIComponent(templateId)}`);
     return data.template;
-  };
+  }, []);
 
-  const createTemplate = async (data: {
+  const createTemplate = useCallback(async (data: {
     name: string;
     description?: string;
     exercises?: { exercise_id: string }[];
   }): Promise<WorkoutTemplate> => {
-    const res = await fetch("/api/templates", {
+    const resData = await apiFetch<{ template: WorkoutTemplate }>("/api/templates", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-    const resData = await res.json();
-    if (!res.ok) throw new Error(resData.error || "Failed to create template");
     return resData.template;
-  };
+  }, []);
 
-  const updateTemplate = async (data: {
+  const updateTemplate = useCallback(async (data: {
     id: string;
     name?: string;
     description?: string;
     exercises?: { exercise_id: string }[];
   }): Promise<WorkoutTemplate> => {
-    const res = await fetch("/api/templates", {
+    const resData = await apiFetch<{ template: WorkoutTemplate }>("/api/templates", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-    const resData = await res.json();
-    if (!res.ok) throw new Error(resData.error || "Failed to update template");
     return resData.template;
-  };
+  }, []);
 
-  const deleteTemplate = async (id: string): Promise<void> => {
-    const res = await fetch(`/api/templates?id=${id}`, {
+  const deleteTemplate = useCallback(async (id: string): Promise<void> => {
+    await apiFetch(`/api/templates?id=${id}`, {
       method: "DELETE",
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to delete template");
-  };
+  }, []);
 
   return {
     fetchTemplates,
