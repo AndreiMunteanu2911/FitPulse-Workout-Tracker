@@ -4,6 +4,10 @@ import { useCallback } from "react";
 import { apiFetch } from "@/services/api/apiFetch";
 import type { Set as WorkoutSet, Workout } from "@/types";
 
+function isMissingSetError(error: unknown): boolean {
+  return error instanceof Error && error.message === "Set not found or unauthorized";
+}
+
 export function useWorkout() {
   const getDraftWorkout = useCallback(async () => {
     const data = await apiFetch<{ workout: Workout | null }>("/api/workouts/draft");
@@ -53,15 +57,25 @@ export function useWorkout() {
   }, []);
 
   const updateSet = useCallback(async (id: string, updates: { reps?: number; weight?: number }) => {
-    await apiFetch(`/api/sets/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updates),
-    });
+    try {
+      await apiFetch(`/api/sets/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      });
+    } catch (error) {
+      if (isMissingSetError(error)) return;
+      throw error;
+    }
   }, []);
 
   const deleteSet = useCallback(async (id: string) => {
-    await apiFetch(`/api/sets/${id}`, { method: "DELETE" });
+    try {
+      await apiFetch(`/api/sets/${id}`, { method: "DELETE" });
+    } catch (error) {
+      if (isMissingSetError(error)) return;
+      throw error;
+    }
   }, []);
 
   return {
