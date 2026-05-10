@@ -247,20 +247,20 @@ function getRunningRepAverage(repMetrics: FormRepMetric[]): number {
 
 function getActiveFeedbackPenalty(items: FormFeedback[]): number {
   const penalty = items.reduce((sum, item) => {
-    if (item.type === "error") return sum + 12;
-    if (item.type === "warning") return sum + 6;
+    if (item.type === "error") return sum + 10;
+    if (item.type === "warning") return sum + 4;
     return sum;
   }, 0);
-  return Math.min(32, penalty);
+  return Math.min(26, penalty);
 }
 
 function getAccumulatedFeedbackPenalty(state: FeedbackPenaltyState): number {
-  return Math.min(24, Math.round((state.errorEvents * 1.1) + (state.warningEvents * 0.45)));
+  return Math.min(18, Math.round((state.errorEvents * 0.9) + (state.warningEvents * 0.3)));
 }
 
 function getAdjustedRunningScore(rawScore: number, activeFeedback: FormFeedback[], penaltyState: FeedbackPenaltyState): number {
   if (rawScore <= 0) return 0;
-  const penalty = Math.min(42, getActiveFeedbackPenalty(activeFeedback) + getAccumulatedFeedbackPenalty(penaltyState));
+  const penalty = Math.min(34, getActiveFeedbackPenalty(activeFeedback) + getAccumulatedFeedbackPenalty(penaltyState));
   return Math.max(0, rawScore - penalty);
 }
 
