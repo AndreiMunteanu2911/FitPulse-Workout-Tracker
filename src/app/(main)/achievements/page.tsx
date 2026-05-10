@@ -6,21 +6,22 @@ import ProtectedWrapper from "@/components/ProtectedWrapper";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import type { Achievement } from "@/types";
 import {
-  ArrowLeft,
-  Trophy,
-  Dumbbell,
   Activity,
-  TrendingUp,
-  Star,
+  ArrowLeft,
   Award,
-  Zap,
-  Flame,
-  Rocket,
-  Target,
-  Medal,
   BarChart2,
-  Crown,
   Check,
+  CheckCircle2,
+  Crown,
+  Dumbbell,
+  Flame,
+  Medal,
+  Rocket,
+  Star,
+  Target,
+  TrendingUp,
+  Trophy,
+  Zap,
   type LucideIcon,
 } from "lucide-react";
 import { ChartBarIncreasing } from "lucide-react";
@@ -42,67 +43,26 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Crown,
 };
 
+type CategoryKey = Achievement["category"];
+
+const CATEGORY_META: Record<CategoryKey, { label: string; icon: LucideIcon }> = {
+  workouts: { label: "Workouts", icon: Dumbbell },
+  streaks: { label: "Streaks", icon: Flame },
+  records: { label: "Records", icon: Trophy },
+  volume: { label: "Volume", icon: BarChart2 },
+};
+
 function AchievementIcon({ name, className }: { name: string; className?: string }) {
   const Icon = ICON_MAP[name] ?? Trophy;
   return <Icon className={className} aria-hidden="true" />;
 }
 
-type CategoryKey = Achievement["category"];
-
-const CATEGORY_META: Record<
-  CategoryKey,
-  { label: string; colorVar: string; trackVar: string; headerBg: string }
-> = {
-  workouts: { label: "Workouts", colorVar: "var(--primary-600)", trackVar: "var(--primary-100)", headerBg: "var(--primary-50)" },
-  streaks: { label: "Streaks", colorVar: "var(--primary-500)", trackVar: "var(--primary-100)", headerBg: "var(--primary-50)" },
-  records: { label: "Records", colorVar: "var(--primary-700)", trackVar: "var(--primary-100)", headerBg: "var(--primary-50)" },
-  volume: { label: "Volume", colorVar: "var(--primary-400)", trackVar: "var(--primary-100)", headerBg: "var(--primary-50)" },
-};
-
-function CategoryRing({
-  unlocked,
-  total,
-  colorVar,
-  trackVar,
-}: {
-  unlocked: number;
-  total: number;
-  colorVar: string;
-  trackVar: string;
-}) {
-  const size = 64;
-  const strokeWidth = 6;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference * (1 - (total > 0 ? unlocked / total : 0));
-
-  return (
-    <svg width={size} height={size} className="rotate-[-90deg]" aria-hidden="true">
-      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={trackVar} strokeWidth={strokeWidth} />
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        fill="none"
-        stroke={colorVar}
-        strokeWidth={strokeWidth}
-        strokeDasharray={circumference}
-        strokeDashoffset={offset}
-        strokeLinecap="round"
-        style={{ transition: "stroke-dashoffset 0.8s ease-out" }}
-      />
-    </svg>
-  );
-}
-
 function AchievementBadge({
   achievement,
-  colorVar,
   onClaim,
   claiming,
 }: {
   achievement: Achievement;
-  colorVar: string;
   onClaim: (id: string) => void;
   claiming: boolean;
 }) {
@@ -113,62 +73,68 @@ function AchievementBadge({
   return (
     <div
       title={achievement.description}
-      className={`relative flex flex-col items-center gap-2 p-3 rounded-xl transition-all ${
-        isClaimed ? "opacity-100" : isClaimable ? "opacity-100" : "opacity-35 grayscale"
-      }`}
-      style={
+      className={`relative rounded-[var(--radius-md)] border p-3 transition-all duration-200 ${
         isClaimed
-          ? { backgroundColor: "var(--primary-50)" }
+          ? "border-[var(--border)] bg-[var(--surface)]"
           : isClaimable
-            ? { backgroundColor: "var(--surface)" }
-            : { backgroundColor: "var(--surface-raised)" }
-      }
+            ? "border-[var(--lime-green)] bg-[var(--surface)] shadow-[0_8px_22px_rgba(226,241,99,0.12)]"
+            : "border-[var(--border)] bg-[var(--surface)] opacity-60"
+      }`}
     >
       {claiming && (
-        <div
-          className="absolute inset-0 rounded-xl flex items-center justify-center z-10"
-          style={{ backgroundColor: "var(--surface)", opacity: 0.85 }}
-        >
-          <div className="animate-spin rounded-full h-6 w-6 border-2 border-t-transparent" style={{ borderColor: colorVar, borderTopColor: "transparent" }} />
+        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-[var(--radius-md)] bg-[var(--surface)]/85">
+          <LoadingSpinner size={5} showText={false} />
         </div>
       )}
 
-      <div
-        className={`w-9 h-9 rounded-full flex items-center justify-center ${
-          isClaimed || isClaimable ? "bg-[var(--primary-50)]" : "bg-[var(--surface)]"
-        }`}
-        style={isClaimed || isClaimable ? { color: colorVar } : { color: "var(--muted-foreground)" }}
-      >
-        {isClaimed ? <Check className="w-4 h-4" /> : <AchievementIcon name={achievement.icon} className="w-4 h-4" />}
+      <div className="flex items-start gap-3">
+        <div
+          className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[var(--radius-sm)] ${
+            isClaimable
+              ? "bg-[var(--lime-green)] text-[#232323]"
+              : isClaimed
+                ? "bg-[var(--primary-50)] text-[var(--primary-600)]"
+                : "bg-[var(--surface-raised)] text-[var(--muted-foreground)]"
+          }`}
+        >
+          {isClaimed ? <Check className="h-5 w-5" /> : <AchievementIcon name={achievement.icon} className="h-5 w-5" />}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="text-sm font-bold leading-snug text-[var(--foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>
+              {achievement.name}
+            </h3>
+            <span className="flex-shrink-0 rounded-full bg-[var(--surface-raised)] px-2 py-0.5 text-[10px] font-bold text-[var(--muted-foreground)]">
+              {achievement.xpReward} XP
+            </span>
+          </div>
+          <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-[var(--muted-foreground)]">
+            {achievement.description}
+          </p>
+        </div>
       </div>
 
-      <span className="text-[11px] font-bold text-center leading-tight text-[var(--foreground)]">
-        {achievement.name}
-      </span>
-
-      {isClaimed ? (
-        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full" style={{ color: colorVar, backgroundColor: "var(--primary-100)" }}>
-          +{achievement.xpReward} XP
-        </span>
-      ) : isClaimable ? (
-        <button
-          onClick={() => onClaim(achievement.id)}
-          disabled={claiming}
-          className="text-[10px] font-bold px-2 py-0.5 rounded-full transition-colors"
-          style={{
-            color: "var(--surface)",
-            backgroundColor: colorVar,
-            opacity: claiming ? 0.6 : 1,
-            cursor: claiming ? "wait" : "pointer",
-          }}
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <span
+          className={`inline-flex items-center gap-1.5 text-xs font-semibold ${
+            isClaimed ? "text-[var(--color-success)]" : isClaimable ? "text-[var(--foreground)]" : "text-[var(--muted-foreground)]"
+          }`}
         >
-          {`Claim +${achievement.xpReward} XP`}
-        </button>
-      ) : (
-        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full" style={{ color: "var(--muted-foreground)", backgroundColor: "var(--surface)" }}>
-          {achievement.xpReward} XP
+          {isClaimed && <CheckCircle2 className="h-3.5 w-3.5" />}
+          {isClaimed ? "Claimed" : isClaimable ? "Ready to claim" : "Locked"}
         </span>
-      )}
+
+        {isClaimable && (
+          <button
+            onClick={() => onClaim(achievement.id)}
+            disabled={claiming}
+            className="rounded-full bg-[var(--lime-green)] px-3 py-1.5 text-xs font-bold text-[#232323] transition hover:brightness-105 disabled:cursor-wait disabled:opacity-70"
+          >
+            Claim
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -185,30 +151,46 @@ function CategorySection({
   claimingId: string | null;
 }) {
   const meta = CATEGORY_META[category];
-  const claimed = achievements.filter((a) => !!a.claimedAt).length;
+  const Icon = meta.icon;
+  const claimed = achievements.filter((achievement) => !!achievement.claimedAt).length;
+  const claimable = achievements.filter((achievement) => !!achievement.unlockedAt && !achievement.claimedAt).length;
+  const progress = achievements.length > 0 ? (claimed / achievements.length) * 100 : 0;
 
   return (
-    <section className="rounded-xl overflow-hidden">
-      <div className="px-4 py-3 flex items-center gap-4" style={{ backgroundColor: meta.headerBg }}>
-        <div className="relative flex-shrink-0">
-          <CategoryRing unlocked={claimed} total={achievements.length} colorVar={meta.colorVar} trackVar={meta.trackVar} />
-          <span className="absolute inset-0 flex items-center justify-center text-[11px] font-extrabold tabular-nums" style={{ color: meta.colorVar }}>
-            {claimed}/{achievements.length}
-          </span>
+    <section className="rounded-[var(--radius-lg)] bg-[var(--surface)] p-4 sm:p-5">
+      <div className="mb-4 flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--primary-50)] text-[var(--primary-600)]">
+          <Icon className="h-5 w-5" />
         </div>
-        <div>
-          <h2 className="text-base font-extrabold tracking-tight" style={{ color: meta.colorVar }}>
-            {meta.label}
-          </h2>
-          <p className="text-xs text-[var(--muted-foreground)] mt-0.5">
-            {claimed === achievements.length ? "All claimed!" : `${achievements.length - claimed} remaining`}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-base font-extrabold text-[var(--foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>
+              {meta.label}
+            </h2>
+            <span className="text-xs font-semibold text-[var(--muted-foreground)]">
+              {claimed}/{achievements.length}
+            </span>
+          </div>
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--surface-raised)]">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-[var(--primary-500)] to-[var(--lime-green)] transition-all duration-700 ease-out"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <p className="mt-2 text-xs text-[var(--muted-foreground)]">
+            {claimable > 0 ? `${claimable} ready to claim` : claimed === achievements.length ? "All claimed" : `${achievements.length - claimed} remaining`}
           </p>
         </div>
       </div>
 
-      <div className="p-4 bg-[var(--surface)] grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
-        {achievements.map((a) => (
-          <AchievementBadge key={a.id} achievement={a} colorVar={meta.colorVar} onClaim={onClaim} claiming={claimingId === a.id} />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {achievements.map((achievement) => (
+          <AchievementBadge
+            key={achievement.id}
+            achievement={achievement}
+            onClaim={onClaim}
+            claiming={claimingId === achievement.id}
+          />
         ))}
       </div>
     </section>
@@ -224,9 +206,9 @@ export default function AchievementsPage() {
 
   useEffect(() => {
     fetch("/api/achievements")
-      .then((r) => (r.ok ? r.json() : Promise.reject(r.statusText)))
-      .then((d) => setAchievements(d.achievements || []))
-      .catch((e) => setError(typeof e === "string" ? e : "Failed to load"))
+      .then((response) => (response.ok ? response.json() : Promise.reject(response.statusText)))
+      .then((data) => setAchievements(data.achievements || []))
+      .catch((err) => setError(typeof err === "string" ? err : "Failed to load achievements"))
       .finally(() => setLoading(false));
   }, []);
 
@@ -234,57 +216,64 @@ export default function AchievementsPage() {
     setClaimingId(achievementId);
     setClaimError(null);
     try {
-      const res = await fetch("/api/achievements", {
+      const response = await fetch("/api/achievements", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ achievementId }),
       });
 
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
+      if (!response.ok) {
+        const json = await response.json().catch(() => ({}));
         throw new Error((json as { error?: string }).error ?? "Claim failed");
       }
 
-      const result = (await res.json()) as {
+      const result = (await response.json()) as {
         achievementId: string;
         claimedAt: string;
       };
 
-      setAchievements((prev) => prev.map((a) => (a.id === result.achievementId ? { ...a, claimedAt: result.claimedAt } : a)));
-    } catch (e) {
-      setClaimError(e instanceof Error ? e.message : "Claim failed");
+      setAchievements((prev) =>
+        prev.map((achievement) =>
+          achievement.id === result.achievementId
+            ? { ...achievement, claimedAt: result.claimedAt }
+            : achievement,
+        ),
+      );
+    } catch (err) {
+      setClaimError(err instanceof Error ? err.message : "Claim failed");
     } finally {
       setClaimingId(null);
     }
   }, []);
 
   const categories: CategoryKey[] = ["workouts", "streaks", "records", "volume"];
-  const totalClaimed = achievements.filter((a) => !!a.claimedAt).length;
+  const totalClaimed = achievements.filter((achievement) => !!achievement.claimedAt).length;
   const totalAchievements = achievements.length;
-  const claimableCount = achievements.filter((a) => !!a.unlockedAt && !a.claimedAt).length;
+  const claimableCount = achievements.filter((achievement) => !!achievement.unlockedAt && !achievement.claimedAt).length;
+  const progress = totalAchievements > 0 ? Math.round((totalClaimed / totalAchievements) * 100) : 0;
 
   return (
     <ProtectedWrapper>
       <div className="w-full space-y-5">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/dashboard"
-            aria-label="Back to dashboard"
-            className="w-9 h-9 rounded-lg flex items-center justify-center bg-[var(--surface)] border border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-extrabold text-[var(--foreground)] tracking-tight flex items-center gap-2">
-              <Trophy className="w-6 h-6 text-[var(--primary-500)]" />
-              Achievements
-            </h1>
-            {!loading && (
-              <p className="text-sm text-[var(--muted-foreground)] mt-0.5">
-                {totalClaimed} / {totalAchievements} claimed
-                {claimableCount > 0 && <span className="ml-2 text-[var(--primary-600)] font-semibold">· {claimableCount} ready to claim</span>}
+        <div className="page-header">
+          <div className="flex items-start gap-3">
+            <Link
+              href="/dashboard"
+              aria-label="Back to dashboard"
+              className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--surface)] text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+            <div className="min-w-0 flex-1">
+              <h1 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight text-[var(--foreground)] sm:text-3xl" style={{ fontFamily: "var(--font-poppins)" }}>
+                <Trophy className="h-6 w-6 text-[var(--primary-500)]" />
+                Achievements
+              </h1>
+              <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+                {loading ? "Loading your progress..." : `${totalClaimed} of ${totalAchievements} claimed`}
+                {!loading && claimableCount > 0 && <span className="font-semibold text-[var(--primary-600)]"> · {claimableCount} ready</span>}
               </p>
-            )}
+            </div>
           </div>
         </div>
 
@@ -295,22 +284,60 @@ export default function AchievementsPage() {
         )}
 
         {!loading && error && (
-          <div className="bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] rounded-lg p-5 text-sm font-medium text-center">
+          <div className="rounded-[var(--radius-md)] bg-[var(--color-destructive-bg)] p-5 text-center text-sm font-semibold text-[var(--color-destructive)]">
             {error}
           </div>
         )}
 
-        {claimError && (
-          <div className="bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] rounded-lg p-3 text-sm font-medium text-center">
-            {claimError}
-          </div>
-        )}
-
-        {!loading && (
+        {!loading && !error && (
           <>
-            {categories.map((cat) => {
-              const items = achievements.filter((a) => a.category === cat);
-              return <CategorySection key={cat} category={cat} achievements={items} onClaim={handleClaim} claimingId={claimingId} />;
+            <section className="rounded-[var(--radius-lg)] bg-[var(--surface)] p-5 sm:p-6">
+              <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-center">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>
+                    Overall progress
+                  </p>
+                  <div className="mt-3 h-3 overflow-hidden rounded-full bg-[var(--surface-raised)]">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-[var(--primary-500)] to-[var(--lime-green)] transition-all duration-700 ease-out"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-3 text-center sm:min-w-[18rem]">
+                  <div className="rounded-[var(--radius-md)] bg-[var(--surface-raised)] px-3 py-3">
+                    <p className="text-xl font-extrabold text-[var(--foreground)]">{progress}%</p>
+                    <p className="mt-1 text-[11px] font-semibold text-[var(--muted-foreground)]">Complete</p>
+                  </div>
+                  <div className="rounded-[var(--radius-md)] bg-[var(--surface-raised)] px-3 py-3">
+                    <p className="text-xl font-extrabold text-[var(--foreground)]">{totalClaimed}</p>
+                    <p className="mt-1 text-[11px] font-semibold text-[var(--muted-foreground)]">Claimed</p>
+                  </div>
+                  <div className="rounded-[var(--radius-md)] bg-[var(--surface-raised)] px-3 py-3">
+                    <p className="text-xl font-extrabold text-[var(--foreground)]">{claimableCount}</p>
+                    <p className="mt-1 text-[11px] font-semibold text-[var(--muted-foreground)]">Ready</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {claimError && (
+              <div className="rounded-[var(--radius-md)] bg-[var(--color-destructive-bg)] p-3 text-center text-sm font-semibold text-[var(--color-destructive)]">
+                {claimError}
+              </div>
+            )}
+
+            {categories.map((category) => {
+              const items = achievements.filter((achievement) => achievement.category === category);
+              return (
+                <CategorySection
+                  key={category}
+                  category={category}
+                  achievements={items}
+                  onClaim={handleClaim}
+                  claimingId={claimingId}
+                />
+              );
             })}
           </>
         )}
