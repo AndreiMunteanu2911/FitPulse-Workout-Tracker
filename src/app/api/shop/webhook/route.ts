@@ -63,23 +63,9 @@ export async function POST(req: NextRequest) {
         ? ((await stripe.paymentIntents.retrieve(checkoutSession.payment_intent, { expand: ["latest_charge"] })) as unknown as PaymentIntentLike)
         : (checkoutSession.payment_intent as PaymentIntentLike | null) ?? null;
 
-    console.log("[shop-webhook] shipping debug", {
-      sessionId: checkoutSession.id,
-      paymentIntentId:
-        typeof checkoutSession.payment_intent === "string"
-          ? checkoutSession.payment_intent
-          : paymentIntent?.id ?? null,
-      sessionCollectedShipping: checkoutSession.collected_information?.shipping_details ?? null,
-      sessionShippingDetails: checkoutSession.shipping_details ?? null,
-      sessionCustomerAddress: checkoutSession.customer_details?.address ?? null,
-      paymentIntentShipping: paymentIntent?.shipping ?? null,
-      paymentIntentLatestCharge: paymentIntent?.latest_charge?.shipping ?? null,
-    });
-
     if (checkoutSession.metadata?.type === "product-order") {
       try {
-        const result = await fulfillStripeProductOrder(supabaseAdmin, checkoutSession as never, paymentIntent as never);
-        console.log("[shop-webhook] product fulfilled", result);
+        await fulfillStripeProductOrder(supabaseAdmin, checkoutSession as never, paymentIntent as never);
       } catch (error) {
         console.error("[shop-webhook] product fulfillment failed", error);
         return NextResponse.json({ error: "Webhook fulfillment failed." }, { status: 500 });

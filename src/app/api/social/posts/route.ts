@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
 
   const { data, error } = await supabase
     .from("posts")
-    .insert({ user_id: user.id, content, image_url, workout_summary })
+    .insert({ user_id: user.id, content, image_url, workout_id, workout_summary })
     .select("*")
     .single();
 

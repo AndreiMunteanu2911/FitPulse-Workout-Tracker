@@ -349,6 +349,7 @@ export interface Friendship {
 export interface Post {
   id: string;
   user_id: string;
+  workout_id?: string | null;
   content?: string | null;
   image_url?: string | null;
   workout_summary?: string | null;
@@ -360,6 +361,7 @@ export interface Post {
   likes_count?: number;
   comments_count?: number;
   liked_by_me?: boolean;
+  workout?: Workout | null;
 }
 
 export interface PostLike {

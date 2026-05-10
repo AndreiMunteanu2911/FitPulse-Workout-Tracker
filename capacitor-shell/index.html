@@ -259,12 +259,26 @@
         });
 
         if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
-          window.Capacitor.Plugins.App.addListener("appUrlOpen", function (event) {
+          var appPlugin = window.Capacitor.Plugins.App;
+
+          appPlugin.addListener("appUrlOpen", function (event) {
             connect(parseAppUrl(event.url));
           });
-        }
 
-        connect("/");
+          if (typeof appPlugin.getLaunchUrl === "function") {
+            appPlugin.getLaunchUrl()
+              .then(function (launch) {
+                connect(parseAppUrl(launch && launch.url ? launch.url : "/"));
+              })
+              .catch(function () {
+                connect("/");
+              });
+          } else {
+            connect("/");
+          }
+        } else {
+          connect("/");
+        }
       })();
     </script>
   </body>

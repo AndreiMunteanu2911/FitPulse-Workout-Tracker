@@ -13,7 +13,7 @@ export default function OnboardingHeightPage() {
     await fetch("/api/user/profile", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ height_cm: height, onboarding_done: true }),
+      body: JSON.stringify({ height_cm: height }),
     });
     router.push("/onboarding/complete");
   };
