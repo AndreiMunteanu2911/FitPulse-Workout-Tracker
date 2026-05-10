@@ -334,10 +334,10 @@ function BlockingOverlay({
   if (!visible) return null;
 
   return (
-    <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-overlay)] px-6 py-5 text-center shadow-[var(--shadow-md)]">
+    <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/45 px-4 backdrop-blur-sm">
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-6 py-5 text-center shadow-[var(--shadow-md)]">
         <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-[var(--primary-500)]" />
-        <p className="text-sm font-semibold text-white">{title}</p>
+        <p className="text-sm font-semibold text-[var(--foreground)]">{title}</p>
         <p className="mt-1 text-xs text-[var(--muted-foreground)]">{description}</p>
       </div>
     </div>
