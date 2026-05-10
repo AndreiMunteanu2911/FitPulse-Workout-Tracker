@@ -14,6 +14,8 @@ interface UseWebcamOptions {
   facingMode?: "user" | "environment";
   /** Camera zoom level. 1 = no zoom, >1 = zoom in, <1 = zoom out. Default: 1 */
   zoom?: number;
+  /** Whether the hook should start the camera on mount. Default: true */
+  autoStart?: boolean;
 }
 
 interface UseWebcamReturn {
@@ -41,6 +43,7 @@ export function useWebcam({
   resolution = "hd",
   facingMode = "user",
   zoom = 1,
+  autoStart = true,
 }: UseWebcamOptions = {}): UseWebcamReturn {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -157,11 +160,12 @@ export function useWebcam({
 
   // Auto-start on mount
   useEffect(() => {
+    if (!autoStart) return;
     startCamera();
     return () => {
       stopCamera();
     };
-  }, [startCamera, stopCamera]);
+  }, [autoStart, startCamera, stopCamera]);
 
   return {
     videoRef,
