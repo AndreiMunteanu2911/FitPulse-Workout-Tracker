@@ -69,6 +69,7 @@ type FeedbackPenaltyState = {
   errorEvents: number;
   warningEvents: number;
   lastSampleMs: number;
+  activeCueKeys: Set<string>;
 };
 
 const DETECTION_CONFIG: DetectionCadenceConfig = {
@@ -281,10 +282,13 @@ function recordFeedbackPenalty(
   items: FormFeedback[],
 ): FeedbackPenaltyState {
   if (timestampMs - penaltyState.lastSampleMs < 300) return penaltyState;
+  const activeCueKeys = new Set(items.map((item) => `${item.type}:${item.message}`));
+  const newItems = items.filter((item) => !penaltyState.activeCueKeys.has(`${item.type}:${item.message}`));
   return {
-    errorEvents: penaltyState.errorEvents + items.filter((item) => item.type === "error").length,
-    warningEvents: penaltyState.warningEvents + items.filter((item) => item.type === "warning").length,
+    errorEvents: penaltyState.errorEvents + newItems.filter((item) => item.type === "error").length,
+    warningEvents: penaltyState.warningEvents + newItems.filter((item) => item.type === "warning").length,
     lastSampleMs: timestampMs,
+    activeCueKeys,
   };
 }
 
@@ -348,7 +352,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
   const currentRepFeedbackRef = useRef<FormFeedback[]>([]);
   const completedRepMetricsRef = useRef<FormRepMetric[]>([]);
   const realtimeFeedbackLogRef = useRef<FormFeedback[]>([]);
-  const feedbackPenaltyRef = useRef<FeedbackPenaltyState>({ errorEvents: 0, warningEvents: 0, lastSampleMs: 0 });
+  const feedbackPenaltyRef = useRef<FeedbackPenaltyState>({ errorEvents: 0, warningEvents: 0, lastSampleMs: 0, activeCueKeys: new Set() });
   const recorderRef = useRef<LandmarkStreamRecorder | null>(null);
   const tempoCueExpiryRef = useRef(0);
   const tempTempoFeedbackRef = useRef<FormFeedback[]>([]);
@@ -492,7 +496,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
     currentRepFeedbackRef.current = [];
     completedRepMetricsRef.current = [];
     realtimeFeedbackLogRef.current = [];
-    feedbackPenaltyRef.current = { errorEvents: 0, warningEvents: 0, lastSampleMs: 0 };
+    feedbackPenaltyRef.current = { errorEvents: 0, warningEvents: 0, lastSampleMs: 0, activeCueKeys: new Set() };
     tempTempoFeedbackRef.current = [];
     tempoCueExpiryRef.current = 0;
     scoringWarmupUntilRef.current = 0;

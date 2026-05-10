@@ -31,8 +31,10 @@ This README focuses on the implementation surface: route groups, feature domains
 - The exercise library gives users a searchable catalog of movements they can add to workouts or mark as favorites for faster access later.
 - Exercise detail pages show how the movement looks, what muscles it targets, how the user has performed on it before, and the latest session history.
 - The form checker lets users record a set with the camera running and receive realtime coaching cues while they move.
-- It uses pose tracking and rule-based scoring to estimate rep quality, then stores the finished analysis for later review.
-- When available, the app also asks the cloud coaching layer for a second-pass summary of the set so users get both instant and post-set feedback.
+- It uses MediaPipe pose tracking, smoothed landmarks, calibration hysteresis, stable joint status, and rule-based scoring to estimate rep quality without single-frame flicker.
+- Detection runs at a controlled cadence and keeps pose inference from overlapping, which improves mobile/WebView stability.
+- Finished sets stop the camera, save a local analysis, and show a post-set review with realtime score, post-set score, main cues, and optional AI coach feedback.
+- When available, the app asks the cloud coaching layer for a second-pass summary of the set so users get both instant and post-set feedback.
 - The same exercise system supports custom exercises and admin-managed rule mappings, so the library can grow with the user's training style.
 
 ### Progress and gamification
@@ -41,6 +43,7 @@ This README focuses on the implementation surface: route groups, feature domains
 - Progress photos give users a visual before/after record with notes and body-part tags instead of only relying on numbers.
 - The workout calendar highlights training days so consistency is visible at a glance.
 - XP, levels, and achievements turn regular logging into a progression system, with claimable rewards when the user hits milestones.
+- The dashboard shows a compact achievement progress card, and the achievements page groups badges by workouts, streaks, records, and volume with clear locked, ready, and claimed states.
 - The dashboard surfaces the most important progress signals together so the user can see momentum without opening multiple pages.
 
 ### AI coach
@@ -139,12 +142,14 @@ This README focuses on the implementation surface: route groups, feature domains
 
 - The app is split into route groups. `(auth)` holds the public login, signup, and onboarding flow. `(main)` holds the protected app shell and all authenticated pages.
 - Client components are thin shells over reusable hooks. Hooks call Next.js API routes, not Supabase directly.
+- Client API calls should use `apiFetch` where possible so auth redirects, network failures, and non-JSON errors are handled consistently.
 - API routes are the only place where Supabase credentials are used, which keeps the browser bundle free of backend credentials.
 - Session state is read through `@supabase/ssr` and stored in HTTP-only cookies.
 - The main layout checks `onboarding_done` and redirects incomplete users into the onboarding flow before they reach protected pages.
 - Database access is protected with row-level security and code-level ownership checks.
 - Admin access is enforced by the `role` field in `user_stats` and the `requireAdmin()` helper.
 - The UI is responsive: desktop uses a sticky left sidebar and content area, while mobile uses a fixed top bar and bottom tab navigation.
+- Loading states use the shared `LoadingSpinner` component. The app avoids skeleton placeholders and should show only one primary spinner per screen-level loading surface.
 - Theme preference is persisted and applied without a flash of the wrong theme.
 - Android builds use Capacitor as a native container. In production the Android app boots into a branded shell and forwards users into the hosted FitPulse app. In development the Android emulator can point directly at a local Next.js dev server.
 - Shared domain logic lives in `src/lib/`:
@@ -253,6 +258,8 @@ Run the migrations in `migrations/` in numeric order. The current schema covers:
 - Content: blog posts, likes, and comments
 - Commerce: products and orders
 
+Form checker persistence stays compatible with the `form_logs` shape. Recent form checker improvements are client-side analysis, smoothing, scoring, and review UI changes rather than schema changes.
+
 ### Storage buckets
 
 Create the Supabase Storage buckets used by the app:
@@ -303,6 +310,7 @@ Notes:
 - Stripe checkout on Android opens in the native browser/custom tab rather than staying inside the WebView.
 - Progress photo capture uses Capacitor Camera on Android.
 - The realtime form checker relies on `getUserMedia` and MediaPipe in the WebView. That feature requires an HTTPS context. It may not work from local cleartext emulator dev (`http://10.0.2.2:3000`) and should be validated against a hosted HTTPS build for full parity.
+- Form checker camera lifecycle is controlled by the form checker component. The camera starts for detection, stops for review, and should not restart while the saved review is open.
 
 ### Build the Android shell for production
 
