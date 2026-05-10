@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import type { NormalizedLandmark, PoseLandmarker } from "@mediapipe/tasks-vision";
-import { Camera, X, RotateCcw, AlertTriangle, CheckCircle, Loader2, Info, Brain } from "lucide-react";
+import { Camera, X, RotateCcw, AlertTriangle, CheckCircle, Loader2, Info } from "lucide-react";
 import Button from "@/components/Button";
 import { useWebcam } from "@/hooks/useWebcam";
 import { initPoseDetector, detectPose, releasePoseDetector } from "@/lib/pose-detector";
@@ -51,6 +51,88 @@ interface FormCheckerProps {
 
 type FormCheckerCameraStatus = CameraViewStatus | "calibrating";
 type FormFeedback = FormSessionFeedbackItem;
+type JointVisualStatus = "neutral" | "warning" | "error";
+
+interface TrackedRuleState {
+  failFrames: number;
+  passFrames: number;
+  active: boolean;
+  lastSeenMs: number;
+  severity: FormFeedback["type"];
+  feedback: FormFeedback | null;
+}
+
+interface StableJointStatus {
+  status: JointVisualStatus;
+  expiresAt: number;
+}
+
+type JointStatusMap = Record<number, StableJointStatus>;
+
+interface StableFeedbackState {
+  items: FormFeedback[];
+  jointStatusMap: JointStatusMap;
+  trackingInterrupted: boolean;
+  recentRepDetectedUntilMs: number;
+}
+
+interface DetectionCadenceConfig {
+  targetFps: number;
+  minFrameIntervalMs: number;
+  missingPoseGraceFrames: number;
+  enterCalibrationFrames: number;
+  exitCalibrationFrames: number;
+  feedbackTtlMs: number;
+  clearFrames: number;
+  minRepRangeDegrees: number;
+  primaryLossResetFrames: number;
+}
+
+const DETECTION_CONFIG: DetectionCadenceConfig = {
+  targetFps: 28,
+  minFrameIntervalMs: Math.round(1000 / 28),
+  missingPoseGraceFrames: 5,
+  enterCalibrationFrames: 12,
+  exitCalibrationFrames: 7,
+  feedbackTtlMs: 850,
+  clearFrames: 5,
+  minRepRangeDegrees: 24,
+  primaryLossResetFrames: 8,
+};
+
+function getSeverityRank(status: JointVisualStatus): number {
+  if (status === "error") return 2;
+  if (status === "warning") return 1;
+  return 0;
+}
+
+function toJointStatus(type: FormFeedback["type"]): JointVisualStatus {
+  if (type === "error") return "error";
+  if (type === "warning") return "warning";
+  return "neutral";
+}
+
+function getStableFeedbackKey(items: FormFeedback[]): string {
+  return items.map((item) => `${item.type}:${item.message}`).join("|");
+}
+
+function getPointVisualStatus(jointStatusMap: JointStatusMap, index: number, now: number): JointVisualStatus {
+  const visual = jointStatusMap[index];
+  if (!visual || visual.expiresAt < now) return "neutral";
+  return visual.status;
+}
+
+function getSegmentVisualStatus(jointStatusMap: JointStatusMap, a: number, b: number, now: number): JointVisualStatus {
+  const first = getPointVisualStatus(jointStatusMap, a, now);
+  const second = getPointVisualStatus(jointStatusMap, b, now);
+  return getSeverityRank(first) >= getSeverityRank(second) ? first : second;
+}
+
+function getSkeletonColor(status: JointVisualStatus, alpha: number): string {
+  if (status === "error") return `rgba(239, 68, 68, ${alpha})`;
+  if (status === "warning") return `rgba(245, 158, 11, ${alpha})`;
+  return `rgba(59, 130, 246, ${alpha})`;
+}
 
 function CameraGuideOverlay({
   status,
@@ -102,29 +184,20 @@ function CameraGuideOverlay({
 
 function SkeletonCanvas({
   landmarks,
-  feedback,
+  jointStatusMap,
   canvasWidth,
   canvasHeight,
   sourceWidth,
   sourceHeight,
 }: {
   landmarks: NormalizedLandmark[] | null;
-  feedback: FormFeedback[];
+  jointStatusMap: JointStatusMap;
   canvasWidth: number;
   canvasHeight: number;
   sourceWidth: number;
   sourceHeight: number;
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const feedbackLandmarks = useRef(new Set<number>());
-
-  useEffect(() => {
-    feedbackLandmarks.current.clear();
-    for (const cue of feedback) {
-      if (!cue.landmarkIndices) continue;
-      for (const idx of cue.landmarkIndices) feedbackLandmarks.current.add(idx);
-    }
-  }, [feedback]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -137,6 +210,7 @@ function SkeletonCanvas({
     if (!landmarks) return;
 
     const projected = projectAllLandmarks(landmarks, canvasWidth, canvasHeight, sourceWidth, sourceHeight);
+    const now = performance.now();
 
     ctx.lineWidth = 3;
     for (const [a, b] of POSE_CONNECTIONS) {
@@ -144,8 +218,10 @@ function SkeletonCanvas({
       const pb = projected[b];
       if (!pa || !pb) continue;
 
-      const hasError = feedbackLandmarks.current.has(a) || feedbackLandmarks.current.has(b);
-      ctx.strokeStyle = hasError ? "rgba(239, 68, 68, 0.85)" : "rgba(59, 130, 246, 0.75)";
+      const visibility = Math.min(landmarks[a]?.visibility ?? 0, landmarks[b]?.visibility ?? 0);
+      const alpha = Math.max(0.18, Math.min(0.85, 0.25 + (visibility * 0.6)));
+      const status = getSegmentVisualStatus(jointStatusMap, a, b, now);
+      ctx.strokeStyle = getSkeletonColor(status, alpha);
       ctx.beginPath();
       ctx.moveTo(pa.x, pa.y);
       ctx.lineTo(pb.x, pb.y);
@@ -155,13 +231,15 @@ function SkeletonCanvas({
     for (let i = 0; i < projected.length; i += 1) {
       const point = projected[i];
       if (!point) continue;
-      const hasError = feedbackLandmarks.current.has(i);
+      const status = getPointVisualStatus(jointStatusMap, i, now);
+      const visibility = landmarks[i]?.visibility ?? 0;
+      const alpha = Math.max(0.25, Math.min(0.95, 0.3 + (visibility * 0.65)));
       ctx.beginPath();
-      ctx.arc(point.x, point.y, hasError ? 6 : 4, 0, 2 * Math.PI);
-      ctx.fillStyle = hasError ? "#ef4444" : "#3b82f6";
+      ctx.arc(point.x, point.y, status === "neutral" ? 4 : 6, 0, 2 * Math.PI);
+      ctx.fillStyle = getSkeletonColor(status, alpha);
       ctx.fill();
     }
-  }, [landmarks, canvasWidth, canvasHeight, feedback, sourceWidth, sourceHeight]);
+  }, [landmarks, canvasWidth, canvasHeight, jointStatusMap, sourceWidth, sourceHeight]);
 
   return (
     <canvas
@@ -179,10 +257,14 @@ function FeedbackPanel({
   feedback,
   repCount,
   formScore,
+  trackingInterrupted,
+  recentRepDetected,
 }: {
   feedback: FormFeedback[];
   repCount: number;
   formScore: number;
+  trackingInterrupted: boolean;
+  recentRepDetected: boolean;
 }) {
   const errors = feedback.filter((item) => item.type === "error");
   const warnings = feedback.filter((item) => item.type === "warning");
@@ -195,13 +277,19 @@ function FeedbackPanel({
       <div className="flex items-end justify-between mb-2">
         <div className="flex flex-col gap-1 flex-1 min-w-0 pr-4">
           {visibleCues.length === 0 ? (
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-              <span className="text-sm font-semibold text-emerald-300">Good form!</span>
+            <div className="flex items-center gap-2 transition-all duration-200">
+              {trackingInterrupted ? (
+                <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />
+              ) : (
+                <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+              )}
+              <span className={`text-sm font-semibold ${trackingInterrupted ? "text-amber-300" : "text-emerald-300"}`}>
+                {trackingInterrupted ? "Tracking interrupted" : recentRepDetected ? "Rep detected" : "Tracking"}
+              </span>
             </div>
           ) : (
             visibleCues.map((cue, index) => (
-              <div key={`${cue.message}-${index}`} className="flex items-center gap-2">
+              <div key={`${cue.message}-${index}`} className="flex items-center gap-2 transition-all duration-200">
                 <AlertTriangle
                   className={`w-4 h-4 flex-shrink-0 ${
                     cue.type === "error" ? "text-red-400" : cue.type === "warning" ? "text-amber-400" : "text-sky-400"
@@ -446,6 +534,9 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
   const [cameraStatus, setCameraStatus] = useState<FormCheckerCameraStatus>("calibrating");
   const [landmarks, setLandmarks] = useState<NormalizedLandmark[] | null>(null);
   const [feedback, setFeedback] = useState<FormFeedback[]>([]);
+  const [jointStatusMap, setJointStatusMap] = useState<JointStatusMap>({});
+  const [trackingInterrupted, setTrackingInterrupted] = useState(false);
+  const [recentRepDetected, setRecentRepDetected] = useState(false);
   const [repCount, setRepCount] = useState(0);
   const [formScore, setFormScore] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
@@ -461,9 +552,20 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
 
   const tempoTrackerRef = useRef(new TempoTracker());
   const jitterDetectorRef = useRef(new JitterDetector());
-  const landmarkSmootherRef = useRef(new LandmarkSmoother());
-  const ruleFailureCountsRef = useRef<Record<string, number>>({});
-  const calibrationFramesRef = useRef(0);
+  const landmarkSmootherRef = useRef(new LandmarkSmoother({
+    positionAlpha: 0.52,
+    visibilityAlpha: 0.42,
+    visibilityDecay: 0.8,
+    lowConfidenceThreshold: 0.55,
+  }));
+  const trackedRulesRef = useRef<Record<string, TrackedRuleState>>({});
+  const calibrationGoodFramesRef = useRef(0);
+  const calibrationBadFramesRef = useRef(0);
+  const missingPoseFramesRef = useRef(0);
+  const isDetectingRef = useRef(false);
+  const lastDetectionMsRef = useRef(0);
+  const primaryMissingFramesRef = useRef(0);
+  const lastStableFeedbackKeyRef = useRef("");
   const isCalibratedRef = useRef(false);
   const sessionStartRef = useRef(performance.now());
   const sessionStartedRef = useRef(false);
@@ -481,6 +583,12 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
   const observedPrimaryRangeRef = useRef<{ min: number; max: number }>({
     min: Number.POSITIVE_INFINITY,
     max: Number.NEGATIVE_INFINITY,
+  });
+  const stableFeedbackRef = useRef<StableFeedbackState>({
+    items: [],
+    jointStatusMap: {},
+    trackingInterrupted: false,
+    recentRepDetectedUntilMs: 0,
   });
 
   const resolvedRules = useMemo(() => resolveExerciseFormRules(formRules), [formRules]);
@@ -571,8 +679,14 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
     tempoTrackerRef.current.reset();
     jitterDetectorRef.current.reset();
     landmarkSmootherRef.current.reset();
-    ruleFailureCountsRef.current = {};
-    calibrationFramesRef.current = 0;
+    trackedRulesRef.current = {};
+    calibrationGoodFramesRef.current = 0;
+    calibrationBadFramesRef.current = 0;
+    missingPoseFramesRef.current = 0;
+    isDetectingRef.current = false;
+    lastDetectionMsRef.current = 0;
+    primaryMissingFramesRef.current = 0;
+    lastStableFeedbackKeyRef.current = "";
     updateCalibrationState(false);
     setCameraStatus("calibrating");
     setCalibrationMessage("Hold still while we lock in your pose.");
@@ -580,6 +694,9 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
     repCountRef.current = 0;
     setFormScore(0);
     setFeedback([]);
+    setJointStatusMap({});
+    setTrackingInterrupted(false);
+    setRecentRepDetected(false);
     setSessionSaved(false);
     setSessionAnalysis(null);
     setCoachingError("");
@@ -596,6 +713,12 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
     observedPrimaryRangeRef.current = {
       min: Number.POSITIVE_INFINITY,
       max: Number.NEGATIVE_INFINITY,
+    };
+    stableFeedbackRef.current = {
+      items: [],
+      jointStatusMap: {},
+      trackingInterrupted: false,
+      recentRepDetectedUntilMs: 0,
     };
     recorderRef.current = new LandmarkStreamRecorder(getRequiredLandmarks(resolvedRules));
   }, [getRequiredLandmarks, resolvedRules, updateCalibrationState]);
@@ -731,6 +854,106 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
     }
   }, [formRules, getRequiredLandmarks, maybeRequestCoaching, persistSession, resolvedRules, startCamera]);
 
+  const commitStableFeedback = useCallback((items: FormFeedback[], timestampMs: number, trackingLost = false) => {
+    const now = performance.now();
+    const nextJointStatusMap: JointStatusMap = {};
+
+    for (const [index, visual] of Object.entries(stableFeedbackRef.current.jointStatusMap)) {
+      if (visual.expiresAt > now) {
+        nextJointStatusMap[Number(index)] = visual;
+      }
+    }
+
+    for (const item of items) {
+      if (!item.landmarkIndices) continue;
+      const status = toJointStatus(item.type);
+      if (status === "neutral") continue;
+
+      for (const index of item.landmarkIndices) {
+        const current = nextJointStatusMap[index];
+        if (!current || getSeverityRank(status) >= getSeverityRank(current.status)) {
+          nextJointStatusMap[index] = {
+            status,
+            expiresAt: now + DETECTION_CONFIG.feedbackTtlMs,
+          };
+        }
+      }
+    }
+
+    const currentKeys = new Set(items.map((item) => `${item.type}:${item.message}`));
+    const carriedItems = stableFeedbackRef.current.items.filter((item) => {
+      const key = `${item.type}:${item.message}`;
+      const itemTimestamp = item.timestampMs ?? timestampMs;
+      return !currentKeys.has(key) && timestampMs - itemTimestamp <= DETECTION_CONFIG.feedbackTtlMs;
+    });
+    const stableItems = dedupeFeedback([...items, ...carriedItems]).slice(0, 8);
+    stableFeedbackRef.current = {
+      items: stableItems,
+      jointStatusMap: nextJointStatusMap,
+      trackingInterrupted: trackingLost,
+      recentRepDetectedUntilMs: stableFeedbackRef.current.recentRepDetectedUntilMs,
+    };
+
+    const feedbackKey = getStableFeedbackKey(stableItems);
+    if (feedbackKey !== lastStableFeedbackKeyRef.current) {
+      lastStableFeedbackKeyRef.current = feedbackKey;
+      setFeedback(stableItems);
+    }
+    setJointStatusMap(nextJointStatusMap);
+    setTrackingInterrupted(trackingLost);
+    setRecentRepDetected(timestampMs <= stableFeedbackRef.current.recentRepDetectedUntilMs);
+  }, []);
+
+  const updateTrackedRule = useCallback((
+    rule: ResolvedFormRule,
+    failed: boolean,
+    canEvaluate: boolean,
+    feedbackItem: FormFeedback,
+    holdFrames: number,
+    timestampMs: number,
+  ): FormFeedback | null => {
+    const existing = trackedRulesRef.current[rule.id] ?? {
+      failFrames: 0,
+      passFrames: 0,
+      active: false,
+      lastSeenMs: 0,
+      severity: rule.severity,
+      feedback: null,
+    };
+
+    if (!canEvaluate) {
+      existing.passFrames += 1;
+      if (existing.passFrames >= DETECTION_CONFIG.clearFrames) {
+        existing.active = false;
+        existing.feedback = null;
+        existing.failFrames = 0;
+      }
+      trackedRulesRef.current[rule.id] = existing;
+      return existing.active ? existing.feedback : null;
+    }
+
+    if (failed) {
+      existing.failFrames += 1;
+      existing.passFrames = 0;
+      existing.lastSeenMs = timestampMs;
+      existing.severity = feedbackItem.type;
+      existing.feedback = feedbackItem;
+      if (existing.failFrames >= holdFrames) {
+        existing.active = true;
+      }
+    } else {
+      existing.passFrames += 1;
+      existing.failFrames = Math.max(0, existing.failFrames - 1);
+      if (existing.passFrames >= DETECTION_CONFIG.clearFrames) {
+        existing.active = false;
+        existing.feedback = null;
+      }
+    }
+
+    trackedRulesRef.current[rule.id] = existing;
+    return existing.active ? existing.feedback : null;
+  }, []);
+
   const detectionLoop = useCallback(() => {
     if (!loopActiveRef.current) return;
 
@@ -739,16 +962,41 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
       return;
     }
 
+    const now = performance.now();
+    if (isDetectingRef.current || now - lastDetectionMsRef.current < DETECTION_CONFIG.minFrameIntervalMs) {
+      animationFrameRef.current = requestAnimationFrame(detectionLoop);
+      return;
+    }
+
+    isDetectingRef.current = true;
+    lastDetectionMsRef.current = now;
+
     detectPose(detectorRef.current, videoRef.current, performance.now()).then((result) => {
+      isDetectingRef.current = false;
       if (!loopActiveRef.current) return;
 
       if (!result) {
-        setCameraStatus("not-detected");
-        setLandmarks(null);
+        missingPoseFramesRef.current += 1;
+        const trackingLost = missingPoseFramesRef.current >= DETECTION_CONFIG.missingPoseGraceFrames;
+        if (trackingLost) {
+          setCameraStatus("not-detected");
+          setLandmarks(null);
+          updateCalibrationState(false);
+          calibrationGoodFramesRef.current = 0;
+          calibrationBadFramesRef.current = DETECTION_CONFIG.exitCalibrationFrames;
+          primaryMissingFramesRef.current += 1;
+          if (primaryMissingFramesRef.current >= DETECTION_CONFIG.primaryLossResetFrames) {
+            primaryAngleRef.current = null;
+            currentRepSamplesRef.current = [];
+          }
+        }
+        const timestampMs = Math.max(0, Math.round(performance.now() - sessionStartRef.current));
+        commitStableFeedback(stableFeedbackRef.current.items, timestampMs, trackingLost);
         animationFrameRef.current = requestAnimationFrame(detectionLoop);
         return;
       }
 
+      missingPoseFramesRef.current = 0;
       const smoothedLandmarks = landmarkSmootherRef.current.smooth(result);
       setLandmarks(smoothedLandmarks);
       if (startingDetection) {
@@ -767,14 +1015,19 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
         ? jitterDetectorRef.current.getAverageVariance(requiredLandmarks)
         : 0;
 
-      if (
-        angleStatus !== "good"
-        || requiredVisibility < 0.6
-        || calibrationVariance > 0.0045
-      ) {
-        calibrationFramesRef.current = 0;
-        updateCalibrationState(false);
-        setCameraStatus(angleStatus === "good" ? "calibrating" : angleStatus);
+      const frameIsCalibrated =
+        angleStatus === "good"
+        && requiredVisibility >= 0.6
+        && calibrationVariance <= 0.0045;
+
+      if (!frameIsCalibrated) {
+        calibrationGoodFramesRef.current = 0;
+        calibrationBadFramesRef.current += 1;
+        if (calibrationBadFramesRef.current >= DETECTION_CONFIG.exitCalibrationFrames) {
+          updateCalibrationState(false);
+        }
+        const sustainedBadFrame = calibrationBadFramesRef.current >= DETECTION_CONFIG.exitCalibrationFrames;
+        setCameraStatus(sustainedBadFrame ? (angleStatus === "good" ? "calibrating" : angleStatus) : (isCalibratedRef.current ? "good" : "calibrating"));
         if (angleStatus !== "good") {
           setCalibrationMessage("Adjust your camera so the expected view stays visible.");
         } else if (requiredVisibility < 0.6) {
@@ -782,17 +1035,19 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
         } else {
           setCalibrationMessage("Hold still for a moment so tracking can stabilize.");
         }
-        setFeedback([]);
+        commitStableFeedback(stableFeedbackRef.current.items, timestampMs, false);
         animationFrameRef.current = requestAnimationFrame(detectionLoop);
         return;
       }
 
+      calibrationBadFramesRef.current = 0;
+
       if (!isCalibratedRef.current) {
-        calibrationFramesRef.current += 1;
+        calibrationGoodFramesRef.current += 1;
         setCameraStatus("calibrating");
         setCalibrationMessage("Great, stay steady for a second...");
-        if (calibrationFramesRef.current < 12) {
-          setFeedback([]);
+        if (calibrationGoodFramesRef.current < DETECTION_CONFIG.enterCalibrationFrames) {
+          commitStableFeedback([], timestampMs, false);
           animationFrameRef.current = requestAnimationFrame(detectionLoop);
           return;
         }
@@ -823,6 +1078,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
 
       let primaryAngle = -1;
       if (primaryVisible && resolvedRules) {
+        primaryMissingFramesRef.current = 0;
         primaryAngle = calculateAngle2D(
           smoothedLandmarks,
           resolvedRules.primaryMetric.landmarks[0],
@@ -842,17 +1098,39 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
             phase: currentPhase,
           });
         }
+      } else {
+        primaryMissingFramesRef.current += 1;
+        if (primaryMissingFramesRef.current >= DETECTION_CONFIG.primaryLossResetFrames) {
+          primaryAngleRef.current = null;
+          currentRepSamplesRef.current = [];
+        }
       }
 
       if (hasRealtimeRules && resolvedRules) {
         for (const rule of resolvedRules.rules) {
           if (!areLandmarksVisible(smoothedLandmarks, [...rule.landmarks], rule.visibilityThreshold)) {
-            ruleFailureCountsRef.current[rule.id] = 0;
+            const retainedFeedback = updateTrackedRule(rule, false, false, {
+              type: rule.severity,
+              message: rule.cue,
+              landmarkIndices: rule.landmarks,
+              source: "rule",
+              ruleId: rule.id,
+              timestampMs,
+            }, rule.holdFrames, timestampMs);
+            if (retainedFeedback) currentFeedback.push(retainedFeedback);
             continue;
           }
 
           if (!shouldEvaluateRule(currentPhase, rule.phase)) {
-            ruleFailureCountsRef.current[rule.id] = 0;
+            const retainedFeedback = updateTrackedRule(rule, false, false, {
+              type: rule.severity,
+              message: rule.cue,
+              landmarkIndices: rule.landmarks,
+              source: "rule",
+              ruleId: rule.id,
+              timestampMs,
+            }, rule.holdFrames, timestampMs);
+            if (retainedFeedback) currentFeedback.push(retainedFeedback);
             continue;
           }
 
@@ -866,19 +1144,17 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
           const effectiveMax = Math.min(180, adjusted.max + visibilityPadding);
           const effectiveHoldFrames = ruleVisibility < 0.72 ? rule.holdFrames + 2 : rule.holdFrames;
           const failed = !isScoringWarmup && (angle < effectiveMin || angle > effectiveMax);
-          const nextCount = failed ? (ruleFailureCountsRef.current[rule.id] ?? 0) + 1 : 0;
-          ruleFailureCountsRef.current[rule.id] = nextCount;
-
-          if (nextCount >= effectiveHoldFrames) {
-            currentFeedback.push({
-              type: downgradeSeverityForConfidence(rule.severity, resolvedRules.confidence, nextCount > rule.holdFrames + 3),
-              message: rule.cue,
-              landmarkIndices: rule.landmarks,
-              source: "rule",
-              ruleId: rule.id,
-              timestampMs,
-            });
-          }
+          const existingFrames = trackedRulesRef.current[rule.id]?.failFrames ?? 0;
+          const feedbackItem: FormFeedback = {
+            type: downgradeSeverityForConfidence(rule.severity, resolvedRules.confidence, existingFrames > rule.holdFrames + 3),
+            message: rule.cue,
+            landmarkIndices: rule.landmarks,
+            source: "rule",
+            ruleId: rule.id,
+            timestampMs,
+          };
+          const stableRuleFeedback = updateTrackedRule(rule, failed, true, feedbackItem, effectiveHoldFrames, timestampMs);
+          if (stableRuleFeedback) currentFeedback.push(stableRuleFeedback);
         }
       }
 
@@ -944,25 +1220,27 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
       }
 
       const dedupedFeedback = dedupeFeedback(currentFeedback);
-      setFeedback(dedupedFeedback);
+      commitStableFeedback(dedupedFeedback, timestampMs, false);
 
       currentRepFeedbackRef.current = dedupeFeedback([
         ...currentRepFeedbackRef.current,
-        ...dedupedFeedback,
+        ...stableFeedbackRef.current.items,
       ]).slice(-8);
       realtimeFeedbackLogRef.current = dedupeFeedback([
         ...realtimeFeedbackLogRef.current,
-        ...dedupedFeedback,
+        ...stableFeedbackRef.current.items,
       ]).slice(-20);
 
       if (primaryAngle >= 0 && repWindow && resolvedRules && currentPhase !== "unknown") {
         const effectiveRepWindow = getEffectiveRepWindow(repWindow, observedPrimaryRangeRef.current) ?? repWindow;
-        const repResult = tempoTrackerRef.current.checkRep(
-          primaryAngle,
-          effectiveRepWindow.min,
-          effectiveRepWindow.max,
-          resolvedRules.primaryMetric.phaseLogic,
-        );
+        const observedSpan = observedPrimaryRangeRef.current.max - observedPrimaryRangeRef.current.min;
+        const hasEnoughRepRange = Number.isFinite(observedSpan) && observedSpan >= DETECTION_CONFIG.minRepRangeDegrees;
+        const repResult = hasEnoughRepRange && tempoTrackerRef.current.checkRep(
+            primaryAngle,
+            effectiveRepWindow.min,
+            effectiveRepWindow.max,
+            resolvedRules.primaryMetric.phaseLogic,
+          );
         if (repResult) {
           const nextRep = repCountRef.current + 1;
           const repMetric = summarizeRepSamples(
@@ -991,6 +1269,8 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
 
           repCountRef.current = nextRep;
           setRepCount(nextRep);
+          stableFeedbackRef.current.recentRepDetectedUntilMs = timestampMs + 1200;
+          setRecentRepDetected(true);
           currentRepSamplesRef.current = primaryAngle >= 0 ? [{
             timestampMs,
             angle: primaryAngle,
@@ -1002,7 +1282,19 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
 
       animationFrameRef.current = requestAnimationFrame(detectionLoop);
     });
-  }, [videoRef, isReady, resolvedRules, hasRealtimeRules, getCalibrationLandmarks, getVisibleRatio, updateCalibrationState, isRunning, startingDetection]);
+  }, [
+    videoRef,
+    isReady,
+    resolvedRules,
+    hasRealtimeRules,
+    getCalibrationLandmarks,
+    getVisibleRatio,
+    updateCalibrationState,
+    commitStableFeedback,
+    updateTrackedRule,
+    isRunning,
+    startingDetection,
+  ]);
 
   useEffect(() => {
     if (isRunning && isReady && detectorRef.current) {
@@ -1158,7 +1450,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
 
           <SkeletonCanvas
             landmarks={landmarks}
-            feedback={feedback}
+            jointStatusMap={jointStatusMap}
             canvasWidth={canvasSize.width}
             canvasHeight={canvasSize.height}
             sourceWidth={videoSize.width}
@@ -1182,7 +1474,13 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
           )}
 
           {isRunning && cameraStatus === "good" && isCalibrated && (
-            <FeedbackPanel feedback={feedback} repCount={repCount} formScore={formScore} />
+            <FeedbackPanel
+              feedback={feedback}
+              repCount={repCount}
+              formScore={formScore}
+              trackingInterrupted={trackingInterrupted}
+              recentRepDetected={recentRepDetected}
+            />
           )}
 
           {(isLoading || (!detectorReady && !camError && !isRunning)) && (

@@ -130,10 +130,26 @@ export function detectCameraAngle(
   return "good";
 }
 
+export interface LandmarkSmootherOptions {
+  positionAlpha?: number;
+  visibilityAlpha?: number;
+  visibilityDecay?: number;
+  lowConfidenceThreshold?: number;
+}
+
 export class LandmarkSmoother {
   private previous: NormalizedLandmark[] | null = null;
+  private readonly positionAlpha: number;
+  private readonly visibilityAlpha: number;
+  private readonly visibilityDecay: number;
+  private readonly lowConfidenceThreshold: number;
 
-  constructor(private readonly alpha = 0.6) {}
+  constructor(options: LandmarkSmootherOptions = {}) {
+    this.positionAlpha = options.positionAlpha ?? 0.55;
+    this.visibilityAlpha = options.visibilityAlpha ?? 0.45;
+    this.visibilityDecay = options.visibilityDecay ?? 0.82;
+    this.lowConfidenceThreshold = options.lowConfidenceThreshold ?? 0.55;
+  }
 
   smooth(landmarks: NormalizedLandmark[]): NormalizedLandmark[] {
     if (!this.previous) {
@@ -144,13 +160,21 @@ export class LandmarkSmoother {
     const next = landmarks.map((landmark, index) => {
       const prev = this.previous?.[index];
       if (!prev) return { ...landmark };
+      const currentVisibility = landmark.visibility ?? 0;
+      const previousVisibility = prev.visibility ?? 0;
+      const positionAlpha = currentVisibility < this.lowConfidenceThreshold
+        ? this.positionAlpha * 0.45
+        : this.positionAlpha;
+      const nextVisibility = currentVisibility >= previousVisibility
+        ? (currentVisibility * this.visibilityAlpha) + (previousVisibility * (1 - this.visibilityAlpha))
+        : Math.max(currentVisibility, previousVisibility * this.visibilityDecay);
 
       return {
         ...landmark,
-        x: (landmark.x * this.alpha) + (prev.x * (1 - this.alpha)),
-        y: (landmark.y * this.alpha) + (prev.y * (1 - this.alpha)),
-        z: ((landmark.z ?? 0) * this.alpha) + ((prev.z ?? 0) * (1 - this.alpha)),
-        visibility: Math.max(landmark.visibility ?? 0, prev.visibility ?? 0),
+        x: (landmark.x * positionAlpha) + (prev.x * (1 - positionAlpha)),
+        y: (landmark.y * positionAlpha) + (prev.y * (1 - positionAlpha)),
+        z: ((landmark.z ?? 0) * positionAlpha) + ((prev.z ?? 0) * (1 - positionAlpha)),
+        visibility: Math.max(0, Math.min(1, nextVisibility)),
       };
     });
 
