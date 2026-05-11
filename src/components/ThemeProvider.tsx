@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { persistNativeTheme, syncStatusBar } from "@/lib/mobile";
 import { useThemeStore } from "@/stores/themeStore";
 
 export default function ThemeProvider({ children }: { children: React.ReactNode }) {
@@ -13,6 +14,9 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
     } else {
       root.classList.remove("dark");
     }
+
+    void persistNativeTheme(isDark);
+    void syncStatusBar(isDark);
   }, [isDark]);
 
   return <>{children}</>;

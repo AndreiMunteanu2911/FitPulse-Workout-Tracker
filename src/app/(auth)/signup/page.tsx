@@ -39,7 +39,7 @@ export default function SignUpPage() {
             const data = await signup(email, password, fullName.trim());
             if (data.user && data.session) {
                 // Auto-logged in → go to onboarding
-                router.push("/onboarding");
+                router.push("/onboarding/gender");
             } else if (data.user) {
                 // Email confirmation required
                 setMessage("Account created! Check your email to verify, then log in.");

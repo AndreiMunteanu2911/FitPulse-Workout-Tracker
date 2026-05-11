@@ -1,30 +1,28 @@
 "use client";
 
-export function useWeightLogs() {
-  const fetchWeights = async () => {
-    const res = await fetch("/api/weight-logs");
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to fetch weights");
-    return data.weights;
-  };
+import { useCallback } from "react";
+import { apiFetch } from "@/services/api/apiFetch";
+import type { WeightLog } from "@/types";
 
-  const addWeight = async (log_date: string, weight: string) => {
-    const res = await fetch("/api/weight-logs", {
+export function useWeightLogs() {
+  const fetchWeights = useCallback(async () => {
+    const data = await apiFetch<{ weights: WeightLog[] }>("/api/weight-logs");
+    return data.weights;
+  }, []);
+
+  const addWeight = useCallback(async (log_date: string, weight: string) => {
+    await apiFetch("/api/weight-logs", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ log_date, weight }),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to add weight");
-  };
+  }, []);
 
-  const deleteWeight = async (id: string) => {
-    const res = await fetch(`/api/weight-logs?id=${id}`, {
+  const deleteWeight = useCallback(async (id: string) => {
+    await apiFetch(`/api/weight-logs?id=${id}`, {
       method: "DELETE",
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to delete weight");
-  };
+  }, []);
 
   return { fetchWeights, addWeight, deleteWeight };
 }

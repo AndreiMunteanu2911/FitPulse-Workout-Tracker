@@ -11,7 +11,85 @@ import {
 interface SetRow { weight: number; reps: number }
 interface WorkoutExerciseRow { exercise_id?: string; sets?: SetRow[] }
 interface WorkoutRow { workout_date: string; workout_exercises?: WorkoutExerciseRow[] }
+interface UserAchievementRow { achievement_id: string; unlocked_at: string }
 interface UserStatsRow { total_xp: number; level: number }
+
+function buildWorkoutSummary(rows: WorkoutRow[]) {
+  let totalVolume = 0;
+  const exerciseMaxWeights = new Map<string, number>();
+  const MS_PER_DAY = 86_400_000;
+
+  rows.forEach((w) => {
+    (w.workout_exercises ?? []).forEach((we) => {
+      (we.sets ?? []).forEach((s) => {
+        totalVolume += s.weight * s.reps;
+        if (we.exercise_id) {
+          const prev = exerciseMaxWeights.get(we.exercise_id) ?? 0;
+          if (s.weight > prev) exerciseMaxWeights.set(we.exercise_id, s.weight);
+        }
+      });
+    });
+  });
+
+  const uniqueDates = [...new Set(rows.map((w) => w.workout_date))].sort(
+    (a, b) => new Date(b).getTime() - new Date(a).getTime(),
+  );
+
+  let longestStreak = 0;
+  if (uniqueDates.length > 0) {
+    let temp = 1;
+    for (let i = 1; i < uniqueDates.length; i++) {
+      const diff = (new Date(uniqueDates[i - 1]).getTime() - new Date(uniqueDates[i]).getTime()) / MS_PER_DAY;
+      if (diff === 1) {
+        temp++;
+      } else {
+        longestStreak = Math.max(longestStreak, temp);
+        temp = 1;
+      }
+    }
+    longestStreak = Math.max(longestStreak, temp);
+  }
+
+  return { totalWorkouts: rows.length, prCount: exerciseMaxWeights.size, longestStreak, totalVolume };
+}
+
+export async function GET() {
+  const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { data: workouts, error: workoutError } = await supabase
+    .from("workouts")
+    .select("workout_date, workout_exercises (exercise_id, sets (weight, reps))")
+    .eq("user_id", user.id)
+    .eq("status", "completed");
+
+  if (workoutError) return NextResponse.json({ error: workoutError.message }, { status: 500 });
+
+  const { data: claimedRows, error: claimedError } = await supabase
+    .from("user_achievements")
+    .select("achievement_id, unlocked_at")
+    .eq("user_id", user.id);
+
+  if (claimedError) return NextResponse.json({ error: claimedError.message }, { status: 500 });
+
+  const summary = buildWorkoutSummary((workouts ?? []) as WorkoutRow[]);
+  const claimedMap = new Map<string, string>(
+    ((claimedRows ?? []) as UserAchievementRow[]).map((row) => [row.achievement_id, row.unlocked_at]),
+  );
+
+  const achievements = ACHIEVEMENT_DEFINITIONS.map((definition) => {
+    const claimedAt = claimedMap.get(definition.id) ?? null;
+    const conditionMet = checkUnlockCondition(definition.id, summary);
+    return {
+      ...definition,
+      unlockedAt: conditionMet ? (claimedAt ?? new Date().toISOString()) : null,
+      claimedAt,
+    };
+  });
+
+  return NextResponse.json({ achievements });
+}
 
 /**
  * POST /api/achievements
@@ -48,43 +126,7 @@ export async function POST(request: Request) {
 
   if (wErr) return NextResponse.json({ error: wErr.message }, { status: 500 });
 
-  const rows = (workouts ?? []) as WorkoutRow[];
-  let totalVolume = 0;
-  const exerciseMaxWeights = new Map<string, number>();
-  const MS_PER_DAY = 86_400_000;
-
-  rows.forEach((w) => {
-    (w.workout_exercises ?? []).forEach((we) => {
-      (we.sets ?? []).forEach((s) => {
-        totalVolume += s.weight * s.reps;
-        if (we.exercise_id) {
-          const prev = exerciseMaxWeights.get(we.exercise_id) ?? 0;
-          if (s.weight > prev) exerciseMaxWeights.set(we.exercise_id, s.weight);
-        }
-      });
-    });
-  });
-
-  const uniqueDates = [...new Set(rows.map((w) => w.workout_date))].sort(
-    (a, b) => new Date(b).getTime() - new Date(a).getTime(),
-  );
-
-  let longestStreak = 0;
-  if (uniqueDates.length > 0) {
-    let temp = 1;
-    for (let i = 1; i < uniqueDates.length; i++) {
-      const diff = (new Date(uniqueDates[i - 1]).getTime() - new Date(uniqueDates[i]).getTime()) / MS_PER_DAY;
-      if (diff === 1) {
-        temp++;
-      } else {
-        longestStreak = Math.max(longestStreak, temp);
-        temp = 1;
-      }
-    }
-    longestStreak = Math.max(longestStreak, temp);
-  }
-
-  const summary = { totalWorkouts: rows.length, prCount: exerciseMaxWeights.size, longestStreak, totalVolume };
+  const summary = buildWorkoutSummary((workouts ?? []) as WorkoutRow[]);
 
   if (!checkUnlockCondition(achievementId, summary)) {
     return NextResponse.json({ error: "Achievement conditions not yet met" }, { status: 403 });

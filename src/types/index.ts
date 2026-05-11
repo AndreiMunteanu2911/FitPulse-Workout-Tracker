@@ -29,6 +29,27 @@ export type FormRuleApplicability = "realtime" | "post_set_only" | "not_applicab
 export type FormRuleView = "front" | "side" | "three_quarter";
 export type FormRulePhase = "eccentric" | "concentric" | "both";
 export type FormRuleSeverity = "error" | "warning" | "info";
+export type FormPatternRuleKind =
+  | "angle"
+  | "distance"
+  | "vertical_delta"
+  | "horizontal_delta"
+  | "joint_velocity"
+  | "torso_angle"
+  | "relative_position";
+export type FormPatternRuleEffect = "score_penalty" | "cue_only" | "rep_gate";
+export type FormPatternRuleEvaluationTiming = "phase" | "phase_endpoint" | "always";
+export type FormPatternRuleBodyScale = "shoulder_width" | "hip_width" | "torso" | "body_height";
+export type FormPatternRuleRelation = "above" | "below" | "left_of" | "right_of";
+export type FormCueCategory =
+  | "range_of_motion"
+  | "tempo"
+  | "stability"
+  | "symmetry"
+  | "posture"
+  | "tracking"
+  | "other";
+export type FormScoreBand = "excellent" | "good" | "needs_work" | "poor";
 export type PrimaryMetricKind = "angle";
 export type PrimaryMetricPhaseLogic =
   | "flexion_extension"
@@ -81,6 +102,9 @@ export interface FormSessionFeedbackItem {
   source?: "rule" | "tempo" | "stability" | "symmetry" | "spine" | "coach";
   ruleId?: string;
   timestampMs?: number;
+  category?: FormCueCategory;
+  confidence?: number;
+  effect?: FormPatternRuleEffect;
 }
 
 export interface FormLandmarkSample {
@@ -112,6 +136,8 @@ export interface FormRepMetric {
   minAngle: number;
   maxAngle: number;
   score: number;
+  scoreBand?: FormScoreBand;
+  trackingConfidence?: number;
   feedback: FormSessionFeedbackItem[];
   tempoFlags: string[];
 }
@@ -150,6 +176,13 @@ export interface FormSessionAnalysis {
     realtime: FormSessionFeedbackItem[];
     postset: FormSessionFeedbackItem[];
     coaching?: FormCoachingResult | null;
+    scoring?: {
+      scoreBand: FormScoreBand;
+      trackingConfidence: number;
+      trackingHint?: string | null;
+      consistencyPenalty?: number;
+      trendPenalty?: number;
+    };
   };
   rep_metrics_json: FormRepMetric[];
   landmark_stream_json: FormLandmarkSample[];
@@ -349,6 +382,7 @@ export interface Friendship {
 export interface Post {
   id: string;
   user_id: string;
+  workout_id?: string | null;
   content?: string | null;
   image_url?: string | null;
   workout_summary?: string | null;
@@ -360,6 +394,7 @@ export interface Post {
   likes_count?: number;
   comments_count?: number;
   liked_by_me?: boolean;
+  workout?: Workout | null;
 }
 
 export interface PostLike {

@@ -5,6 +5,7 @@ import BlogList from "@/components/blog/BlogList";
 import BlogFormModal from "@/components/blog/BlogFormModal";
 import Button from "@/components/Button";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { useAuthSession } from "@/components/AuthSessionProvider";
 import { BlogPost } from "@/types";
 import { Plus, Search } from "lucide-react";
@@ -116,10 +117,8 @@ export default function BlogPage() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-[400px] bg-[var(--surface-raised)] animate-pulse rounded-[var(--radius-lg)]" />
-            ))}
+          <div className="flex min-h-[18rem] items-center justify-center">
+            <LoadingSpinner />
           </div>
         ) : (
           <BlogList

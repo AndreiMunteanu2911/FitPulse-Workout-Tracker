@@ -2,13 +2,41 @@
 
 import Link from "next/link";
 import type { Achievement } from "@/types";
-import { Trophy, ArrowRight, Dumbbell, Activity, TrendingUp, Star, Award, Zap, Flame, Rocket, Target, Medal, BarChart2, Crown, type LucideIcon } from "lucide-react";
+import {
+  Activity,
+  ArrowRight,
+  Award,
+  BarChart2,
+  CheckCircle2,
+  Crown,
+  Dumbbell,
+  Flame,
+  Medal,
+  Rocket,
+  Star,
+  Target,
+  TrendingUp,
+  Trophy,
+  Zap,
+  type LucideIcon,
+} from "lucide-react";
 import { ChartBarIncreasing } from "lucide-react";
 
 const ICON_MAP: Record<string, LucideIcon> = {
-  Dumbbell, Activity, TrendingUp, Star, Award,
-  Zap, Flame, Rocket, Trophy, Target, Medal,
-  BarChart2, ChartBarIncreasing, Crown,
+  Dumbbell,
+  Activity,
+  TrendingUp,
+  Star,
+  Award,
+  Zap,
+  Flame,
+  Rocket,
+  Trophy,
+  Target,
+  Medal,
+  BarChart2,
+  ChartBarIncreasing,
+  Crown,
 };
 
 interface AchievementsTeaserCardProps {
@@ -16,88 +44,82 @@ interface AchievementsTeaserCardProps {
 }
 
 export default function AchievementsTeaserCard({ achievements }: AchievementsTeaserCardProps) {
-  const claimed = achievements.filter((a) => !!a.claimedAt);
-  const claimable = achievements.filter((a) => !!a.unlockedAt && !a.claimedAt);
+  const claimed = achievements.filter((achievement) => !!achievement.claimedAt);
+  const claimable = achievements.filter((achievement) => !!achievement.unlockedAt && !achievement.claimedAt);
   const total = achievements.length;
-
-  // Show the first 4 claimable badges; fall back to claimed ones if none pending
-  const previewBadges = claimable.length > 0 ? claimable.slice(0, 4) : claimed.slice(0, 4);
+  const progress = total > 0 ? Math.round((claimed.length / total) * 100) : 0;
+  const previewBadges = (claimable.length > 0 ? claimable : claimed).slice(0, 5);
   const hasClaimable = claimable.length > 0;
 
   return (
-    <div className="bg-[var(--surface)] rounded-[var(--radius-md)] overflow-hidden">
-      <div className="relative flex items-center gap-4 p-4 sm:p-5">
-        {/* Primary accent bar */}
-        <div className="absolute left-0 inset-y-0 w-1 bg-gradient-to-b from-[var(--primary-500)] to-[var(--lime-green)] rounded-full" />
-
-        {/* Icon */}
-        <div className="flex-shrink-0 w-11 h-11 rounded-[var(--radius-sm)] bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center relative">
-          <Trophy className="w-6 h-6 text-[var(--primary-600)] dark:text-[var(--primary-500)]" />
+    <div className="bg-[var(--surface)] rounded-[var(--radius-lg)] p-5 sm:p-6">
+      <div className="flex items-start gap-4">
+        <div className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--primary-50)] dark:bg-[var(--primary-100)] text-[var(--primary-600)]">
+          <Trophy className="h-6 w-6" />
           {hasClaimable && (
-            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[var(--lime-green)] text-[#232323] text-[9px] font-bold flex items-center justify-center">
+            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--lime-green)] px-1 text-[10px] font-extrabold text-[#232323]">
               {claimable.length}
             </span>
           )}
         </div>
 
-        {/* Text */}
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-[var(--foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>Achievements</p>
-          <p className="text-xs text-[var(--muted-foreground)] mt-0.5">
-            <span className="font-semibold text-[var(--primary-600)] dark:text-[var(--primary-500)]">
-              {claimed.length}
-            </span>{" "}
-            / {total} claimed
-            {hasClaimable && (
-              <span className="ml-1.5 font-semibold text-[var(--primary-600)] dark:text-[var(--primary-500)]">
-                · {claimable.length} ready
-              </span>
-            )}
-          </p>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-[var(--foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>
+                Achievements
+              </p>
+              <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+                {claimed.length} of {total} claimed
+                {hasClaimable && <span className="font-semibold text-[var(--primary-600)]"> · {claimable.length} ready</span>}
+              </p>
+            </div>
+            <Link
+              href="/achievements"
+              aria-label="View all achievements"
+              className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--surface-raised)] text-[var(--foreground)] transition-colors hover:bg-[var(--primary-50)] hover:text-[var(--primary-600)]"
+            >
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
 
-          {/* Mini icon strip */}
-          {previewBadges.length > 0 && (
-            <div className="flex items-center gap-1.5 mt-2">
-              {previewBadges.map((a) => {
-                const Icon = ICON_MAP[a.icon] ?? Trophy;
+          <div className="mt-4">
+            <div className="mb-1.5 flex items-center justify-between text-[11px] font-semibold text-[var(--muted-foreground)]">
+              <span>Progress</span>
+              <span>{progress}%</span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-[var(--surface-raised)]">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-[var(--primary-500)] to-[var(--lime-green)] transition-all duration-700 ease-out"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+
+          {previewBadges.length > 0 ? (
+            <div className="mt-4 flex items-center gap-2 overflow-hidden">
+              {previewBadges.map((achievement) => {
+                const Icon = ICON_MAP[achievement.icon] ?? Trophy;
+                const isReady = !!achievement.unlockedAt && !achievement.claimedAt;
                 return (
                   <span
-                    key={a.id}
-                    title={a.name}
-                    className="w-6 h-6 rounded-full bg-[var(--primary-50)] flex items-center justify-center text-[var(--primary-500)]"
+                    key={achievement.id}
+                    title={achievement.name}
+                    className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border ${
+                      isReady
+                        ? "border-[var(--lime-green)] bg-[var(--lime-green)] text-[#232323]"
+                        : "border-[var(--border)] bg-[var(--surface-raised)] text-[var(--primary-600)]"
+                    }`}
                   >
-                    <Icon className="w-3.5 h-3.5" aria-hidden="true" />
+                    {achievement.claimedAt ? <CheckCircle2 className="h-4 w-4" /> : <Icon className="h-4 w-4" aria-hidden="true" />}
                   </span>
                 );
               })}
-              {claimable.length > 4 && (
-                <span className="text-xs text-[var(--muted-foreground)]">+{claimable.length - 4}</span>
-              )}
             </div>
-          )}
-
-          {previewBadges.length === 0 && (
-            <p className="text-xs text-[var(--muted-foreground)] mt-1.5">Start earning badges</p>
+          ) : (
+            <p className="mt-4 text-xs text-[var(--muted-foreground)]">Log workouts to unlock your first badges.</p>
           )}
         </div>
-
-        {/* CTA */}
-        <Link
-          href="/achievements"
-          aria-label="View all achievements"
-          className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] text-[var(--primary-600)] dark:text-[var(--primary-500)] font-semibold text-xs hover:bg-[var(--primary-100)] dark:hover:bg-[var(--primary-200)] transition-colors"
-        >
-          View All
-          <ArrowRight className="w-3.5 h-3.5" />
-        </Link>
-      </div>
-
-      {/* Progress bar */}
-      <div className="h-1.5 w-full bg-[var(--surface-raised)]">
-        <div
-          className="h-full bg-gradient-to-r from-[var(--primary-500)] to-[var(--lime-green)] transition-all duration-700 ease-out"
-          style={{ width: total > 0 ? `${(claimed.length / total) * 100}%` : "0%" }}
-        />
       </div>
     </div>
   );
