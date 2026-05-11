@@ -222,7 +222,7 @@ export function FeedbackPanel({
             <p className="text-[10px] uppercase tracking-wider text-white/60">Score</p>
             <p
               className={`text-xl font-bold leading-none ${
-                !hasRepScore ? "text-white/70" : formScore >= 80 ? "text-emerald-400" : formScore >= 60 ? "text-amber-400" : "text-red-400"
+                !hasRepScore ? "text-white/70" : formScore >= 90 ? "text-emerald-400" : formScore >= 75 ? "text-violet-300" : formScore >= 60 ? "text-amber-400" : "text-red-400"
               }`}
             >
               {hasRepScore ? `${formScore}%` : "--"}
@@ -234,7 +234,7 @@ export function FeedbackPanel({
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/20">
         <div
           className={`h-full rounded-full transition-all duration-500 ${
-            !hasRepScore ? "bg-white/30" : formScore >= 80 ? "bg-emerald-400" : formScore >= 60 ? "bg-amber-400" : "bg-red-400"
+            !hasRepScore ? "bg-white/30" : formScore >= 90 ? "bg-emerald-400" : formScore >= 75 ? "bg-violet-300" : formScore >= 60 ? "bg-amber-400" : "bg-red-400"
           }`}
           style={{ width: `${hasRepScore ? formScore : 12}%` }}
         />

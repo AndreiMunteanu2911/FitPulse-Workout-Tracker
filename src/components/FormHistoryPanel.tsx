@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Activity, ChevronDown, ChevronUp } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import type { FormLog } from "@/types";
+import { getScoreBand } from "@/lib/form-analysis";
 
 interface FormHistoryPanelProps {
   exerciseId: string;
@@ -27,9 +28,10 @@ function formatDate(iso: string): string {
 }
 
 function ScoreBadge({ score }: { score: number }) {
+  const band = getScoreBand(score);
   return (
     <span className="inline-flex items-center rounded-full bg-[var(--primary-50)] px-2.5 py-1 text-sm font-bold text-[var(--primary-700)] dark:bg-[var(--primary-100)] dark:text-[var(--primary-700)]">
-      {score}%
+      {band.label} {score}%
     </span>
   );
 }
