@@ -6,7 +6,8 @@ import { BlogPost, BlogComment } from "@/types";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import { useAuthSession } from "@/components/AuthSessionProvider";
 import Button from "@/components/Button";
-import { ArrowLeft, Calendar, Loader2, Heart, MessageCircle, Send, Trash2 } from "lucide-react";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { ArrowLeft, Calendar, Heart, MessageCircle, Send, Trash2 } from "lucide-react";
 import Image from "next/image";
 
 export default function BlogPostPage({ params }: { params: Promise<{ id: string }> }) {
@@ -130,9 +131,8 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <Loader2 className="w-10 h-10 animate-spin text-[var(--primary-600)]" />
-        <p className="text-[var(--muted-foreground)] font-medium animate-pulse">Loading story...</p>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <LoadingSpinner />
       </div>
     );
   }

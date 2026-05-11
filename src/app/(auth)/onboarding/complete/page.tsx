@@ -7,8 +7,18 @@ import { useAuthSession } from "@/components/AuthSessionProvider";
 
 export default function OnboardingCompletePage() {
   const router = useRouter();
-  const { user } = useAuthSession();
+  const { user, refreshSession } = useAuthSession();
   const userName = user?.display_name?.split(" ")[0] || "there";
+
+  async function handleFinish(): Promise<void> {
+    await fetch("/api/user/profile", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ onboarding_done: true }),
+    });
+    await refreshSession();
+    router.push("/dashboard");
+  }
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-6 pb-8">
@@ -67,7 +77,7 @@ export default function OnboardingCompletePage() {
 
       <div className="w-full max-w-xs">
         <Button
-          onClick={() => router.push("/dashboard")}
+          onClick={handleFinish}
           block
           variant="lime"
           className="!py-3 !text-base"

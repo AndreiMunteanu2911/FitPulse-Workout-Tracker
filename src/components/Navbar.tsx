@@ -15,7 +15,7 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="hidden md:flex w-60 sticky top-0 h-screen flex-col bg-gradient-to-b from-[#5E3FDE] to-[#896CFE] text-white z-20">
+      <nav className="hidden md:flex w-60 sticky top-0 h-screen flex-col bg-gradient-to-b from-[#5E3FDE] via-[#7457F5] to-[#896CFE] text-white z-20 shadow-[18px_0_45px_rgba(94,63,222,0.18)]">
         <div className="flex items-center gap-2.5 px-5 pt-6 pb-8">
           <div className="w-9 h-9 rounded-[var(--radius-sm)] bg-white flex items-center justify-center flex-shrink-0 overflow-hidden">
             <Image src="/assets/logo.png" alt="FitPulse" width={24} height={24} className="object-contain" />
@@ -32,16 +32,16 @@ export default function Navbar() {
               <li key={name} className="flex-shrink-0">
                 <Link
                   href={href}
-                  className={`flex items-center gap-3 px-5 py-3.5 transition-all duration-150 text-sm ${
+                  className={`group flex items-center gap-3 px-5 py-3.5 transition-all duration-200 text-sm ${
                     active
-                      ? "bg-[var(--lime-green)] text-[#4A2FC2] font-bold"
-                      : "text-white/60 hover:text-white/90 hover:bg-white/5"
+                      ? "bg-[var(--lime-green)] text-[#4A2FC2] font-bold shadow-[inset_4px_0_0_rgba(74,47,194,0.35)]"
+                      : "text-white/65 hover:text-white hover:bg-white/[0.08]"
                   }`}
                 >
                   <div className={`w-7 h-7 rounded-[var(--radius-sm)] flex items-center justify-center flex-shrink-0 transition-colors ${
                     active ? "bg-[#4A2FC2]/15" : "bg-transparent"
                   }`}>
-                    <Icon className="w-[18px] h-[18px]" />
+                    <Icon className="w-[18px] h-[18px] transition-transform duration-200 group-hover:scale-110" />
                   </div>
                   {name}
                 </Link>
@@ -51,7 +51,7 @@ export default function Navbar() {
         </ul>
       </nav>
 
-      <nav className="fixed bottom-0 left-0 right-0 md:hidden z-20 bg-[#5E3FDE] text-white">
+      <nav className="fixed bottom-0 left-0 right-0 md:hidden z-20 bg-[#5E3FDE]/95 pb-[env(safe-area-inset-bottom)] text-white shadow-[0_-12px_34px_rgba(94,63,222,0.25)] backdrop-blur-xl">
         <ul className="flex">
           {mobileTabs.map(({ name, href, Icon }) => {
             const active = pathname === href;
@@ -59,10 +59,10 @@ export default function Navbar() {
               <li key={name} className="flex-1">
                 <Link
                   href={href}
-                  className={`relative flex flex-col items-center justify-center py-2.5 px-1 gap-1 transition-all duration-200 ${
+                  className={`relative flex min-h-[4.25rem] flex-col items-center justify-center gap-1 px-1 py-2 transition-all duration-200 ${
                     active
                       ? "bg-[var(--lime-green)] text-[#4A2FC2]"
-                      : ""
+                      : "hover:bg-white/[0.08]"
                   }`}
                 >
                   <span

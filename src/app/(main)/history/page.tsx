@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import Skeleton from "react-loading-skeleton";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import WorkoutHistoryCard from "@/components/WorkoutHistoryCard";
 import ModalWrapper from "@/components/ModalWrapper";
@@ -128,28 +128,8 @@ export default function HistoryPage() {
     if (loading) {
         return (
             <ProtectedWrapper>
-                <div className="w-full">
-                    <div className="bg-gradient-to-br from-[var(--primary-700)] to-[var(--primary-400)] rounded-[var(--radius-lg)] p-6 mb-5">
-                        <Skeleton className="mb-4 bg-white/20" width={120} height={20} />
-                        <div className="grid grid-cols-3 gap-3">
-                            <Skeleton className="bg-white/20" height={50} />
-                            <Skeleton className="bg-white/20" height={50} />
-                            <Skeleton className="bg-white/20" height={50} />
-                        </div>
-                    </div>
-                    <div className="space-y-3">
-                        {Array.from({ length: 4 }).map((_, i) => (
-                            <div key={i} className="bg-[var(--surface)] rounded-[var(--radius-lg)] p-5">
-                                <Skeleton width={100} className="mb-2" />
-                                <Skeleton width={200} className="mb-3" />
-                                <div className="flex gap-2">
-                                    <Skeleton width={80} height={24} />
-                                    <Skeleton width={80} height={24} />
-                                    <Skeleton width={80} height={24} />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                <div className="flex min-h-[18rem] w-full items-center justify-center">
+                    <LoadingSpinner />
                 </div>
             </ProtectedWrapper>
         );

@@ -6,6 +6,7 @@ import { useAuthSession } from "@/components/AuthSessionProvider";
 import PostCard from "@/components/social/PostCard";
 import CreatePostModal from "@/components/social/CreatePostModal";
 import FriendManagement from "@/components/social/FriendManagement";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { useSocial } from "@/hooks/useSocial";
 import type { Post, Friendship, Workout } from "@/types";
 import { Plus, Users, Rss } from "lucide-react";
@@ -18,6 +19,7 @@ export default function SocialPage() {
   const [loadingFeed, setLoadingFeed] = useState(true);
   const [loadingFriends, setLoadingFriends] = useState(true);
   const [showCreatePost, setShowCreatePost] = useState(false);
+  const [actionError, setActionError] = useState("");
   const { fetchFeed, fetchFriendships, createPost, toggleLike, deletePost } = useSocial();
   const { user } = useAuthSession();
   const currentUserId = user?.id ?? "";
@@ -60,28 +62,43 @@ export default function SocialPage() {
   }, []);
 
   const handleLike = async (postId: string) => {
-    const liked = await toggleLike(postId);
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === postId
-          ? {
-              ...p,
-              liked_by_me: liked,
-              likes_count: liked ? (p.likes_count || 0) + 1 : Math.max((p.likes_count || 0) - 1, 0),
-            }
-          : p
-      )
-    );
+    try {
+      setActionError("");
+      const liked = await toggleLike(postId);
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId
+            ? {
+                ...p,
+                liked_by_me: liked,
+                likes_count: liked ? (p.likes_count || 0) + 1 : Math.max((p.likes_count || 0) - 1, 0),
+              }
+            : p
+        )
+      );
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Could not update post.");
+    }
   };
 
   const handleCreatePost = async (payload: { content?: string; image?: File; workout_id?: string }) => {
-    const post = await createPost(payload);
-    setPosts((prev) => [post, ...prev]);
+    try {
+      setActionError("");
+      const post = await createPost(payload);
+      setPosts((prev) => [post, ...prev]);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Could not create post.");
+    }
   };
 
   const handleDeletePost = async (postId: string) => {
-    await deletePost(postId);
-    setPosts((prev) => prev.filter((p) => p.id !== postId));
+    try {
+      setActionError("");
+      await deletePost(postId);
+      setPosts((prev) => prev.filter((p) => p.id !== postId));
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Could not delete post.");
+    }
   };
 
   const pendingCount = friendships.filter(
@@ -142,23 +159,17 @@ export default function SocialPage() {
           </button>
         </div>
 
+        {actionError && (
+          <div className="mb-4 rounded-[var(--radius-md)] border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+            {actionError}
+          </div>
+        )}
+
         {activeTab === "feed" && (
           <>
             {loadingFeed ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="bg-[var(--surface)] rounded-[var(--radius-lg)] p-4 animate-pulse">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-9 h-9 rounded-full bg-[var(--surface-raised)]" />
-                      <div className="space-y-1 flex-1">
-                        <div className="h-3 bg-[var(--surface-raised)] rounded w-1/3" />
-                        <div className="h-2.5 bg-[var(--surface-raised)] rounded w-1/5" />
-                      </div>
-                    </div>
-                    <div className="h-3 bg-[var(--surface-raised)] rounded w-full mb-2" />
-                    <div className="h-3 bg-[var(--surface-raised)] rounded w-3/4" />
-                  </div>
-                ))}
+              <div className="flex min-h-[16rem] items-center justify-center">
+                <LoadingSpinner />
               </div>
             ) : posts.length === 0 ? (
               <div className="text-center py-16 bg-[var(--surface)] rounded-[var(--radius-lg)]">
@@ -190,13 +201,8 @@ export default function SocialPage() {
         {activeTab === "friends" && (
           <>
             {loadingFriends ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="bg-[var(--surface-raised)] rounded-[var(--radius-md)] p-3 animate-pulse flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-[var(--surface)]" />
-                    <div className="h-3 bg-[var(--surface)] rounded w-1/3" />
-                  </div>
-                ))}
+              <div className="flex min-h-[16rem] items-center justify-center">
+                <LoadingSpinner />
               </div>
             ) : (
               <FriendManagement

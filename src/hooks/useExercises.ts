@@ -1,28 +1,23 @@
 "use client";
 import { useCallback } from "react";
+import { apiFetch } from "@/services/api/apiFetch";
+import type { Exercise } from "@/types";
 
 export function useExercises() {
   const fetchExercises = useCallback(async (page: number, search: string) => {
     const params = new URLSearchParams({ page: String(page), search });
-    const res = await fetch(`/api/exercises?${params}`);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to fetch exercises");
-    return data as { exercises: unknown[]; hasMore: boolean };
+    return apiFetch<{ exercises: Exercise[]; hasMore: boolean }>(`/api/exercises?${params}`);
   }, []);
 
   const fetchExercise = useCallback(async (id: string) => {
-    const res = await fetch(`/api/exercises/${id}`);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to fetch exercise");
+    const data = await apiFetch<{ exercise: Exercise }>(`/api/exercises/${id}`);
     return data.exercise;
   }, []);
 
   const searchExercises = useCallback(async (query: string, limit = 10) => {
     const params = new URLSearchParams({ search: query, page: "0" });
-    const res = await fetch(`/api/exercises?${params}`);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to search exercises");
-    return (data.exercises as unknown[]).slice(0, limit);
+    const data = await apiFetch<{ exercises: Exercise[] }>(`/api/exercises?${params}`);
+    return data.exercises.slice(0, limit);
   }, []);
 
   return { fetchExercises, fetchExercise, searchExercises };

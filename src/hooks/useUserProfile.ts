@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { apiFetch } from "@/services/api/apiFetch";
 
 export interface UserProfile {
   display_name: string | null;
@@ -17,29 +18,24 @@ export function useUserProfile() {
   const fetchProfile = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/user/profile");
-      if (res.ok) {
-        const json = await res.json();
-        setProfile(json.profile);
-      }
+      const json = await apiFetch<{ profile: UserProfile }>("/api/user/profile");
+      setProfile(json.profile);
     } catch {
       // ignore
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   const updateProfile = useCallback(async (updates: Partial<UserProfile>) => {
     try {
-      const res = await fetch("/api/user/profile", {
+      const json = await apiFetch<{ profile: UserProfile }>("/api/user/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updates),
       });
-      if (res.ok) {
-        const json = await res.json();
-        setProfile(json.profile);
-        return true;
-      }
+      setProfile(json.profile);
+      return true;
     } catch {
       // ignore
     }

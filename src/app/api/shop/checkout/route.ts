@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getWebAppBaseUrl } from "@/config/app-env";
 import { stripe } from "@/helper/stripe";
 import { createSupabaseServerClient } from "@/helper/supabaseServer";
 
@@ -36,9 +37,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = (await req.json().catch(() => ({}))) as { productId?: string; quantity?: number };
+  const body = (await req.json().catch(() => ({}))) as {
+    productId?: string;
+    quantity?: number;
+    nativeApp?: boolean;
+    appScheme?: string;
+  };
   const productId = body.productId;
   const quantity = Number(body.quantity || 1);
+  const nativeApp = body.nativeApp === true;
+  const appScheme = body.appScheme?.trim() || "com.fitpulse.app";
 
   if (!productId || quantity < 1) {
     return NextResponse.json({ error: "Missing productId or invalid quantity." }, { status: 400 });
@@ -74,15 +82,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: orderError?.message || "Failed to create order." }, { status: 500 });
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(req.url).origin;
+  const baseUrl = getWebAppBaseUrl(new URL(req.url).origin);
+  const successUrl = nativeApp
+    ? `${appScheme}://checkout-success?session_id={CHECKOUT_SESSION_ID}`
+    : `${baseUrl}/checkout-success?session_id={CHECKOUT_SESSION_ID}`;
+  const cancelUrl = nativeApp
+    ? `${appScheme}://shop?cancelled=1`
+    : `${baseUrl}/shop?canceled=1`;
   const allowedCountries = (process.env.STRIPE_ALLOWED_SHIPPING_COUNTRIES || "")
     .split(",")
     .map((country) => country.trim().toUpperCase())
     .filter(Boolean) as AllowedCountry[];
   const sessionParams: CheckoutCreateParamsWithShipping = {
     mode: "payment",
-    success_url: `${baseUrl}/checkout-success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${baseUrl}/shop?canceled=1`,
+    success_url: successUrl,
+    cancel_url: cancelUrl,
     shipping_address_collection: product.is_physical
       ? {
           allowed_countries: (allowedCountries.length > 0 ? allowedCountries : DEFAULT_ALLOWED_COUNTRIES) as AllowedCountry[],

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Dumbbell, Users, LayoutTemplate, BarChart3, Shield, Brain, ShoppingBag, Package } from "lucide-react";
-import Skeleton from "react-loading-skeleton";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminStatCard from "@/components/admin/AdminStatCard";
 import AdminNavCard from "@/components/admin/AdminNavCard";
@@ -58,21 +58,8 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <div className="w-full">
-        <div className="page-header mb-6">
-          <Skeleton width={80} height={28} className="mb-2" />
-          <Skeleton width={140} />
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} height={80} className="rounded-lg" />
-          ))}
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} height={80} className="rounded-lg" />
-          ))}
-        </div>
+      <div className="flex min-h-[18rem] w-full items-center justify-center">
+        <LoadingSpinner />
       </div>
     );
   }

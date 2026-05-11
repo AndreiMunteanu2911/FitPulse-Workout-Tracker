@@ -73,7 +73,12 @@ export const formSessionFeedbackItemSchema = z.object({
   source: z.enum(["rule", "tempo", "stability", "symmetry", "spine", "coach"]).optional(),
   ruleId: z.string().min(1).optional(),
   timestampMs: z.number().int().min(0).optional(),
+  category: z.enum(["range_of_motion", "tempo", "stability", "symmetry", "posture", "tracking", "other"]).optional(),
+  confidence: z.number().min(0).max(1).optional(),
+  effect: z.enum(["score_penalty", "cue_only", "rep_gate"]).optional(),
 });
+
+const formScoreBandSchema = z.enum(["excellent", "good", "needs_work", "poor"]);
 
 export const formLandmarkSampleSchema = z.object({
   timestampMs: z.number().int().min(0),
@@ -98,6 +103,8 @@ export const formRepMetricSchema = z.object({
   minAngle: z.number().min(0).max(180),
   maxAngle: z.number().min(0).max(180),
   score: z.number().int().min(0).max(100),
+  scoreBand: formScoreBandSchema.optional(),
+  trackingConfidence: z.number().min(0).max(1).optional(),
   feedback: z.array(formSessionFeedbackItemSchema).max(12),
   tempoFlags: z.array(z.string().min(1).max(60)).max(8),
 });
@@ -135,6 +142,13 @@ export const formSessionAnalysisSchema = z.object({
     realtime: z.array(formSessionFeedbackItemSchema).max(20),
     postset: z.array(formSessionFeedbackItemSchema).max(20),
     coaching: formCoachingResultSchema.nullish(),
+    scoring: z.object({
+      scoreBand: formScoreBandSchema,
+      trackingConfidence: z.number().min(0).max(1),
+      trackingHint: z.string().max(160).nullable().optional(),
+      consistencyPenalty: z.number().int().min(0).max(100).optional(),
+      trendPenalty: z.number().int().min(0).max(100).optional(),
+    }).optional(),
   }),
   rep_metrics_json: z.array(formRepMetricSchema).max(100),
   landmark_stream_json: z.array(formLandmarkSampleSchema).max(1200),
@@ -158,6 +172,13 @@ export const formCoachingAnalysisSchema = z.object({
     realtime: z.array(formSessionFeedbackItemSchema).max(20),
     postset: z.array(formSessionFeedbackItemSchema).max(20),
     coaching: formCoachingResultSchema.nullish(),
+    scoring: z.object({
+      scoreBand: formScoreBandSchema,
+      trackingConfidence: z.number().min(0).max(1),
+      trackingHint: z.string().max(160).nullable().optional(),
+      consistencyPenalty: z.number().int().min(0).max(100).optional(),
+      trendPenalty: z.number().int().min(0).max(100).optional(),
+    }).optional(),
   }),
   rep_metrics_json: z.array(formRepMetricSchema).max(20),
   worst_segment_json: formWorstSegmentSchema.nullable(),

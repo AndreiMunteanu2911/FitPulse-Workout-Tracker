@@ -2,7 +2,7 @@
 
 [Live deployment](https://fitpulseam.vercel.app)
 
-FitPulse is a mobile-first fitness platform for logging workouts, tracking progress, reviewing lifting form, building habits, and sharing training updates with a community. It is built with Next.js App Router, React 19, Supabase, Tailwind CSS, Framer Motion, Recharts, Stripe, and MediaPipe.
+FitPulse is a mobile-first fitness platform for logging workouts, tracking progress, reviewing lifting form, building habits, and sharing training updates with a community. It is built with Next.js App Router, React 19, Supabase, Tailwind CSS, Framer Motion, Recharts, Stripe, MediaPipe, and a Capacitor-based Android shell.
 
 ## Overview
 
@@ -31,8 +31,14 @@ This README focuses on the implementation surface: route groups, feature domains
 - The exercise library gives users a searchable catalog of movements they can add to workouts or mark as favorites for faster access later.
 - Exercise detail pages show how the movement looks, what muscles it targets, how the user has performed on it before, and the latest session history.
 - The form checker lets users record a set with the camera running and receive realtime coaching cues while they move.
-- It uses pose tracking and rule-based scoring to estimate rep quality, then stores the finished analysis for later review.
-- When available, the app also asks the cloud coaching layer for a second-pass summary of the set so users get both instant and post-set feedback.
+- It uses MediaPipe pose tracking, smoothed landmarks with visibility decay, calibration hysteresis, stable joint status, and rep-based scoring to estimate quality without single-frame flicker.
+- Detection runs at a controlled cadence, prevents overlapping pose inference, and shows one shared spinner while the first landmarks are loading so the camera startup does not feel frozen.
+- The local pattern engine supports angle, distance, vertical/horizontal delta, joint velocity, torso angle, and relative-position checks while keeping saved exercise rule mappings lightweight.
+- Rule effects separate coaching from invalid movement: red `rep_gate` rules can reject fake or unsafe reps, yellow score-penalty rules affect rep quality, and `cue_only` hints guide the user without materially changing the score.
+- Endpoint-aware rules evaluate lockout, depth, finish, or bottom-position requirements only near the expected end of the phase, so completion cues can be strict without flashing during normal movement.
+- Finished sets stop the camera, save a local analysis, and show a post-set review with a score band, exact percentage, realtime score, post-set score, main cues, and optional AI coach feedback.
+- The score model groups repeated cues by category per rep, weights penalties by tracking confidence, and applies small consistency/fatigue adjustments from completed reps rather than frame-by-frame warning spam.
+- When available, the app asks the cloud coaching layer for a second-pass summary of the set. If the provider is slow or unavailable, the review falls back to the local analysis instead of blocking the user.
 - The same exercise system supports custom exercises and admin-managed rule mappings, so the library can grow with the user's training style.
 
 ### Progress and gamification
@@ -41,6 +47,7 @@ This README focuses on the implementation surface: route groups, feature domains
 - Progress photos give users a visual before/after record with notes and body-part tags instead of only relying on numbers.
 - The workout calendar highlights training days so consistency is visible at a glance.
 - XP, levels, and achievements turn regular logging into a progression system, with claimable rewards when the user hits milestones.
+- The dashboard shows a compact achievement progress card, and the achievements page groups badges by workouts, streaks, records, and volume with clear locked, ready, and claimed states.
 - The dashboard surfaces the most important progress signals together so the user can see momentum without opening multiple pages.
 
 ### AI coach
@@ -123,6 +130,7 @@ This README focuses on the implementation surface: route groups, feature domains
 | Styling | Tailwind CSS v4, CSS variables, custom theme tokens |
 | Animation | Framer Motion |
 | Charts | Recharts |
+| Android shell | Capacitor 8 |
 | Database | Supabase PostgreSQL |
 | Auth | Supabase Auth with `@supabase/ssr` |
 | Storage | Supabase Storage |
@@ -138,16 +146,19 @@ This README focuses on the implementation surface: route groups, feature domains
 
 - The app is split into route groups. `(auth)` holds the public login, signup, and onboarding flow. `(main)` holds the protected app shell and all authenticated pages.
 - Client components are thin shells over reusable hooks. Hooks call Next.js API routes, not Supabase directly.
+- Client API calls should use `apiFetch` where possible so auth redirects, network failures, and non-JSON errors are handled consistently.
 - API routes are the only place where Supabase credentials are used, which keeps the browser bundle free of backend credentials.
 - Session state is read through `@supabase/ssr` and stored in HTTP-only cookies.
 - The main layout checks `onboarding_done` and redirects incomplete users into the onboarding flow before they reach protected pages.
 - Database access is protected with row-level security and code-level ownership checks.
 - Admin access is enforced by the `role` field in `user_stats` and the `requireAdmin()` helper.
 - The UI is responsive: desktop uses a sticky left sidebar and content area, while mobile uses a fixed top bar and bottom tab navigation.
+- Loading states use the shared `LoadingSpinner` component. The app avoids skeleton placeholders and should show only one primary spinner per screen-level loading surface.
 - Theme preference is persisted and applied without a flash of the wrong theme.
+- Android builds use Capacitor as a native container. In production the Android app boots into a branded shell and forwards users into the hosted FitPulse app. In development the Android emulator can point directly at a local Next.js dev server.
 - Shared domain logic lives in `src/lib/`:
   - `ai.ts`, `rag-context.ts`, `rag-intent.ts`, and `workout-generator.ts` implement the AI coach and draft workout generation.
-  - `form-rules.ts`, `form-analysis.ts`, `form-coaching.ts`, `form-geometry.ts`, and `pose-detector.ts` implement the form checker pipeline.
+  - `form-rules.ts`, `form-analysis.ts`, `form-coaching.ts`, `form-geometry.ts`, and `pose-detector.ts` implement the form checker pipeline, including local pattern evaluation, endpoint-aware rules, landmark smoothing, rep scoring, and post-set coaching fallback.
   - `gamification.ts` computes XP, levels, streaks, and achievement unlock state.
   - `exercise-index.ts` resolves library and custom exercises for search and workout generation.
   - `navigation.ts` defines the desktop/mobile nav items.
@@ -177,6 +188,12 @@ npm install
 Copy `.env.example` to `.env.local` and fill in the values for your environment.
 
 ```env
+# App environment
+CAP_APP_ENV=development
+NEXT_PUBLIC_APP_ENV=development
+NEXT_PUBLIC_PRODUCTION_APP_URL=https://fitpulseam.vercel.app
+CAP_ANDROID_DEV_SERVER_URL=http://10.0.2.2:3000
+
 # Supabase
 SUPABASE_URL=https://<your-project-ref>.supabase.co
 SUPABASE_ANON_KEY=<your-anon-key>
@@ -200,13 +217,38 @@ OPENROUTER_EMBEDDING_MODEL=nvidia/llama-nemotron-embed-vl-1b-v2:free
 # Stripe
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_ALLOWED_SHIPPING_COUNTRIES=US,CA,GB,AU,DE,FR,NL,BE,ES,IT,PT,RO
 ```
 
 Notes:
 
+- `CAP_APP_ENV` / `NEXT_PUBLIC_APP_ENV` control whether Capacitor should behave as a local development shell or a production shell.
+- `NEXT_PUBLIC_PRODUCTION_APP_URL` is the hosted FitPulse URL the Android app should use outside of local development.
+- `CAP_ANDROID_DEV_SERVER_URL` is the Android emulator address for your local Next.js server. `10.0.2.2` maps back to your host machine from the emulator.
 - The client Supabase helper uses the `NEXT_PUBLIC_*` variables.
 - Server routes and admin helpers use the non-public Supabase variables.
 - The AI coach and form coaching can fall back through built-in models if your preferred OpenRouter model is unavailable.
+
+### Environment modes
+
+For local web and Android emulator work:
+
+```env
+CAP_APP_ENV=development
+NEXT_PUBLIC_APP_ENV=development
+NEXT_PUBLIC_PRODUCTION_APP_URL=https://fitpulseam.vercel.app
+CAP_ANDROID_DEV_SERVER_URL=http://10.0.2.2:3000
+```
+
+For production / Vercel:
+
+```env
+CAP_APP_ENV=production
+NEXT_PUBLIC_APP_ENV=production
+NEXT_PUBLIC_PRODUCTION_APP_URL=https://fitpulseam.vercel.app
+```
+
+On Vercel, copy the values from `.env.production` into the Production environment and replace the placeholder secrets with your real production keys.
 
 ### Database setup
 
@@ -219,6 +261,17 @@ Run the migrations in `migrations/` in numeric order. The current schema covers:
 - Community: friendships, posts, likes, and comments
 - Content: blog posts, likes, and comments
 - Commerce: products and orders
+
+Form checker persistence stays compatible with the `form_logs` shape. Recent form checker improvements are client-side analysis, smoothing, rep-based scoring, score-band metadata, and review UI changes rather than schema changes.
+
+Form rules remain backwards compatible with the existing `form_rules` data model. Database rows continue to store the exercise-to-pattern mapping, primary metric, view, confidence, overrides, and review metadata. The richer movement logic lives in the local pattern catalogue, where each reusable rule can declare:
+
+- `kind`: `angle`, `distance`, `vertical_delta`, `horizontal_delta`, `joint_velocity`, `torso_angle`, or `relative_position`
+- `category`: `range_of_motion`, `tempo`, `stability`, `symmetry`, `posture`, `tracking`, or `other`
+- `effect`: `score_penalty`, `cue_only`, or `rep_gate`
+- `evaluationTiming`: `phase`, `phase_endpoint`, or `always`
+
+This keeps admin overrides and saved logs compatible while letting patterns such as curls, squats, presses, pulls, hinges, lunges, raises, calf raises, and carries become stricter and more specific without a migration.
 
 ### Storage buckets
 
@@ -237,6 +290,54 @@ npm run dev
 
 Then open [http://localhost:3000](http://localhost:3000).
 
+### Run the Android app
+
+Capacitor and the Android project are already set up in this repository.
+
+For local Android emulator development:
+
+1. Start the Next.js dev server.
+
+```bash
+pnpm dev
+```
+
+2. Sync the Android project.
+
+```bash
+pnpm exec cap sync android
+```
+
+3. Open the Android project in Android Studio.
+
+```bash
+pnpm exec cap open android
+```
+
+4. Run the `app` target on an emulator or connected device.
+
+Notes:
+
+- Local Android development uses `CAP_ANDROID_DEV_SERVER_URL`, which defaults to `http://10.0.2.2:3000`.
+- `10.0.2.2` is the Android emulator alias for your host machine.
+- Stripe checkout on Android opens in the native browser/custom tab rather than staying inside the WebView.
+- Progress photo capture uses Capacitor Camera on Android.
+- The realtime form checker relies on `getUserMedia` and MediaPipe in the WebView. That feature requires an HTTPS context. It may not work from local cleartext emulator dev (`http://10.0.2.2:3000`) and should be validated against a hosted HTTPS build for full parity.
+- Form checker camera lifecycle is controlled by the form checker component. The camera starts for detection, stops for review, and should not restart while the saved review is open.
+
+### Build the Android shell for production
+
+1. Set the app environment to production in your local env or CI env.
+2. Sync the Android project:
+
+```bash
+pnpm exec cap sync android
+```
+
+3. Build and sign from Android Studio or your Gradle release pipeline.
+
+In production mode the Android app uses the branded Capacitor shell and forwards users into the hosted FitPulse app at `NEXT_PUBLIC_PRODUCTION_APP_URL`.
+
 ## Scripts
 
 | Script | Purpose |
@@ -247,6 +348,8 @@ Then open [http://localhost:3000](http://localhost:3000).
 | `npm run lint` | Run ESLint |
 | `npm run form-rules:generate` | Generate form rule data |
 | `npm run form-rules:import` | Import generated form rules |
+| `pnpm exec cap sync android` | Sync Capacitor config and assets into the Android project |
+| `pnpm exec cap open android` | Open the Android project in Android Studio |
 
 ## Database Notes
 
