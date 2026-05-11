@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import type { NormalizedLandmark, PoseLandmarker } from "@mediapipe/tasks-vision";
-import { X, RotateCcw, AlertTriangle, CheckCircle, Loader2 } from "lucide-react";
+import { X, RotateCcw, AlertTriangle, Loader2 } from "lucide-react";
 import Button from "@/components/Button";
 import {
   CameraErrorOverlay,
@@ -46,7 +46,6 @@ import {
 } from "@/lib/form-geometry";
 import { evaluateFormRule, resolveExerciseFormRules, type ResolvedExerciseFormRules, type ResolvedFormRule } from "@/lib/form-rules";
 import {
-  FORM_DETECTOR_VERSION,
   LandmarkStreamRecorder,
   adjustThresholdForConfidence,
   buildSessionAnalysis,
@@ -72,11 +71,14 @@ const DETECTION_CONFIG: DetectionCadenceConfig = {
   missingPoseGraceFrames: 5,
   enterCalibrationFrames: 12,
   exitCalibrationFrames: 7,
-  feedbackTtlMs: 850,
-  clearFrames: 5,
+  feedbackTtlMs: 1250,
+  clearFrames: 9,
   minRepRangeDegrees: 24,
   primaryLossResetFrames: 8,
 };
+
+const STABILITY_WARNING_MIN_JOINTS = 5;
+const STABILITY_WARNING_MIN_VARIANCE = 0.011;
 
 function getStableFeedbackKey(items: FormFeedback[]): string {
   return items.map((item) => `${item.type}:${item.message}`).join("|");
@@ -93,7 +95,7 @@ function SessionSummaryCard({
 }) {
   if (!analysis) return null;
   const coaching = analysis.feedback_json.coaching;
-  const topIssues = analysis.feedback_json.topIssues.slice(0, 3);
+  const topIssues = analysis.feedback_json.topIssues.slice(0, 6);
   const scoreBand = getScoreBand(analysis.score);
   const trackingHint = analysis.feedback_json.scoring?.trackingHint;
   const scoreColor = analysis.score >= 90
@@ -115,9 +117,6 @@ function SessionSummaryCard({
             <h3 className="mt-1 text-lg font-extrabold text-[var(--foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>
               {scoreBand.label} form
             </h3>
-            <p className="mt-2 text-sm leading-relaxed text-[var(--muted-foreground)]">
-              {analysis.feedback_summary || "Session analyzed locally."}
-            </p>
             {trackingHint && (
               <p className="mt-2 rounded-[var(--radius-sm)] bg-[var(--surface-raised)] px-3 py-2 text-xs font-semibold text-[var(--muted-foreground)]">
                 {trackingHint}
@@ -181,9 +180,6 @@ function SessionSummaryCard({
         )}
       </section>
 
-      <p className="px-1 text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">
-        Detector {FORM_DETECTOR_VERSION}
-      </p>
     </div>
   );
 }
@@ -967,7 +963,6 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
             continue;
           }
 
-          const effectiveHoldFrames = evaluation.confidence < 0.72 ? rule.holdFrames + 2 : rule.holdFrames;
           const existingFrames = trackedRulesRef.current[rule.id]?.failFrames ?? 0;
           const feedbackItem: FormFeedback = {
             type: downgradeSeverityForConfidence(rule.severity, resolvedRules.confidence, existingFrames > rule.holdFrames + 3),
@@ -980,6 +975,12 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
             effect: evaluation.effect,
             timestampMs,
           };
+          const baseHoldFrames = evaluation.effect === "rep_gate" && feedbackItem.type === "error"
+            ? Math.max(2, rule.holdFrames - 1)
+            : rule.holdFrames;
+          const effectiveHoldFrames = baseHoldFrames
+            + (feedbackItem.type === "warning" ? 2 : 0)
+            + (evaluation.confidence < 0.72 && evaluation.effect !== "rep_gate" ? 2 : 0);
           const stableRuleFeedback = updateTrackedRule(rule, evaluation.failed, true, feedbackItem, effectiveHoldFrames, timestampMs);
           if (stableRuleFeedback) {
             currentFeedback.push(stableRuleFeedback);
@@ -1034,7 +1035,9 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
 
       if (!isScoringWarmup && resolvedRules?.pattern.universalChecks.stability) {
         const jittery = jitterDetectorRef.current.getJitteryJoints();
-        if (jittery.size > 2) {
+        const requiredLandmarks = getRequiredLandmarks(resolvedRules);
+        const averageVariance = jitterDetectorRef.current.getAverageVariance(requiredLandmarks);
+        if (jittery.size >= STABILITY_WARNING_MIN_JOINTS && averageVariance >= STABILITY_WARNING_MIN_VARIANCE) {
           currentFeedback.push({
             type: "warning",
             message: "Unstable movement, slow down",
@@ -1160,6 +1163,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
     resolvedRules,
     hasRealtimeRules,
     getCalibrationLandmarks,
+    getRequiredLandmarks,
     getVisibleRatio,
     updateCalibrationState,
     commitStableFeedback,
@@ -1260,6 +1264,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
 
   const isButtonLoading = !showFullHeightReview && (!isReady || !detectorReady) && !isRunning;
   const isReviewing = coachingLoading || isSaving;
+  const showStartupOverlay = startingDetection || (isRunning && !landmarks && cameraStatus !== "not-detected");
   const isBusy = isReviewing || startingDetection;
   const primaryActionDisabled =
     rulesNotApplicable
@@ -1377,7 +1382,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
         </div>
       )}
 
-      <StartupOverlay visible={startingDetection} />
+      <StartupOverlay visible={showStartupOverlay} />
       <ReviewOverlay visible={isReviewing} />
 
       <div className="px-4 py-4 bg-[var(--surface-overlay)] border-t border-[var(--border)] z-20">
@@ -1403,11 +1408,6 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
             </div>
           )}
 
-          {sessionSaved && !isSaving && (
-            <div className="flex items-center gap-2 px-4 py-2 text-emerald-400 text-sm font-semibold">
-              <CheckCircle className="w-4 h-4" /> Saved
-            </div>
-          )}
         </div>
       </div>
     </div>

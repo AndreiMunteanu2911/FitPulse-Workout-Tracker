@@ -8,8 +8,6 @@ import {
   projectAllLandmarks,
   POSE_CONNECTIONS,
 } from "@/lib/form-geometry";
-import { FORM_DETECTOR_VERSION } from "@/lib/form-analysis";
-import type { FormSessionAnalysis } from "@/types";
 import {
   getSeverityRank,
   type FormCheckerCameraStatus,
@@ -76,11 +74,11 @@ export function CameraGuideOverlay({
   const msg = messages[status] ?? messages["not-detected"];
 
   return (
-    <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
-      <div className="max-w-sm rounded-xl border border-[var(--border)] bg-[var(--surface-overlay)] p-6 text-center shadow-[var(--shadow-md)]">
-        <AlertTriangle className="mx-auto mb-3 h-10 w-10 text-amber-400" />
-        <p className="mb-1 font-bold text-[var(--foreground)]">{msg.title}</p>
-        <p className="text-sm text-[var(--muted-foreground)]">{msg.desc}</p>
+    <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/45 px-4 backdrop-blur-sm">
+      <div className="w-full max-w-sm rounded-xl border border-[var(--border)] bg-[var(--surface)] px-6 py-5 text-center shadow-[var(--shadow-md)]">
+        <AlertTriangle className="mx-auto mb-3 h-8 w-8 text-amber-400" />
+        <p className="text-sm font-semibold text-[var(--foreground)]">{msg.title}</p>
+        <p className="mt-1 text-xs text-[var(--muted-foreground)]">{msg.desc}</p>
       </div>
     </div>
   );
@@ -246,95 +244,21 @@ export function FeedbackPanel({
   );
 }
 
-export function SessionSummaryCard({
-  analysis,
-  coachingLoading,
-  coachingError,
-}: {
-  analysis: FormSessionAnalysis | null;
-  coachingLoading: boolean;
-  coachingError: string;
-}) {
-  if (!analysis) return null;
-  const coaching = analysis.feedback_json.coaching;
-  const topIssues = analysis.feedback_json.topIssues.slice(0, 3);
-
-  return (
-    <div className="space-y-3 border-t border-[var(--border)] bg-[var(--surface)] px-4 py-4">
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-[var(--foreground)]">Post-set analysis</p>
-          <p className="text-xs text-[var(--muted-foreground)]">{analysis.feedback_summary || "Session analyzed locally."}</p>
-        </div>
-        <div className="text-right">
-          <p className="text-xs uppercase tracking-wider text-[var(--muted-foreground)]">Final</p>
-          <p className="text-lg font-bold text-[var(--foreground)]">{analysis.score}%</p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-3 gap-2 text-xs">
-        <div className="rounded-lg bg-[var(--surface-raised)] px-3 py-2">
-          <p className="text-[var(--muted-foreground)]">Realtime</p>
-          <p className="font-semibold text-[var(--foreground)]">{analysis.realtime_score}%</p>
-        </div>
-        <div className="rounded-lg bg-[var(--surface-raised)] px-3 py-2">
-          <p className="text-[var(--muted-foreground)]">Post-set</p>
-          <p className="font-semibold text-[var(--foreground)]">{analysis.postset_score}%</p>
-        </div>
-        <div className="rounded-lg bg-[var(--surface-raised)] px-3 py-2">
-          <p className="text-[var(--muted-foreground)]">Detector</p>
-          <p className="text-[11px] font-semibold text-[var(--foreground)]">{FORM_DETECTOR_VERSION}</p>
-        </div>
-      </div>
-
-      {topIssues.length > 0 && (
-        <div className="space-y-2">
-          {topIssues.map((item, index) => (
-            <div key={`${item.message}-${index}`} className="flex items-start gap-2 text-sm text-[var(--foreground)]">
-              <AlertTriangle className={`mt-0.5 h-4 w-4 flex-shrink-0 ${item.type === "error" ? "text-red-400" : item.type === "warning" ? "text-amber-400" : "text-sky-400"}`} />
-              <span>{item.message}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className="rounded-lg bg-[var(--surface-raised)] px-3 py-3">
-        <div className="mb-2 flex items-center gap-2">
-          <p className="text-sm font-semibold text-[var(--foreground)]">AI Coach review</p>
-          {coachingLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--muted-foreground)]" />}
-        </div>
-        {coaching ? (
-          <div className="space-y-2">
-            <p className="text-sm text-[var(--foreground)]">{coaching.summary}</p>
-            {coaching.top_cues.slice(0, 3).map((cue, index) => (
-              <p key={`${cue}-${index}`} className="text-xs text-[var(--muted-foreground)]">- {cue}</p>
-            ))}
-          </div>
-        ) : coachingError ? (
-          <p className="text-xs text-amber-400">{coachingError}</p>
-        ) : (
-          <p className="text-xs text-[var(--muted-foreground)]">
-            {analysis.used_cloud_coach ? "Reviewing your set..." : "Local-only summary used for this set."}
-          </p>
-        )}
-      </div>
-    </div>
-  );
-}
-
 function BlockingOverlay({
   visible,
   title,
   description,
+  solid = false,
 }: {
   visible: boolean;
   title: string;
   description: string;
+  solid?: boolean;
 }) {
   if (!visible) return null;
 
   return (
-    <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/45 px-4 backdrop-blur-sm">
+    <div className={`absolute inset-0 z-30 flex items-center justify-center px-4 ${solid ? "bg-[var(--surface)]" : "bg-black/45 backdrop-blur-sm"}`}>
       <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-6 py-5 text-center shadow-[var(--shadow-md)]">
         <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-[var(--primary-500)]" />
         <p className="text-sm font-semibold text-[var(--foreground)]">{title}</p>
@@ -358,8 +282,9 @@ export function StartupOverlay({ visible }: { visible: boolean }) {
   return (
     <BlockingOverlay
       visible={visible}
-      title="Starting detection..."
-      description="Please wait while the camera and pose tracking warm up."
+      title="Starting pose tracking..."
+      description="Camera is ready. Waiting for the first stable pose frame."
+      solid
     />
   );
 }
