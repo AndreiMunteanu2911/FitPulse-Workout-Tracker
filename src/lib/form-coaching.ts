@@ -25,6 +25,33 @@ function stripLargePayload(analysis: FormCoachingRequestInput["analysis"]) {
   };
 }
 
+function truncateText(value: unknown, maxLength: number): string {
+  const text = typeof value === "string" ? value.trim() : String(value ?? "").trim();
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`;
+}
+
+function coerceTextArray(value: unknown, maxItems: number, maxLength: number): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => truncateText(item, maxLength))
+    .filter(Boolean)
+    .slice(0, maxItems);
+}
+
+function normalizeCoachingPayload(value: unknown): FormCoachingResult {
+  const object = value && typeof value === "object" ? value as Record<string, unknown> : {};
+  return {
+    summary: truncateText(object.summary, 500) || "Review complete. Use the main cues above for your next set.",
+    top_cues: coerceTextArray(object.top_cues, 5, 140),
+    rep_observations: coerceTextArray(object.rep_observations, 5, 160),
+    confidence: typeof object.confidence === "number" ? Math.max(0, Math.min(1, object.confidence)) : 0.5,
+    needs_human_rule_review: typeof object.needs_human_rule_review === "boolean"
+      ? object.needs_human_rule_review
+      : false,
+  };
+}
+
 export async function generateFormCoaching(params: {
   exerciseName: string;
   formRules: ExerciseFormRules | null;
@@ -71,6 +98,9 @@ export async function generateFormCoaching(params: {
     .replace(/^```\s*/i, "")
     .replace(/\s*```$/i, "")
     .trim();
-  const parsed = formCoachingResultSchema.parse(JSON.parse(normalized));
-  return parsed;
+  const json = JSON.parse(normalized);
+  const parsed = formCoachingResultSchema.safeParse(json);
+  if (parsed.success) return parsed.data;
+
+  return formCoachingResultSchema.parse(normalizeCoachingPayload(json));
 }

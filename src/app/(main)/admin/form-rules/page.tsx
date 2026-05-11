@@ -498,7 +498,7 @@ export default function AdminFormRulesPage() {
                   <div key={rule.id} className="mb-3 last:mb-0">
                     <p className="text-sm font-medium text-[var(--foreground)]">{rule.id}</p>
                     <p className="text-xs text-[var(--muted-foreground)]">
-                      {rule.phase} • {rule.min}°-{rule.max}° • {rule.cue}
+                      {rule.kind ?? "angle"} • {rule.phase} • {rule.min}-{rule.max} • {rule.effect ?? "score_penalty"} • {rule.cue}
                     </p>
                   </div>
                 ))}
@@ -623,7 +623,7 @@ export default function AdminFormRulesPage() {
                       <div>
                         <p className="text-sm font-medium text-[var(--foreground)]">{rule.id}</p>
                         <p className="text-xs text-[var(--muted-foreground)]">
-                          {rule.phase} • {rule.min}°-{rule.max}° • {rule.cue}
+                          {rule.kind ?? "angle"} • {rule.phase} • {rule.min}-{rule.max} • {rule.effect ?? "score_penalty"} • {rule.cue}
                         </p>
                       </div>
                       <label className="text-xs text-[var(--muted-foreground)] flex items-center gap-2">

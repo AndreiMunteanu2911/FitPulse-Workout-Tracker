@@ -75,6 +75,7 @@ export const formSessionFeedbackItemSchema = z.object({
   timestampMs: z.number().int().min(0).optional(),
   category: z.enum(["range_of_motion", "tempo", "stability", "symmetry", "posture", "tracking", "other"]).optional(),
   confidence: z.number().min(0).max(1).optional(),
+  effect: z.enum(["score_penalty", "cue_only", "rep_gate"]).optional(),
 });
 
 const formScoreBandSchema = z.enum(["excellent", "good", "needs_work", "poor"]);

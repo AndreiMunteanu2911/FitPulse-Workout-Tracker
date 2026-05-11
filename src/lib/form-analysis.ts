@@ -19,9 +19,9 @@ const LANDMARK_SAMPLE_INTERVAL_MS = 100;
 const MAX_LANDMARK_SAMPLES = 900;
 const MAX_FEEDBACK_ITEMS = 8;
 const SEVERITY_WEIGHT: Record<FormSessionFeedbackItem["type"], number> = {
-  error: 14,
-  warning: 5,
-  info: 1,
+  error: 24,
+  warning: 10,
+  info: 2,
 };
 
 function getSeverityRank(type: FormSessionFeedbackItem["type"]): number {
@@ -223,7 +223,8 @@ export function summarizeRepSamples(
     if (pattern.tempo.pauseSeconds > 0 && bottomPauseMs < pattern.tempo.pauseSeconds * 1000 * 0.5) tempoFlags.push("pause_too_short");
   }
 
-  const groupedFeedback = groupWorstCueByCategory(feedback);
+  const scoreEligibleFeedback = feedback.filter((item) => item.effect !== "cue_only" && item.effect !== "rep_gate");
+  const groupedFeedback = groupWorstCueByCategory(scoreEligibleFeedback);
   const tempoFeedback = tempoFlags.map<FormSessionFeedbackItem>((flag) => ({
     type: flag === "eccentric_too_fast" ? "warning" : "info",
     message: flag,
@@ -240,18 +241,18 @@ export function summarizeRepSamples(
   const infoCount = scoredFeedback.filter((item) => item.type === "info").length;
   let score = Math.max(0, 100 - penalty);
 
-  // Keep single-issue reps in a believable "good but imperfect" band.
+  // Keep genuinely minor single-issue reps in a believable "good but imperfect" band.
   if (errorCount === 0 && warningCount === 1 && tempoFlags.length === 0) {
-    score = Math.max(score, 84);
+    score = Math.max(score, 82);
   }
   if (errorCount === 0 && warningCount === 0 && infoCount <= 1 && tempoFlags.length <= 1) {
     score = Math.max(score, 92);
   }
   if (errorCount === 0 && warningCount <= 2 && tempoFlags.length <= 1) {
-    score = Math.max(score, 74);
+    score = Math.max(score, 68);
   }
   if (errorCount === 1 && warningCount <= 1 && tempoFlags.length <= 1) {
-    score = Math.max(score, 68);
+    score = Math.max(score, 55);
   }
 
   return {

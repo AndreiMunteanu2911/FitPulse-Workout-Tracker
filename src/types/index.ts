@@ -29,6 +29,17 @@ export type FormRuleApplicability = "realtime" | "post_set_only" | "not_applicab
 export type FormRuleView = "front" | "side" | "three_quarter";
 export type FormRulePhase = "eccentric" | "concentric" | "both";
 export type FormRuleSeverity = "error" | "warning" | "info";
+export type FormPatternRuleKind =
+  | "angle"
+  | "distance"
+  | "vertical_delta"
+  | "horizontal_delta"
+  | "joint_velocity"
+  | "torso_angle"
+  | "relative_position";
+export type FormPatternRuleEffect = "score_penalty" | "cue_only" | "rep_gate";
+export type FormPatternRuleBodyScale = "shoulder_width" | "hip_width" | "torso" | "body_height";
+export type FormPatternRuleRelation = "above" | "below" | "left_of" | "right_of";
 export type FormCueCategory =
   | "range_of_motion"
   | "tempo"
@@ -92,6 +103,7 @@ export interface FormSessionFeedbackItem {
   timestampMs?: number;
   category?: FormCueCategory;
   confidence?: number;
+  effect?: FormPatternRuleEffect;
 }
 
 export interface FormLandmarkSample {
