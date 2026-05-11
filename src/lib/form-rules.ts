@@ -6,6 +6,7 @@ import type {
   FormCueCategory,
   FormPatternRuleBodyScale,
   FormPatternRuleEffect,
+  FormPatternRuleEvaluationTiming,
   FormPatternRuleKind,
   FormPatternRuleRelation,
   FormRuleApplicability,
@@ -33,6 +34,7 @@ export interface FormPatternRule {
   cue: string;
   category?: FormCueCategory;
   effect?: FormPatternRuleEffect;
+  evaluationTiming?: FormPatternRuleEvaluationTiming;
   bodyScale?: FormPatternRuleBodyScale;
   relation?: FormPatternRuleRelation;
   absolute?: boolean;

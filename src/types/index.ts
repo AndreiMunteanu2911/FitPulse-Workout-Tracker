@@ -38,6 +38,7 @@ export type FormPatternRuleKind =
   | "torso_angle"
   | "relative_position";
 export type FormPatternRuleEffect = "score_penalty" | "cue_only" | "rep_gate";
+export type FormPatternRuleEvaluationTiming = "phase" | "phase_endpoint" | "always";
 export type FormPatternRuleBodyScale = "shoulder_width" | "hip_width" | "torso" | "body_height";
 export type FormPatternRuleRelation = "above" | "below" | "left_of" | "right_of";
 export type FormCueCategory =

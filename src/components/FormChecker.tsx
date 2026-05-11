@@ -79,6 +79,7 @@ const DETECTION_CONFIG: DetectionCadenceConfig = {
 
 const STABILITY_WARNING_MIN_JOINTS = 5;
 const STABILITY_WARNING_MIN_VARIANCE = 0.011;
+const ARM_SYMMETRY_WARNING_DEGREES = 28;
 
 function getStableFeedbackKey(items: FormFeedback[]): string {
   return items.map((item) => `${item.type}:${item.message}`).join("|");
@@ -276,6 +277,33 @@ function getFeedbackSeverityRank(type: FormFeedback["type"]): number {
 function getAdjustedRunningScore(rawScore: number, activeFeedback: FormFeedback[]): number {
   if (rawScore <= 0) return 0;
   return Math.max(0, rawScore - getActiveFeedbackPenalty(activeFeedback));
+}
+
+function isNearPhaseEndpoint({
+  phase,
+  phaseLogic,
+  angle,
+  repWindow,
+  confidence,
+}: {
+  phase: "eccentric" | "concentric" | "unknown";
+  phaseLogic?: ExerciseFormRules["primaryMetric"]["phaseLogic"];
+  angle: number;
+  repWindow: Pick<ResolvedFormRule, "min" | "max" | "visibilityThreshold"> | null;
+  confidence: number;
+}): boolean {
+  if (phase === "unknown" || angle < 0 || !repWindow) return false;
+
+  const logic = phaseLogic ?? "flexion_extension";
+  const movingTowardMin = logic === "flexion_extension" || logic === "cyclic"
+    ? phase === "eccentric"
+    : logic === "extension_flexion"
+      ? phase === "concentric"
+      : phase === "eccentric";
+  const target = movingTowardMin ? repWindow.min : repWindow.max;
+  const tolerance = confidence < 0.72 ? 16 : 12;
+
+  return Math.abs(angle - target) <= tolerance;
 }
 
 function enrichFeedbackConfidence(items: FormFeedback[], landmarks: NormalizedLandmark[]): FormFeedback[] {
@@ -917,6 +945,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
       }
 
       if (hasRealtimeRules && resolvedRules) {
+        const effectiveRepWindowForRules = getEffectiveRepWindow(repWindow, observedPrimaryRangeRef.current) ?? repWindow;
         for (const rule of resolvedRules.rules) {
           if (!shouldEvaluateRule(currentPhase, rule.phase)) {
             const retainedFeedback = updateTrackedRule(rule, false, false, {
@@ -947,6 +976,29 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
               scoringWarmup: isScoringWarmup,
             },
           );
+          const endpointReady = rule.evaluationTiming !== "phase_endpoint"
+            || isNearPhaseEndpoint({
+              phase: currentPhase,
+              phaseLogic: resolvedRules.primaryMetric.phaseLogic,
+              angle: primaryAngle,
+              repWindow: effectiveRepWindowForRules,
+              confidence: evaluation.confidence,
+            });
+          if (!endpointReady) {
+            const retainedFeedback = updateTrackedRule(rule, false, false, {
+              type: rule.severity,
+              message: rule.cue,
+              landmarkIndices: evaluation.landmarkIndices,
+              source: "rule",
+              ruleId: rule.id,
+              category: evaluation.category,
+              confidence: evaluation.confidence,
+              effect: evaluation.effect,
+              timestampMs,
+            }, rule.holdFrames, timestampMs);
+            if (retainedFeedback) currentFeedback.push(retainedFeedback);
+            continue;
+          }
           if (!evaluation.evaluable) {
             const retainedFeedback = updateTrackedRule(rule, false, false, {
               type: rule.severity,
@@ -976,7 +1028,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
             timestampMs,
           };
           const baseHoldFrames = evaluation.effect === "rep_gate" && feedbackItem.type === "error"
-            ? Math.max(2, rule.holdFrames - 1)
+            ? Math.max(2, rule.holdFrames - 2)
             : rule.holdFrames;
           const effectiveHoldFrames = baseHoldFrames
             + (feedbackItem.type === "warning" ? 2 : 0)
@@ -994,12 +1046,14 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
       if (resolvedRules?.pattern.universalChecks.symmetry) {
         if (!isScoringWarmup && areLandmarksVisible(smoothedLandmarks, [11, 13, 15, 12, 14, 16], 0.55)) {
           const symmetry = getSymmetryChecks(smoothedLandmarks);
-          if (symmetry.elbowSymmetry > 15 && symmetry.elbowSymmetry >= 0) {
+          if (symmetry.elbowSymmetry > ARM_SYMMETRY_WARNING_DEGREES && symmetry.elbowSymmetry >= 0) {
             currentFeedback.push({
               type: "warning",
               message: "Uneven arm position",
               landmarkIndices: [11, 13, 15, 12, 14, 16],
               source: "symmetry",
+              category: "symmetry",
+              effect: "cue_only",
               timestampMs,
             });
           }
