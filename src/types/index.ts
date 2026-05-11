@@ -29,6 +29,15 @@ export type FormRuleApplicability = "realtime" | "post_set_only" | "not_applicab
 export type FormRuleView = "front" | "side" | "three_quarter";
 export type FormRulePhase = "eccentric" | "concentric" | "both";
 export type FormRuleSeverity = "error" | "warning" | "info";
+export type FormCueCategory =
+  | "range_of_motion"
+  | "tempo"
+  | "stability"
+  | "symmetry"
+  | "posture"
+  | "tracking"
+  | "other";
+export type FormScoreBand = "excellent" | "good" | "needs_work" | "poor";
 export type PrimaryMetricKind = "angle";
 export type PrimaryMetricPhaseLogic =
   | "flexion_extension"
@@ -81,6 +90,8 @@ export interface FormSessionFeedbackItem {
   source?: "rule" | "tempo" | "stability" | "symmetry" | "spine" | "coach";
   ruleId?: string;
   timestampMs?: number;
+  category?: FormCueCategory;
+  confidence?: number;
 }
 
 export interface FormLandmarkSample {
@@ -112,6 +123,8 @@ export interface FormRepMetric {
   minAngle: number;
   maxAngle: number;
   score: number;
+  scoreBand?: FormScoreBand;
+  trackingConfidence?: number;
   feedback: FormSessionFeedbackItem[];
   tempoFlags: string[];
 }
@@ -150,6 +163,13 @@ export interface FormSessionAnalysis {
     realtime: FormSessionFeedbackItem[];
     postset: FormSessionFeedbackItem[];
     coaching?: FormCoachingResult | null;
+    scoring?: {
+      scoreBand: FormScoreBand;
+      trackingConfidence: number;
+      trackingHint?: string | null;
+      consistencyPenalty?: number;
+      trendPenalty?: number;
+    };
   };
   rep_metrics_json: FormRepMetric[];
   landmark_stream_json: FormLandmarkSample[];

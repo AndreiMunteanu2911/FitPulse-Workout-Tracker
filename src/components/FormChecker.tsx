@@ -51,8 +51,10 @@ import {
   LandmarkStreamRecorder,
   adjustThresholdForConfidence,
   buildSessionAnalysis,
+  categorizeFeedback,
   downgradeSeverityForConfidence,
   getMetricPhase,
+  getScoreBand,
   shouldEvaluateRule,
   shouldUseCloudCoaching,
   summarizeRepSamples,
@@ -64,13 +66,6 @@ interface FormCheckerProps {
   formRules: ExerciseFormRules | null;
   onClose: () => void;
 }
-
-type FeedbackPenaltyState = {
-  errorEvents: number;
-  warningEvents: number;
-  lastSampleMs: number;
-  activeCueKeys: Set<string>;
-};
 
 const DETECTION_CONFIG: DetectionCadenceConfig = {
   targetFps: 28,
@@ -100,9 +95,13 @@ function SessionSummaryCard({
   if (!analysis) return null;
   const coaching = analysis.feedback_json.coaching;
   const topIssues = analysis.feedback_json.topIssues.slice(0, 3);
-  const scoreColor = analysis.score >= 80
+  const scoreBand = getScoreBand(analysis.score);
+  const trackingHint = analysis.feedback_json.scoring?.trackingHint;
+  const scoreColor = analysis.score >= 90
     ? "text-emerald-500"
-    : analysis.score >= 60
+    : analysis.score >= 75
+      ? "text-[var(--primary-600)]"
+      : analysis.score >= 60
       ? "text-amber-500"
       : "text-red-500";
 
@@ -115,14 +114,19 @@ function SessionSummaryCard({
               Set review
             </p>
             <h3 className="mt-1 text-lg font-extrabold text-[var(--foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>
-              Form analysis
+              {scoreBand.label} form
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-[var(--muted-foreground)]">
               {analysis.feedback_summary || "Session analyzed locally."}
             </p>
+            {trackingHint && (
+              <p className="mt-2 rounded-[var(--radius-sm)] bg-[var(--surface-raised)] px-3 py-2 text-xs font-semibold text-[var(--muted-foreground)]">
+                {trackingHint}
+              </p>
+            )}
           </div>
           <div className="flex h-20 w-20 flex-shrink-0 flex-col items-center justify-center rounded-[var(--radius-lg)] bg-[var(--surface-raised)]">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Final</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">{scoreBand.label}</p>
             <p className={`text-2xl font-extrabold leading-none ${scoreColor}`}>{analysis.score}%</p>
           </div>
         </div>
@@ -246,50 +250,46 @@ function getRunningRepAverage(repMetrics: FormRepMetric[]): number {
 }
 
 function getActiveFeedbackPenalty(items: FormFeedback[]): number {
-  const penalty = items.reduce((sum, item) => {
-    if (item.type === "error") return sum + 10;
-    if (item.type === "warning") return sum + 4;
+  const grouped = new Map<string, FormFeedback>();
+  for (const item of items) {
+    const category = item.category ?? categorizeFeedback(item);
+    const existing = grouped.get(category);
+    if (!existing || getFeedbackSeverityRank(item.type) > getFeedbackSeverityRank(existing.type)) {
+      grouped.set(category, { ...item, category });
+    }
+  }
+
+  const penalty = Array.from(grouped.values()).reduce((sum, item) => {
+    const confidence = item.confidence ?? 1;
+    const multiplier = confidence >= 0.75 ? 1 : confidence >= 0.55 ? 0.6 : 0.25;
+    if (item.type === "error") return sum + Math.round(10 * multiplier);
+    if (item.type === "warning") return sum + Math.round(4 * multiplier);
     return sum;
   }, 0);
-  return Math.min(26, penalty);
+  return Math.min(20, penalty);
 }
 
-function getAccumulatedFeedbackPenalty(state: FeedbackPenaltyState): number {
-  return Math.min(18, Math.round((state.errorEvents * 0.9) + (state.warningEvents * 0.3)));
+function getFeedbackSeverityRank(type: FormFeedback["type"]): number {
+  if (type === "error") return 3;
+  if (type === "warning") return 2;
+  return 1;
 }
 
-function getAdjustedRunningScore(rawScore: number, activeFeedback: FormFeedback[], penaltyState: FeedbackPenaltyState): number {
+function getAdjustedRunningScore(rawScore: number, activeFeedback: FormFeedback[]): number {
   if (rawScore <= 0) return 0;
-  const penalty = Math.min(34, getActiveFeedbackPenalty(activeFeedback) + getAccumulatedFeedbackPenalty(penaltyState));
-  return Math.max(0, rawScore - penalty);
+  return Math.max(0, rawScore - getActiveFeedbackPenalty(activeFeedback));
 }
 
-function applyFeedbackPenaltyToAnalysis(analysis: FormSessionAnalysis, penaltyState: FeedbackPenaltyState): FormSessionAnalysis {
-  if (analysis.reps <= 0) return analysis;
-  const accumulatedPenalty = getAccumulatedFeedbackPenalty(penaltyState);
-  const adjustedRealtimeScore = Math.max(0, analysis.realtime_score - accumulatedPenalty);
-  const adjustedFinalScore = Math.max(0, analysis.score - accumulatedPenalty);
-  return {
-    ...analysis,
-    score: adjustedFinalScore,
-    realtime_score: adjustedRealtimeScore,
-  };
-}
-
-function recordFeedbackPenalty(
-  penaltyState: FeedbackPenaltyState,
-  timestampMs: number,
-  items: FormFeedback[],
-): FeedbackPenaltyState {
-  if (timestampMs - penaltyState.lastSampleMs < 300) return penaltyState;
-  const activeCueKeys = new Set(items.map((item) => `${item.type}:${item.message}`));
-  const newItems = items.filter((item) => !penaltyState.activeCueKeys.has(`${item.type}:${item.message}`));
-  return {
-    errorEvents: penaltyState.errorEvents + newItems.filter((item) => item.type === "error").length,
-    warningEvents: penaltyState.warningEvents + newItems.filter((item) => item.type === "warning").length,
-    lastSampleMs: timestampMs,
-    activeCueKeys,
-  };
+function enrichFeedbackConfidence(items: FormFeedback[], landmarks: NormalizedLandmark[]): FormFeedback[] {
+  return items.map((item) => ({
+    ...item,
+    category: item.category ?? categorizeFeedback(item),
+    confidence: item.confidence ?? (
+      item.landmarkIndices && item.landmarkIndices.length > 0
+        ? getLandmarkVisibility(landmarks, item.landmarkIndices)
+        : 1
+    ),
+  }));
 }
 
 export default function FormChecker({ exerciseId, exerciseName, formRules, onClose }: FormCheckerProps) {
@@ -352,7 +352,6 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
   const currentRepFeedbackRef = useRef<FormFeedback[]>([]);
   const completedRepMetricsRef = useRef<FormRepMetric[]>([]);
   const realtimeFeedbackLogRef = useRef<FormFeedback[]>([]);
-  const feedbackPenaltyRef = useRef<FeedbackPenaltyState>({ errorEvents: 0, warningEvents: 0, lastSampleMs: 0, activeCueKeys: new Set() });
   const recorderRef = useRef<LandmarkStreamRecorder | null>(null);
   const tempoCueExpiryRef = useRef(0);
   const tempTempoFeedbackRef = useRef<FormFeedback[]>([]);
@@ -496,7 +495,6 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
     currentRepFeedbackRef.current = [];
     completedRepMetricsRef.current = [];
     realtimeFeedbackLogRef.current = [];
-    feedbackPenaltyRef.current = { errorEvents: 0, warningEvents: 0, lastSampleMs: 0, activeCueKeys: new Set() };
     tempTempoFeedbackRef.current = [];
     tempoCueExpiryRef.current = 0;
     scoringWarmupUntilRef.current = 0;
@@ -583,7 +581,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
       const rulesConfidence = resolvedRules?.confidence ?? formRules?.confidence ?? 0;
       const realtimeFeedback = dedupeFeedback(realtimeFeedbackLogRef.current).slice(0, 20);
       const rawRealtimeScore = getRunningRepAverage(completedRepMetricsRef.current);
-      const localAnalysis = applyFeedbackPenaltyToAnalysis(buildSessionAnalysis({
+      const localAnalysis = buildSessionAnalysis({
         durationMs,
         realtimeScore: rawRealtimeScore,
         rulesConfidence,
@@ -595,12 +593,12 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
         coaching: null,
         usedCloudCoach: shouldUseCloudCoaching(formRules, { score: rawRealtimeScore, rules_confidence: rulesConfidence, reps: repCountRef.current }),
         cloudModel: null,
-      }), feedbackPenaltyRef.current);
+      });
 
       let finalAnalysis = localAnalysis;
       const { coaching, cloudModel } = await maybeRequestCoaching(localAnalysis);
       if (coaching) {
-        finalAnalysis = applyFeedbackPenaltyToAnalysis(buildSessionAnalysis({
+        finalAnalysis = buildSessionAnalysis({
           durationMs,
           realtimeScore: rawRealtimeScore,
           rulesConfidence,
@@ -612,7 +610,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
           coaching,
           usedCloudCoach: true,
           cloudModel,
-        }), feedbackPenaltyRef.current);
+        });
       } else if (localAnalysis.used_cloud_coach) {
         finalAnalysis = {
           ...localAnalysis,
@@ -781,11 +779,12 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
             type: "warning",
             message: "Tracking interrupted",
             source: "stability",
+            category: "tracking",
+            confidence: 0.35,
             timestampMs,
           };
-          feedbackPenaltyRef.current = recordFeedbackPenalty(feedbackPenaltyRef.current, timestampMs, [trackingPenalty]);
           const runningAverage = getRunningRepAverage(completedRepMetricsRef.current);
-          setFormScore(getAdjustedRunningScore(runningAverage, [trackingPenalty], feedbackPenaltyRef.current));
+          setFormScore(getAdjustedRunningScore(runningAverage, [trackingPenalty]));
         }
         commitStableFeedback(stableFeedbackRef.current.items, timestampMs, trackingLost);
         animationFrameRef.current = requestAnimationFrame(detectionLoop);
@@ -836,11 +835,12 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
             type: "warning",
             message: angleStatus === "good" ? "Movement is too unstable to score cleanly" : "Camera angle drifted",
             source: "stability",
+            category: "tracking",
+            confidence: 0.4,
             timestampMs,
           };
-          feedbackPenaltyRef.current = recordFeedbackPenalty(feedbackPenaltyRef.current, timestampMs, [calibrationPenalty]);
           const runningAverage = getRunningRepAverage(completedRepMetricsRef.current);
-          setFormScore(getAdjustedRunningScore(runningAverage, [calibrationPenalty], feedbackPenaltyRef.current));
+          setFormScore(getAdjustedRunningScore(runningAverage, [calibrationPenalty]));
         }
         commitStableFeedback(stableFeedbackRef.current.items, timestampMs, false);
         animationFrameRef.current = requestAnimationFrame(detectionLoop);
@@ -1026,18 +1026,15 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
         tempTempoFeedbackRef.current = [];
       }
 
-      const dedupedFeedback = dedupeFeedback(currentFeedback);
+      const dedupedFeedback = dedupeFeedback(enrichFeedbackConfidence(currentFeedback, smoothedLandmarks));
       commitStableFeedback(dedupedFeedback, timestampMs, false);
 
       const activeScoredFeedback = stableFeedbackRef.current.items.filter(
         (item) => item.type === "error" || item.type === "warning",
       );
-      if (isRunning && !isScoringWarmup) {
-        feedbackPenaltyRef.current = recordFeedbackPenalty(feedbackPenaltyRef.current, timestampMs, activeScoredFeedback);
-      }
       const runningAverage = getRunningRepAverage(completedRepMetricsRef.current);
       if (runningAverage > 0) {
-        setFormScore(getAdjustedRunningScore(runningAverage, activeScoredFeedback, feedbackPenaltyRef.current));
+        setFormScore(getAdjustedRunningScore(runningAverage, activeScoredFeedback));
       }
 
       currentRepFeedbackRef.current = dedupeFeedback([
@@ -1072,7 +1069,6 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
             setFormScore(getAdjustedRunningScore(
               getRunningRepAverage(completedRepMetricsRef.current),
               activeScoredFeedback,
-              feedbackPenaltyRef.current,
             ));
             if (repMetric.tempoFlags.length > 0) {
               tempTempoFeedbackRef.current = repMetric.tempoFlags.map((flag) => ({

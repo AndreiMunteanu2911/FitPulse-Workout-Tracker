@@ -31,9 +31,10 @@ This README focuses on the implementation surface: route groups, feature domains
 - The exercise library gives users a searchable catalog of movements they can add to workouts or mark as favorites for faster access later.
 - Exercise detail pages show how the movement looks, what muscles it targets, how the user has performed on it before, and the latest session history.
 - The form checker lets users record a set with the camera running and receive realtime coaching cues while they move.
-- It uses MediaPipe pose tracking, smoothed landmarks, calibration hysteresis, stable joint status, and rule-based scoring to estimate rep quality without single-frame flicker.
+- It uses MediaPipe pose tracking, smoothed landmarks, calibration hysteresis, stable joint status, and rep-based scoring to estimate quality without single-frame flicker.
 - Detection runs at a controlled cadence and keeps pose inference from overlapping, which improves mobile/WebView stability.
-- Finished sets stop the camera, save a local analysis, and show a post-set review with realtime score, post-set score, main cues, and optional AI coach feedback.
+- Finished sets stop the camera, save a local analysis, and show a post-set review with a score band, exact percentage, realtime score, post-set score, main cues, and optional AI coach feedback.
+- The score model groups repeated cues by category per rep, weights penalties by tracking confidence, and applies small consistency/fatigue adjustments from completed reps rather than frame-by-frame warning spam.
 - When available, the app asks the cloud coaching layer for a second-pass summary of the set so users get both instant and post-set feedback.
 - The same exercise system supports custom exercises and admin-managed rule mappings, so the library can grow with the user's training style.
 
@@ -258,7 +259,7 @@ Run the migrations in `migrations/` in numeric order. The current schema covers:
 - Content: blog posts, likes, and comments
 - Commerce: products and orders
 
-Form checker persistence stays compatible with the `form_logs` shape. Recent form checker improvements are client-side analysis, smoothing, scoring, and review UI changes rather than schema changes.
+Form checker persistence stays compatible with the `form_logs` shape. Recent form checker improvements are client-side analysis, smoothing, rep-based scoring, score-band metadata, and review UI changes rather than schema changes.
 
 ### Storage buckets
 
