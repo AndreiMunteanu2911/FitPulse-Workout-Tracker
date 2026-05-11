@@ -4,9 +4,9 @@ import { useState, useEffect } from "react";
 import ModalWrapper from "./ModalWrapper";
 import Button from "./Button";
 import { useExercises } from "@/hooks/useExercises";
-import type { WorkoutTemplate } from "@/types";
+import type { Exercise, WorkoutTemplate } from "@/types";
 import { Check } from "lucide-react";
-import Skeleton from "react-loading-skeleton";
+import LoadingSpinner from "./LoadingSpinner";
 
 interface CreateTemplateModalProps {
   isOpen: boolean;
@@ -26,7 +26,7 @@ export default function CreateTemplateModal({
   const [description, setDescription] = useState("");
   const [selectedExercises, setSelectedExercises] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [exercises, setExercises] = useState<any[]>([]);
+  const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -139,8 +139,8 @@ export default function CreateTemplateModal({
 
         <div className="flex-1 overflow-auto mb-4 border border-[var(--border)] rounded-lg p-3">
           {loading ? (
-            <div className="text-center text-[var(--muted-foreground)] py-4">
-                <Skeleton width={120} className="mx-auto" />
+            <div className="flex justify-center py-6">
+              <LoadingSpinner size={6} />
             </div>
           ) : exercises.length === 0 ? (
             <div className="text-center text-[var(--muted-foreground)] py-4">No exercises found</div>

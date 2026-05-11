@@ -44,7 +44,7 @@ export default function SetRow({
       {/* Previous session */}
       <span className="text-center text-xs font-medium tabular-nums text-[var(--muted-foreground)]">
         {previousLoading
-          ? <span className="inline-block w-5 h-3 bg-[var(--muted-foreground)]/20 rounded animate-pulse" />
+          ? "..."
           : previous
             ? `${previous.reps}×${previous.weight}`
             : "—"

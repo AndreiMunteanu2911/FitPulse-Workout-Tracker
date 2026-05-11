@@ -5,6 +5,7 @@ import Button from "@/components/Button";
 import ConfirmDeleteModal from "@/components/admin/ConfirmDeleteModal";
 import { useRouter } from "next/navigation";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import WeightHistoryChart from "@/components/WeightHistoryChart";
 import AddWeightModal from "@/components/AddWeightModal";
 import ProgressPhotoCard from "@/components/ProgressPhotoCard";
@@ -315,32 +316,8 @@ export default function ProfilePage() {
     if (loading) {
         return (
             <ProtectedWrapper>
-                <div className="w-full">
-                    <div className="page-header mb-5">
-                        <h1 className="hidden md:block text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight" style={{ fontFamily: "var(--font-poppins)" }}>Profile</h1>
-                    </div>
-                    <div className="bg-gradient-to-br from-[var(--primary-600)] to-[var(--primary-400)] rounded-[var(--radius-lg)] p-5 mb-5 animate-pulse">
-                        <div className="flex items-center gap-4">
-                            <div className="w-14 h-14 rounded-full bg-white/20" />
-                            <div className="flex-1 space-y-2">
-                                <div className="h-4 w-40 bg-white/20 rounded-[var(--radius-sm)]" />
-                                <div className="h-3 w-16 bg-white/20 rounded-[var(--radius-sm)]" />
-                            </div>
-                        </div>
-                    </div>
-                    <div className="space-y-5">
-                        {[1, 2, 3, 4].map((i) => (
-                            <div key={i} className="bg-[var(--surface)] rounded-[var(--radius-lg)] p-5 animate-pulse">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-[var(--surface-raised)]" />
-                                    <div className="flex-1 space-y-1.5">
-                                        <div className="h-3.5 w-28 bg-[var(--surface-raised)] rounded-[var(--radius-sm)]" />
-                                        <div className="h-2.5 w-16 bg-[var(--surface-raised)] rounded-[var(--radius-sm)]" />
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                <div className="flex min-h-[18rem] w-full items-center justify-center">
+                    <LoadingSpinner />
                 </div>
             </ProtectedWrapper>
         );
