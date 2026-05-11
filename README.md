@@ -31,11 +31,14 @@ This README focuses on the implementation surface: route groups, feature domains
 - The exercise library gives users a searchable catalog of movements they can add to workouts or mark as favorites for faster access later.
 - Exercise detail pages show how the movement looks, what muscles it targets, how the user has performed on it before, and the latest session history.
 - The form checker lets users record a set with the camera running and receive realtime coaching cues while they move.
-- It uses MediaPipe pose tracking, smoothed landmarks, calibration hysteresis, stable joint status, and rep-based scoring to estimate quality without single-frame flicker.
-- Detection runs at a controlled cadence and keeps pose inference from overlapping, which improves mobile/WebView stability.
+- It uses MediaPipe pose tracking, smoothed landmarks with visibility decay, calibration hysteresis, stable joint status, and rep-based scoring to estimate quality without single-frame flicker.
+- Detection runs at a controlled cadence, prevents overlapping pose inference, and shows one shared spinner while the first landmarks are loading so the camera startup does not feel frozen.
+- The local pattern engine supports angle, distance, vertical/horizontal delta, joint velocity, torso angle, and relative-position checks while keeping saved exercise rule mappings lightweight.
+- Rule effects separate coaching from invalid movement: red `rep_gate` rules can reject fake or unsafe reps, yellow score-penalty rules affect rep quality, and `cue_only` hints guide the user without materially changing the score.
+- Endpoint-aware rules evaluate lockout, depth, finish, or bottom-position requirements only near the expected end of the phase, so completion cues can be strict without flashing during normal movement.
 - Finished sets stop the camera, save a local analysis, and show a post-set review with a score band, exact percentage, realtime score, post-set score, main cues, and optional AI coach feedback.
 - The score model groups repeated cues by category per rep, weights penalties by tracking confidence, and applies small consistency/fatigue adjustments from completed reps rather than frame-by-frame warning spam.
-- When available, the app asks the cloud coaching layer for a second-pass summary of the set so users get both instant and post-set feedback.
+- When available, the app asks the cloud coaching layer for a second-pass summary of the set. If the provider is slow or unavailable, the review falls back to the local analysis instead of blocking the user.
 - The same exercise system supports custom exercises and admin-managed rule mappings, so the library can grow with the user's training style.
 
 ### Progress and gamification
@@ -155,7 +158,7 @@ This README focuses on the implementation surface: route groups, feature domains
 - Android builds use Capacitor as a native container. In production the Android app boots into a branded shell and forwards users into the hosted FitPulse app. In development the Android emulator can point directly at a local Next.js dev server.
 - Shared domain logic lives in `src/lib/`:
   - `ai.ts`, `rag-context.ts`, `rag-intent.ts`, and `workout-generator.ts` implement the AI coach and draft workout generation.
-  - `form-rules.ts`, `form-analysis.ts`, `form-coaching.ts`, `form-geometry.ts`, and `pose-detector.ts` implement the form checker pipeline.
+  - `form-rules.ts`, `form-analysis.ts`, `form-coaching.ts`, `form-geometry.ts`, and `pose-detector.ts` implement the form checker pipeline, including local pattern evaluation, endpoint-aware rules, landmark smoothing, rep scoring, and post-set coaching fallback.
   - `gamification.ts` computes XP, levels, streaks, and achievement unlock state.
   - `exercise-index.ts` resolves library and custom exercises for search and workout generation.
   - `navigation.ts` defines the desktop/mobile nav items.
@@ -260,6 +263,15 @@ Run the migrations in `migrations/` in numeric order. The current schema covers:
 - Commerce: products and orders
 
 Form checker persistence stays compatible with the `form_logs` shape. Recent form checker improvements are client-side analysis, smoothing, rep-based scoring, score-band metadata, and review UI changes rather than schema changes.
+
+Form rules remain backwards compatible with the existing `form_rules` data model. Database rows continue to store the exercise-to-pattern mapping, primary metric, view, confidence, overrides, and review metadata. The richer movement logic lives in the local pattern catalogue, where each reusable rule can declare:
+
+- `kind`: `angle`, `distance`, `vertical_delta`, `horizontal_delta`, `joint_velocity`, `torso_angle`, or `relative_position`
+- `category`: `range_of_motion`, `tempo`, `stability`, `symmetry`, `posture`, `tracking`, or `other`
+- `effect`: `score_penalty`, `cue_only`, or `rep_gate`
+- `evaluationTiming`: `phase`, `phase_endpoint`, or `always`
+
+This keeps admin overrides and saved logs compatible while letting patterns such as curls, squats, presses, pulls, hinges, lunges, raises, calf raises, and carries become stricter and more specific without a migration.
 
 ### Storage buckets
 
