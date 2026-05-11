@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { capturePhotoFile, supportsNativeCamera, toObjectUrl } from "@/lib/mobile";
 import ModalWrapper from "./ModalWrapper";
 import Button from "./Button";
 import DatePicker from "./DatePicker";
-import { ImageIcon } from "lucide-react";
+import { Camera, ImageIcon } from "lucide-react";
 
 interface AddPhotoModalProps {
   isOpen: boolean;
@@ -18,15 +19,34 @@ export default function AddPhotoModal({ isOpen, onClose, onAdd }: AddPhotoModalP
   const [logDate, setLogDate] = useState(new Date().toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [nativePicking, setNativePicking] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const nativeCameraEnabled = supportsNativeCamera();
+
+  const applySelectedFile = (file: File) => {
+    setSelectedFile(file);
+    if (preview?.startsWith("blob:")) {
+      URL.revokeObjectURL(preview);
+    }
+    setPreview(toObjectUrl(file));
+  };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setSelectedFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => setPreview(reader.result as string);
-      reader.readAsDataURL(file);
+      applySelectedFile(file);
+    }
+  };
+
+  const handleNativeCapture = async () => {
+    setNativePicking(true);
+    try {
+      const file = await capturePhotoFile();
+      applySelectedFile(file);
+    } catch (error) {
+      console.error("Failed to capture native photo:", error);
+    } finally {
+      setNativePicking(false);
     }
   };
 
@@ -46,6 +66,9 @@ export default function AddPhotoModal({ isOpen, onClose, onAdd }: AddPhotoModalP
 
   const resetForm = () => {
     setSelectedFile(null);
+    if (preview?.startsWith("blob:")) {
+      URL.revokeObjectURL(preview);
+    }
     setPreview(null);
     setLogDate(new Date().toISOString().split("T")[0]);
     setNotes("");
@@ -78,6 +101,14 @@ export default function AddPhotoModal({ isOpen, onClose, onAdd }: AddPhotoModalP
             )}
           </div>
           <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
+          {nativeCameraEnabled && (
+            <div className="mt-3">
+              <Button type="button" variant="secondary" onClick={handleNativeCapture} disabled={nativePicking || submitting} className="w-full">
+                <Camera className="w-4 h-4 mr-2" />
+                {nativePicking ? "Opening camera..." : "Use Camera or Gallery"}
+              </Button>
+            </div>
+          )}
         </div>
 
         <div>

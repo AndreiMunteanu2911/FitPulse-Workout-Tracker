@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { User } from "lucide-react";
-import Skeleton from "react-loading-skeleton";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import SearchInput from "@/components/admin/SearchInput";
 import EmptyState from "@/components/admin/EmptyState";
@@ -96,17 +96,8 @@ export default function AdminUsersPage() {
 
   if (!isAdmin || loading) {
     return (
-      <div className="w-full">
-        <div className="page-header mb-6">
-          <Skeleton width={120} height={28} className="mb-2" />
-          <Skeleton width={160} />
-        </div>
-        <Skeleton height={40} className="mb-6 rounded-lg" />
-        <div className="space-y-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} height={70} className="rounded-lg" />
-          ))}
-        </div>
+      <div className="flex min-h-[18rem] w-full items-center justify-center">
+        <LoadingSpinner />
       </div>
     );
   }

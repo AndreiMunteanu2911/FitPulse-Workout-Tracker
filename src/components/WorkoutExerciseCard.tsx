@@ -1,5 +1,4 @@
 import React from "react";
-import Skeleton from "react-loading-skeleton";
 import RestTimer from "@/components/RestTimer";
 import SetRow from "@/components/SetRow";
 import { useState } from "react";
@@ -31,7 +30,7 @@ function ExerciseThumbnail({ src }: { src: string }) {
     const [loaded, setLoaded] = useState(false);
     return (
         <div className="relative w-full h-full bg-[var(--surface-raised)] overflow-hidden">
-            {!loaded && <Skeleton className="absolute inset-0" />}
+            {!loaded && <div className="absolute inset-0 bg-[var(--surface-raised)]" />}
             <img
                 src={src}
                 alt=""

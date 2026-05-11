@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
-import Skeleton from "react-loading-skeleton";
 import Link from "next/link";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useExercises } from "@/hooks/useExercises";
@@ -20,7 +19,7 @@ function ExerciseThumbnail({ src }: { src: string }) {
     const [loaded, setLoaded] = useState(false);
     return (
         <div className="relative w-full h-full bg-[var(--surface-raised)] overflow-hidden">
-            {!loaded && <Skeleton className="absolute inset-0" />}
+            {!loaded && <div className="absolute inset-0 bg-[var(--surface-raised)]" />}
             <img
                 src={src}
                 alt=""
@@ -66,35 +65,8 @@ export default function ExerciseDetailsPage() {
     if (loading) {
         return (
             <ProtectedWrapper>
-                <div className="w-full">
-                    <div className="page-header mb-4 flex items-center gap-3" style={{ top: 0 }}>
-                        <Skeleton circle width={36} height={36} />
-                        <Skeleton width={160} height={28} />
-                    </div>
-                    <div className="flex gap-1 p-1 bg-[var(--surface-raised)] rounded-[var(--radius-md)] mb-5 w-fit">
-                        <Skeleton width={100} height={32} />
-                        <Skeleton width={60} height={32} />
-                    </div>
-                    <div className="flex flex-col md:flex-row gap-5 mb-5">
-                        <Skeleton className="w-full md:w-56 aspect-square rounded-lg" />
-                        <div className="flex-1 bg-[var(--surface)] rounded-[var(--radius-md)] p-5 space-y-4">
-                            <Skeleton width={100} height={16} />
-                            <div className="flex flex-wrap gap-1.5">
-                                <Skeleton width={70} height={24} />
-                                <Skeleton width={80} height={24} />
-                            </div>
-                            <Skeleton width={80} height={16} />
-                            <div className="flex flex-wrap gap-1.5">
-                                <Skeleton width={60} height={24} />
-                            </div>
-                        </div>
-                    </div>
-                    <div className="bg-[var(--surface)] rounded-[var(--radius-md)] p-5 mb-6">
-                        <Skeleton width={100} height={16} className="mb-3" />
-                        <Skeleton className="mb-2" />
-                        <Skeleton className="mb-2" />
-                        <Skeleton width="80%" />
-                    </div>
+                <div className="flex min-h-[18rem] w-full items-center justify-center">
+                    <LoadingSpinner />
                 </div>
             </ProtectedWrapper>
         );

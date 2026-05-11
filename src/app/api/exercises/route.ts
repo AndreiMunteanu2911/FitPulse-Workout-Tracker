@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
   if (muscle) query = query.ilike("target_muscles", "%" + muscle + "%");
   if (equipment) query = query.ilike("equipments", "%" + equipment + "%");
   if (favoritesOnly && favoriteExerciseIds.length > 0) {
-    query = query.in("id", favoriteExerciseIds);
+    query = query.in("exercise_id", favoriteExerciseIds);
   } else if (favoritesOnly) {
     return NextResponse.json({ exercises: [], hasMore: false });
   }
