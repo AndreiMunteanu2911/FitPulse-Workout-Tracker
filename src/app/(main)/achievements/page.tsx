@@ -83,7 +83,7 @@ function AchievementBadge({
     >
       {claiming && (
         <div className="absolute inset-0 z-10 flex items-center justify-center rounded-[var(--radius-md)] bg-[var(--surface)]/85">
-          <LoadingSpinner size={5} showText={false} />
+          <LoadingSpinner size={5} variant="image" />
         </div>
       )}
 
