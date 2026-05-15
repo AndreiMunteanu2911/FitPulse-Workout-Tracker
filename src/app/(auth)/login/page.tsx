@@ -14,7 +14,6 @@ const REMEMBER_LOGIN_KEY = "fitpulse:remember-login";
 
 type RememberedLogin = {
     email: string;
-    password: string;
 };
 
 export default function LoginPage() {
@@ -33,7 +32,6 @@ export default function LoginPage() {
             if (!saved) return;
             const parsed = JSON.parse(saved) as Partial<RememberedLogin>;
             if (typeof parsed.email === "string") setEmail(parsed.email);
-            if (typeof parsed.password === "string") setPassword(parsed.password);
             setRememberMe(true);
         } catch {
             window.localStorage.removeItem(REMEMBER_LOGIN_KEY);
@@ -48,9 +46,9 @@ export default function LoginPage() {
 
         try {
             loginSchema.parse({ email, password });
-            await login(email, password);
+            await login(email, password, rememberMe);
             if (rememberMe) {
-                window.localStorage.setItem(REMEMBER_LOGIN_KEY, JSON.stringify({ email, password }));
+                window.localStorage.setItem(REMEMBER_LOGIN_KEY, JSON.stringify({ email }));
             } else {
                 window.localStorage.removeItem(REMEMBER_LOGIN_KEY);
             }

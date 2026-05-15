@@ -3,8 +3,20 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 
-export async function createSupabaseServerClient() {
+interface SupabaseServerClientOptions {
+  rememberSession?: boolean;
+}
+
+function toSessionCookieOptions<T extends Record<string, unknown>>(options?: T): Omit<T, "maxAge" | "expires"> {
+  if (!options) return {} as Omit<T, "maxAge" | "expires">;
+  const { maxAge: _maxAge, expires: _expires, ...sessionOptions } = options;
+  return sessionOptions;
+}
+
+export async function createSupabaseServerClient(options: SupabaseServerClientOptions = {}) {
   const cookieStore = await cookies();
+  const rememberSession = options.rememberSession ?? true;
+
   return createServerClient(
     process.env.SUPABASE_URL!,
     process.env.SUPABASE_ANON_KEY!,
@@ -14,8 +26,12 @@ export async function createSupabaseServerClient() {
           return cookieStore.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            cookieStore.set(name, value, options);
+          cookiesToSet.forEach(({ name, value, options: cookieOptions }) => {
+            cookieStore.set(
+              name,
+              value,
+              rememberSession ? cookieOptions : toSessionCookieOptions(cookieOptions),
+            );
           });
         },
       },
