@@ -359,8 +359,8 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
   const tempoTrackerRef = useRef(new TempoTracker());
   const jitterDetectorRef = useRef(new JitterDetector());
   const landmarkSmootherRef = useRef(new LandmarkSmoother({
-    positionAlpha: 0.52,
-    visibilityAlpha: 0.42,
+    positionAlpha: 0.72,
+    visibilityAlpha: 0.55,
     visibilityDecay: 0.8,
     lowConfidenceThreshold: 0.55,
   }));
