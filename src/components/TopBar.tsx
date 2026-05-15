@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { apiFetch } from "@/services/api/apiFetch";
-import type { Exercise } from "@/types";
+import type { BlogPost, Exercise } from "@/types";
 
 /**
  * Derives a human-readable page title from the current pathname.
@@ -42,6 +42,15 @@ function getPageTitle(pathname: string): string {
     "ai-coach": "AI Coach",
     admin: "Admin",
     achievements: "Achievements",
+    analytics: "Analytics",
+    blog: "Blog",
+    "checkout-success": "Checkout",
+    "form-rules": "Form Rules",
+    orders: "Orders",
+    shop: "Shop",
+    social: "Social",
+    templates: "Templates",
+    users: "Users",
   };
 
   // Admin sub-pages
@@ -92,44 +101,63 @@ function beautifySegment(segment: string): string {
 
 export default function TopBar() {
   const pathname = usePathname();
-  const [exerciseTitle, setExerciseTitle] = useState<string | null>(null);
+  const [routeTitle, setRouteTitle] = useState<string | null>(null);
 
   useEffect(() => {
-    const match = pathname.match(/^\/exercises\/([^/]+)$/);
-    if (!match) {
-      setExerciseTitle(null);
+    const exerciseMatch = pathname.match(/^\/exercises\/([^/]+)$/);
+    const blogMatch = pathname.match(/^\/blog\/([^/]+)$/);
+
+    if (!exerciseMatch && !blogMatch) {
+      setRouteTitle(null);
       return;
     }
 
-    const exerciseId = match[1];
+    setRouteTitle(null);
     let cancelled = false;
 
-    const loadExerciseTitle = async () => {
+    const loadRouteTitle = async () => {
       try {
-        const data = await apiFetch<{ exercise?: Exercise }>(`/api/exercises/${exerciseId}`);
-        const nextTitle =
-          typeof data.exercise?.name === "string" && data.exercise.name.trim()
-            ? beautifySegment(data.exercise.name)
-            : beautifySegment(exerciseId);
+        if (exerciseMatch) {
+          const exerciseId = exerciseMatch[1];
+          const data = await apiFetch<{ exercise?: Exercise }>(`/api/exercises/${exerciseId}`);
+          const nextTitle =
+            typeof data.exercise?.name === "string" && data.exercise.name.trim()
+              ? beautifySegment(data.exercise.name)
+              : beautifySegment(exerciseId);
 
-        if (!cancelled) {
-          setExerciseTitle(nextTitle);
+          if (!cancelled) {
+            setRouteTitle(nextTitle);
+          }
+          return;
+        }
+
+        if (blogMatch) {
+          const blogId = blogMatch[1];
+          const data = await apiFetch<{ data?: BlogPost }>(`/api/blog/${blogId}`);
+          const nextTitle =
+            typeof data.data?.title === "string" && data.data.title.trim()
+              ? data.data.title.trim()
+              : "Blog Post";
+
+          if (!cancelled) {
+            setRouteTitle(nextTitle);
+          }
         }
       } catch {
         if (!cancelled) {
-          setExerciseTitle(beautifySegment(exerciseId));
+          setRouteTitle(blogMatch ? "Blog Post" : getPageTitle(pathname));
         }
       }
     };
 
-    void loadExerciseTitle();
+    void loadRouteTitle();
 
     return () => {
       cancelled = true;
     };
   }, [pathname]);
 
-  const title = exerciseTitle ?? getPageTitle(pathname);
+  const title = routeTitle ?? getPageTitle(pathname);
 
   return (
     <header className="fixed left-0 right-0 top-0 z-20 flex h-11 items-center justify-between bg-gradient-to-r from-[#5E3FDE]/95 via-[#7457F5]/95 to-[#896CFE]/95 px-5 shadow-[0_10px_28px_rgba(94,63,222,0.22)] backdrop-blur-xl md:hidden">
