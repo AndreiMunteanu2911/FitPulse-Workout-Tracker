@@ -80,7 +80,8 @@ const DETECTION_CONFIG: DetectionCadenceConfig = {
 
 const STABILITY_WARNING_MIN_JOINTS = 5;
 const STABILITY_WARNING_MIN_VARIANCE = 0.011;
-const ARM_SYMMETRY_WARNING_DEGREES = 28;
+const ARM_SYMMETRY_WARNING_DEGREES = 42;
+const KNEE_SYMMETRY_WARNING_DEGREES = 26;
 const RULE_HOLD_FRAME_BONUS = 2;
 
 function getStableFeedbackKey(items: FormFeedback[]): string {
@@ -526,6 +527,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
     setRepCount(0);
     repCountRef.current = 0;
     setFormScore(0);
+    setLandmarks(null);
     setFeedback([]);
     setJointStatusMap({});
     setTrackingInterrupted(false);
@@ -546,6 +548,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
     tempTempoFeedbackRef.current = [];
     tempoCueExpiryRef.current = 0;
     scoringWarmupUntilRef.current = 0;
+    tempoTrackerRef.current.reset();
     observedPrimaryRangeRef.current = {
       min: Number.POSITIVE_INFINITY,
       max: Number.NEGATIVE_INFINITY,
@@ -960,7 +963,29 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
           primaryAngleRef.current = null;
           currentRepSamplesRef.current = [];
           currentRepGateFailuresRef.current = 0;
+          observedPrimaryRangeRef.current = {
+            min: Number.POSITIVE_INFINITY,
+            max: Number.NEGATIVE_INFINITY,
+          };
+          tempoTrackerRef.current.reset();
         }
+      }
+
+      const primaryTrackingLost = Boolean(
+        isRunning
+        && resolvedRules
+        && repWindow
+        && primaryMissingFramesRef.current >= DETECTION_CONFIG.primaryLossResetFrames,
+      );
+
+      if (primaryTrackingLost) {
+        trackedRulesRef.current = {};
+        currentRepFeedbackRef.current = [];
+        commitStableFeedback([], timestampMs, true);
+        previousEvaluationLandmarksRef.current = smoothedLandmarks.map((landmark) => ({ ...landmark }));
+        previousEvaluationTimestampRef.current = timestampMs;
+        animationFrameRef.current = requestAnimationFrame(detectionLoop);
+        return;
       }
 
       if (hasRealtimeRules && resolvedRules) {
@@ -1063,8 +1088,8 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
         }
       }
 
-      if (resolvedRules?.pattern.universalChecks.symmetry) {
-        if (!isScoringWarmup && areLandmarksVisible(smoothedLandmarks, [11, 13, 15, 12, 14, 16], 0.55)) {
+      if (resolvedRules?.pattern.universalChecks.symmetry && resolvedRules.view !== "side") {
+        if (!isScoringWarmup && areLandmarksVisible(smoothedLandmarks, [11, 13, 15, 12, 14, 16], 0.72)) {
           const symmetry = getSymmetryChecks(smoothedLandmarks);
           if (symmetry.elbowSymmetry > ARM_SYMMETRY_WARNING_DEGREES && symmetry.elbowSymmetry >= 0) {
             currentFeedback.push({
@@ -1078,9 +1103,9 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
             });
           }
         }
-        if (!isScoringWarmup && areLandmarksVisible(smoothedLandmarks, [23, 25, 27, 24, 26, 28], 0.55)) {
+        if (!isScoringWarmup && areLandmarksVisible(smoothedLandmarks, [23, 25, 27, 24, 26, 28], 0.72)) {
           const symmetry = getSymmetryChecks(smoothedLandmarks);
-          if (symmetry.kneeSymmetry > 15 && symmetry.kneeSymmetry >= 0) {
+          if (symmetry.kneeSymmetry > KNEE_SYMMETRY_WARNING_DEGREES && symmetry.kneeSymmetry >= 0) {
             currentFeedback.push({
               type: "warning",
               message: "Knee imbalance detected",
@@ -1129,7 +1154,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
       }
 
       const dedupedFeedback = dedupeFeedback(enrichFeedbackConfidence(currentFeedback, smoothedLandmarks));
-      commitStableFeedback(dedupedFeedback, timestampMs, false);
+      commitStableFeedback(dedupedFeedback, timestampMs, primaryTrackingLost);
 
       const activeScoredFeedback = stableFeedbackRef.current.items.filter(
         (item) => item.type === "error" || item.type === "warning",
@@ -1244,6 +1269,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = 0;
     }
+    setLandmarks(null);
     stopCamera();
   }, [showFullHeightReview, stopCamera]);
 
@@ -1258,6 +1284,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
     if (isRunning) {
       loopActiveRef.current = false;
       setIsRunning(false);
+      setLandmarks(null);
       stopCamera();
       await finalizeSession();
       return;
@@ -1284,6 +1311,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
     setIsRunning(false);
     sessionStartedRef.current = false;
     setStartingDetection(false);
+    setLandmarks(null);
     resetSessionState();
     void startCamera();
   };
@@ -1291,6 +1319,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
   const handleSwitchCamera = () => {
     const nextFacingMode = cameraFacingMode === "environment" ? "user" : "environment";
     reviewModeRef.current = false;
+    setLandmarks(null);
     stopCamera();
     resetSessionState();
     setStartingDetection(false);
@@ -1302,6 +1331,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
     if (isRunning) {
       loopActiveRef.current = false;
       setIsRunning(false);
+      setLandmarks(null);
       stopCamera();
       await finalizeSession();
     }

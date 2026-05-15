@@ -11,18 +11,18 @@ type AuthResponse = {
 const REMEMBER_LOGIN_KEY = "fitpulse:remember-login";
 
 interface UseAuthResult {
-  login: (email: string, password: string) => Promise<AuthResponse>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<AuthResponse>;
   signup: (email: string, password: string, displayName?: string) => Promise<AuthResponse>;
   logout: () => Promise<void>;
   getSession: () => Promise<User | null>;
 }
 
 export function useAuth(): UseAuthResult {
-  async function login(email: string, password: string): Promise<AuthResponse> {
+  async function login(email: string, password: string, rememberMe = false): Promise<AuthResponse> {
     return apiFetch<AuthResponse>("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, rememberMe }),
     });
   }
 
