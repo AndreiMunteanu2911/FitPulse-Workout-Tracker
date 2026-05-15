@@ -8,6 +8,8 @@ type AuthResponse = {
   session?: unknown;
 };
 
+const REMEMBER_LOGIN_KEY = "fitpulse:remember-login";
+
 interface UseAuthResult {
   login: (email: string, password: string) => Promise<AuthResponse>;
   signup: (email: string, password: string, displayName?: string) => Promise<AuthResponse>;
@@ -34,6 +36,9 @@ export function useAuth(): UseAuthResult {
 
   async function logout(): Promise<void> {
     await apiFetch<{ success: boolean }>("/api/auth/logout", { method: "POST" });
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(REMEMBER_LOGIN_KEY);
+    }
   }
 
   async function getSession(): Promise<User | null> {
