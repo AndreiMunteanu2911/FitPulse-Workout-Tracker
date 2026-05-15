@@ -160,12 +160,14 @@ export function FeedbackPanel({
   repCount,
   formScore,
   trackingInterrupted,
+  trackingLimited = false,
   recentRepDetected,
 }: {
   feedback: FormFeedback[];
   repCount: number;
   formScore: number;
   trackingInterrupted: boolean;
+  trackingLimited?: boolean;
   recentRepDetected: boolean;
 }) {
   const errors = feedback.filter((item) => item.type === "error");
@@ -180,13 +182,13 @@ export function FeedbackPanel({
         <div className="min-w-0 flex-1">
           {visibleCues.length === 0 ? (
             <div className="flex items-center gap-2 transition-all duration-200">
-              {trackingInterrupted ? (
+              {trackingInterrupted || trackingLimited ? (
                 <AlertTriangle className="h-4 w-4 flex-shrink-0 text-amber-400" />
               ) : (
                 <CheckCircle className="h-4 w-4 flex-shrink-0 text-emerald-400" />
               )}
-              <span className={`truncate text-sm font-semibold ${trackingInterrupted ? "text-amber-300" : "text-emerald-300"}`}>
-                {trackingInterrupted ? "Tracking interrupted" : recentRepDetected ? "Rep detected" : "Tracking"}
+              <span className={`truncate text-sm font-semibold ${trackingInterrupted || trackingLimited ? "text-amber-300" : "text-emerald-300"}`}>
+                {trackingInterrupted ? "Tracking interrupted" : trackingLimited ? "Limited tracking" : recentRepDetected ? "Rep detected" : "Tracking"}
               </span>
             </div>
           ) : (

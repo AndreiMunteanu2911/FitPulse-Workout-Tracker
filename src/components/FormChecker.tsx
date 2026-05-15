@@ -36,6 +36,7 @@ import type {
 import {
   areLandmarksVisible,
   calculateAngle2D,
+  detectCameraAngle,
   getLandmarkVisibility,
   getSymmetryChecks,
   checkSpinalAlignment,
@@ -65,6 +66,7 @@ interface FormCheckerProps {
 }
 
 type CameraFacingMode = "user" | "environment";
+type TrackingQuality = "good" | "limited" | "lost";
 
 const DETECTION_CONFIG: DetectionCadenceConfig = {
   targetFps: 28,
@@ -74,7 +76,7 @@ const DETECTION_CONFIG: DetectionCadenceConfig = {
   exitCalibrationFrames: 7,
   feedbackTtlMs: 1700,
   clearFrames: 14,
-  minRepRangeDegrees: 24,
+  minRepRangeDegrees: 16,
   primaryLossResetFrames: 8,
 };
 
@@ -235,6 +237,43 @@ function getEffectiveRepWindow(
   };
 }
 
+function getRepCountingWindow(
+  repWindow: Pick<ResolvedFormRule, "min" | "max" | "visibilityThreshold"> | null,
+  observedRange: { min: number; max: number },
+): Pick<ResolvedFormRule, "min" | "max" | "visibilityThreshold"> | null {
+  if (!repWindow) return null;
+  if (!Number.isFinite(observedRange.min) || !Number.isFinite(observedRange.max)) {
+    return repWindow;
+  }
+
+  const span = observedRange.max - observedRange.min;
+  if (span < DETECTION_CONFIG.minRepRangeDegrees) {
+    return repWindow;
+  }
+
+  return {
+    min: Math.round(observedRange.min + (span * 0.18)),
+    max: Math.round(observedRange.max - (span * 0.18)),
+    visibilityThreshold: Math.min(repWindow.visibilityThreshold, 0.42),
+  };
+}
+
+function getTrackingQuality({
+  angleStatus,
+  requiredVisibility,
+  calibrationVariance,
+  primaryTrackingLost,
+}: {
+  angleStatus: ReturnType<typeof detectCameraAngle>;
+  requiredVisibility: number;
+  calibrationVariance: number;
+  primaryTrackingLost: boolean;
+}): TrackingQuality {
+  if (primaryTrackingLost || requiredVisibility < 0.35) return "lost";
+  if (angleStatus !== "good" || requiredVisibility < 0.6 || calibrationVariance > 0.012) return "limited";
+  return "good";
+}
+
 function dedupeFeedback(items: FormFeedback[]): FormFeedback[] {
   const seen = new Set<string>();
   return items.filter((item) => {
@@ -349,6 +388,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
   const [feedback, setFeedback] = useState<FormFeedback[]>([]);
   const [jointStatusMap, setJointStatusMap] = useState<JointStatusMap>({});
   const [trackingInterrupted, setTrackingInterrupted] = useState(false);
+  const [trackingQuality, setTrackingQuality] = useState<TrackingQuality>("limited");
   const [recentRepDetected, setRecentRepDetected] = useState(false);
   const [repCount, setRepCount] = useState(0);
   const [formScore, setFormScore] = useState(0);
@@ -531,6 +571,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
     setFeedback([]);
     setJointStatusMap({});
     setTrackingInterrupted(false);
+    setTrackingQuality("limited");
     setRecentRepDetected(false);
     setSessionSaved(false);
     setSessionAnalysis(null);
@@ -853,6 +894,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
       const requiredVisibility = requiredLandmarks.length > 0
         ? getVisibleRatio(smoothedLandmarks, requiredLandmarks, 0.45)
         : 0;
+      const angleStatus = detectCameraAngle(smoothedLandmarks, resolvedRules?.view ?? "side");
 
       jitterDetectorRef.current.addFrame(smoothedLandmarks);
       const calibrationVariance = requiredLandmarks.length > 0
@@ -931,7 +973,9 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
         && areLandmarksVisible(
           smoothedLandmarks,
           [...resolvedRules.primaryMetric.landmarks],
-          Math.max(repWindow.visibilityThreshold, 0.55),
+          isRunning
+            ? Math.min(repWindow.visibilityThreshold, 0.42)
+            : Math.max(repWindow.visibilityThreshold, 0.55),
         ),
       );
 
@@ -977,6 +1021,13 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
         && repWindow
         && primaryMissingFramesRef.current >= DETECTION_CONFIG.primaryLossResetFrames,
       );
+      const currentTrackingQuality = getTrackingQuality({
+        angleStatus,
+        requiredVisibility,
+        calibrationVariance,
+        primaryTrackingLost,
+      });
+      setTrackingQuality(currentTrackingQuality);
 
       if (primaryTrackingLost) {
         trackedRulesRef.current = {};
@@ -988,7 +1039,11 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
         return;
       }
 
-      if (hasRealtimeRules && resolvedRules) {
+      if (currentTrackingQuality !== "good") {
+        trackedRulesRef.current = {};
+      }
+
+      if (hasRealtimeRules && resolvedRules && currentTrackingQuality === "good") {
         const effectiveRepWindowForRules = getEffectiveRepWindow(repWindow, observedPrimaryRangeRef.current) ?? repWindow;
         for (const rule of resolvedRules.rules) {
           if (!shouldEvaluateRule(currentPhase, rule.phase)) {
@@ -1001,7 +1056,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
               category: rule.category,
               effect: rule.effect,
               timestampMs,
-            }, rule.holdFrames, timestampMs);
+            }, rule.holdFrames + RULE_HOLD_FRAME_BONUS, timestampMs);
             if (retainedFeedback) currentFeedback.push(retainedFeedback);
             continue;
           }
@@ -1039,7 +1094,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
               confidence: evaluation.confidence,
               effect: evaluation.effect,
               timestampMs,
-            }, rule.holdFrames, timestampMs);
+            }, rule.holdFrames + RULE_HOLD_FRAME_BONUS, timestampMs);
             if (retainedFeedback) currentFeedback.push(retainedFeedback);
             continue;
           }
@@ -1054,7 +1109,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
               confidence: evaluation.confidence,
               effect: evaluation.effect,
               timestampMs,
-            }, rule.holdFrames, timestampMs);
+            }, rule.holdFrames + RULE_HOLD_FRAME_BONUS, timestampMs);
             if (retainedFeedback) currentFeedback.push(retainedFeedback);
             continue;
           }
@@ -1088,7 +1143,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
         }
       }
 
-      if (resolvedRules?.pattern.universalChecks.symmetry && resolvedRules.view !== "side") {
+      if (currentTrackingQuality === "good" && resolvedRules?.pattern.universalChecks.symmetry && resolvedRules.view !== "side") {
         if (!isScoringWarmup && areLandmarksVisible(smoothedLandmarks, [11, 13, 15, 12, 14, 16], 0.72)) {
           const symmetry = getSymmetryChecks(smoothedLandmarks);
           if (symmetry.elbowSymmetry > ARM_SYMMETRY_WARNING_DEGREES && symmetry.elbowSymmetry >= 0) {
@@ -1117,7 +1172,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
         }
       }
 
-      if (resolvedRules?.pattern.universalChecks.spine) {
+      if (currentTrackingQuality === "good" && resolvedRules?.pattern.universalChecks.spine) {
         if (!isScoringWarmup && areLandmarksVisible(smoothedLandmarks, [11, 12, 23, 24], 0.55)) {
           const spineAngle = checkSpinalAlignment(smoothedLandmarks);
           if (spineAngle > 0 && spineAngle < 30) {
@@ -1132,7 +1187,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
         }
       }
 
-      if (!isScoringWarmup && resolvedRules?.pattern.universalChecks.stability) {
+      if (!isScoringWarmup && currentTrackingQuality === "good" && resolvedRules?.pattern.universalChecks.stability) {
         const jittery = jitterDetectorRef.current.getJitteryJoints();
         const requiredLandmarks = getRequiredLandmarks(resolvedRules);
         const averageVariance = jitterDetectorRef.current.getAverageVariance(requiredLandmarks);
@@ -1174,7 +1229,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
       ]).slice(-20);
 
       if (primaryAngle >= 0 && repWindow && resolvedRules && currentPhase !== "unknown") {
-        const effectiveRepWindow = getEffectiveRepWindow(repWindow, observedPrimaryRangeRef.current) ?? repWindow;
+        const effectiveRepWindow = getRepCountingWindow(repWindow, observedPrimaryRangeRef.current) ?? repWindow;
         const observedSpan = observedPrimaryRangeRef.current.max - observedPrimaryRangeRef.current.min;
         const hasEnoughRepRange = Number.isFinite(observedSpan) && observedSpan >= DETECTION_CONFIG.minRepRangeDegrees;
         const repResult = hasEnoughRepRange && tempoTrackerRef.current.checkRep(
@@ -1457,6 +1512,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
               repCount={repCount}
               formScore={formScore}
               trackingInterrupted={trackingInterrupted}
+              trackingLimited={trackingQuality === "limited"}
               recentRepDetected={recentRepDetected}
             />
           )}

@@ -13,7 +13,15 @@ let poseLandmarker: PoseLandmarker | null = null;
 let initializingPromise: Promise<PoseLandmarker> | null = null;
 
 const WASM_URL = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.17/wasm";
-const TASK_URL = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/1/pose_landmarker_heavy.task";
+const TASK_URLS = {
+  full: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task",
+  heavy: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/1/pose_landmarker_heavy.task",
+} as const;
+
+function prefersMobileModel(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+}
 
 /**
  * Initialize the MediaPipe Pose Landmarker.
@@ -25,10 +33,11 @@ export async function initPoseDetector(): Promise<PoseLandmarker> {
 
   initializingPromise = (async () => {
     const filesetResolver = await FilesetResolver.forVisionTasks(WASM_URL);
+    const modelAssetPath = prefersMobileModel() ? TASK_URLS.full : TASK_URLS.heavy;
 
     const detector = await PoseLandmarker.createFromOptions(filesetResolver, {
       baseOptions: {
-        modelAssetPath: TASK_URL,
+        modelAssetPath,
         delegate: "GPU",
       },
       runningMode: "VIDEO",
