@@ -1410,11 +1410,14 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
         <div ref={canvasContainerRef} className="flex-1 min-h-0 relative bg-black overflow-hidden">
           <video
             ref={videoRef as React.RefObject<HTMLVideoElement>}
-            className="absolute inset-0 w-full h-full object-cover"
+            className="absolute inset-0 h-full w-full bg-black object-cover"
             autoPlay
             playsInline
             muted
-            style={{ transform: cameraFacingMode === "user" ? "scaleX(-1)" : undefined }}
+            style={{
+              opacity: isReady ? 1 : 0,
+              transform: cameraFacingMode === "user" ? "scaleX(-1)" : undefined,
+            }}
           />
 
           <PoseCanvas
