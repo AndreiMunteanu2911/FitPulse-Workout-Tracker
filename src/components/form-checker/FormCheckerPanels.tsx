@@ -91,6 +91,7 @@ export function PoseCanvas({
   canvasHeight,
   sourceWidth,
   sourceHeight,
+  mirrorX = true,
 }: {
   landmarks: NormalizedLandmark[] | null;
   jointStatusMap: JointStatusMap;
@@ -98,6 +99,7 @@ export function PoseCanvas({
   canvasHeight: number;
   sourceWidth: number;
   sourceHeight: number;
+  mirrorX?: boolean;
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -111,7 +113,7 @@ export function PoseCanvas({
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
     if (!landmarks) return;
 
-    const projected = projectAllLandmarks(landmarks, canvasWidth, canvasHeight, sourceWidth, sourceHeight);
+    const projected = projectAllLandmarks(landmarks, canvasWidth, canvasHeight, sourceWidth, sourceHeight, mirrorX);
     const now = performance.now();
 
     ctx.lineWidth = 3;
@@ -141,7 +143,7 @@ export function PoseCanvas({
       ctx.fillStyle = getPoseColor(status, alpha);
       ctx.fill();
     }
-  }, [landmarks, canvasWidth, canvasHeight, jointStatusMap, sourceWidth, sourceHeight]);
+  }, [landmarks, canvasWidth, canvasHeight, jointStatusMap, sourceWidth, sourceHeight, mirrorX]);
 
   return (
     <canvas

@@ -330,6 +330,7 @@ export function projectLandmark(
   canvasHeight: number,
   sourceWidth?: number,
   sourceHeight?: number,
+  mirrorX = true,
 ): { x: number; y: number } {
   const baseWidth = sourceWidth && sourceWidth > 0 ? sourceWidth : canvasWidth;
   const baseHeight = sourceHeight && sourceHeight > 0 ? sourceHeight : canvasHeight;
@@ -340,7 +341,7 @@ export function projectLandmark(
   const offsetY = (canvasHeight - renderedHeight) / 2;
 
   return {
-    x: ((1 - landmark.x) * renderedWidth) + offsetX,
+    x: ((mirrorX ? 1 - landmark.x : landmark.x) * renderedWidth) + offsetX,
     y: (landmark.y * renderedHeight) + offsetY,
   };
 }
@@ -351,10 +352,11 @@ export function projectAllLandmarks(
   canvasHeight: number,
   sourceWidth?: number,
   sourceHeight?: number,
+  mirrorX = true,
 ): Array<{ x: number; y: number } | null> {
   return landmarks.map((landmark) => (
     landmark
-      ? projectLandmark(landmark, canvasWidth, canvasHeight, sourceWidth, sourceHeight)
+      ? projectLandmark(landmark, canvasWidth, canvasHeight, sourceWidth, sourceHeight, mirrorX)
       : null
   ));
 }
