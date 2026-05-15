@@ -36,7 +36,6 @@ import type {
 import {
   areLandmarksVisible,
   calculateAngle2D,
-  detectCameraAngle,
   getLandmarkVisibility,
   getSymmetryChecks,
   checkSpinalAlignment,
@@ -73,8 +72,8 @@ const DETECTION_CONFIG: DetectionCadenceConfig = {
   missingPoseGraceFrames: 5,
   enterCalibrationFrames: 12,
   exitCalibrationFrames: 7,
-  feedbackTtlMs: 1250,
-  clearFrames: 9,
+  feedbackTtlMs: 1700,
+  clearFrames: 14,
   minRepRangeDegrees: 24,
   primaryLossResetFrames: 8,
 };
@@ -82,6 +81,7 @@ const DETECTION_CONFIG: DetectionCadenceConfig = {
 const STABILITY_WARNING_MIN_JOINTS = 5;
 const STABILITY_WARNING_MIN_VARIANCE = 0.011;
 const ARM_SYMMETRY_WARNING_DEGREES = 28;
+const RULE_HOLD_FRAME_BONUS = 2;
 
 function getStableFeedbackKey(items: FormFeedback[]): string {
   return items.map((item) => `${item.type}:${item.message}`).join("|");
@@ -320,6 +320,12 @@ function enrichFeedbackConfidence(items: FormFeedback[], landmarks: NormalizedLa
   }));
 }
 
+function capitalizeFirstWord(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return value;
+  return `${trimmed.charAt(0).toUpperCase()}${trimmed.slice(1)}`;
+}
+
 export default function FormChecker({ exerciseId, exerciseName, formRules, onClose }: FormCheckerProps) {
   const [cameraFacingMode, setCameraFacingMode] = useState<CameraFacingMode>("environment");
   const { videoRef, isReady, isLoading, error: camError, startCamera, stopCamera } = useWebcam({
@@ -358,10 +364,16 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
 
   const tempoTrackerRef = useRef(new TempoTracker());
   const jitterDetectorRef = useRef(new JitterDetector());
-  const landmarkSmootherRef = useRef(new LandmarkSmoother({
-    positionAlpha: 0.72,
-    visibilityAlpha: 0.55,
+  const visualLandmarkSmootherRef = useRef(new LandmarkSmoother({
+    positionAlpha: 0.74,
+    visibilityAlpha: 0.58,
     visibilityDecay: 0.8,
+    lowConfidenceThreshold: 0.55,
+  }));
+  const ruleLandmarkSmootherRef = useRef(new LandmarkSmoother({
+    positionAlpha: 0.42,
+    visibilityAlpha: 0.36,
+    visibilityDecay: 0.88,
     lowConfidenceThreshold: 0.55,
   }));
   const trackedRulesRef = useRef<Record<string, TrackedRuleState>>({});
@@ -498,7 +510,8 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
     reviewModeRef.current = false;
     tempoTrackerRef.current.reset();
     jitterDetectorRef.current.reset();
-    landmarkSmootherRef.current.reset();
+    visualLandmarkSmootherRef.current.reset();
+    ruleLandmarkSmootherRef.current.reset();
     trackedRulesRef.current = {};
     calibrationGoodFramesRef.current = 0;
     calibrationBadFramesRef.current = 0;
@@ -825,14 +838,14 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
       }
 
       missingPoseFramesRef.current = 0;
-      const smoothedLandmarks = landmarkSmootherRef.current.smooth(result);
-      setLandmarks(smoothedLandmarks);
+      const visualLandmarks = visualLandmarkSmootherRef.current.smooth(result);
+      const smoothedLandmarks = ruleLandmarkSmootherRef.current.smooth(result);
+      setLandmarks(visualLandmarks);
       if (startingDetection) {
         setStartingDetection(false);
       }
       const timestampMs = Math.max(0, Math.round(performance.now() - sessionStartRef.current));
 
-      const angleStatus = detectCameraAngle(smoothedLandmarks, resolvedRules?.view ?? "side");
       const requiredLandmarks = getCalibrationLandmarks(resolvedRules);
       const requiredVisibility = requiredLandmarks.length > 0
         ? getVisibleRatio(smoothedLandmarks, requiredLandmarks, 0.45)
@@ -843,10 +856,15 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
         ? jitterDetectorRef.current.getAverageVariance(requiredLandmarks)
         : 0;
 
+      const requiredVisibilityThreshold = isCalibratedRef.current || isRunning ? 0.5 : 0.6;
+      const calibrationVarianceThreshold = isCalibratedRef.current || isRunning ? 0.012 : 0.0045;
+      const keepRunningDespiteDrift = isRunning && isCalibratedRef.current && requiredVisibility >= 0.35;
       const frameIsCalibrated =
-        angleStatus === "good"
-        && requiredVisibility >= 0.6
-        && calibrationVariance <= 0.0045;
+        keepRunningDespiteDrift
+        || (
+          requiredVisibility >= requiredVisibilityThreshold
+          && calibrationVariance <= calibrationVarianceThreshold
+        );
 
       if (!frameIsCalibrated) {
         calibrationGoodFramesRef.current = 0;
@@ -855,10 +873,8 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
           updateCalibrationState(false);
         }
         const sustainedBadFrame = calibrationBadFramesRef.current >= DETECTION_CONFIG.exitCalibrationFrames;
-        setCameraStatus(sustainedBadFrame ? (angleStatus === "good" ? "calibrating" : angleStatus) : (isCalibratedRef.current ? "good" : "calibrating"));
-        if (angleStatus !== "good") {
-          setCalibrationMessage("Adjust your camera so the expected view stays visible.");
-        } else if (requiredVisibility < 0.6) {
+        setCameraStatus(sustainedBadFrame ? "calibrating" : (isCalibratedRef.current ? "good" : "calibrating"));
+        if (requiredVisibility < requiredVisibilityThreshold) {
           setCalibrationMessage("Keep your torso and the working joints visible in frame.");
         } else {
           setCalibrationMessage("Hold still for a moment so tracking can stabilize.");
@@ -866,7 +882,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
         if (isRunning && sustainedBadFrame && completedRepMetricsRef.current.length > 0) {
           const calibrationPenalty: FormFeedback = {
             type: "warning",
-            message: angleStatus === "good" ? "Movement is too unstable to score cleanly" : "Camera angle drifted",
+            message: "Movement is too unstable to score cleanly",
             source: "stability",
             category: "tracking",
             confidence: 0.4,
@@ -1034,6 +1050,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
             ? Math.max(2, rule.holdFrames - 2)
             : rule.holdFrames;
           const effectiveHoldFrames = baseHoldFrames
+            + RULE_HOLD_FRAME_BONUS
             + (feedbackItem.type === "warning" ? 2 : 0)
             + (evaluation.confidence < 0.72 && evaluation.effect !== "rep_gate" ? 2 : 0);
           const stableRuleFeedback = updateTrackedRule(rule, evaluation.failed, true, feedbackItem, effectiveHoldFrames, timestampMs);
@@ -1142,32 +1159,6 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
             resolvedRules.primaryMetric.phaseLogic,
           );
         if (repResult) {
-          const repBlocked = currentRepGateFailuresRef.current >= 2
-            || stableFeedbackRef.current.items.some((item) => item.effect === "rep_gate" && item.type !== "info");
-
-          if (repBlocked) {
-            tempTempoFeedbackRef.current = [{
-              type: "warning",
-              message: "Reset and perform a controlled rep.",
-              source: "stability",
-              category: "stability",
-              effect: "cue_only",
-              timestampMs,
-            }];
-            tempoCueExpiryRef.current = timestampMs + 1800;
-            currentRepSamplesRef.current = primaryAngle >= 0 ? [{
-              timestampMs,
-              angle: primaryAngle,
-              phase: currentPhase,
-            }] : [];
-            currentRepFeedbackRef.current = [];
-            currentRepGateFailuresRef.current = 0;
-            previousEvaluationLandmarksRef.current = smoothedLandmarks.map((landmark) => ({ ...landmark }));
-            previousEvaluationTimestampRef.current = timestampMs;
-            animationFrameRef.current = requestAnimationFrame(detectionLoop);
-            return;
-          }
-
           const nextRep = repCountRef.current + 1;
           const repMetric = summarizeRepSamples(
             nextRep,
@@ -1343,16 +1334,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
     <div className="fixed inset-0 z-50 bg-black flex flex-col">
       <div className="flex items-center justify-between px-4 py-3 bg-black/80 z-20">
         <div>
-          <h2 className="text-lg font-bold text-white leading-tight">{exerciseName}</h2>
-          <p className="text-xs text-white/50 mt-0.5">
-            {rulesNotApplicable
-              ? "Not applicable for realtime checks"
-              : postSetOnly
-                ? "Post-set review only"
-                : hasRealtimeRules
-                  ? `${resolvedRules?.rules.length ?? 0} pattern rules active`
-                  : "Universal checks only"}
-          </p>
+          <h2 className="text-lg font-bold text-white leading-tight">{capitalizeFirstWord(exerciseName)}</h2>
         </div>
         <div className="flex items-center gap-2">
           {!showFullHeightReview && (

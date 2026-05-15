@@ -223,7 +223,7 @@ export function summarizeRepSamples(
     if (pattern.tempo.pauseSeconds > 0 && bottomPauseMs < pattern.tempo.pauseSeconds * 1000 * 0.5) tempoFlags.push("pause_too_short");
   }
 
-  const scoreEligibleFeedback = feedback.filter((item) => item.effect !== "cue_only" && item.effect !== "rep_gate");
+  const scoreEligibleFeedback = feedback.filter((item) => item.effect !== "cue_only");
   const groupedFeedback = groupWorstCueByCategory(scoreEligibleFeedback);
   const tempoFeedback = tempoFlags.map<FormSessionFeedbackItem>((flag) => ({
     type: flag === "eccentric_too_fast" ? "warning" : "info",
