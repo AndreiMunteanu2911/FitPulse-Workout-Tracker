@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import type { NormalizedLandmark, PoseLandmarker } from "@mediapipe/tasks-vision";
-import { X, RotateCcw, AlertTriangle, Loader2 } from "lucide-react";
+import { X, RotateCcw, AlertTriangle, Loader2, SwitchCamera } from "lucide-react";
 import Button from "@/components/Button";
 import {
   CameraErrorOverlay,
@@ -64,6 +64,8 @@ interface FormCheckerProps {
   formRules: ExerciseFormRules | null;
   onClose: () => void;
 }
+
+type CameraFacingMode = "user" | "environment";
 
 const DETECTION_CONFIG: DetectionCadenceConfig = {
   targetFps: 28,
@@ -319,8 +321,9 @@ function enrichFeedbackConfidence(items: FormFeedback[], landmarks: NormalizedLa
 }
 
 export default function FormChecker({ exerciseId, exerciseName, formRules, onClose }: FormCheckerProps) {
+  const [cameraFacingMode, setCameraFacingMode] = useState<CameraFacingMode>("environment");
   const { videoRef, isReady, isLoading, error: camError, startCamera, stopCamera } = useWebcam({
-    facingMode: "environment",
+    facingMode: cameraFacingMode,
     zoom: 0.7,
     autoStart: false,
   });
@@ -1294,6 +1297,15 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
     void startCamera();
   };
 
+  const handleSwitchCamera = () => {
+    const nextFacingMode = cameraFacingMode === "environment" ? "user" : "environment";
+    reviewModeRef.current = false;
+    stopCamera();
+    resetSessionState();
+    setStartingDetection(false);
+    setCameraFacingMode(nextFacingMode);
+  };
+
   const handleClose = async () => {
     reviewModeRef.current = true;
     if (isRunning) {
@@ -1320,6 +1332,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
   const isReviewing = coachingLoading || isSaving;
   const showStartupOverlay = startingDetection || (isRunning && !landmarks && cameraStatus !== "not-detected");
   const isBusy = isReviewing || startingDetection;
+  const canSwitchCamera = !isRunning && !isBusy && !isLoading && !showFullHeightReview;
   const primaryActionDisabled =
     rulesNotApplicable
     || isBusy
@@ -1342,6 +1355,17 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {!showFullHeightReview && (
+            <button
+              onClick={handleSwitchCamera}
+              disabled={!canSwitchCamera}
+              className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50 sm:hidden"
+              title={`Switch to ${cameraFacingMode === "environment" ? "front" : "back"} camera`}
+              aria-label={`Switch to ${cameraFacingMode === "environment" ? "front" : "back"} camera`}
+            >
+              <SwitchCamera className="h-4 w-4 text-white" />
+            </button>
+          )}
           <button
             onClick={handleReset}
             disabled={isBusy}
@@ -1390,7 +1414,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
             autoPlay
             playsInline
             muted
-            style={{ transform: "scaleX(-1)" }}
+            style={{ transform: cameraFacingMode === "user" ? "scaleX(-1)" : undefined }}
           />
 
           <PoseCanvas
@@ -1400,6 +1424,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
             canvasHeight={canvasSize.height}
             sourceWidth={videoSize.width}
             sourceHeight={videoSize.height}
+            mirrorX={cameraFacingMode === "user"}
           />
           <CameraGuideOverlay
             status={cameraStatus}
