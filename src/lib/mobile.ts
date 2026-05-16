@@ -30,11 +30,15 @@ export function supportsNativeCamera(): boolean {
 
 export async function openCheckoutUrl(url: string): Promise<void> {
   if (isNativePlatform()) {
-    await Browser.open({
-      url,
-      presentationStyle: "fullscreen",
-    });
-    return;
+    try {
+      await Browser.open({
+        url,
+        presentationStyle: "fullscreen",
+      });
+      return;
+    } catch (error) {
+      console.error("Failed to open checkout in native browser:", error);
+    }
   }
 
   window.location.href = url;

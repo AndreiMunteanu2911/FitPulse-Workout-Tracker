@@ -64,19 +64,22 @@ export default function ShopPage() {
                 appScheme: MOBILE_APP_SCHEME,
               }),
           });
-          const data = await res.json();
+          const data = (await res.json().catch(() => null)) as { url?: string; error?: string } | null;
 
-          if (data.url) {
+          if (data?.url) {
               await openCheckoutUrl(data.url);
           } else if (res.ok) {
               setMessage({ type: "success", text: "Purchase successful!" });
               setIsPurchaseModalOpen(false);
               fetchData();
           } else {
-              setMessage({ type: "error", text: data.error || "Failed to complete purchase." });
+              setMessage({ type: "error", text: data?.error || "Failed to complete purchase." });
           }
-      } catch {
-          setMessage({ type: "error", text: "An error occurred during purchase." });
+      } catch (error) {
+          setMessage({
+            type: "error",
+            text: error instanceof Error ? error.message : "An error occurred during purchase.",
+          });
       } finally {
           setPurchaseLoading(false);
       }
