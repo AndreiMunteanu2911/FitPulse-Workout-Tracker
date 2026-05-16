@@ -32,7 +32,7 @@ export default async function MainLayout({
         <div className="flex h-dvh min-w-0 flex-1 flex-col overflow-y-auto overscroll-contain">
           <TopBar />
           {/* Spacer matching the fixed TopBar height so content is never hidden beneath it */}
-          <div className="h-11 flex-shrink-0 md:hidden" aria-hidden="true" />
+          <div className="h-[var(--ph-top)] flex-shrink-0 md:hidden" aria-hidden="true" />
           <main className="mx-auto w-full max-w-5xl flex-1 min-w-0 px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-4 sm:px-5 sm:pt-5 md:px-8 md:pb-8 md:pt-6">
             {children}
           </main>

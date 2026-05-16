@@ -139,10 +139,10 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
-/* On mobile the TopBar is 2.75rem (44px) tall; offset sticky page headers below it */
+/* On mobile the TopBar leaves room for the native status bar. */
 @media (max-width: 767px) {
   :root {
-    --ph-top: 2.75rem;
+    --ph-top: calc(4rem + env(safe-area-inset-top));
   }
 }
 
