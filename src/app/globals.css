@@ -142,7 +142,7 @@ html {
 /* On mobile the TopBar leaves room for the native status bar. */
 @media (max-width: 767px) {
   :root {
-    --ph-top: calc(4rem + env(safe-area-inset-top));
+    --ph-top: calc(3.25rem + env(safe-area-inset-top));
   }
 }
 
