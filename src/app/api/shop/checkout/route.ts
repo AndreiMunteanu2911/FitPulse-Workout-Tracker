@@ -40,13 +40,9 @@ export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => ({}))) as {
     productId?: string;
     quantity?: number;
-    nativeApp?: boolean;
-    appScheme?: string;
   };
   const productId = body.productId;
   const quantity = Number(body.quantity || 1);
-  const nativeApp = body.nativeApp === true;
-  const appScheme = body.appScheme?.trim() || "com.fitpulse.app";
 
   if (!productId || quantity < 1) {
     return NextResponse.json({ error: "Missing productId or invalid quantity." }, { status: 400 });
@@ -83,12 +79,8 @@ export async function POST(req: NextRequest) {
   }
 
   const baseUrl = getWebAppBaseUrl(new URL(req.url).origin);
-  const successUrl = nativeApp
-    ? `${appScheme}://checkout-success?session_id={CHECKOUT_SESSION_ID}`
-    : `${baseUrl}/checkout-success?session_id={CHECKOUT_SESSION_ID}`;
-  const cancelUrl = nativeApp
-    ? `${appScheme}://shop?cancelled=1`
-    : `${baseUrl}/shop?canceled=1`;
+  const successUrl = `${baseUrl}/checkout-success?session_id={CHECKOUT_SESSION_ID}`;
+  const cancelUrl = `${baseUrl}/shop?canceled=1`;
   const allowedCountries = (process.env.STRIPE_ALLOWED_SHIPPING_COUNTRIES || "")
     .split(",")
     .map((country) => country.trim().toUpperCase())
@@ -125,7 +117,14 @@ export async function POST(req: NextRequest) {
     ],
   };
 
-  const session = await stripe.checkout.sessions.create(sessionParams as CheckoutCreateParams);
+  const session = await stripe.checkout.sessions.create(sessionParams as CheckoutCreateParams).catch((error: unknown) => {
+    console.error("Failed to create Stripe checkout session:", error);
+    return null;
+  });
+
+  if (!session?.url) {
+    return NextResponse.json({ error: "Failed to create Stripe checkout session." }, { status: 502 });
+  }
 
   const { error: sessionUpdateError } = await supabase
     .from("orders")
