@@ -160,7 +160,7 @@ export default function TopBar() {
   const title = routeTitle ?? getPageTitle(pathname);
 
   return (
-    <header className="fixed left-0 right-0 top-0 z-20 flex h-11 items-center justify-between bg-gradient-to-r from-[#5E3FDE]/95 via-[#7457F5]/95 to-[#896CFE]/95 px-5 shadow-[0_10px_28px_rgba(94,63,222,0.22)] backdrop-blur-xl md:hidden">
+    <header className="fixed left-0 right-0 top-0 z-20 flex h-[var(--ph-top)] items-end justify-between bg-gradient-to-r from-[#5E3FDE]/95 via-[#7457F5]/95 to-[#896CFE]/95 px-5 pb-2 shadow-[0_10px_28px_rgba(94,63,222,0.22)] backdrop-blur-xl md:hidden">
       <span className="text-lg font-bold text-white tracking-tight truncate flex-1" style={{ fontFamily: "var(--font-poppins)" }}>{title}</span>
       <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center flex-shrink-0 overflow-hidden">
         <Image src="/assets/logo.png" alt="FitPulse" width={20} height={20} className="object-contain" />
