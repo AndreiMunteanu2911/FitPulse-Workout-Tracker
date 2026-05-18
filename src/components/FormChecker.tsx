@@ -1417,7 +1417,7 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
 
   return (
     <div className="fixed inset-0 z-50 bg-black flex flex-col">
-      <div className="flex items-center justify-between px-4 py-3 bg-black/80 z-20">
+      <div className="flex items-end justify-between px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] bg-black/80 z-20">
         <div>
           <h2 className="text-lg font-bold text-white leading-tight">{capitalizeFirstWord(exerciseName)}</h2>
         </div>
