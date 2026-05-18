@@ -2,7 +2,7 @@
 
 [Live deployment](https://fitpulseam.vercel.app)
 
-Android APK builds are available on the [GitHub Releases page](https://github.com/AndreiMunteanu2911/workout-tracker/releases).
+Android APK builds are available on the [GitHub Releases page](https://github.com/AndreiMunteanu2911/FitPulse-Workout-Tracker/releases).
 
 FitPulse is a mobile-first fitness platform for logging workouts, tracking progress, reviewing lifting form, building habits, and sharing training updates with a community. It is built with Next.js App Router, React 19, Supabase, Tailwind CSS, Framer Motion, Recharts, Stripe, MediaPipe, and a Capacitor-based Android shell.
 
@@ -180,8 +180,8 @@ This README focuses on the implementation surface: route groups, feature domains
 ### Install
 
 ```bash
-git clone https://github.com/AndreiMunteanu2911/workout-tracker.git
-cd workout-tracker
+git clone https://github.com/AndreiMunteanu2911/FitPulse-Workout-Tracker.git
+cd FitPulse-Workout-Tracker
 pnpm install
 ```
 
