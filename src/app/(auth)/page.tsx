@@ -1,9 +1,12 @@
 import Link from "next/link";
 import Image from "next/image";
+import AuthAutoLogin from "@/components/AuthAutoLogin";
 
 export default function LandingPage() {
     return (
         <div className="w-full text-white min-h-screen flex flex-col">
+            <AuthAutoLogin />
+
             {/* Logo */}
             <div className="flex items-center gap-2.5 pt-6 pb-2">
                 <div className="w-9 h-9 rounded-[12px] overflow-hidden bg-white flex items-center justify-center">

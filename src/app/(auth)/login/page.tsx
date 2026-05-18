@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Button from "@/components/Button";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,6 +14,7 @@ const REMEMBER_LOGIN_KEY = "fitpulse:remember-login";
 
 type RememberedLogin = {
     email: string;
+    password: string;
 };
 
 export default function LoginPage() {
@@ -25,18 +26,42 @@ export default function LoginPage() {
     const [message, setMessage] = useState("");
     const [loading, setLoading] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
+    const autoLoginAttempted = useRef(false);
 
     useEffect(() => {
+        if (autoLoginAttempted.current) return;
+        autoLoginAttempted.current = true;
+
         try {
             const saved = window.localStorage.getItem(REMEMBER_LOGIN_KEY);
             if (!saved) return;
             const parsed = JSON.parse(saved) as Partial<RememberedLogin>;
-            if (typeof parsed.email === "string") setEmail(parsed.email);
+            const savedEmail = typeof parsed.email === "string" ? parsed.email : "";
+            const savedPassword = typeof parsed.password === "string" ? parsed.password : "";
+
+            if (savedEmail) setEmail(savedEmail);
+            if (savedPassword) setPassword(savedPassword);
             setRememberMe(true);
+
+            if (!savedEmail || !savedPassword) return;
+
+            setLoading(true);
+            void login(savedEmail, savedPassword, true)
+                .then(() => {
+                    router.replace("/dashboard");
+                })
+                .catch((err: unknown) => {
+                    window.localStorage.removeItem(REMEMBER_LOGIN_KEY);
+                    setPassword("");
+                    setMessage(err instanceof Error ? err.message : "Saved login failed. Please log in again.");
+                })
+                .finally(() => {
+                    setLoading(false);
+                });
         } catch {
             window.localStorage.removeItem(REMEMBER_LOGIN_KEY);
         }
-    }, []);
+    }, [login, router]);
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -48,7 +73,7 @@ export default function LoginPage() {
             loginSchema.parse({ email, password });
             await login(email, password, rememberMe);
             if (rememberMe) {
-                window.localStorage.setItem(REMEMBER_LOGIN_KEY, JSON.stringify({ email }));
+                window.localStorage.setItem(REMEMBER_LOGIN_KEY, JSON.stringify({ email, password }));
             } else {
                 window.localStorage.removeItem(REMEMBER_LOGIN_KEY);
             }
