@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import RestTimer from "./RestTimer";
+import RestTimer from "@/components/RestTimer";
 import type { RestTimerState } from "@/types";
 
 function timer(overrides: Partial<RestTimerState> = {}): RestTimerState {

@@ -6,7 +6,7 @@ import {
   setSchema,
   signupSchema,
   workoutSchema,
-} from "./validations";
+} from "@/lib/validations";
 
 describe("auth validation schemas", () => {
   it("accepts valid credentials and rejects invalid credentials", () => {

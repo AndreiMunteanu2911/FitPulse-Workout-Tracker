@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { classifyIntent, extractWorkoutType } from "./rag-intent";
+import { classifyIntent, extractWorkoutType } from "@/lib/rag-intent";
 
 describe("classifyIntent", () => {
   it("prioritizes workout creation requests", () => {

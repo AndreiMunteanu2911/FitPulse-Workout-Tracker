@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import Button from "./Button";
+import Button from "@/components/Button";
 
 describe("Button", () => {
   it("renders a button with default type and click behavior", async () => {

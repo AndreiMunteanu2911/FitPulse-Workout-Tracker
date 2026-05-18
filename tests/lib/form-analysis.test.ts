@@ -13,7 +13,7 @@ import {
   getScoreBand,
   shouldEvaluateRule,
   summarizeRepSamples,
-} from "./form-analysis";
+} from "@/lib/form-analysis";
 import type { FormRepMetric, FormSessionFeedbackItem } from "@/types";
 
 describe("form analysis scoring helpers", () => {

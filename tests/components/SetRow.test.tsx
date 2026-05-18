@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import SetRow from "./SetRow";
+import SetRow from "@/components/SetRow";
 
 const baseProps = {
   set: { id: "set-1", set_number: 1, reps: 8, weight: 80 },

@@ -5,15 +5,14 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: true,
-    setupFiles: ["./src/test/setup.ts"],
+    setupFiles: ["./tests/setup.ts"],
     css: false,
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
       include: ["src/**/*.{ts,tsx}"],
       exclude: [
-        "src/**/*.test.{ts,tsx}",
-        "src/test/**",
+        "tests/**",
         "src/app/**/page.tsx",
         "src/app/**/layout.tsx",
         "src/app/**/loading.tsx",
@@ -23,6 +22,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
+      "#tests": fileURLToPath(new URL("./tests", import.meta.url)),
     },
   },
 });

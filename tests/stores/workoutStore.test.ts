@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { useWorkoutStore } from "./workoutStore";
+import { useWorkoutStore } from "@/stores/workoutStore";
 import type { Exercise, Workout } from "@/types";
 
 const exercise: Exercise = {

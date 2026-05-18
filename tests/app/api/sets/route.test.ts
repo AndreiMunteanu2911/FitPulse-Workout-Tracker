@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { POST } from "./route";
+import { POST } from "@/app/api/sets/route";
 import { createSupabaseServerClient } from "@/helper/supabaseServer";
 
 vi.mock("@/helper/supabaseServer", () => ({

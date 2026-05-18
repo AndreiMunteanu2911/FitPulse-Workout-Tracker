@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
-import { useExercises } from "./useExercises";
-import { server } from "@/test/mocks/server";
+import { useExercises } from "@/hooks/useExercises";
+import { server } from "#tests/mocks/server";
 
 describe("useExercises", () => {
   it("fetches paginated exercises with search params", async () => {

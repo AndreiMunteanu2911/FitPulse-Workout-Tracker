@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { POST } from "./route";
+import { POST } from "@/app/api/shop/checkout/route";
 import { createSupabaseServerClient } from "@/helper/supabaseServer";
 import { stripe } from "@/helper/stripe";
 

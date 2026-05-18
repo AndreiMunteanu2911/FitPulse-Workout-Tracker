@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { GET, POST } from "./route";
+import { GET, POST } from "@/app/api/workouts/route";
 import { createSupabaseServerClient } from "@/helper/supabaseServer";
 import { resolveExercises } from "@/helper/resolveExercises";
 

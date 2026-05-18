@@ -6,7 +6,7 @@ import {
   levelFromXP,
   xpForLevel,
   xpProgress,
-} from "./gamification";
+} from "@/lib/gamification";
 
 describe("XP helpers", () => {
   it("maps cumulative XP to levels and current level progress", () => {

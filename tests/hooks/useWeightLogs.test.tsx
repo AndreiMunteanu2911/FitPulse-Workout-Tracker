@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
-import { useWeightLogs } from "./useWeightLogs";
-import { server } from "@/test/mocks/server";
+import { useWeightLogs } from "@/hooks/useWeightLogs";
+import { server } from "#tests/mocks/server";
 
 describe("useWeightLogs", () => {
   it("fetches weight logs and unwraps the response", async () => {

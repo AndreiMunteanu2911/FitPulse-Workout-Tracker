@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { AppError, AuthRedirectError, apiFetch } from "./apiFetch";
+import { AppError, AuthRedirectError, apiFetch } from "@/services/api/apiFetch";
 
 describe("apiFetch", () => {
   beforeEach(() => {
