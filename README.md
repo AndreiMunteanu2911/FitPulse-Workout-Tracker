@@ -182,7 +182,7 @@ This README focuses on the implementation surface: route groups, feature domains
 ```bash
 git clone https://github.com/AndreiMunteanu2911/workout-tracker.git
 cd workout-tracker
-npm install
+pnpm install
 ```
 
 ### Environment variables
@@ -287,7 +287,7 @@ Create the Supabase Storage buckets used by the app:
 ### Run the app
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 Then open [http://localhost:3000](http://localhost:3000).
@@ -344,12 +344,15 @@ In production mode the Android app uses the branded Capacitor shell and forwards
 
 | Script | Purpose |
 | --- | --- |
-| `npm run dev` | Start the development server |
-| `npm run build` | Build the production app |
-| `npm run start` | Start the production server |
-| `npm run lint` | Run ESLint |
-| `npm run form-rules:generate` | Generate form rule data |
-| `npm run form-rules:import` | Import generated form rules |
+| `pnpm dev` | Start the development server |
+| `pnpm build` | Build the production app |
+| `pnpm start` | Start the production server |
+| `pnpm lint` | Run ESLint |
+| `pnpm test` | Run the headless Vitest suite once |
+| `pnpm test:watch` | Run the headless Vitest suite in watch mode |
+| `pnpm test:coverage` | Run Vitest with coverage output |
+| `pnpm form-rules:generate` | Generate form rule data |
+| `pnpm form-rules:import` | Import generated form rules |
 | `pnpm exec cap sync android` | Sync Capacitor config and assets into the Android project |
 | `pnpm exec cap open android` | Open the Android project in Android Studio |
 
