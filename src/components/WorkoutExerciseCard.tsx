@@ -65,21 +65,21 @@ export default function WorkoutExerciseCard({
         onRestTimerDismiss;
 
     return (
-        <div className="bg-[var(--surface)] rounded-[var(--radius-lg)] overflow-hidden">
+        <div className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
             <div className="p-5 sm:p-6">
                 {/* Header */}
                 <div className="flex items-center gap-3 mb-5">
                     {workoutExercise.exercise.gif_url && (
-                        <div className="flex-shrink-0 w-14 h-14 rounded-[var(--radius-sm)] overflow-hidden bg-[var(--surface-raised)]">
+                        <div className="flex-shrink-0 w-16 h-16 rounded-[var(--radius-lg)] overflow-hidden bg-[var(--surface-raised)]">
                             <ExerciseThumbnail src={workoutExercise.exercise.gif_url} />
                         </div>
                     )}
                     <div className="flex-1 min-w-0">
-                        <h3 className="text-base sm:text-lg font-bold text-[var(--foreground)] truncate" style={{ fontFamily: "var(--font-poppins)" }}>
+                        <h3 className="text-lg sm:text-xl font-extrabold text-[var(--foreground)] truncate" style={{ fontFamily: "var(--font-poppins)" }}>
                             {capitalizeFirstLetter(workoutExercise.exercise.name)}
                         </h3>
                         {workoutExercise.exercise.target_muscles?.[0] && (
-                            <p className="text-xs text-[var(--muted-foreground)] capitalize mt-0.5">
+                            <p className="mt-1 inline-flex rounded-full bg-[var(--surface-raised)] px-2.5 py-1 text-xs font-bold capitalize text-[var(--muted-foreground)]">
                                 {workoutExercise.exercise.target_muscles[0]}
                             </p>
                         )}
@@ -87,20 +87,20 @@ export default function WorkoutExerciseCard({
                     <button
                         aria-label="Delete exercise"
                         onClick={() => onDeleteExercise(exerciseIndex)}
-                        className="flex-shrink-0 w-8 h-8 rounded-[var(--radius-sm)] flex items-center justify-center text-[var(--muted-foreground)] hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-100)] hover:text-[var(--primary-600)] dark:hover:text-[var(--primary-700)] transition-colors"
+                        className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-[var(--surface-raised)] text-[var(--muted-foreground)] hover:bg-[var(--color-destructive-bg)] hover:text-[var(--color-destructive)] transition-colors"
                     >
                         <Trash2 className="w-4 h-4" />
                     </button>
                 </div>
 
                 {errorMessage && (
-                    <div className="mb-3 p-3 bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] rounded-[var(--radius-sm)] text-sm font-medium">
+                    <div className="mb-3 rounded-[var(--radius-lg)] bg-[var(--color-destructive-bg)] p-4 text-sm font-bold text-[var(--color-destructive)]">
                         {errorMessage}
                     </div>
                 )}
 
                 {/* Column headers */}
-                <div className="grid grid-cols-[2.5rem_3.5rem_1fr_1fr_5rem] gap-2 px-1 mb-2">
+                <div className="mb-2 grid grid-cols-[2.5rem_3.5rem_1fr_1fr_5rem] gap-2 rounded-[var(--radius-lg)] bg-[var(--surface-raised)] px-3 py-2">
                     <span className="text-[10px] ml-1.5 font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Set</span>
                     <span className="text-[10px] ml-6.5 font-semibold uppercase tracking-widest text-[var(--muted-foreground)] text-center">Prev</span>
                     <span className="text-[10px] ml-3 font-semibold uppercase tracking-widest text-[var(--muted-foreground)] text-center">Reps</span>
@@ -109,7 +109,7 @@ export default function WorkoutExerciseCard({
                 </div>
 
                 {/* Sets */}
-                <div className="space-y-1.5 mb-4">
+                <div className="space-y-2 mb-4">
                     {workoutExercise.sets.map((set, setIndex) => {
                         const isConfirmed = confirmedSetIds.has(set.id);
                         const showTimerHere = showTimer && restTimer?.setId === set.id;
@@ -147,7 +147,7 @@ export default function WorkoutExerciseCard({
                 {/* Add Set */}
                 <button
                     onClick={() => onAddSet(exerciseIndex)}
-                    className="w-full py-2.5 flex items-center justify-center gap-2 text-sm font-semibold text-[var(--primary-600)] dark:text-[var(--primary-500)] bg-[var(--primary-50)] dark:bg-[var(--primary-100)] rounded-full hover:brightness-95 transition-all"
+                    className="w-full min-h-12 rounded-full bg-[var(--primary-50)] py-3 flex items-center justify-center gap-2 text-sm font-extrabold text-[var(--primary-600)] transition-all hover:-translate-y-0.5 hover:brightness-95 dark:bg-[var(--primary-100)] dark:text-[var(--primary-500)]"
                 >
                     <Plus className="w-4 h-4" />
                     Add Set

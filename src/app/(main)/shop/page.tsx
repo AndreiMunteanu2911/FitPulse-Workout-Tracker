@@ -104,7 +104,7 @@ export default function ShopPage() {
           </div>
 
           {message && (
-              <div className={`mb-6 flex items-center gap-3 rounded-[var(--radius-md)] border px-4 py-3 ${
+              <div className={`mb-6 flex items-center gap-3 rounded-[var(--radius-xl)] border px-5 py-4 shadow-[var(--shadow-xs)] ${
                   message.type === "success"
                       ? "border-[var(--color-success)]/20 bg-[var(--color-success-bg)] text-[var(--color-success)]"
                       : "border-[var(--color-destructive)]/20 bg-[var(--color-destructive-bg)] text-[var(--color-destructive)]"
@@ -133,10 +133,12 @@ export default function ShopPage() {
           </div>
 
           {products.length === 0 && (
-              <div className="mt-6 rounded-[var(--radius-md)] border border-dashed border-[var(--border)] bg-[var(--surface)] px-6 py-16 text-center">
-                <ShoppingBag className="mx-auto mb-4 h-16 w-16 text-[var(--muted-foreground)] opacity-20" />
-                <h3 className="text-xl font-black text-[var(--foreground)]">No products yet</h3>
-                <p className="mt-2 text-sm text-[var(--muted-foreground)]">Check back later for new arrivals.</p>
+              <div className="mt-6 rounded-[var(--radius-xl)] border border-dashed border-[var(--border)] bg-[var(--surface)] px-6 py-16 text-center shadow-[var(--shadow-xs)]">
+                <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-[var(--radius-xl)] bg-[var(--surface-raised)]">
+                  <ShoppingBag className="h-10 w-10 text-[var(--muted-foreground)] opacity-50" />
+                </div>
+                <h3 className="text-2xl font-black text-[var(--foreground)]">No products yet</h3>
+                <p className="mt-2 text-base text-[var(--muted-foreground)]">Check back later for new arrivals.</p>
               </div>
           )}
         </div>

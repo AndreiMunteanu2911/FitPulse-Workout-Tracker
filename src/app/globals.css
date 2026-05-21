@@ -239,6 +239,7 @@ select {
   border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-sm);
+  overflow: hidden;
   transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
 }
 
@@ -248,6 +249,7 @@ select {
   border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-sm);
+  overflow: hidden;
   transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
   cursor: pointer;
 }
@@ -267,10 +269,11 @@ select {
 .badge {
   display: inline-flex;
   align-items: center;
+  gap: 0.35rem;
   border-radius: var(--radius-full);
-  padding: 0.2rem 0.75rem;
+  padding: 0.32rem 0.85rem;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 800;
   line-height: 1.5;
 }
 
@@ -302,12 +305,12 @@ input[type="number"] {
 /* Premium form input — more rounded */
 .input {
   width: 100%;
-  padding: 0.8rem 1.1rem;
+  padding: 0.95rem 1.15rem;
   border: 1.5px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   background: var(--surface);
   color: var(--foreground);
-  font-size: 0.9375rem;
+  font-size: 1rem;
   line-height: 1.5;
   transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
@@ -351,10 +354,12 @@ input[type="number"] {
 
 /* Stat block used in PersonalRecordCard — more rounded */
 .stat-block {
-  background: var(--primary-50);
-  border-radius: var(--radius-lg);
-  padding: 0.85rem;
+  background: linear-gradient(135deg, var(--primary-50), var(--surface));
+  border: 1px solid color-mix(in srgb, var(--primary-200) 35%, var(--border));
+  border-radius: var(--radius-xl);
+  padding: 1rem;
   text-align: center;
+  box-shadow: var(--shadow-xs);
 }
 
 .dark .stat-block {

@@ -21,23 +21,23 @@ export default function PersonalRecordCard({ record }: PersonalRecordCardProps) 
     : null;
 
   return (
-    <div className="bg-[var(--surface)] rounded-[var(--radius-lg)] overflow-hidden">
+    <div className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
       <div className="p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex-1 min-w-0 flex items-center gap-3">
-            <div className="flex-shrink-0 w-11 h-11 rounded-full bg-gradient-to-br from-[var(--primary-500)] to-[var(--lime-green)] flex items-center justify-center">
-              <Trophy className="w-5 h-5 text-white" />
+            <div className="flex-shrink-0 w-14 h-14 rounded-[var(--radius-lg)] bg-gradient-to-br from-[var(--primary-500)] to-[var(--lime-green)] flex items-center justify-center shadow-[0_12px_26px_rgba(116,87,245,0.22)]">
+              <Trophy className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-base sm:text-lg font-bold text-[var(--foreground)] capitalize truncate" style={{ fontFamily: "var(--font-poppins)" }}>{exerciseName}</h3>
-              <p className="text-xs text-[var(--muted-foreground)] capitalize mt-0.5">{targetMuscles}</p>
+              <h3 className="text-lg sm:text-xl font-extrabold text-[var(--foreground)] capitalize truncate" style={{ fontFamily: "var(--font-poppins)" }}>{exerciseName}</h3>
+              <p className="mt-1 inline-flex rounded-full bg-[var(--surface-raised)] px-2.5 py-1 text-xs font-bold capitalize text-[var(--muted-foreground)]">{targetMuscles}</p>
             </div>
           </div>
           {record.exercise?.gif_url && (
             <img
               src={record.exercise.gif_url}
               alt={exerciseName}
-              className="w-14 h-14 object-contain rounded-[var(--radius-sm)] bg-[var(--surface-raised)] ml-3 flex-shrink-0"
+              className="w-16 h-16 object-contain rounded-[var(--radius-lg)] bg-[var(--surface-raised)] ml-3 flex-shrink-0"
             />
           )}
         </div>
@@ -66,7 +66,7 @@ export default function PersonalRecordCard({ record }: PersonalRecordCardProps) 
         </div>
 
         {estimated1RM !== null && (
-          <div className="mt-3 flex items-center justify-center gap-2 py-2 px-4 rounded-full bg-[var(--primary-50)] dark:bg-[color-mix(in_srgb,var(--primary-900)_40%,transparent)]">
+          <div className="mt-4 flex items-center justify-center gap-2 rounded-full bg-[var(--primary-50)] px-4 py-3 dark:bg-[color-mix(in_srgb,var(--primary-900)_40%,transparent)]">
             <span className="text-sm text-[var(--muted-foreground)]">Est. 1RM</span>
             <span className="text-base font-extrabold text-[var(--primary-600)] dark:text-[var(--primary-500)]">{estimated1RM} kg</span>
           </div>

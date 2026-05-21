@@ -41,11 +41,11 @@ export default function DashboardShortcuts() {
   const shortcuts = getDashboardShortcutItems(isAdmin);
 
   return (
-    <div className="mb-6 bg-[var(--surface)] p-4 rounded-lg sm:p-5">
+    <div className="card mb-6 p-5 sm:p-6">
       <div className="mb-4 flex items-center justify-between gap-4">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">Shortcuts</p>
-          <h2 className="mt-1 text-base font-bold text-[var(--foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>
+          <h2 className="mt-1 text-xl font-extrabold text-[var(--foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>
             More places to go
           </h2>
         </div>
@@ -62,14 +62,14 @@ export default function DashboardShortcuts() {
             <Link
               key={name}
               href={href}
-              className="group rounded-md flex items-center gap-4 bg-[var(--surface)] p-4 transition-colors hover:bg-[var(--surface-raised)]"
+              className="group flex items-center gap-4 rounded-[var(--radius-xl)] bg-[var(--surface-raised)] p-4 transition-all hover:-translate-y-0.5 hover:bg-[var(--surface)] hover:shadow-[var(--shadow-sm)]"
             >
-              <div className={`h-12 w-12 flex-shrink-0 rounded-full bg-gradient-to-br ${meta.color} flex items-center justify-center`}>
+              <div className={`h-14 w-14 flex-shrink-0 rounded-[var(--radius-lg)] bg-gradient-to-br ${meta.color} flex items-center justify-center shadow-[0_12px_26px_rgba(116,87,245,0.18)]`}>
                 <Icon className="h-5 w-5 text-white" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-bold text-[var(--foreground)]">{name}</p>
-                <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">{meta.description}</p>
+                <p className="text-base font-extrabold text-[var(--foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>{name}</p>
+                <p className="mt-1 text-sm leading-snug text-[var(--muted-foreground)]">{meta.description}</p>
               </div>
             </Link>
           );

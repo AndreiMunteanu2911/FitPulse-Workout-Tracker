@@ -78,19 +78,19 @@ export default function ExercisesPage() {
                 <div className="page-header mb-5">
                     <h1 className="hidden md:block text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight mb-3">Exercises</h1>
                     {/* Search */}
-                    <div className="relative">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" />
+                    <div className="relative rounded-[var(--radius-xl)] bg-[var(--surface)] p-2 shadow-[var(--shadow-sm)]">
+                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--muted-foreground)]" />
                         <input
                             type="text"
                             placeholder="Search exercises..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-11 pr-10 py-3 bg-white dark:bg-[var(--surface)] rounded-[var(--radius-lg)] text-[var(--foreground)] text-sm font-medium placeholder-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] transition"
+                            className="w-full rounded-[var(--radius-lg)] bg-[var(--surface-raised)] py-3.5 pl-12 pr-12 text-base font-semibold text-[var(--foreground)] placeholder-[var(--muted-foreground)] transition focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
                         />
                         {searchQuery && (
                             <button
                                 onClick={() => setSearchQuery("")}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center bg-[var(--primary-500)] text-white hover:bg-[var(--primary-600)] transition-colors"
+                                className="absolute right-5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center bg-[var(--primary-500)] text-white hover:bg-[var(--primary-600)] transition-colors"
                             >
                                 <X className="w-3.5 h-3.5" />
                             </button>
@@ -98,7 +98,7 @@ export default function ExercisesPage() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     {exercises.map((exercise) => (
                         <ExerciseCard key={exercise.exercise_id} exercise={exercise} />
                     ))}

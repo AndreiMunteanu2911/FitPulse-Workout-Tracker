@@ -11,11 +11,11 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, onBuy }: ProductCardProps) {
   return (
-    <article className="overflow-hidden rounded-[var(--radius-md)] bg-[var(--surface)] transition-colors hover:bg-[var(--surface-raised)]">
+    <article className="group overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-sm)] transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)]">
       <div className="relative aspect-[4/3] overflow-hidden bg-[var(--surface-raised)]">
         {product.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" />
+          <img src={product.image_url} alt={product.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-[var(--muted-foreground)]">
             <ShoppingBag className="h-14 w-14 opacity-20" />
@@ -44,15 +44,15 @@ export default function ProductCard({ product, onBuy }: ProductCardProps) {
         )}
       </div>
 
-      <div className="space-y-4 p-5">
+      <div className="space-y-5 p-5">
         <div>
-          <h3 className="text-lg font-semibold text-[var(--foreground)] line-clamp-1">{product.name}</h3>
-          <p className="mt-1.5 line-clamp-2 text-sm leading-6 text-[var(--muted-foreground)]">{product.description}</p>
+          <h3 className="line-clamp-1 text-xl font-extrabold text-[var(--foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>{product.name}</h3>
+          <p className="mt-2 line-clamp-2 text-base leading-relaxed text-[var(--muted-foreground)]">{product.description}</p>
         </div>
 
         <div className="flex items-end justify-between gap-4">
           <div className="space-y-1">
-            {product.price_usd && <p className="text-lg font-black text-[var(--foreground)]">${product.price_usd}</p>}
+            {product.price_usd && <p className="text-3xl font-black leading-none text-[var(--foreground)]">${product.price_usd}</p>}
           </div>
 
           <Button

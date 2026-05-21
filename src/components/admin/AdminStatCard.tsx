@@ -16,19 +16,19 @@ interface AdminStatCardProps {
  */
 export default function AdminStatCard({ title, value, subtitle, icon, accentColor = "bg-[var(--primary-500)]" }: AdminStatCardProps) {
   return (
-    <div className="bg-[var(--surface)] rounded-[var(--radius-md)] p-5 relative overflow-hidden">
-      <div className={`absolute left-0 inset-y-0 w-1 ${accentColor}`} />
+    <div className="relative overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-sm)]">
+      <div className={`absolute inset-x-0 top-0 h-1 ${accentColor}`} />
       {icon && (
-        <div className="flex items-center gap-2 mb-1.5">
-          <span className="text-[var(--muted-foreground)]">{icon}</span>
+        <div className="flex items-center gap-2 mb-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--surface-raised)] text-[var(--primary-600)]">{icon}</span>
           <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>{title}</p>
         </div>
       )}
       {!icon && (
         <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-1.5" style={{ fontFamily: "var(--font-poppins)" }}>{title}</p>
       )}
-      <p className="text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] leading-none">{value}</p>
-      {subtitle && <p className="text-xs text-[var(--muted-foreground)] mt-1">{subtitle}</p>}
+      <p className="text-3xl sm:text-4xl font-extrabold text-[var(--foreground)] leading-none">{value}</p>
+      {subtitle && <p className="text-sm font-semibold text-[var(--muted-foreground)] mt-2">{subtitle}</p>}
     </div>
   );
 }

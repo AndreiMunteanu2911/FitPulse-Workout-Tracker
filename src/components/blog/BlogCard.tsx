@@ -43,20 +43,20 @@ export default function BlogCard({ post, isAdmin, onEdit, onDelete }: BlogCardPr
   };
 
   return (
-    <div className="bg-[var(--surface)] rounded-[var(--radius-lg)] overflow-hidden border border-none transition-all hover:border-[var(--primary-400)]/30 group flex flex-row h-full">
-      <div className="p-6 flex flex-col flex-1 w-[60%]">
-        <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-[var(--muted-foreground)] mb-2">
-          <div className="flex items-center gap-1.5">
+    <div className="group flex h-full flex-col overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-sm)] transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)] sm:flex-row">
+      <div className="flex flex-1 flex-col p-5 sm:w-[60%] sm:p-6">
+        <div className="mb-3 flex items-center gap-3 text-[11px] font-bold uppercase tracking-widest text-[var(--muted-foreground)]">
+          <div className="flex items-center gap-1.5 rounded-full bg-[var(--surface-raised)] px-3 py-1.5">
             <Calendar className="w-3 h-3" />
             {formatDate(post.created_at)}
           </div>
         </div>
         <Link href={`/blog/${post.id}`}>
-          <h3 className="text-lg font-bold text-[var(--foreground)] mb-2 line-clamp-2 group-hover:text-[var(--primary-500)] transition-colors leading-tight" style={{ fontFamily: "var(--font-poppins)" }}>
+          <h3 className="mb-2 line-clamp-2 text-xl font-extrabold leading-tight text-[var(--foreground)] transition-colors group-hover:text-[var(--primary-500)]" style={{ fontFamily: "var(--font-poppins)" }}>
             {post.title}
           </h3>
         </Link>
-        <p className="text-[var(--muted-foreground)] text-sm line-clamp-2 mb-4 leading-relaxed">
+        <p className="mb-4 line-clamp-3 text-base leading-relaxed text-[var(--muted-foreground)]">
           {post.content}
         </p>
         
@@ -64,7 +64,7 @@ export default function BlogCard({ post, isAdmin, onEdit, onDelete }: BlogCardPr
           <div className="flex items-center gap-2">
             <Link 
               href={`/blog/${post.id}`}
-              className="flex items-center gap-2 text-[var(--primary-500)] text-sm font-bold whitespace-nowrap"
+              className="flex items-center gap-2 rounded-full bg-[var(--primary-50)] px-3 py-2 text-sm font-bold text-[var(--primary-600)] whitespace-nowrap dark:bg-[var(--primary-100)] dark:text-[var(--primary-700)]"
             >
               Read More
               <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
@@ -72,7 +72,7 @@ export default function BlogCard({ post, isAdmin, onEdit, onDelete }: BlogCardPr
             
             <button
               onClick={handleLike}
-              className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${liked ? "text-[var(--color-destructive)]" : "text-[var(--muted-foreground)] hover:text-[var(--color-destructive)]"}`}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-bold transition-colors ${liked ? "bg-[var(--color-destructive-bg)] text-[var(--color-destructive)]" : "text-[var(--muted-foreground)] hover:bg-[var(--surface-raised)] hover:text-[var(--color-destructive)]"}`}
             >
               <Heart className={`w-4 h-4 ${liked ? "fill-current" : ""}`} />
               <span>{likesCount}</span>
@@ -80,7 +80,7 @@ export default function BlogCard({ post, isAdmin, onEdit, onDelete }: BlogCardPr
             
             <Link 
               href={`/blog/${post.id}`}
-              className="flex items-center gap-1.5 text-sm font-medium text-[var(--muted-foreground)] hover:text-[var(--primary-500)] transition-colors"
+              className="flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-bold text-[var(--muted-foreground)] transition-colors hover:bg-[var(--surface-raised)] hover:text-[var(--primary-500)]"
             >
               <MessageCircle className="w-4 h-4" />
               <span>{post.comments_count ?? 0}</span>
@@ -114,7 +114,7 @@ export default function BlogCard({ post, isAdmin, onEdit, onDelete }: BlogCardPr
         )}
       </div>
       {post.image_url && (
-        <Link href={`/blog/${post.id}`} className="relative w-[40%] h-auto min-h-[180px] flex-shrink-0 overflow-hidden">
+        <Link href={`/blog/${post.id}`} className="relative min-h-[220px] flex-shrink-0 overflow-hidden sm:w-[40%]">
           <Image
             src={post.image_url}
             alt={post.title}

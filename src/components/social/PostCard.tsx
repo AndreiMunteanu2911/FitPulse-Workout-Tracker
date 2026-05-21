@@ -103,20 +103,20 @@ export default function PostCard({ post, onLike, onDelete, currentUserId }: Post
   const hasMore = visibleCount < totalComments;
 
   return (
-    <div className="bg-[var(--surface)] rounded-[var(--radius-lg)] overflow-hidden">
-      <div className="p-4">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+    <div className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
+      <div className="p-5">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)] flex items-center justify-center text-white text-sm font-extrabold flex-shrink-0 shadow-[0_10px_24px_rgba(116,87,245,0.22)]">
             {initials || <User className="w-4 h-4" />}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-[var(--foreground)] truncate">{displayName}</p>
-            <p className="text-xs text-[var(--muted-foreground)]">{timeAgo(post.created_at!)}</p>
+            <p className="text-base font-extrabold text-[var(--foreground)] truncate" style={{ fontFamily: "var(--font-poppins)" }}>{displayName}</p>
+            <p className="text-sm font-semibold text-[var(--muted-foreground)]">{timeAgo(post.created_at!)}</p>
           </div>
           {isPostOwner && (
             <button
               onClick={() => onDelete(post.id)}
-              className="p-1.5 text-[var(--muted-foreground)] hover:text-[var(--color-destructive)] transition-colors"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--surface-raised)] text-[var(--muted-foreground)] transition-colors hover:bg-[var(--color-destructive-bg)] hover:text-[var(--color-destructive)]"
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -124,11 +124,11 @@ export default function PostCard({ post, onLike, onDelete, currentUserId }: Post
         </div>
 
         {post.content && (
-          <p className="text-sm text-[var(--foreground)] mb-3 leading-relaxed">{post.content}</p>
+          <p className="mb-4 text-base leading-relaxed text-[var(--foreground)]">{post.content}</p>
         )}
 
         {post.image_url && (
-          <div className="rounded-[var(--radius-md)] overflow-hidden mb-3 relative">
+          <div className="relative mb-4 overflow-hidden rounded-[var(--radius-xl)] bg-[var(--surface-raised)]">
             <img
               src={post.image_url}
               alt="Post image"
@@ -136,7 +136,7 @@ export default function PostCard({ post, onLike, onDelete, currentUserId }: Post
             />
             <button
                 onClick={() => setExpandedImage(post.image_url ?? null)}
-                className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors"
+                className="absolute top-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
             >
               <Maximize2 className="w-4 h-4" />
             </button>
@@ -148,10 +148,10 @@ export default function PostCard({ post, onLike, onDelete, currentUserId }: Post
         )}
 
         {showComments && visibleComments.length > 0 && (
-          <div className="mt-3 space-y-2">
+          <div className="mt-4 space-y-3 rounded-[var(--radius-xl)] bg-[var(--surface-raised)] p-4">
             {visibleComments.map((comment) => (
-              <div key={comment.id} className="flex items-start gap-2 group">
-                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[var(--primary-400)] to-[var(--primary-600)] flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+              <div key={comment.id} className="flex items-start gap-3 group">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--primary-400)] to-[var(--primary-600)] flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0">
                   {getInitials(comment.user_stats?.display_name || "?")}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -163,7 +163,7 @@ export default function PostCard({ post, onLike, onDelete, currentUserId }: Post
                       {timeAgo(comment.created_at!)}
                     </span>
                   </div>
-                  <p className="text-xs text-[var(--foreground)] mt-0.5 break-words">
+                  <p className="mt-1 break-words text-sm leading-relaxed text-[var(--foreground)]">
                     {comment.content}
                   </p>
                 </div>
@@ -190,15 +190,15 @@ export default function PostCard({ post, onLike, onDelete, currentUserId }: Post
         )}
       </div>
 
-      <div className="px-4 py-2.5">
-        <div className="flex items-center gap-4 mb-2">
+      <div className="border-t border-[var(--border)] px-5 py-4">
+        <div className="flex items-center gap-3 mb-3">
           <button
             onClick={handleLike}
             disabled={liking}
-            className={`flex items-center gap-1.5 text-sm transition-colors ${
+            className={`flex min-h-10 items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition-colors ${
               post.liked_by_me
-                ? "text-red-500"
-                : "text-[var(--muted-foreground)] hover:text-red-500"
+                ? "bg-[var(--color-destructive-bg)] text-red-500"
+                : "bg-[var(--surface-raised)] text-[var(--muted-foreground)] hover:text-red-500"
             }`}
           >
             <Heart className={`w-4 h-4 ${post.liked_by_me ? "fill-current" : ""}`} />
@@ -206,7 +206,7 @@ export default function PostCard({ post, onLike, onDelete, currentUserId }: Post
           </button>
           <button
             onClick={() => setShowComments(!showComments)}
-            className="flex items-center gap-1.5 text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
+            className="flex min-h-10 items-center gap-2 rounded-full bg-[var(--surface-raised)] px-4 py-2 text-sm font-bold text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]"
           >
             <MessageCircle className="w-4 h-4" />
             <span>{totalComments} Comments</span>
@@ -221,12 +221,12 @@ export default function PostCard({ post, onLike, onDelete, currentUserId }: Post
               onChange={(e) => setCommentText(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
               placeholder="Write a comment..."
-              className="flex-1 px-3 py-1.5 text-xs bg-[var(--surface-raised)] border border-[var(--border)] rounded-[var(--radius-md)] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:border-[var(--primary-500)]"
+              className="input flex-1 py-2 text-sm"
             />
             <button
               onClick={handleAddComment}
               disabled={!commentText.trim() || submitting}
-              className="p-1.5 rounded-[var(--radius-sm)] bg-[var(--primary-500)] text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--primary-500)] text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Send className="w-4 h-4" />
             </button>
@@ -243,7 +243,7 @@ export default function PostCard({ post, onLike, onDelete, currentUserId }: Post
         ) : (
           <button
             onClick={() => setShowCommentInput(true)}
-            className="text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
+            className="rounded-full bg-[var(--surface-raised)] px-4 py-2 text-sm font-semibold text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]"
           >
             Add a comment...
           </button>
