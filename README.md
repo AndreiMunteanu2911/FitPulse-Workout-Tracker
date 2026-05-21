@@ -1,5 +1,9 @@
 # FitPulse - Workout Tracker
 
+<p align="center">
+  <img src="public/assets/logo.png" alt="FitPulse logo" width="140" />
+</p>
+
 [Live deployment](https://fitpulseam.vercel.app)
 
 Android APK builds are available on the [GitHub Releases page](https://github.com/AndreiMunteanu2911/FitPulse-Workout-Tracker/releases).
