@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/helper/supabaseServer";
 import { resolveExercises } from "@/helper/resolveExercises";
-import { createDraftWorkoutInDB, type DraftWorkout } from "@/lib/workout-generator";
+import { createDraftWorkoutInDB, type DraftExercise, type DraftWorkout } from "@/lib/workout-generator";
 
 export async function GET() {
   const supabase = await createSupabaseServerClient();
@@ -57,7 +57,7 @@ export async function POST(req: Request) {
   const draft: DraftWorkout = {
     name,
     exercises: exercises
-      .map((exercise: Record<string, unknown>) => {
+      .map((exercise: Record<string, unknown>): DraftExercise => {
         const exerciseId = typeof exercise.exerciseId === "string"
           ? exercise.exerciseId
           : typeof exercise.exercise_id === "string"
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
           })),
         };
       })
-      .filter((exercise) => exercise.exercise_id && exercise.sets.length > 0),
+      .filter((exercise: DraftExercise) => exercise.exercise_id && exercise.sets.length > 0),
   };
 
   if (draft.exercises.length === 0) {
