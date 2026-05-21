@@ -2,7 +2,20 @@
 
 import { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import type { NormalizedLandmark, PoseLandmarker } from "@mediapipe/tasks-vision";
-import { X, RotateCcw, AlertTriangle, Loader2, SwitchCamera } from "lucide-react";
+import {
+  X,
+  RotateCcw,
+  AlertTriangle,
+  Loader2,
+  SwitchCamera,
+  Activity,
+  CheckCircle2,
+  Clock,
+  Gauge,
+  Sparkles,
+  Target,
+  Zap,
+} from "lucide-react";
 import Button from "@/components/Button";
 import {
   CameraErrorOverlay,
@@ -90,7 +103,7 @@ function getStableFeedbackKey(items: FormFeedback[]): string {
   return items.map((item) => `${item.type}:${item.message}`).join("|");
 }
 
-function SessionSummaryCard({
+export function SessionSummaryCard({
   analysis,
   coachingLoading,
   coachingError,
@@ -104,88 +117,213 @@ function SessionSummaryCard({
   const topIssues = analysis.feedback_json.topIssues.slice(0, 6);
   const scoreBand = getScoreBand(analysis.score);
   const trackingHint = analysis.feedback_json.scoring?.trackingHint;
-  const scoreColor = analysis.score >= 90
-    ? "text-emerald-500"
+  const trackingConfidence = analysis.feedback_json.scoring?.trackingConfidence;
+  const durationSeconds = Math.max(0, Math.round(analysis.duration_ms / 1000));
+  const durationLabel = durationSeconds >= 60
+    ? `${Math.floor(durationSeconds / 60)}m ${durationSeconds % 60}s`
+    : `${durationSeconds}s`;
+  const scorePercent = Math.max(0, Math.min(100, analysis.score));
+  const scoreBg = analysis.score >= 90
+    ? "bg-emerald-500"
     : analysis.score >= 75
-      ? "text-[var(--primary-600)]"
+      ? "bg-[var(--primary-500)]"
       : analysis.score >= 60
-      ? "text-amber-500"
-      : "text-red-500";
+      ? "bg-amber-500"
+      : "bg-red-500";
+  const metricCards = [
+    {
+      label: "Realtime",
+      value: `${analysis.realtime_score}%`,
+      detail: "Live cue average",
+      icon: <Zap className="h-5 w-5" />,
+    },
+    {
+      label: "Post-set",
+      value: `${analysis.postset_score}%`,
+      detail: "Full set pass",
+      icon: <Target className="h-5 w-5" />,
+    },
+    {
+      label: "Reps",
+      value: analysis.reps,
+      detail: "Detected reps",
+      icon: <Activity className="h-5 w-5" />,
+    },
+    {
+      label: "Duration",
+      value: durationLabel,
+      detail: "Recorded time",
+      icon: <Clock className="h-5 w-5" />,
+    },
+  ];
+  const coachStatus = analysis.analysis_status === "cloud_complete"
+    ? "AI coach ready"
+    : analysis.analysis_status === "cloud_failed"
+      ? "Local review"
+      : analysis.used_cloud_coach
+        ? "AI coach pending"
+        : "Local review";
 
   return (
-    <div className="space-y-4 p-4 sm:p-5">
-      <section className="rounded-[var(--radius-lg)] bg-[var(--surface)] p-4 sm:p-5">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>
-              Set review
-            </p>
-            <h3 className="mt-1 text-lg font-extrabold text-[var(--foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>
-              {scoreBand.label} form
-            </h3>
-            {trackingHint && (
-              <p className="mt-2 rounded-[var(--radius-sm)] bg-[var(--surface-raised)] px-3 py-2 text-xs font-semibold text-[var(--muted-foreground)]">
-                {trackingHint}
-              </p>
-            )}
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 py-5 sm:px-6 sm:py-6">
+      <section className="overflow-hidden rounded-[var(--radius-xl)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
+        <div className="bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)] px-5 py-6 text-white sm:px-6">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-widest text-white/70">Set review</p>
+              <h3 className="mt-2 text-3xl font-extrabold leading-none sm:text-4xl" style={{ fontFamily: "var(--font-poppins)" }}>
+                {scoreBand.label} form
+              </h3>
+              <div className="mt-4 flex flex-wrap items-center gap-2 text-sm font-semibold">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5">
+                  <Gauge className="h-4 w-4" />
+                  {scorePercent}% overall
+                </span>
+                <span className="rounded-full bg-white/15 px-3 py-1.5">{coachStatus}</span>
+              </div>
+            </div>
+            <div className="flex h-24 w-24 flex-shrink-0 flex-col items-center justify-center rounded-[var(--radius-xl)] bg-white text-[#232323] shadow-[0_16px_34px_rgba(0,0,0,0.16)]">
+              <p className="text-xs font-bold uppercase tracking-widest text-[#6B7280]">Score</p>
+              <p className="text-4xl font-extrabold leading-none">{scorePercent}</p>
+            </div>
           </div>
-          <div className="flex h-20 w-20 flex-shrink-0 flex-col items-center justify-center rounded-[var(--radius-lg)] bg-[var(--surface-raised)]">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">{scoreBand.label}</p>
-            <p className={`text-2xl font-extrabold leading-none ${scoreColor}`}>{analysis.score}%</p>
+
+          <div className="mt-5 h-3 overflow-hidden rounded-full bg-white/20">
+            <div
+              className="h-full rounded-full bg-[var(--lime-green)] transition-all duration-700"
+              style={{ width: `${scorePercent}%` }}
+            />
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
-          <div className="rounded-[var(--radius-md)] bg-[var(--surface-raised)] px-3 py-3">
-            <p className="text-[var(--muted-foreground)]">Realtime</p>
-            <p className="mt-1 font-bold text-[var(--foreground)]">{analysis.realtime_score}%</p>
-          </div>
-          <div className="rounded-[var(--radius-md)] bg-[var(--surface-raised)] px-3 py-3">
-            <p className="text-[var(--muted-foreground)]">Post-set</p>
-            <p className="mt-1 font-bold text-[var(--foreground)]">{analysis.postset_score}%</p>
-          </div>
-          <div className="rounded-[var(--radius-md)] bg-[var(--surface-raised)] px-3 py-3">
-            <p className="text-[var(--muted-foreground)]">Reps</p>
-            <p className="mt-1 font-bold text-[var(--foreground)]">{analysis.reps}</p>
-          </div>
+        <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-4 sm:p-5">
+          {metricCards.map((metric) => (
+            <div key={metric.label} className="rounded-[var(--radius-lg)] bg-[var(--surface-raised)] p-4">
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--primary-50)] text-[var(--primary-600)] dark:bg-[var(--primary-100)] dark:text-[var(--primary-700)]">
+                {metric.icon}
+              </div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">{metric.label}</p>
+              <p className="mt-1 text-2xl font-extrabold leading-none text-[var(--foreground)]">{metric.value}</p>
+              <p className="mt-2 text-sm leading-snug text-[var(--muted-foreground)]">{metric.detail}</p>
+            </div>
+          ))}
         </div>
       </section>
 
-      {topIssues.length > 0 && (
-        <section className="rounded-[var(--radius-lg)] bg-[var(--surface)] p-4 sm:p-5">
-          <p className="mb-3 text-sm font-bold text-[var(--foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>
-            Main cues
-          </p>
-          {topIssues.map((item, index) => (
-            <div key={`${item.message}-${index}`} className="flex items-start gap-2 py-1.5 text-sm text-[var(--foreground)]">
-              <AlertTriangle className={`w-4 h-4 mt-0.5 flex-shrink-0 ${item.type === "error" ? "text-red-400" : item.type === "warning" ? "text-amber-400" : "text-sky-400"}`} />
-              <span>{item.message}</span>
-            </div>
-          ))}
-        </section>
-      )}
-
-      <section className="rounded-[var(--radius-lg)] bg-[var(--surface)] p-4 sm:p-5">
-        <div className="flex items-center gap-2 mb-2">
-          <p className="text-sm font-bold text-[var(--foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>AI Coach review</p>
-          {coachingLoading && <Loader2 className="w-3.5 h-3.5 animate-spin text-[var(--primary-500)]" />}
+      <section className="rounded-[var(--radius-xl)] bg-[var(--surface)] p-5 shadow-[var(--shadow-xs)] sm:p-6">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--lime-green)] text-[#232323]">
+            {coachingLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Sparkles className="h-6 w-6" />}
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Coach review</p>
+            <h4 className="text-xl font-extrabold leading-tight text-[var(--foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>
+              Session summary
+            </h4>
+          </div>
         </div>
+
         {coaching ? (
-          <div className="space-y-2">
-            <p className="text-sm leading-relaxed text-[var(--foreground)]">{coaching.summary}</p>
-            {coaching.top_cues.slice(0, 3).map((cue, index) => (
-              <p key={`${cue}-${index}`} className="text-xs text-[var(--muted-foreground)]">- {cue}</p>
-            ))}
+          <div className="space-y-4">
+            <p className="text-lg leading-relaxed text-[var(--foreground)]">{coaching.summary}</p>
+            {coaching.top_cues.length > 0 && (
+              <div className="space-y-2">
+                {coaching.top_cues.slice(0, 3).map((cue, index) => (
+                  <div key={`${cue}-${index}`} className="flex items-start gap-3 text-base leading-relaxed text-[var(--foreground)]">
+                    <span className="mt-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[var(--primary-50)] text-xs font-extrabold text-[var(--primary-600)] dark:bg-[var(--primary-100)] dark:text-[var(--primary-700)]">
+                      {index + 1}
+                    </span>
+                    <span>{cue}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ) : coachingError ? (
-          <p className="text-xs text-amber-400">{coachingError}</p>
+          <p className="rounded-[var(--radius-lg)] bg-[var(--color-warning-bg)] p-4 text-base font-semibold leading-relaxed text-[var(--color-warning)]">
+            {coachingError}
+          </p>
         ) : (
-          <p className="text-xs text-[var(--muted-foreground)]">
+          <p className="rounded-[var(--radius-lg)] bg-[var(--surface-raised)] p-4 text-base leading-relaxed text-[var(--muted-foreground)]">
             {analysis.used_cloud_coach ? "Reviewing your set..." : "Local-only summary used for this set."}
           </p>
         )}
       </section>
 
+      <section className="rounded-[var(--radius-xl)] bg-[var(--surface)] p-5 shadow-[var(--shadow-xs)] sm:p-6">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Priority cues</p>
+            <h4 className="mt-1 text-xl font-extrabold leading-tight text-[var(--foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>
+              What to fix next
+            </h4>
+          </div>
+          <span className="rounded-full bg-[var(--surface-raised)] px-3 py-1.5 text-sm font-bold text-[var(--muted-foreground)]">
+            {topIssues.length || "Clear"}
+          </span>
+        </div>
+
+        {topIssues.length > 0 ? (
+          <div className="space-y-3">
+            {topIssues.map((item, index) => (
+              <div key={`${item.message}-${index}`} className="flex items-start gap-3 rounded-[var(--radius-lg)] bg-[var(--surface-raised)] p-4">
+                <div className={`mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full ${
+                  item.type === "error"
+                    ? "bg-[var(--color-destructive-bg)] text-[var(--color-destructive)]"
+                    : item.type === "warning"
+                      ? "bg-[var(--color-warning-bg)] text-[var(--color-warning)]"
+                      : "bg-[var(--primary-50)] text-[var(--primary-600)] dark:bg-[var(--primary-100)] dark:text-[var(--primary-700)]"
+                }`}>
+                  <AlertTriangle className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-base font-bold leading-snug text-[var(--foreground)]">
+                    Cue {index + 1}
+                  </p>
+                  <p className="mt-1 text-base leading-relaxed text-[var(--foreground)]">{item.message}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex items-start gap-3 rounded-[var(--radius-lg)] bg-[var(--color-success-bg)] p-4 text-[var(--color-success)]">
+            <CheckCircle2 className="mt-0.5 h-6 w-6 flex-shrink-0" />
+            <p className="text-base font-bold leading-relaxed">No major form cues were flagged in this set.</p>
+          </div>
+        )}
+      </section>
+
+      {(trackingHint || typeof trackingConfidence === "number") && (
+        <section className="rounded-[var(--radius-xl)] bg-[var(--surface)] p-5 shadow-[var(--shadow-xs)] sm:p-6">
+          <div className="flex items-start gap-4">
+            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-[var(--primary-50)] text-[var(--primary-600)] dark:bg-[var(--primary-100)] dark:text-[var(--primary-700)]">
+              <Gauge className="h-6 w-6" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-[var(--foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>
+                Tracking quality
+              </p>
+              {trackingHint && (
+                <p className="mt-1 text-base leading-relaxed text-[var(--foreground)]">{trackingHint}</p>
+              )}
+              {typeof trackingConfidence === "number" && (
+                <div className="mt-4">
+                  <div className="flex items-center justify-between text-sm font-semibold">
+                    <span className="text-[var(--muted-foreground)]">Confidence</span>
+                    <span className="text-[var(--foreground)]">{Math.round(trackingConfidence * 100)}%</span>
+                  </div>
+                  <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-[var(--surface-raised)]">
+                    <div
+                      className={`h-full rounded-full ${scoreBg}`}
+                      style={{ width: `${Math.max(0, Math.min(100, trackingConfidence * 100))}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
@@ -1457,13 +1595,19 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
       {showFullHeightReview ? (
         <div className="flex-1 min-h-0 overflow-y-auto bg-[var(--background)]">
           <div className="min-h-full flex flex-col">
-            <div className="px-4 py-4 bg-[var(--surface)] border-b border-[var(--border)]">
-              <div className="flex items-center gap-3">
-                <div className="min-w-0 flex-1">
+            <div className="border-b border-[var(--border)] bg-[var(--surface)] px-4 py-4 shadow-[var(--shadow-xs)] sm:px-6">
+              <div className="mx-auto flex w-full max-w-3xl items-center gap-4">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)] text-white">
+                  <CheckCircle2 className="h-6 w-6" />
+                </div>
+                <div className="min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Post-set review</p>
-                  <h3 className="text-base font-extrabold text-[var(--foreground)] truncate" style={{ fontFamily: "var(--font-poppins)" }}>
-                    Coach analysis complete
+                  <h3 className="truncate text-xl font-extrabold leading-tight text-[var(--foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>
+                    {capitalizeFirstWord(exerciseName)}
                   </h3>
+                  <p className="mt-0.5 text-sm font-semibold text-[var(--muted-foreground)]">
+                    Coach analysis complete
+                  </p>
                 </div>
               </div>
             </div>
