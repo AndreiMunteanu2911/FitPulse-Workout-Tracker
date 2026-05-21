@@ -165,7 +165,7 @@ export function SessionSummaryCard({
         : "Local review";
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 py-5 sm:px-6 sm:py-6">
+    <div className="flex w-full flex-col gap-4 px-4 py-5 sm:px-6 sm:py-6">
       <section className="overflow-hidden rounded-[var(--radius-xl)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
         <div className="bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)] px-5 py-6 text-white sm:px-6">
           <div className="flex items-start justify-between gap-4">
@@ -1595,23 +1595,6 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
       {showFullHeightReview ? (
         <div className="flex-1 min-h-0 overflow-y-auto bg-[var(--background)]">
           <div className="min-h-full flex flex-col">
-            <div className="border-b border-[var(--border)] bg-[var(--surface)] px-4 py-4 shadow-[var(--shadow-xs)] sm:px-6">
-              <div className="mx-auto flex w-full max-w-3xl items-center gap-4">
-                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)] text-white">
-                  <CheckCircle2 className="h-6 w-6" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Post-set review</p>
-                  <h3 className="truncate text-xl font-extrabold leading-tight text-[var(--foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>
-                    {capitalizeFirstWord(exerciseName)}
-                  </h3>
-                  <p className="mt-0.5 text-sm font-semibold text-[var(--muted-foreground)]">
-                    Coach analysis complete
-                  </p>
-                </div>
-              </div>
-            </div>
-
             <div className="flex-1 min-h-0">
               <SessionSummaryCard analysis={sessionAnalysis} coachingLoading={coachingLoading} coachingError={coachingError} />
             </div>
