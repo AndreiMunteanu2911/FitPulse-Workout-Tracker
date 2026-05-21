@@ -13,6 +13,7 @@ import { useAuthSession } from "@/components/AuthSessionProvider";
 
 interface UserInfo {
   user_id: string;
+  display_name: string | null;
   total_xp: number;
   level: number;
   streak_freeze_count: number;
@@ -103,7 +104,13 @@ export default function AdminUsersPage() {
   }
 
   const filtered = search.trim()
-    ? users.filter((u) => u.user_id.toLowerCase().includes(search.toLowerCase()))
+    ? users.filter((u) => {
+        const query = search.toLowerCase();
+        return (
+          u.user_id.toLowerCase().includes(query) ||
+          (u.display_name ?? "").toLowerCase().includes(query)
+        );
+      })
     : users;
 
   return (
@@ -116,7 +123,7 @@ export default function AdminUsersPage() {
 
       {/* Search */}
       <div className="relative mb-6">
-        <SearchInput value={search} onChange={setSearch} placeholder="Search by user ID..." />
+        <SearchInput value={search} onChange={setSearch} placeholder="Search by name or user ID..." />
       </div>
 
       {/* User List */}
@@ -132,6 +139,7 @@ export default function AdminUsersPage() {
             <UserCard
               key={u.user_id}
               user_id={u.user_id}
+              display_name={u.display_name}
               total_xp={u.total_xp}
               level={u.level}
               workout_count={u.workout_count}

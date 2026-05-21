@@ -13,7 +13,7 @@ export async function GET() {
   // Fetch user_stats with user info (via join)
   const { data: stats, error: statsError } = await supabase
     .from("user_stats")
-    .select("user_id, total_xp, level, streak_freeze_count, role");
+    .select("user_id, display_name, total_xp, level, streak_freeze_count, role");
 
   if (statsError) return NextResponse.json({ error: statsError.message }, { status: 500 });
 
@@ -31,6 +31,7 @@ export async function GET() {
   // Enrich stats with workout counts
   const users = (stats ?? []).map((s) => ({
     user_id: s.user_id,
+    display_name: s.display_name,
     total_xp: s.total_xp,
     level: s.level,
     streak_freeze_count: s.streak_freeze_count,
