@@ -17,6 +17,7 @@ import {
   Trophy,
 } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import LoadReveal from "@/components/LoadReveal";
 import XPLevelCard from "@/components/XPLevelCard";
 import AchievementsTeaserCard from "@/components/AchievementsTeaserCard";
 import Button from "@/components/Button";
@@ -128,7 +129,7 @@ export default function DashboardStats() {
   const draftExerciseCount = draftWorkout?.workout_exercises.length ?? 0;
 
   return (
-    <div className="space-y-6">
+    <LoadReveal className="space-y-6">
       <section className="relative overflow-hidden rounded-[var(--radius-2xl)] bg-gradient-to-br from-[var(--primary-700)] via-[var(--primary-600)] to-[var(--primary-500)] p-6 text-white shadow-[var(--shadow-md)] sm:p-8">
         <div className="absolute -right-16 -top-20 size-64 rounded-full bg-white/10 blur-3xl" />
         <div className="absolute -bottom-24 left-1/3 size-56 rounded-full bg-[var(--lime-green)]/15 blur-3xl" />
@@ -344,6 +345,6 @@ export default function DashboardStats() {
         </motion.section>
       )}
       </AnimatePresence>
-    </div>
+    </LoadReveal>
   );
 }

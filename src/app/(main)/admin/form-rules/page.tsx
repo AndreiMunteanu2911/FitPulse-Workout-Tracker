@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Edit3, Eye, Loader2, Plus, Save, Search, Sparkles, Trash2, X } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import LoadReveal from "@/components/LoadReveal";
 import Button from "@/components/Button";
 import ModalWrapper from "@/components/ModalWrapper";
 import BulkAiGeneratedConfirmModal from "@/components/admin/BulkAiGeneratedConfirmModal";
@@ -302,7 +303,7 @@ export default function AdminFormRulesPage() {
   }
 
   return (
-    <div className="page-stack">
+    <LoadReveal className="page-stack">
       <AdminPageHeader
         title="Pattern Form Rules"
         subtitle="Review exercise pattern mapping and overrides."
@@ -731,6 +732,6 @@ export default function AdminFormRulesPage() {
           </div>
         )}
       </ModalWrapper>
-    </div>
+    </LoadReveal>
   );
 }

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Activity, ChevronDown, ChevronUp, Clock, Sparkles, Target, Zap } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import LoadReveal from "@/components/LoadReveal";
 import type { FormLog } from "@/types";
 import { getScoreBand } from "@/lib/form-analysis";
 
@@ -75,7 +76,7 @@ export default function FormHistoryPanel({ exerciseId }: FormHistoryPanelProps) 
   if (logs.length === 0) return null;
 
   return (
-    <div className="mb-6">
+    <LoadReveal className="mb-6">
       <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">
         <Activity className="h-3.5 w-3.5" />
         Recent Form Sessions
@@ -247,6 +248,6 @@ export default function FormHistoryPanel({ exerciseId }: FormHistoryPanelProps) 
           );
         })}
       </div>
-    </div>
+    </LoadReveal>
   );
 }

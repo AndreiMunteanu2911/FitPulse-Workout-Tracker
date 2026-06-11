@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import LoadReveal from "@/components/LoadReveal";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import WorkoutHistoryCard from "@/components/WorkoutHistoryCard";
 import ModalWrapper from "@/components/ModalWrapper";
@@ -139,7 +140,7 @@ export default function HistoryPage() {
 
     return (
         <ProtectedWrapper>
-            <div className="page-stack">
+            <LoadReveal className="page-stack">
                 <PageHeader
                     title="History"
                     description="Review completed workouts and personal records."
@@ -202,7 +203,7 @@ export default function HistoryPage() {
                         </AnimatePresence>
                     </motion.div>
                 )}
-            </div>
+            </LoadReveal>
 
             {/* Rename Modal */}
             <ModalWrapper isOpen={!!renameTarget} onClose={() => setRenameTarget(null)} containerClassName="max-w-sm p-5">

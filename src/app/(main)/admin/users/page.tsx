@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { User } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import LoadReveal from "@/components/LoadReveal";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import SearchInput from "@/components/admin/SearchInput";
 import EmptyState from "@/components/admin/EmptyState";
@@ -114,7 +115,7 @@ export default function AdminUsersPage() {
     : users;
 
   return (
-    <div className="page-stack">
+    <LoadReveal className="page-stack">
       <AdminPageHeader
         title="Admin — Users"
         subtitle="View and manage user accounts"
@@ -162,6 +163,6 @@ export default function AdminUsersPage() {
           loading={saving}
         />
       )}
-    </div>
+    </LoadReveal>
   );
 }

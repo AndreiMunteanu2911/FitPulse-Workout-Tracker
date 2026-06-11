@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import LoadReveal from "@/components/LoadReveal";
 import ModalWrapper from "@/components/ModalWrapper";
 import Button from "@/components/Button";
 import { PageHeader } from "@/components/PageHeader";
@@ -394,7 +395,7 @@ export default function WorkoutDetailPage() {
 
     return (
         <ProtectedWrapper>
-            <div className="page-stack">
+            <LoadReveal className="page-stack">
                 <PageHeader
                     title="Workout details"
                     description={`${workout.name} / ${formatDate(workout.workout_date)}`}
@@ -525,7 +526,7 @@ export default function WorkoutDetailPage() {
                         />
                     </div>
                 )}
-            </div>
+            </LoadReveal>
 
             <AddCustomExerciseModal
                 isOpen={showCustomExerciseModal}

@@ -7,6 +7,7 @@ import ConfirmDeleteModal from "@/components/admin/ConfirmDeleteModal";
 import { useRouter } from "next/navigation";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import LoadReveal from "@/components/LoadReveal";
 import WeightHistoryChart from "@/components/WeightHistoryChart";
 import AddWeightModal from "@/components/AddWeightModal";
 import ProgressPhotoCard from "@/components/ProgressPhotoCard";
@@ -113,11 +114,10 @@ function EditProfileModal({
 
   return (
     <ModalWrapper isOpen={isOpen} onClose={onClose} containerClassName="max-w-md max-h-[90vh] overflow-y-auto p-0">
-      <div className="relative overflow-hidden border-b border-[var(--border)] p-6">
+      <div className="relative shrink-0 overflow-hidden border-b border-[var(--border)] p-4 pr-16">
         <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[var(--primary-500)] to-[var(--lime-green)]" />
         <p className="eyebrow">Account details</p>
         <h2 className="text-xl font-bold text-[var(--foreground)]">Edit profile</h2>
-        <p className="mt-1 text-sm text-[var(--muted-foreground)]">Keep your training profile accurate.</p>
       </div>
       <button
         type="button"
@@ -340,7 +340,7 @@ export default function ProfilePage() {
 
     return (
         <ProtectedWrapper>
-            <div className="page-stack">
+            <LoadReveal className="page-stack">
                 <PageHeader
                     title="Profile"
                     description="Manage your personal details and review your progress."
@@ -561,7 +561,7 @@ export default function ProfilePage() {
                     onConfirm={confirmDelete}
                     loading={deleteLoading}
                 />
-            </div>
+            </LoadReveal>
         </ProtectedWrapper>
     );
 }

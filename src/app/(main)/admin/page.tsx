@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Dumbbell, Users, LayoutTemplate, BarChart3, Shield, Brain, ShoppingBag, Package } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import LoadReveal from "@/components/LoadReveal";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminStatCard from "@/components/admin/AdminStatCard";
 import AdminNavCard from "@/components/admin/AdminNavCard";
@@ -65,7 +66,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="page-stack">
+    <LoadReveal className="page-stack">
       <AdminPageHeader
         title="Admin"
         subtitle="Manage the platform"
@@ -115,6 +116,6 @@ export default function AdminPage() {
           />
         ))}
       </div>
-    </div>
+    </LoadReveal>
   );
 }

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, X, LayoutTemplate } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import LoadReveal from "@/components/LoadReveal";
 import Button from "@/components/Button";
 import ModalWrapper from "@/components/ModalWrapper";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
@@ -148,7 +149,7 @@ export default function AdminTemplatesPage() {
   }
 
   return (
-    <div className="page-stack">
+    <LoadReveal className="page-stack">
       <AdminPageHeader
         title="Admin — Templates"
         subtitle="Manage official workout templates"
@@ -236,6 +237,6 @@ export default function AdminTemplatesPage() {
         error={error}
         loading={saving}
       />
-    </div>
+    </LoadReveal>
   );
 }

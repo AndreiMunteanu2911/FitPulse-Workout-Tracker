@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import LoadReveal from "@/components/LoadReveal";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import { CheckCircle2, Clock3, Package, RefreshCw, Truck, XCircle } from "lucide-react";
 
@@ -92,7 +93,7 @@ export default function AdminOrdersPage() {
 
   return (
     <ProtectedWrapper>
-      <div className="page-stack">
+      <LoadReveal className="page-stack">
         <AdminPageHeader
           title="Orders"
           subtitle="Review orders, update fulfillment status, and inspect shipping details"
@@ -216,7 +217,7 @@ export default function AdminOrdersPage() {
             <p className="empty-state-description">Orders will appear here after customers complete checkout.</p>
           </div>
         )}
-      </div>
+      </LoadReveal>
     </ProtectedWrapper>
   );
 }

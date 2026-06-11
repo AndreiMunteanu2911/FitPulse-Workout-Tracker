@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { BarChart3, CalendarDays, Repeat2, Trophy, Weight, Zap } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import LoadReveal from "@/components/LoadReveal";
 
 interface ExerciseStat {
     workout_date: string;
@@ -124,7 +125,7 @@ export default function ExerciseStatsTab({ exerciseId }: ExerciseStatsTabProps) 
 
     if (stats.length === 0) {
         return (
-            <div className="rounded-[var(--radius-xl)] bg-[var(--surface)] px-6 py-14 text-center shadow-[var(--shadow-xs)]">
+            <LoadReveal className="rounded-[var(--radius-xl)] bg-[var(--surface)] px-6 py-14 text-center shadow-[var(--shadow-xs)]">
                 <span className="icon-tile mx-auto mb-4 !size-14">
                     <BarChart3 className="size-6" />
                 </span>
@@ -132,7 +133,7 @@ export default function ExerciseStatsTab({ exerciseId }: ExerciseStatsTabProps) 
                 <p className="mt-1 text-sm text-[var(--muted-foreground)]">
                     Log this exercise in a workout to build your performance history.
                 </p>
-            </div>
+            </LoadReveal>
         );
     }
 
@@ -159,7 +160,7 @@ export default function ExerciseStatsTab({ exerciseId }: ExerciseStatsTabProps) 
     ];
 
     return (
-        <div className="space-y-4">
+        <LoadReveal className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-3">
                 {metrics.map((metric) => {
                     const Icon = metric.icon;
@@ -223,6 +224,6 @@ export default function ExerciseStatsTab({ exerciseId }: ExerciseStatsTabProps) 
                 color="var(--color-warning)"
                 unit="reps"
             />
-        </div>
+        </LoadReveal>
     );
 }

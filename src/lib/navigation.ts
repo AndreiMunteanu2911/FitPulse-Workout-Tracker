@@ -22,13 +22,13 @@ export type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { name: "Dashboard", href: "/dashboard", Icon: LayoutDashboard, mobile: true },
   { name: "Workout", href: "/workout", Icon: Dumbbell, mobile: true },
-  { name: "History", href: "/history", Icon: History, mobile: true },
   { name: "Exercises", href: "/exercises", Icon: Library, mobile: true },
-  { name: "AI Coach", href: "/ai-coach", Icon: Sparkles, mobile: true },
-  { name: "Profile", href: "/profile", Icon: User, mobile: true },
-  { name: "Blog", href: "/blog", Icon: Newspaper, mobile: false },
+  { name: "History", href: "/history", Icon: History, mobile: true },
   { name: "Social", href: "/social", Icon: Users, mobile: false },
+  { name: "AI Coach", href: "/ai-coach", Icon: Sparkles, mobile: true },
+  { name: "Blog", href: "/blog", Icon: Newspaper, mobile: false },
   { name: "Shop", href: "/shop", Icon: ShoppingBag, mobile: false },
+  { name: "Profile", href: "/profile", Icon: User, mobile: true },
 ];
 
 const ADMIN_ITEM: NavItem = {

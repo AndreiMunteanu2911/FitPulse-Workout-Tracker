@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import LoadReveal from "@/components/LoadReveal";
 import { PageHeader } from "@/components/PageHeader";
 import type { Achievement } from "@/types";
 import {
@@ -312,7 +313,7 @@ export default function AchievementsPage() {
         )}
 
         {!loading && !error && (
-          <>
+          <LoadReveal className="page-stack">
             <section className="card p-5 sm:p-6">
               <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-center">
                 <div>
@@ -369,7 +370,7 @@ export default function AchievementsPage() {
                 />
               );
             })}
-          </>
+          </LoadReveal>
         )}
       </div>
     </ProtectedWrapper>

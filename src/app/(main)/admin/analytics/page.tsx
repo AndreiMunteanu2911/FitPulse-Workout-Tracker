@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Users, Dumbbell, TrendingUp, BarChart3 } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import LoadReveal from "@/components/LoadReveal";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminStatCard from "@/components/admin/AdminStatCard";
 import TimeRangeSelector from "@/components/admin/TimeRangeSelector";
@@ -74,7 +75,7 @@ export default function AdminAnalyticsPage() {
   }
 
   return (
-    <div className="page-stack">
+    <LoadReveal className="page-stack">
       <AdminPageHeader
         title="Admin — Analytics"
         subtitle="Platform-wide usage metrics"
@@ -119,6 +120,6 @@ export default function AdminAnalyticsPage() {
 
       {/* Top Exercises */}
       <TopExercisesList exercises={data.topExercises} />
-    </div>
+    </LoadReveal>
   );
 }

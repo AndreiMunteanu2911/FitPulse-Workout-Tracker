@@ -6,6 +6,7 @@ import { openCheckoutUrl, isNativePlatform, MOBILE_APP_SCHEME } from "@/lib/mobi
 import { useSearchParams } from "next/navigation";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import LoadReveal from "@/components/LoadReveal";
 import { Product } from "@/types";
 import { CheckCircle2, ShoppingBag, XCircle } from "lucide-react";
 import ProductCard from "@/components/shop/ProductCard";
@@ -98,7 +99,7 @@ export default function ShopPage() {
 
   return (
       <ProtectedWrapper>
-        <div className="page-stack">
+        <LoadReveal className="page-stack">
           <PageHeader
             title="Shop"
             description="Training gear and digital tools selected for your next session."
@@ -156,7 +157,7 @@ export default function ShopPage() {
                 <p className="empty-state-description">Check back later for new training gear and tools.</p>
               </div>
           )}
-        </div>
+        </LoadReveal>
         <ProductPurchaseModal
             isOpen={isPurchaseModalOpen}
             product={selectedProduct}

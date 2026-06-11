@@ -8,6 +8,7 @@ import PostCard from "@/components/social/PostCard";
 import CreatePostModal from "@/components/social/CreatePostModal";
 import FriendManagement from "@/components/social/FriendManagement";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import LoadReveal from "@/components/LoadReveal";
 import { useSocial } from "@/hooks/useSocial";
 import type { Post, Friendship, Workout } from "@/types";
 import { MessageCircle, Plus, Users, Rss } from "lucide-react";
@@ -185,7 +186,7 @@ export default function SocialPage() {
                 <LoadingSpinner />
               </div>
             ) : posts.length === 0 ? (
-              <div className="empty-state">
+              <LoadReveal className="empty-state">
                 <div className="empty-state-icon">
                   <Rss className="w-8 h-8" />
                 </div>
@@ -199,7 +200,7 @@ export default function SocialPage() {
                     Create your first post
                   </Button>
                 </div>
-              </div>
+              </LoadReveal>
             ) : (
               <motion.div layout className="mx-auto w-full max-w-3xl space-y-5">
                 <AnimatePresence initial={false} mode="popLayout">
@@ -232,11 +233,13 @@ export default function SocialPage() {
                 <LoadingSpinner />
               </div>
             ) : (
-              <FriendManagement
-                friendships={friendships}
-                currentUserId={currentUserId}
-                onFriendshipsChange={loadFriendships}
-              />
+              <LoadReveal>
+                <FriendManagement
+                  friendships={friendships}
+                  currentUserId={currentUserId}
+                  onFriendshipsChange={loadFriendships}
+                />
+              </LoadReveal>
             )}
           </motion.div>
         )}

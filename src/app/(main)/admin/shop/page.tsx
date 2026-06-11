@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import Button from "@/components/Button";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import LoadReveal from "@/components/LoadReveal";
 import { Product } from "@/types";
 import { Plus, Package, ShoppingBag, Trash2, Edit2 } from "lucide-react";
 import ProductFormModal from "@/components/shop/ProductFormModal";
@@ -100,7 +101,7 @@ export default function AdminShopPage() {
 
   return (
     <ProtectedWrapper>
-      <div className="page-stack">
+      <LoadReveal className="page-stack">
         <AdminPageHeader
           title="Shop"
           subtitle="Add products and manage store inventory"
@@ -312,7 +313,7 @@ export default function AdminShopPage() {
           error={deleteError}
           loading={deleting}
         />
-      </div>
+      </LoadReveal>
     </ProtectedWrapper>
   );
 }

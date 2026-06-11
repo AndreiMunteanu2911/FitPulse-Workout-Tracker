@@ -8,6 +8,7 @@ import ProtectedWrapper from "@/components/ProtectedWrapper";
 import { useAuthSession } from "@/components/AuthSessionProvider";
 import Button from "@/components/Button";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import LoadReveal from "@/components/LoadReveal";
 import UserAvatar from "@/components/UserAvatar";
 import { ArrowLeft, Calendar, Heart, MessageCircle, Send, Sparkles, Trash2 } from "lucide-react";
 import Image from "next/image";
@@ -155,7 +156,7 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
 
   return (
     <ProtectedWrapper>
-      <div className="page-stack mx-auto max-w-4xl">
+      <LoadReveal className="page-stack mx-auto max-w-4xl">
         <PageHeader
           title="Article"
           description="FitPulse training journal"
@@ -302,7 +303,7 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
             </AnimatePresence>
           </div>
         </section>
-      </div>
+      </LoadReveal>
     </ProtectedWrapper>
   );
 }

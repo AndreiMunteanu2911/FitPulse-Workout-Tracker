@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import LoadReveal from "@/components/LoadReveal";
 import WeightLogCard from "@/components/WeightLogCard";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -103,9 +104,9 @@ const WeightHistoryChart: React.FC<WeightHistoryChartProps> = ({ weights, loadin
                     <LoadingSpinner />
                 </div>
             ) : chartData.length === 0 ? (
-                <p className="text-center text-[var(--muted-foreground)] py-8">No weight logs yet.</p>
+                <LoadReveal className="py-8 text-center text-[var(--muted-foreground)]">No weight logs yet.</LoadReveal>
             ) : (
-                <>
+                <LoadReveal>
                     <div className="mb-3 flex items-center justify-between gap-3">
                         <p className="text-xs font-semibold text-[var(--muted-foreground)]">
                             Showing {visibleWeights.length} of {weights.length}
@@ -182,7 +183,7 @@ const WeightHistoryChart: React.FC<WeightHistoryChartProps> = ({ weights, loadin
                         ))}
                         </AnimatePresence>
                     </motion.div>
-                </>
+                </LoadReveal>
             )}
         </div>
     );

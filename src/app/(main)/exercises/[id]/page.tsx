@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import LoadReveal from "@/components/LoadReveal";
 import PersonalRecordCard from "@/components/PersonalRecordCard";
 import ExerciseStatsTab from "@/components/ExerciseStatsTab";
 import FormChecker from "@/components/FormChecker";
@@ -94,7 +95,7 @@ export default function ExerciseDetailsPage() {
 
     return (
         <ProtectedWrapper>
-            <div className="page-stack">
+            <LoadReveal className="page-stack">
                 <PageHeader
                     title={capitalize(exercise.name)}
                     description="Technique guidance, muscle focus, and your performance history."
@@ -289,7 +290,7 @@ export default function ExerciseDetailsPage() {
                     </motion.div>
                 )}
                 </AnimatePresence>
-            </div>
+            </LoadReveal>
 
             {showFormChecker && (
                 <FormChecker

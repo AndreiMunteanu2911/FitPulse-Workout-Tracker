@@ -8,6 +8,7 @@ import ExerciseCard from "@/components/WorkoutExerciseCard";
 import ExerciseSearchModal from "@/components/ExerciseSearchModal";
 import Button from "@/components/Button";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import LoadReveal from "@/components/LoadReveal";
 import CancelWorkoutModal from "@/components/CancelWorkoutModal";
 import FinishWorkoutModal from "@/components/FinishWorkoutModal";
 import DiscardSetsModal from "@/components/DiscardSetsModal";
@@ -757,7 +758,7 @@ export default function WorkoutPage() {
                         <LoadingSpinner />
                     </div>
                 ) : (
-                    <>
+                    <LoadReveal className="page-stack">
                         {errorMessages.general && (
                             <div className="mb-4 text-[var(--color-destructive)]">{errorMessages.general}</div>
                         )}
@@ -1046,7 +1047,7 @@ export default function WorkoutPage() {
                                 }
                             }}
                         />
-                    </>
+                    </LoadReveal>
                 )}
             </div>
         </ProtectedWrapper>

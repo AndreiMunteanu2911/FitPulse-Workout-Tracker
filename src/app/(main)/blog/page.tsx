@@ -6,6 +6,7 @@ import BlogFormModal from "@/components/blog/BlogFormModal";
 import Button from "@/components/Button";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import LoadReveal from "@/components/LoadReveal";
 import { useAuthSession } from "@/components/AuthSessionProvider";
 import { BlogPost } from "@/types";
 import { BookOpen, Plus, Search } from "lucide-react";
@@ -123,15 +124,17 @@ export default function BlogPage() {
             <LoadingSpinner />
           </div>
         ) : (
-          <BlogList
-            posts={filteredPosts}
-            isAdmin={isAdmin}
-            onEdit={(post) => {
-              setEditingPost(post);
-              setIsModalOpen(true);
-            }}
-            onDelete={setDeleteTarget}
-          />
+          <LoadReveal>
+            <BlogList
+              posts={filteredPosts}
+              isAdmin={isAdmin}
+              onEdit={(post) => {
+                setEditingPost(post);
+                setIsModalOpen(true);
+              }}
+              onDelete={setDeleteTarget}
+            />
+          </LoadReveal>
         )}
 
         <BlogFormModal

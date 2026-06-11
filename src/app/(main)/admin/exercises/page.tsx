@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, X, RefreshCw } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import LoadReveal from "@/components/LoadReveal";
 import Button from "@/components/Button";
 import ModalWrapper from "@/components/ModalWrapper";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
@@ -228,7 +229,7 @@ export default function AdminExercisesPage() {
     : exercises;
 
   return (
-    <div className="page-stack">
+    <LoadReveal className="page-stack">
       <AdminPageHeader
         title="Admin — Exercises"
         subtitle="Manage the standard exercise catalogue"
@@ -358,6 +359,6 @@ export default function AdminExercisesPage() {
         error={error}
         loading={saving}
       />
-    </div>
+    </LoadReveal>
   );
 }
