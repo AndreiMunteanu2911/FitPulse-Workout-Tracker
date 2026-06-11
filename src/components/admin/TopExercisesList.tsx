@@ -1,33 +1,35 @@
 import React from "react";
 
 interface TopExercisesListProps {
-  exercises: { exercise_id: string; count: number }[];
+  exercises: { exercise_id: string; name: string; count: number }[];
 }
 
 export default function TopExercisesList({ exercises }: TopExercisesListProps) {
   if (exercises.length === 0) {
     return (
-      <div className="bg-[var(--surface)] rounded-[var(--radius-md)] p-4 sm:p-5">
-        <h2 className="text-base font-bold text-[var(--foreground)] mb-4">Most Used Exercises</h2>
+      <section className="rounded-[var(--radius-xl)] bg-[var(--surface)] p-5 shadow-[var(--shadow-sm)] ring-1 ring-[var(--border)] sm:p-6">
+        <p className="eyebrow">Exercise usage</p>
+        <h2 className="mb-4 text-lg font-extrabold text-[var(--foreground)]">Most used exercises</h2>
         <p className="text-sm text-[var(--muted-foreground)] text-center py-8">No exercise data yet.</p>
-      </div>
+      </section>
     );
   }
 
   return (
-    <div className="bg-[var(--surface)] rounded-[var(--radius-md)] p-4 sm:p-5">
-      <h2 className="text-base font-bold text-[var(--foreground)] mb-4">Most Used Exercises</h2>
+    <section className="rounded-[var(--radius-xl)] bg-[var(--surface)] p-5 shadow-[var(--shadow-sm)] ring-1 ring-[var(--border)] sm:p-6">
+      <p className="eyebrow">Exercise usage</p>
+      <h2 className="mb-5 text-lg font-extrabold text-[var(--foreground)]">Most used exercises</h2>
       <div className="space-y-2">
         {exercises.map((ex, idx) => (
-          <div key={ex.exercise_id} className="flex items-center gap-4">
-            <span className="text-sm font-bold text-[var(--muted-foreground)] w-6 text-center">{idx + 1}</span>
+          <div key={ex.exercise_id} className="flex items-center gap-3 rounded-[var(--radius-lg)] bg-[var(--surface-raised)] p-3">
+            <span className="flex size-8 items-center justify-center rounded-full bg-[var(--primary-50)] text-xs font-extrabold text-[var(--primary-600)]">{idx + 1}</span>
             <div className="flex-1">
-              <p className="text-sm font-semibold text-[var(--foreground)] capitalize">{ex.exercise_id}</p>
+              <p className="text-sm font-semibold text-[var(--foreground)]">{ex.name}</p>
             </div>
-            <span className="text-sm text-[var(--muted-foreground)]">{ex.count} uses</span>
+            <span className="rounded-full bg-[var(--surface)] px-2.5 py-1 text-xs font-bold text-[var(--muted-foreground)]">{ex.count} uses</span>
           </div>
         ))}
       </div>
-    </div>
+    </section>
   );
 }

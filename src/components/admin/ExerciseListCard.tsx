@@ -1,5 +1,6 @@
 import React from "react";
 import { Pencil, Trash2 } from "lucide-react";
+import Button from "@/components/Button";
 
 interface ExerciseListCardProps {
   exercise: {
@@ -13,7 +14,7 @@ interface ExerciseListCardProps {
 
 export default function ExerciseListCard({ exercise, onEdit, onDelete }: ExerciseListCardProps) {
   return (
-    <div className="bg-[var(--surface)] rounded-[var(--radius-md)] p-4 sm:p-5 flex items-center gap-4 transition-all duration-200">
+    <div className="flex items-center gap-4 rounded-[var(--radius-xl)] bg-[var(--surface)] p-4 shadow-[var(--shadow-xs)] ring-1 ring-[var(--border)] transition-all duration-200 hover:ring-[var(--primary-200)] sm:p-5">
       <div className="flex-1 min-w-0">
         <h3 className="text-base font-bold text-[var(--foreground)] truncate" style={{ fontFamily: "var(--font-poppins)" }}>{exercise.name}</h3>
         <p className="text-xs text-[var(--muted-foreground)] font-mono mt-0.5">{exercise.exercise_id}</p>
@@ -21,19 +22,23 @@ export default function ExerciseListCard({ exercise, onEdit, onDelete }: Exercis
           <p className="text-xs text-[var(--muted-foreground)] mt-0.5 capitalize">{exercise.target_muscles}</p>
         )}
       </div>
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <button
+      <div className="flex flex-shrink-0 items-center gap-2">
+        <Button
+          variant="secondary"
           onClick={() => onEdit(exercise)}
-          className="w-9 h-9 rounded-full bg-[var(--surface-raised)] hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-100)] flex items-center justify-center transition-colors"
+          className="!min-h-9 !px-3 !py-2 !text-xs sm:!min-h-9 sm:!px-3 sm:!py-2 sm:!text-xs"
         >
-          <Pencil className="w-4 h-4 text-[var(--muted-foreground)] hover:text-[var(--primary-500)]" />
-        </button>
-        <button
+          <Pencil className="size-3.5" />
+          <span className="hidden sm:inline">Edit</span>
+        </Button>
+        <Button
+          variant="secondary"
           onClick={() => onDelete(exercise)}
-          className="w-9 h-9 rounded-full bg-[var(--surface-raised)] hover:bg-[var(--color-destructive-bg)] flex items-center justify-center transition-colors"
+          className="!min-h-9 !px-3 !py-2 !text-xs text-[var(--color-destructive)] sm:!min-h-9 sm:!px-3 sm:!py-2 sm:!text-xs"
         >
-          <Trash2 className="w-4 h-4 text-[var(--muted-foreground)] hover:text-[var(--color-destructive)]" />
-        </button>
+          <Trash2 className="size-3.5" />
+          <span className="hidden sm:inline">Delete</span>
+        </Button>
       </div>
     </div>
   );

@@ -305,8 +305,8 @@ export default function AdminFormRulesPage() {
   return (
     <LoadReveal className="page-stack">
       <AdminPageHeader
-        title="Pattern Form Rules"
-        subtitle="Review exercise pattern mapping and overrides."
+        title="Form rules"
+        subtitle="Review movement mappings, generated rules, and exercise-level overrides."
         backHref="/admin/exercises"
         action={
           <Button
@@ -329,7 +329,7 @@ export default function AdminFormRulesPage() {
       />
 
       {bulkError && (
-        <div className="mb-4 rounded-lg border border-[var(--color-destructive)]/20 bg-[var(--color-destructive-bg)] px-4 py-3 text-sm font-medium text-[var(--color-destructive)]">
+        <div className="rounded-[var(--radius-xl)] border border-[var(--color-destructive)]/20 bg-[var(--color-destructive-bg)] px-4 py-3 text-sm font-medium text-[var(--color-destructive)]">
           <div className="flex items-start gap-2">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             <span>{bulkError}</span>
@@ -338,7 +338,7 @@ export default function AdminFormRulesPage() {
       )}
 
       {listError && (
-        <div className="mb-4 rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm font-medium text-amber-700 dark:text-amber-300">
+        <div className="rounded-[var(--radius-xl)] border border-[var(--lime-green)]/40 bg-[var(--lime-green)]/15 px-4 py-3 text-sm font-medium text-[var(--foreground)]">
           <div className="flex items-start gap-2">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             <span>{listError}</span>
@@ -351,34 +351,34 @@ export default function AdminFormRulesPage() {
         more.
       </p>
 
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
-        <div className="p-4 rounded-lg bg-[var(--surface-raised)]">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+        <div className="rounded-[var(--radius-xl)] bg-[var(--surface)] p-4 shadow-[var(--shadow-xs)] ring-1 ring-[var(--border)]">
           <p className="text-xs text-[var(--muted-foreground)] uppercase tracking-wider">Loaded</p>
           <p className="text-2xl font-bold text-[var(--foreground)]">{stats.total}</p>
         </div>
-        <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-          <p className="text-xs text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Realtime</p>
-          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.realtime}</p>
+        <div className="rounded-[var(--radius-xl)] bg-[var(--primary-50)] p-4 ring-1 ring-[var(--primary-200)]">
+          <p className="text-xs uppercase tracking-wider text-[var(--primary-600)]">Realtime</p>
+          <p className="text-2xl font-bold text-[var(--primary-700)]">{stats.realtime}</p>
         </div>
-        <div className="p-4 rounded-lg bg-sky-500/10 border border-sky-500/20">
-          <p className="text-xs text-sky-600 dark:text-sky-400 uppercase tracking-wider">Post Set</p>
-          <p className="text-2xl font-bold text-sky-600 dark:text-sky-400">{stats.postSetOnly}</p>
+        <div className="rounded-[var(--radius-xl)] bg-[var(--surface)] p-4 shadow-[var(--shadow-xs)] ring-1 ring-[var(--border)]">
+          <p className="text-xs uppercase tracking-wider text-[var(--muted-foreground)]">Post Set</p>
+          <p className="text-2xl font-bold text-[var(--foreground)]">{stats.postSetOnly}</p>
         </div>
-        <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20">
-          <p className="text-xs text-amber-600 dark:text-amber-400 uppercase tracking-wider">Not Applicable</p>
-          <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.notApplicable}</p>
+        <div className="rounded-[var(--radius-xl)] bg-[var(--surface)] p-4 shadow-[var(--shadow-xs)] ring-1 ring-[var(--border)]">
+          <p className="text-xs uppercase tracking-wider text-[var(--muted-foreground)]">Not Applicable</p>
+          <p className="text-2xl font-bold text-[var(--foreground)]">{stats.notApplicable}</p>
         </div>
-        <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
-          <p className="text-xs text-red-600 dark:text-red-400 uppercase tracking-wider">Needs Review</p>
-          <p className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.needsReview}</p>
+        <div className="rounded-[var(--radius-xl)] bg-[var(--lime-green)]/20 p-4 ring-1 ring-[var(--lime-green)]/40">
+          <p className="text-xs uppercase tracking-wider text-[var(--foreground)]">Needs Review</p>
+          <p className="text-2xl font-bold text-[var(--foreground)]">{stats.needsReview}</p>
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+      <div className="toolbar flex-col sm:flex-row">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" />
           <input
-            className="w-full pl-10 pr-4 py-2.5 rounded-[var(--radius)] bg-[var(--surface-raised)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
+            className="input w-full !pl-10"
             placeholder="Search exercises..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -420,7 +420,7 @@ export default function AdminFormRulesPage() {
             return (
               <div
                 key={exercise.exercise_id}
-                className="flex items-center justify-between p-4 rounded-lg bg-[var(--surface-raised)] border border-[var(--border)] hover:border-[var(--primary-500)]/30 transition-colors"
+                className="flex items-center justify-between rounded-[var(--radius-xl)] bg-[var(--surface)] p-4 shadow-[var(--shadow-xs)] ring-1 ring-[var(--border)] transition-colors hover:ring-[var(--primary-200)]"
               >
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-[var(--foreground)] truncate">{exercise.name}</p>
@@ -433,21 +433,23 @@ export default function AdminFormRulesPage() {
                     Review: {exercise.form_rules?.review.status ?? "missing"}
                   </p>
                 </div>
-                <div className="flex gap-2 ml-4">
-                  <button
+                <div className="ml-4 flex gap-2">
+                  <Button
+                    variant="secondary"
                     onClick={() => openView(exercise)}
-                    className="w-8 h-8 rounded-lg hover:bg-[var(--surface-overlay)] flex items-center justify-center transition-colors"
-                    title="View rules"
+                    className="!min-h-9 !px-3 !py-2 !text-xs sm:!min-h-9 sm:!px-3 sm:!py-2 sm:!text-xs"
                   >
-                    <Eye className="w-4 h-4 text-[var(--muted-foreground)]" />
-                  </button>
-                  <button
+                    <Eye className="size-3.5" />
+                    <span className="hidden sm:inline">View</span>
+                  </Button>
+                  <Button
+                    variant="secondary"
                     onClick={() => openEdit(exercise)}
-                    className="w-8 h-8 rounded-lg hover:bg-[var(--surface-overlay)] flex items-center justify-center transition-colors"
-                    title="Edit rules"
+                    className="!min-h-9 !px-3 !py-2 !text-xs sm:!min-h-9 sm:!px-3 sm:!py-2 sm:!text-xs"
                   >
-                    <Edit3 className="w-4 h-4 text-[var(--muted-foreground)]" />
-                  </button>
+                    <Edit3 className="size-3.5" />
+                    <span className="hidden sm:inline">Edit</span>
+                  </Button>
                 </div>
               </div>
             );
@@ -465,7 +467,7 @@ export default function AdminFormRulesPage() {
 
       {viewingExercise && (
         <ModalWrapper isOpen={!!viewingExercise} onClose={closeView} containerClassName="max-w-2xl p-6 max-h-[80vh] overflow-y-auto">
-          <button className="absolute top-3 right-3 w-8 h-8 rounded-full hover:bg-[var(--surface-raised)] flex items-center justify-center" onClick={closeView}>
+          <button className="absolute right-4 top-4 flex size-9 items-center justify-center rounded-full bg-[var(--surface-raised)] text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]" onClick={closeView}>
             <X className="w-4 h-4" />
           </button>
           <h2 className="text-lg font-bold text-[var(--foreground)] mb-1">{viewingExercise.name}</h2>
@@ -474,7 +476,7 @@ export default function AdminFormRulesPage() {
               <p className="text-sm text-[var(--muted-foreground)] mb-4">
                 Pattern: {getFormPatternById(viewingExercise.form_rules.patternId)?.label ?? viewingExercise.form_rules.patternId}
               </p>
-              <div className="p-4 rounded-lg bg-[var(--surface-base)] border border-[var(--border)] mb-4">
+              <div className="mb-4 rounded-[var(--radius-xl)] bg-[var(--surface-raised)] p-4">
                 <p className="font-semibold text-[var(--foreground)] mb-2">Exercise Mapping</p>
                 <p className="text-sm text-[var(--muted-foreground)]">Applicability: {viewingExercise.form_rules.applicability}</p>
                 <p className="text-sm text-[var(--muted-foreground)]">View: {viewingExercise.form_rules.view}</p>
@@ -485,7 +487,7 @@ export default function AdminFormRulesPage() {
                 )}
               </div>
 
-              <div className="p-4 rounded-lg bg-[var(--surface-base)] border border-[var(--border)] mb-4">
+              <div className="mb-4 rounded-[var(--radius-xl)] bg-[var(--surface-raised)] p-4">
                 <p className="font-semibold text-[var(--foreground)] mb-3">Inherited Pattern Rules</p>
                 {(getFormPatternById(viewingExercise.form_rules.patternId)?.rules ?? []).map((rule) => (
                   <div key={rule.id} className="mb-3 last:mb-0">
@@ -497,7 +499,7 @@ export default function AdminFormRulesPage() {
                 ))}
               </div>
 
-              <div className="p-4 rounded-lg bg-[var(--surface-base)] border border-[var(--border)]">
+              <div className="rounded-[var(--radius-xl)] bg-[var(--surface-raised)] p-4">
                 <p className="font-semibold text-[var(--foreground)] mb-3">Overrides</p>
                 <pre className="text-xs whitespace-pre-wrap text-[var(--muted-foreground)]">
                   {JSON.stringify(viewingExercise.form_rules.overrides, null, 2)}
@@ -511,7 +513,7 @@ export default function AdminFormRulesPage() {
       )}
 
       <ModalWrapper isOpen={showEditModal} onClose={() => setShowEditModal(false)} containerClassName="max-w-3xl p-6 max-h-[85vh] overflow-y-auto">
-        <button className="absolute top-3 right-3 w-8 h-8 rounded-full hover:bg-[var(--surface-raised)] flex items-center justify-center" onClick={() => setShowEditModal(false)}>
+        <button className="absolute right-4 top-4 flex size-9 items-center justify-center rounded-full bg-[var(--surface-raised)] text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]" onClick={() => setShowEditModal(false)}>
           <X className="w-4 h-4" />
         </button>
         <h2 className="text-lg font-bold text-[var(--foreground)] mb-1">Edit Rules: {editingExercise?.name}</h2>
@@ -599,7 +601,7 @@ export default function AdminFormRulesPage() {
               </div>
             </div>
 
-            <div className="p-4 rounded-lg bg-[var(--surface-base)] border border-[var(--border)]">
+            <div className="rounded-[var(--radius-xl)] bg-[var(--surface-raised)] p-4">
               <p className="font-semibold text-[var(--foreground)] mb-2">Primary Metric</p>
               <p className="text-sm text-[var(--muted-foreground)]">
                 {editingRules.primaryMetric.kind} • [{editingRules.primaryMetric.landmarks.join(", ")}]
@@ -607,7 +609,7 @@ export default function AdminFormRulesPage() {
             </div>
 
             {editingPattern && (
-              <div className="p-4 rounded-lg bg-[var(--surface-base)] border border-[var(--border)]">
+              <div className="rounded-[var(--radius-xl)] bg-[var(--surface-raised)] p-4">
                 <p className="font-semibold text-[var(--foreground)] mb-3">Inherited Pattern Rules</p>
                 {editingPattern.rules.map((rule) => {
                   const disabled = editingRules.overrides.disabledRuleIds.includes(rule.id);
@@ -644,7 +646,7 @@ export default function AdminFormRulesPage() {
               </div>
             )}
 
-            <div className="p-4 rounded-lg bg-[var(--surface-base)] border border-[var(--border)]">
+            <div className="rounded-[var(--radius-xl)] bg-[var(--surface-raised)] p-4">
               <div className="flex items-center justify-between mb-3">
                 <p className="font-semibold text-[var(--foreground)]">Threshold Overrides</p>
                 <Button
@@ -671,15 +673,15 @@ export default function AdminFormRulesPage() {
                     </select>
                     <input className="input text-sm" type="number" placeholder="Min" value={override.min ?? ""} onChange={(e) => updateRuleThreshold(index, "min", parseFloat(e.target.value))} />
                     <input className="input text-sm" type="number" placeholder="Max" value={override.max ?? ""} onChange={(e) => updateRuleThreshold(index, "max", parseFloat(e.target.value))} />
-                    <button className="w-10 h-10 rounded-lg hover:bg-red-500/10 flex items-center justify-center" onClick={() => removeRuleThreshold(index)}>
-                      <Trash2 className="w-4 h-4 text-red-400" />
+                    <button className="flex size-10 items-center justify-center rounded-[var(--radius-lg)] bg-[var(--surface)] transition-colors hover:bg-[var(--color-destructive-bg)]" onClick={() => removeRuleThreshold(index)}>
+                      <Trash2 className="w-4 h-4 text-[var(--color-destructive)]" />
                     </button>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="p-4 rounded-lg bg-[var(--surface-base)] border border-[var(--border)]">
+            <div className="rounded-[var(--radius-xl)] bg-[var(--surface-raised)] p-4">
               <div className="flex items-center justify-between mb-3">
                 <p className="font-semibold text-[var(--foreground)]">Cue Overrides</p>
                 <Button
@@ -705,8 +707,8 @@ export default function AdminFormRulesPage() {
                       ))}
                     </select>
                     <input className="input text-sm md:col-span-1" value={override.cue} onChange={(e) => updateCueOverride(index, "cue", e.target.value)} placeholder="Custom cue" />
-                    <button className="w-10 h-10 rounded-lg hover:bg-red-500/10 flex items-center justify-center" onClick={() => removeCueOverride(index)}>
-                      <Trash2 className="w-4 h-4 text-red-400" />
+                    <button className="flex size-10 items-center justify-center rounded-[var(--radius-lg)] bg-[var(--surface)] transition-colors hover:bg-[var(--color-destructive-bg)]" onClick={() => removeCueOverride(index)}>
+                      <Trash2 className="w-4 h-4 text-[var(--color-destructive)]" />
                     </button>
                   </div>
                 ))}

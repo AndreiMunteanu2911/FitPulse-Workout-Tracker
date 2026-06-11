@@ -9,6 +9,7 @@ import { Product } from "@/types";
 import { Plus, Package, ShoppingBag, Trash2, Edit2 } from "lucide-react";
 import ProductFormModal from "@/components/shop/ProductFormModal";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import AdminStatCard from "@/components/admin/AdminStatCard";
 import ConfirmDeleteModal from "@/components/admin/ConfirmDeleteModal";
 
 export default function AdminShopPage() {
@@ -104,31 +105,22 @@ export default function AdminShopPage() {
       <LoadReveal className="page-stack">
         <AdminPageHeader
           title="Shop"
-          subtitle="Add products and manage store inventory"
+          subtitle="Manage products, pricing, inventory, and product types."
           action={
-            <Button onClick={() => setIsAddModalOpen(true)}>
+            <Button variant="lime" onClick={() => setIsAddModalOpen(true)}>
               <Plus className="mr-2 h-5 w-5" />
               Add Product
             </Button>
           }
         />
 
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
-          <div className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-5">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--muted-foreground)]">Products</p>
-            <p className="mt-3 text-3xl font-black text-[var(--foreground)]">{totalProducts}</p>
-          </div>
-          <div className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-5">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--muted-foreground)]">Physical</p>
-            <p className="mt-3 text-3xl font-black text-[var(--foreground)]">{physicalProducts}</p>
-          </div>
-          <div className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-5">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--muted-foreground)]">Digital</p>
-            <p className="mt-3 text-3xl font-black text-[var(--foreground)]">{digitalProducts}</p>
-          </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          <AdminStatCard title="Products" value={totalProducts} accentColor="bg-[var(--primary-500)]" />
+          <AdminStatCard title="Physical" value={physicalProducts} accentColor="bg-[var(--primary-600)]" />
+          <AdminStatCard title="Digital" value={digitalProducts} accentColor="bg-[var(--lime-green)]" />
         </div>
 
-        <div className="mt-6 hidden overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] md:block">
+        <div className="hidden overflow-hidden rounded-[var(--radius-xl)] bg-[var(--surface)] shadow-[var(--shadow-sm)] ring-1 ring-[var(--border)] md:block">
           <table className="w-full table-fixed text-left">
             <thead>
               <tr className="border-b border-[var(--border)] bg-[var(--surface-raised)]">
@@ -184,10 +176,11 @@ export default function AdminShopPage() {
                       <button
                         type="button"
                         onClick={() => setEditingProduct(product)}
-                        className="group p-2 text-[var(--muted-foreground)] transition-colors hover:text-[var(--primary-600)]"
+                        className="group inline-flex items-center gap-1.5 rounded-full bg-[var(--surface-raised)] px-3 py-2 text-xs font-semibold text-[var(--foreground)] transition-colors hover:text-[var(--primary-600)]"
                         aria-label={`Edit ${product.name}`}
                       >
                         <Edit2 className="h-4 w-4 transition-colors group-hover:text-[var(--primary-600)]" />
+                        Edit
                       </button>
                       <button
                         type="button"
@@ -195,10 +188,11 @@ export default function AdminShopPage() {
                           setDeletingProduct(product);
                           setDeleteError("");
                         }}
-                        className="group p-2 text-[var(--muted-foreground)] transition-colors hover:text-[var(--color-destructive)]"
+                        className="group inline-flex items-center gap-1.5 rounded-full bg-[var(--surface-raised)] px-3 py-2 text-xs font-semibold text-[var(--color-destructive)] transition-colors hover:bg-[var(--color-destructive-bg)]"
                         aria-label={`Delete ${product.name}`}
                       >
                         <Trash2 className="h-4 w-4 transition-colors group-hover:text-[var(--color-destructive)]" />
+                        Delete
                       </button>
                     </div>
                   </td>
@@ -216,7 +210,7 @@ export default function AdminShopPage() {
 
         <div className="mt-6 space-y-4 md:hidden">
           {products.map((product) => (
-            <article key={product.id} className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-4">
+            <article key={product.id} className="rounded-[var(--radius-xl)] bg-[var(--surface)] p-4 shadow-[var(--shadow-xs)] ring-1 ring-[var(--border)]">
               <div className="flex items-start gap-3">
                 <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface-raised)]">
                   {product.image_url ? (

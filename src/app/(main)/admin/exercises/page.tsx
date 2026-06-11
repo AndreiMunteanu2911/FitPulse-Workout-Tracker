@@ -231,11 +231,11 @@ export default function AdminExercisesPage() {
   return (
     <LoadReveal className="page-stack">
       <AdminPageHeader
-        title="Admin — Exercises"
-        subtitle="Manage the standard exercise catalogue"
+        title="Exercises"
+        subtitle="Manage the exercise catalogue and its training metadata."
         backHref="/admin"
         action={
-          <Button onClick={openAdd}>
+          <Button variant="lime" onClick={openAdd}>
             <Plus className="w-4 h-4 mr-1.5" /> Add Exercise
           </Button>
         }
@@ -268,17 +268,18 @@ export default function AdminExercisesPage() {
 
       {/* Add Modal */}
       <ModalWrapper isOpen={showAddModal} onClose={() => setShowAddModal(false)} containerClassName="max-w-md p-6">
-        <button className="absolute top-3 right-3 w-8 h-8 rounded-full hover:bg-[var(--surface-raised)] flex items-center justify-center" onClick={() => setShowAddModal(false)}>
+        <button className="absolute right-4 top-4 flex size-9 items-center justify-center rounded-full bg-[var(--surface-raised)] text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]" onClick={() => setShowAddModal(false)}>
           <X className="w-4 h-4" />
         </button>
-        <h2 className="text-lg font-bold text-[var(--foreground)] mb-5">Add Exercise</h2>
+        <p className="eyebrow">Exercise catalogue</p>
+        <h2 className="mb-5 text-xl font-extrabold text-[var(--foreground)]">Add exercise</h2>
         {error && <div className="mb-3 p-3 bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] rounded-[var(--radius-sm)] text-sm font-medium">{error}</div>}
         <form onSubmit={handleAdd} className="space-y-4">
           <div>
             <label className="block mb-1.5 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Exercise ID</label>
             <div className="flex items-center gap-2">
               <input className="input flex-1" value={formExerciseId} onChange={(e) => setFormExerciseId(e.target.value)} placeholder="Auto-generated" />
-              <button type="button" onClick={regenerateId} className="w-9 h-9 rounded-lg bg-[var(--surface-raised)] hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-100)] flex items-center justify-center transition-colors flex-shrink-0" title="Regenerate ID">
+              <button type="button" onClick={regenerateId} className="flex size-10 flex-shrink-0 items-center justify-center rounded-[var(--radius-lg)] bg-[var(--surface-raised)] text-[var(--muted-foreground)] transition-colors hover:bg-[var(--primary-50)] hover:text-[var(--primary-600)]" title="Regenerate ID">
                 <RefreshCw className="w-4 h-4 text-[var(--muted-foreground)]" />
               </button>
             </div>
@@ -312,10 +313,11 @@ export default function AdminExercisesPage() {
 
       {/* Edit Modal */}
       <ModalWrapper isOpen={showEditModal} onClose={() => setShowEditModal(false)} containerClassName="max-w-md p-6">
-        <button className="absolute top-3 right-3 w-8 h-8 rounded-full hover:bg-[var(--surface-raised)] flex items-center justify-center" onClick={() => setShowEditModal(false)}>
+        <button className="absolute right-4 top-4 flex size-9 items-center justify-center rounded-full bg-[var(--surface-raised)] text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]" onClick={() => setShowEditModal(false)}>
           <X className="w-4 h-4" />
         </button>
-        <h2 className="text-lg font-bold text-[var(--foreground)] mb-5">Edit Exercise</h2>
+        <p className="eyebrow">Exercise catalogue</p>
+        <h2 className="mb-5 text-xl font-extrabold text-[var(--foreground)]">Edit exercise</h2>
         {error && <div className="mb-3 p-3 bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] rounded-[var(--radius-sm)] text-sm font-medium">{error}</div>}
         <form onSubmit={handleEdit} className="space-y-4">
           <div>

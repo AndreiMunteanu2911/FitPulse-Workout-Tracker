@@ -20,7 +20,7 @@ interface AdminStats {
 
 const adminLinks = [
   { href: "/admin/exercises", title: "Exercises", desc: "Manage the standard exercise catalogue", icon: Dumbbell, color: "bg-[var(--primary-500)]" },
-  { href: "/admin/form-rules", title: "Form Rules", desc: "Review AI-generated form checking rules", icon: Brain, color: "bg-violet-500" },
+  { href: "/admin/form-rules", title: "Form Rules", desc: "Review AI-generated form checking rules", icon: Brain, color: "bg-[var(--primary-500)]" },
   { href: "/admin/users", title: "Users", desc: "View and manage user accounts and roles", icon: Users, color: "bg-[var(--primary-600)]" },
   { href: "/admin/templates", title: "Templates", desc: "Create and edit official workout templates", icon: LayoutTemplate, color: "bg-[var(--primary-700)]" },
   { href: "/admin/analytics", title: "Analytics", desc: "Platform-wide usage metrics and charts", icon: BarChart3, color: "bg-[var(--primary-400)]" },
@@ -68,54 +68,66 @@ export default function AdminPage() {
   return (
     <LoadReveal className="page-stack">
       <AdminPageHeader
-        title="Admin"
-        subtitle="Manage the platform"
+        title="Platform overview"
+        subtitle="Monitor activity and manage every operational area from one workspace."
       />
 
-      {/* Time Range Selector */}
-      <TimeRangeSelector value={days} onChange={setDays} />
-
-      {/* Stat Cards */}
-      {stats && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
-          <AdminStatCard
-            title="Total Users"
-            value={stats.totalUsers}
-            subtitle={`${stats.activeUsers} in ${days}d`}
-            accentColor="bg-[var(--primary-500)]"
-          />
-          <AdminStatCard
-            title="Total Workouts"
-            value={stats.totalWorkouts}
-            accentColor="bg-[var(--primary-600)]"
-          />
-          <AdminStatCard
-            title="Total Sets"
-            value={stats.totalSets}
-            accentColor="bg-[var(--primary-700)]"
-          />
-          <AdminStatCard
-            title="Admin"
-            value="Management Panel"
-            icon={<Shield className="w-4 h-4 text-[var(--primary-500)]" />}
-            accentColor="bg-[var(--primary-400)]"
-          />
+      <section className="space-y-5">
+        <div className="section-header !mb-0">
+          <div>
+            <p className="eyebrow">Platform pulse</p>
+            <h2 className="section-heading">Activity overview</h2>
+          </div>
+          <TimeRangeSelector value={days} onChange={setDays} />
         </div>
-      )}
+        {stats && (
+          <div className="grid grid-cols-2 gap-3 mt-2 sm:gap-4 lg:grid-cols-4">
+            <AdminStatCard
+              title="Total Users"
+              value={stats.totalUsers}
+              subtitle={`${stats.activeUsers} in ${days}d`}
+              accentColor="bg-[var(--primary-500)]"
+            />
+            <AdminStatCard
+              title="Total Workouts"
+              value={stats.totalWorkouts}
+              accentColor="bg-[var(--primary-600)]"
+            />
+            <AdminStatCard
+              title="Total Sets"
+              value={stats.totalSets}
+              accentColor="bg-[var(--primary-700)]"
+            />
+            <AdminStatCard
+              title="Admin"
+              value="Management Panel"
+              icon={<Shield className="w-4 h-4 text-[var(--primary-500)]" />}
+              accentColor="bg-[var(--primary-400)]"
+            />
+          </div>
+        )}
+      </section>
 
-      {/* Admin Section Links */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-        {adminLinks.map((link) => (
-          <AdminNavCard
-            key={link.href}
-            href={link.href}
-            title={link.title}
-            description={link.desc}
-            icon={link.icon}
-            color={link.color}
-          />
-        ))}
-      </div>
+      <section>
+        <div className="section-header">
+          <div>
+            <p className="eyebrow">Management</p>
+            <h2 className="section-heading">Admin tools</h2>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+          {adminLinks.map((link) => (
+            <AdminNavCard
+              key={link.href}
+              href={link.href}
+              title={link.title}
+              description={link.desc}
+              icon={link.icon}
+              color={link.color}
+            />
+          ))}
+        </div>
+      </section>
     </LoadReveal>
   );
 }

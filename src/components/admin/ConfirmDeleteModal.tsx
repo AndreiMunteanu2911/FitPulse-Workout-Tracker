@@ -23,24 +23,29 @@ export default function ConfirmDeleteModal({
   loading,
 }: ConfirmDeleteModalProps) {
   return (
-    <ModalWrapper isOpen={isOpen} onClose={onClose} containerClassName="max-w-sm p-6">
-      <button className="absolute top-3 right-3 w-8 h-8 rounded-full hover:bg-[var(--surface-raised)] flex items-center justify-center" onClick={onClose}>
+    <ModalWrapper isOpen={isOpen} onClose={onClose} containerClassName="max-w-sm overflow-hidden p-0">
+      <div className="border-b border-[var(--border)] p-6 pr-16">
+        <p className="eyebrow">Confirmation</p>
+        <h2 className="text-xl font-extrabold text-[var(--foreground)]">{title}</h2>
+      </div>
+      <button type="button" aria-label="Close confirmation" className="absolute right-4 top-4 flex size-9 items-center justify-center rounded-full bg-[var(--surface-raised)] text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]" onClick={onClose}>
         <X className="w-4 h-4" />
       </button>
-      <h2 className="text-lg font-bold text-[var(--foreground)] mb-2">{title}</h2>
-      <p className="text-sm text-[var(--muted-foreground)] mb-5">
+      <div className="p-6">
+        <p className="mb-5 text-sm leading-6 text-[var(--muted-foreground)]">
         Are you sure you want to delete <strong className="text-[var(--foreground)]">{itemName}</strong>? This cannot be undone.
       </p>
-      {error && (
-        <div className="mb-3 p-3 bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] rounded-[var(--radius-sm)] text-sm font-medium">
-          {error}
+        {error && (
+          <div className="mb-3 rounded-[var(--radius-sm)] bg-[var(--color-destructive-bg)] p-3 text-sm font-medium text-[var(--color-destructive)]">
+            {error}
+          </div>
+        )}
+        <div className="flex gap-3">
+          <Button variant="secondary" onClick={onClose} block>Cancel</Button>
+          <Button variant="danger" onClick={onConfirm} disabled={loading} block>
+            {loading ? "Deleting..." : "Delete"}
+          </Button>
         </div>
-      )}
-      <div className="flex gap-3">
-        <Button variant="primary" onClick={onClose} block>Cancel</Button>
-        <Button variant="secondary" onClick={onConfirm} disabled={loading} block>
-          {loading ? "Deleting..." : "Delete"}
-        </Button>
       </div>
     </ModalWrapper>
   );

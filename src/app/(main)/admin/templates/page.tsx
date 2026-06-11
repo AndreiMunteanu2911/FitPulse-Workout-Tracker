@@ -151,11 +151,11 @@ export default function AdminTemplatesPage() {
   return (
     <LoadReveal className="page-stack">
       <AdminPageHeader
-        title="Admin — Templates"
-        subtitle="Manage official workout templates"
+        title="Templates"
+        subtitle="Build official workout templates available to every user."
         backHref="/admin"
         action={
-          <Button onClick={openCreate}>
+          <Button variant="lime" onClick={openCreate}>
             <Plus className="w-4 h-4 mr-1.5" /> Create Template
           </Button>
         }
@@ -185,10 +185,11 @@ export default function AdminTemplatesPage() {
 
       {/* Create Modal */}
       <ModalWrapper isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} containerClassName="max-w-md p-6 max-h-[90vh] overflow-y-auto">
-        <button className="absolute top-3 right-3 w-8 h-8 rounded-full hover:bg-[var(--surface-raised)] flex items-center justify-center" onClick={() => setShowCreateModal(false)}>
+        <button className="absolute right-4 top-4 flex size-9 items-center justify-center rounded-full bg-[var(--surface-raised)] text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]" onClick={() => setShowCreateModal(false)}>
           <X className="w-4 h-4" />
         </button>
-        <h2 className="text-lg font-bold text-[var(--foreground)] mb-5">Create Official Template</h2>
+        <p className="eyebrow">Official programming</p>
+        <h2 className="mb-5 text-xl font-extrabold text-[var(--foreground)]">Create template</h2>
         {error && <div className="mb-3 p-3 bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] rounded-[var(--radius-sm)] text-sm font-medium">{error}</div>}
         <form onSubmit={handleCreate} className="space-y-4">
           <div>
@@ -210,7 +211,7 @@ export default function AdminTemplatesPage() {
                   placeholder="e.g. bench-press"
                 />
                 {formExerciseIds.length > 1 && (
-                  <button type="button" onClick={() => removeExerciseField(idx)} className="w-8 h-8 rounded-lg hover:bg-[var(--color-destructive-bg)] flex items-center justify-center flex-shrink-0">
+                  <button type="button" onClick={() => removeExerciseField(idx)} className="flex size-9 flex-shrink-0 items-center justify-center rounded-[var(--radius-lg)] bg-[var(--surface-raised)] transition-colors hover:bg-[var(--color-destructive-bg)]">
                     <X className="w-4 h-4 text-[var(--color-destructive)]" />
                   </button>
                 )}

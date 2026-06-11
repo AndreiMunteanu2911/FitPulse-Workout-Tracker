@@ -8,7 +8,7 @@ interface TimeRangeSelectorProps {
 
 export default function TimeRangeSelector({ value, onChange, options = [7, 14, 30, 90] }: TimeRangeSelectorProps) {
   return (
-    <div className="segmented-control mb-6 w-full sm:w-fit">
+    <div className="segmented-control w-full sm:w-fit">
       {options.map((d) => (
         <button
           key={d}

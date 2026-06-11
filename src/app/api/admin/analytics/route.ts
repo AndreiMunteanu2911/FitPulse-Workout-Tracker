@@ -58,10 +58,24 @@ export async function GET(req: NextRequest) {
     exerciseCounts.set(we.exercise_id, (exerciseCounts.get(we.exercise_id) ?? 0) + 1);
   });
 
-  const topExercisesList = [...exerciseCounts.entries()]
+  const topExerciseCounts = [...exerciseCounts.entries()]
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 10)
-    .map(([exercise_id, count]) => ({ exercise_id, count }));
+    .slice(0, 10);
+  const topExerciseIds = topExerciseCounts.map(([exerciseId]) => exerciseId);
+  const { data: exerciseNames } = topExerciseIds.length > 0
+    ? await supabase
+        .from("exercises")
+        .select("exercise_id, name")
+        .in("exercise_id", topExerciseIds)
+    : { data: [] };
+  const exerciseNameMap = new Map(
+    (exerciseNames ?? []).map((exercise) => [exercise.exercise_id, exercise.name]),
+  );
+  const topExercisesList = topExerciseCounts.map(([exercise_id, count]) => ({
+    exercise_id,
+    name: exerciseNameMap.get(exercise_id) ?? "Unknown exercise",
+    count,
+  }));
 
   // 7. Daily workout counts for chart
   const { data: dailyWorkouts } = await supabase

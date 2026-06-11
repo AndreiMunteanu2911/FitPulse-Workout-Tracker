@@ -20,7 +20,7 @@ interface AnalyticsData {
   recentWorkouts: number;
   totalSets: number;
   recentVolume: number;
-  topExercises: { exercise_id: string; count: number }[];
+  topExercises: { exercise_id: string; name: string; count: number }[];
   dailyWorkouts: { date: string; count: number }[];
 }
 
@@ -77,16 +77,18 @@ export default function AdminAnalyticsPage() {
   return (
     <LoadReveal className="page-stack">
       <AdminPageHeader
-        title="Admin — Analytics"
-        subtitle="Platform-wide usage metrics"
+        title="Analytics"
+        subtitle="Track platform adoption, training activity, and exercise usage."
         backHref="/admin"
       />
 
       {/* Time Range Selector */}
-      <TimeRangeSelector value={days} onChange={setDays} />
+      <div className="flex justify-end">
+        <TimeRangeSelector value={days} onChange={setDays} />
+      </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <AdminStatCard
           title="Total Users"
           value={data.totalUsers}
@@ -116,10 +118,10 @@ export default function AdminAnalyticsPage() {
       </div>
 
       {/* Daily Workouts Chart */}
-      <DailyWorkoutsChart data={data.dailyWorkouts} />
-
-      {/* Top Exercises */}
-      <TopExercisesList exercises={data.topExercises} />
+      <div className="grid gap-4 xl:grid-cols-[1.35fr_0.65fr]">
+        <DailyWorkoutsChart data={data.dailyWorkouts} />
+        <TopExercisesList exercises={data.topExercises} />
+      </div>
     </LoadReveal>
   );
 }

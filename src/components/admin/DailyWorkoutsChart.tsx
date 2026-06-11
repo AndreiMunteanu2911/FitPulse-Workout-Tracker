@@ -12,8 +12,9 @@ export default function DailyWorkoutsChart({ data }: DailyWorkoutsChartProps) {
   }));
 
   return (
-    <div className="bg-[var(--surface)] rounded-[var(--radius-md)] p-4 sm:p-5 mb-6">
-      <h2 className="text-base font-bold text-[var(--foreground)] mb-4">Workouts per Day</h2>
+    <section className="rounded-[var(--radius-xl)] bg-[var(--surface)] p-5 shadow-[var(--shadow-sm)] ring-1 ring-[var(--border)] sm:p-6">
+      <p className="eyebrow">Training activity</p>
+      <h2 className="mb-5 text-lg font-extrabold text-[var(--foreground)]">Workouts per day</h2>
       <ResponsiveContainer width="100%" height={220}>
         <BarChart data={chartData}>
           <CartesianGrid stroke="var(--border)" strokeDasharray="4 4" />
@@ -31,6 +32,6 @@ export default function DailyWorkoutsChart({ data }: DailyWorkoutsChartProps) {
           <Bar dataKey="count" fill="var(--primary-500)" radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
-    </div>
+    </section>
   );
 }

@@ -5,6 +5,7 @@ import ProtectedWrapper from "@/components/ProtectedWrapper";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import LoadReveal from "@/components/LoadReveal";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import Button from "@/components/Button";
 import { CheckCircle2, Clock3, Package, RefreshCw, Truck, XCircle } from "lucide-react";
 
 type AdminOrder = {
@@ -96,16 +97,15 @@ export default function AdminOrdersPage() {
       <LoadReveal className="page-stack">
         <AdminPageHeader
           title="Orders"
-          subtitle="Review orders, update fulfillment status, and inspect shipping details"
+          subtitle="Review purchases, shipping details, and fulfillment status."
           action={
-            <button
-              type="button"
+            <Button
+              variant="secondary"
               onClick={() => loadOrders()}
-              className="inline-flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface-raised)]"
             >
               <RefreshCw className="h-4 w-4" />
               Refresh
-            </button>
+            </Button>
           }
         />
 
@@ -125,8 +125,9 @@ export default function AdminOrdersPage() {
             return (
               <article
                 key={order.id}
-                className="card p-4"
+                className="relative overflow-hidden rounded-[var(--radius-xl)] bg-[var(--surface)] p-5 shadow-[var(--shadow-sm)] ring-1 ring-[var(--border)]"
               >
+                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[var(--primary-500)] to-[var(--lime-green)]" />
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="truncate text-base font-bold text-[var(--foreground)]">
@@ -141,7 +142,7 @@ export default function AdminOrdersPage() {
                 </div>
 
                 <div className="mt-4 space-y-3">
-                  <div className="grid gap-3 rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface-raised)] p-3 sm:grid-cols-2">
+                  <div className="grid gap-3 rounded-[var(--radius-lg)] bg-[var(--surface-raised)] p-3 sm:grid-cols-2">
                     <div className="min-w-0">
                       <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">Method</p>
                       <p className="mt-1 text-sm font-medium text-[var(--foreground)]">{order.payment_method || "unknown"}</p>
@@ -154,7 +155,7 @@ export default function AdminOrdersPage() {
                     </div>
                   </div>
 
-                  <div className="grid gap-3 rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface-raised)] p-3 sm:grid-cols-2">
+                  <div className="grid gap-3 rounded-[var(--radius-lg)] bg-[var(--surface-raised)] p-3 sm:grid-cols-2">
                     <div className="min-w-0">
                       <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">Shipping</p>
                       <p className="mt-1 text-sm font-medium text-[var(--foreground)]">
@@ -175,7 +176,7 @@ export default function AdminOrdersPage() {
                     type="button"
                     disabled={savingId === order.id}
                     onClick={() => updateStatus(order.id, "pending")}
-                    className="rounded-full border border-[var(--border)] px-3 py-1.5 text-xs font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface-raised)] disabled:opacity-50"
+                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50 ${orderStatus === "pending" ? "bg-[var(--primary-500)] text-white" : "bg-[var(--surface-raised)] text-[var(--foreground)] hover:bg-[var(--primary-50)]"}`}
                   >
                     Pending
                   </button>
@@ -183,7 +184,7 @@ export default function AdminOrdersPage() {
                     type="button"
                     disabled={savingId === order.id}
                     onClick={() => updateStatus(order.id, "completed")}
-                    className="rounded-full border border-[var(--border)] px-3 py-1.5 text-xs font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface-raised)] disabled:opacity-50"
+                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50 ${orderStatus === "completed" ? "bg-[var(--primary-500)] text-white" : "bg-[var(--surface-raised)] text-[var(--foreground)] hover:bg-[var(--primary-50)]"}`}
                   >
                     Complete
                   </button>
@@ -191,7 +192,7 @@ export default function AdminOrdersPage() {
                     type="button"
                     disabled={savingId === order.id}
                     onClick={() => updateStatus(order.id, "shipped")}
-                    className="rounded-full border border-[var(--border)] px-3 py-1.5 text-xs font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface-raised)] disabled:opacity-50"
+                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50 ${orderStatus === "shipped" ? "bg-[var(--lime-green)] text-[#232323]" : "bg-[var(--surface-raised)] text-[var(--foreground)] hover:bg-[var(--primary-50)]"}`}
                   >
                     Ship
                   </button>
@@ -199,7 +200,7 @@ export default function AdminOrdersPage() {
                     type="button"
                     disabled={savingId === order.id}
                     onClick={() => updateStatus(order.id, "cancelled")}
-                    className="rounded-full border border-[var(--border)] px-3 py-1.5 text-xs font-semibold text-[var(--color-destructive)] transition-colors hover:bg-[var(--color-destructive-bg)] disabled:opacity-50"
+                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50 ${orderStatus === "cancelled" ? "bg-[var(--color-destructive-bg)] text-[var(--color-destructive)]" : "bg-[var(--surface-raised)] text-[var(--color-destructive)] hover:bg-[var(--color-destructive-bg)]"}`}
                   >
                     Cancel
                   </button>

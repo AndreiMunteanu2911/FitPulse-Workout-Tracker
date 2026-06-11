@@ -24,10 +24,10 @@ export default function UserCard({ user_id, display_name, total_xp, level, worko
   ];
 
   return (
-    <div className="group rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-4 transition-all duration-200 hover:border-[var(--primary-200)] hover:bg-[var(--surface-raised)] sm:p-5">
+    <div className="group rounded-[var(--radius-xl)] bg-[var(--surface)] p-4 shadow-[var(--shadow-xs)] ring-1 ring-[var(--border)] transition-all duration-200 hover:ring-[var(--primary-200)] sm:p-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 flex-1 items-start gap-3">
-          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--primary-50)] text-base font-extrabold text-[var(--primary-700)] dark:bg-[var(--primary-100)] dark:text-[var(--primary-600)]">
+          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-[var(--radius-lg)] bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)] text-base font-extrabold text-white shadow-[0_8px_18px_rgba(116,87,245,0.18)]">
             {initial}
           </div>
 

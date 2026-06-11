@@ -117,14 +117,17 @@ export default function AdminUsersPage() {
   return (
     <LoadReveal className="page-stack">
       <AdminPageHeader
-        title="Admin — Users"
-        subtitle="View and manage user accounts"
+        title="Users"
+        subtitle="Review accounts, training activity, and platform permissions."
         backHref="/admin"
       />
 
       {/* Search */}
-      <div className="relative mb-6">
+      <div className="toolbar">
         <SearchInput value={search} onChange={setSearch} placeholder="Search by name or user ID..." />
+        <span className="hidden whitespace-nowrap px-2 text-sm font-semibold text-[var(--muted-foreground)] sm:block">
+          {filtered.length} {filtered.length === 1 ? "user" : "users"}
+        </span>
       </div>
 
       {/* User List */}
