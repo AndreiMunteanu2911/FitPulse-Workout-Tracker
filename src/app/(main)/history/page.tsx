@@ -8,6 +8,7 @@ import WorkoutHistoryCard from "@/components/WorkoutHistoryCard";
 import ModalWrapper from "@/components/ModalWrapper";
 import ShareWorkoutModal from "@/components/ShareWorkoutModal";
 import Button from "@/components/Button";
+import { PageHeader } from "@/components/PageHeader";
 import { useHistory } from "@/hooks/useHistory";
 import type { Workout } from "@/types";
 import { Clock, PenSquare, Trash2, Plus, Share2 } from "lucide-react";
@@ -138,34 +139,29 @@ export default function HistoryPage() {
     return (
         <ProtectedWrapper>
             <div className="w-full">
-                {/* ── Purple Hero Header ── */}
-                <div className="bg-gradient-to-br from-[var(--primary-700)] via-[var(--primary-500)] to-[var(--primary-400)] text-white rounded-[var(--radius-lg)] overflow-hidden mb-5">
-                    <div className="px-6 pt-6 pb-5">
-                        <div className="flex items-center justify-between mb-4">
-                            <h1 className="text-lg font-extrabold tracking-tight flex items-center gap-2" style={{ fontFamily: "var(--font-poppins)" }}>
-                                <Clock className="w-5 h-5" />
-                                Workout Log
-                            </h1>
-                            <Button onClick={() => router.push("/workout")} variant="lime" className="px-4 py-2 text-xs">
-                                <Plus className="w-4 h-4 mr-1" />
-                                New
-                            </Button>
+                <PageHeader
+                    title="History"
+                    description="Review completed workouts and personal records."
+                    actions={
+                        <Button onClick={() => router.push("/workout")} className="px-4 py-2 text-xs">
+                            <Plus className="w-4 h-4" />
+                            New workout
+                        </Button>
+                    }
+                />
+                <div className="card mb-5 p-5">
+                    <div className="grid grid-cols-3 gap-3">
+                        <div className="text-center">
+                            <p className="text-lg font-semibold text-[var(--foreground)]">{workouts.length}</p>
+                            <p className="text-[10px] uppercase tracking-wide text-[var(--muted-foreground)]">Workouts</p>
                         </div>
-
-                        {/* Stats row */}
-                        <div className="grid grid-cols-3 gap-3 pt-4 border-t border-white/15">
-                            <div className="text-center">
-                                <p className="text-lg font-extrabold">{workouts.length}</p>
-                                <p className="text-[10px] text-white/60 uppercase tracking-wide">Workouts</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-lg font-extrabold">{totalVolume >= 1000 ? (totalVolume / 1000).toFixed(1) + "k" : totalVolume}</p>
-                                <p className="text-[10px] text-white/60 uppercase tracking-wide">Volume (kg)</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-lg font-extrabold">{prCounts.size > 0 ? Array.from(prCounts.values()).reduce((a, b) => a + b, 0) : 0}</p>
-                                <p className="text-[10px] text-white/60 uppercase tracking-wide">PRs</p>
-                            </div>
+                        <div className="text-center">
+                            <p className="text-lg font-semibold text-[var(--foreground)]">{totalVolume >= 1000 ? (totalVolume / 1000).toFixed(1) + "k" : totalVolume}</p>
+                            <p className="text-[10px] uppercase tracking-wide text-[var(--muted-foreground)]">Volume (kg)</p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-lg font-semibold text-[var(--foreground)]">{prCounts.size > 0 ? Array.from(prCounts.values()).reduce((a, b) => a + b, 0) : 0}</p>
+                            <p className="text-[10px] uppercase tracking-wide text-[var(--muted-foreground)]">PRs</p>
                         </div>
                     </div>
                 </div>

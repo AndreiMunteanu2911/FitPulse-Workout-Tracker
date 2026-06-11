@@ -10,6 +10,8 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { useSocial } from "@/hooks/useSocial";
 import type { Post, Friendship, Workout } from "@/types";
 import { Plus, Users, Rss } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
+import Button from "@/components/Button";
 
 export default function SocialPage() {
   const [activeTab, setActiveTab] = useState<"feed" | "friends">("feed");
@@ -108,26 +110,19 @@ export default function SocialPage() {
   return (
     <ProtectedWrapper>
       <div className="w-full">
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <h1
-              className="text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight"
-              style={{ fontFamily: "var(--font-poppins)" }}
-            >
-              Social
-            </h1>
-            <p className="text-sm text-[var(--muted-foreground)] mt-1">Connect and share with friends.</p>
-          </div>
-          {activeTab === "feed" && (
-            <button
+        <PageHeader
+          title="Social"
+          description="Connect and share with friends."
+          actions={activeTab === "feed" ? (
+            <Button
               onClick={() => setShowCreatePost(true)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-600)] text-white hover:brightness-105 transition-all"
+              className="px-4 py-2 text-sm"
             >
               <Plus className="w-4 h-4" />
               Post
-            </button>
-          )}
-        </div>
+            </Button>
+          ) : null}
+        />
 
         <div className="flex gap-1 bg-[var(--surface)] rounded-[var(--radius-md)] p-1 mb-5">
           <button

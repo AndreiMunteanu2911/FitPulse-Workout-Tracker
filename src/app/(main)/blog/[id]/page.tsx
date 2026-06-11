@@ -9,6 +9,7 @@ import Button from "@/components/Button";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { ArrowLeft, Calendar, Heart, MessageCircle, Send, Trash2 } from "lucide-react";
 import Image from "next/image";
+import { PageHeader } from "@/components/PageHeader";
 
 export default function BlogPostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -152,14 +153,12 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
 
   return (
     <ProtectedWrapper>
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 md:py-12">
-        <button
-          onClick={() => router.push("/blog")}
-          className="group flex items-center gap-2 text-[var(--muted-foreground)] hover:text-[var(--primary-600)] mb-10 transition-colors font-medium"
-        >
-          <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-          Back to feed
-        </button>
+      <div className="mx-auto w-full max-w-4xl">
+        <PageHeader
+          title={post.title}
+          description="FitPulse training article"
+          backHref="/blog"
+        />
 
         <article>
           {post.image_url && (
@@ -204,10 +203,6 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
               </div>
             </div>
           </div>
-
-          <h1 className="text-3xl sm:text-5xl font-extrabold text-[var(--foreground)] mb-8 leading-[1.15]" style={{ fontFamily: "var(--font-poppins)" }}>
-            {post.title}
-          </h1>
 
           <div className="prose prose-lg dark:prose-invert max-w-none mb-16">
             {post.content.split("\n").map((para, i) => (

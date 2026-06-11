@@ -1,11 +1,15 @@
 import Stripe from "stripe";
 
-const secretKey = process.env.STRIPE_SECRET_KEY;
+let stripeClient: Stripe | null = null;
 
-if (!secretKey) {
-  throw new Error("STRIPE_SECRET_KEY is required.");
+export function getStripeClient(): Stripe {
+  if (stripeClient) return stripeClient;
+
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (!secretKey) {
+    throw new Error("STRIPE_SECRET_KEY is required.");
+  }
+
+  stripeClient = new Stripe(secretKey);
+  return stripeClient;
 }
-
-// Let Stripe use the account/default API version instead of pinning a version
-// that may not exist in the current test or sandbox environment.
-export const stripe = new Stripe(secretKey);

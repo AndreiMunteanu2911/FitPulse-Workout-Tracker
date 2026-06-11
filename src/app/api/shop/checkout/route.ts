@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import type Stripe from "stripe";
 import { getWebAppBaseUrl } from "@/config/app-env";
-import { stripe } from "@/helper/stripe";
+import { getStripeClient } from "@/helper/stripe";
+import { getSupabaseAdminClient } from "@/helper/supabaseAdmin";
 import { createSupabaseServerClient } from "@/helper/supabaseServer";
 
 const DEFAULT_ALLOWED_COUNTRIES = [
@@ -18,7 +20,7 @@ const DEFAULT_ALLOWED_COUNTRIES = [
   "RO",
 ] as const;
 
-type CheckoutCreateParams = Parameters<typeof stripe.checkout.sessions.create>[0];
+type CheckoutCreateParams = Stripe.Checkout.SessionCreateParams;
 type AllowedCountry = (typeof DEFAULT_ALLOWED_COUNTRIES)[number];
 type CheckoutCreateParamsWithShipping = NonNullable<CheckoutCreateParams> & {
   shipping_address_collection?: {
@@ -42,9 +44,9 @@ export async function POST(req: NextRequest) {
     quantity?: number;
   };
   const productId = body.productId;
-  const quantity = Number(body.quantity || 1);
+  const quantity = Number(body.quantity ?? 1);
 
-  if (!productId || quantity < 1) {
+  if (!productId || !Number.isSafeInteger(quantity) || quantity < 1 || quantity > 10) {
     return NextResponse.json({ error: "Missing productId or invalid quantity." }, { status: 400 });
   }
 
@@ -60,6 +62,10 @@ export async function POST(req: NextRequest) {
 
   if (!product.price_usd) {
     return NextResponse.json({ error: "This product cannot be purchased with card." }, { status: 400 });
+  }
+
+  if (product.is_physical && Number(product.stock_quantity ?? 0) < quantity) {
+    return NextResponse.json({ error: "The requested quantity is not available." }, { status: 409 });
   }
 
   const { data: order, error: orderError } = await supabase
@@ -117,21 +123,28 @@ export async function POST(req: NextRequest) {
     ],
   };
 
-  const session = await stripe.checkout.sessions.create(sessionParams as CheckoutCreateParams).catch((error: unknown) => {
+  const stripe = getStripeClient();
+  const supabaseAdmin = getSupabaseAdminClient();
+  const session = await stripe.checkout.sessions.create(sessionParams).catch((error: unknown) => {
     console.error("Failed to create Stripe checkout session:", error);
     return null;
   });
 
   if (!session?.url) {
+    await supabaseAdmin.from("orders").delete().eq("id", order.id).eq("user_id", user.id).eq("status", "pending");
     return NextResponse.json({ error: "Failed to create Stripe checkout session." }, { status: 502 });
   }
 
-  const { error: sessionUpdateError } = await supabase
+  const { error: sessionUpdateError } = await supabaseAdmin
     .from("orders")
     .update({ stripe_session_id: session.id })
-    .eq("id", order.id);
+    .eq("id", order.id)
+    .eq("user_id", user.id)
+    .eq("status", "pending");
 
   if (sessionUpdateError) {
+    await stripe.checkout.sessions.expire(session.id).catch(() => undefined);
+    await supabaseAdmin.from("orders").delete().eq("id", order.id).eq("user_id", user.id).eq("status", "pending");
     return NextResponse.json({ error: sessionUpdateError.message }, { status: 500 });
   }
 

@@ -7,6 +7,7 @@ import type { Exercise } from "@/types";
 import { useExercises } from "@/hooks/useExercises";
 import { Search, X } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { PageHeader } from "@/components/PageHeader";
 
 export default function ExercisesPage() {
     const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -75,9 +76,11 @@ export default function ExercisesPage() {
     return (
         <ProtectedWrapper>
             <div className="w-full">
-                <div className="page-header mb-5">
-                    <h1 className="hidden md:block text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight mb-3">Exercises</h1>
-                    {/* Search */}
+                <PageHeader
+                    title="Exercises"
+                    description="Browse the exercise library and find movements for your next workout."
+                />
+                <div className="mb-5">
                     <div className="relative rounded-[var(--radius-xl)] bg-[var(--surface)] p-2 shadow-[var(--shadow-sm)]">
                         <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--muted-foreground)]" />
                         <input

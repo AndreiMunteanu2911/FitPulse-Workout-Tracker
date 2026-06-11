@@ -7,25 +7,20 @@ import { getDashboardShortcutItems } from "@/lib/navigation";
 
 type ShortcutMeta = {
   description: string;
-  color: string;
 };
 
 const shortcutMeta: Record<string, ShortcutMeta> = {
   "/blog": {
     description: "Read training guides and updates.",
-    color: "from-[var(--primary-500)] to-[var(--primary-700)]",
   },
   "/social": {
     description: "See what the community is posting.",
-    color: "from-[var(--primary-400)] to-[var(--primary-600)]",
   },
   "/shop": {
     description: "Browse products and store items.",
-    color: "from-[var(--primary-600)] to-[var(--primary-800)]",
   },
   "/admin": {
     description: "Manage the platform and review reports.",
-    color: "from-[var(--primary-700)] to-[var(--primary-900)]",
   },
 };
 
@@ -44,9 +39,9 @@ export default function DashboardShortcuts() {
     <div className="card mb-6 p-5 sm:p-6">
       <div className="mb-4 flex items-center justify-between gap-4">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">Shortcuts</p>
-          <h2 className="mt-1 text-xl font-extrabold text-[var(--foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>
-            More places to go
+          <p className="eyebrow">Explore</p>
+          <h2 className="text-xl font-semibold tracking-tight text-[var(--foreground)]">
+            More from FitPulse
           </h2>
         </div>
       </div>
@@ -55,20 +50,19 @@ export default function DashboardShortcuts() {
         {shortcuts.map(({ name, href, Icon }: ShortcutItem) => {
           const meta = shortcutMeta[href] || {
             description: "Open this section.",
-            color: "from-[var(--primary-500)] to-[var(--primary-700)]",
           };
 
           return (
             <Link
               key={name}
               href={href}
-              className="group flex items-center gap-4 rounded-[var(--radius-xl)] bg-[var(--surface-raised)] p-4 transition-all hover:-translate-y-0.5 hover:bg-[var(--surface)] hover:shadow-[var(--shadow-sm)]"
+              className="group flex items-center gap-4 rounded-[var(--radius-lg)] border border-transparent bg-[var(--surface-raised)] p-4 transition-colors hover:border-[var(--border)] hover:bg-[var(--surface)]"
             >
-              <div className={`h-14 w-14 flex-shrink-0 rounded-[var(--radius-lg)] bg-gradient-to-br ${meta.color} flex items-center justify-center shadow-[0_12px_26px_rgba(116,87,245,0.18)]`}>
-                <Icon className="h-5 w-5 text-white" />
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--primary-50)] text-[var(--primary-600)] dark:bg-[var(--primary-100)] dark:text-[var(--primary-700)]">
+                <Icon className="size-5" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-base font-extrabold text-[var(--foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>{name}</p>
+                <p className="text-base font-semibold text-[var(--foreground)]">{name}</p>
                 <p className="mt-1 text-sm leading-snug text-[var(--muted-foreground)]">{meta.description}</p>
               </div>
             </Link>

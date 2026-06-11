@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { LegacyCredentialCleanup } from "@/components/LegacyCredentialCleanup";
 
 export const metadata: Metadata = {
     title: "FitPulse - Workout Tracker",
@@ -12,6 +13,7 @@ export default function AuthLayout({
 }>) {
     return (
         <div className="min-h-screen w-full flex items-start justify-center auth-bg text-white">
+            <LegacyCredentialCleanup />
             <main className="w-full max-w-sm px-5 pb-10">
                 {children}
             </main>

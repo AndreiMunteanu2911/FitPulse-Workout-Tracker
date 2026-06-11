@@ -35,6 +35,7 @@ import {
   Save,
   Loader2,
 } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return "N/A";
@@ -326,10 +327,10 @@ export default function ProfilePage() {
     return (
         <ProtectedWrapper>
             <div className="w-full">
-                {/* Page header */}
-                <div className="page-header mb-5">
-                    <h1 className="hidden md:block text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight" style={{ fontFamily: "var(--font-poppins)" }}>My Profile</h1>
-                </div>
+                <PageHeader
+                    title="Profile"
+                    description="Manage your personal details and review your progress."
+                />
 
                 {/* ── User Info Card — purple gradient ── */}
                 <div className="bg-gradient-to-br from-[var(--primary-600)] to-[var(--primary-400)] rounded-[var(--radius-lg)] p-5 mb-5 relative">

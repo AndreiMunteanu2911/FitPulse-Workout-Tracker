@@ -17,6 +17,7 @@ import { useWorkoutTemplates } from "@/hooks/useWorkoutTemplates";
 import TemplateCard from "@/components/TemplateCard";
 import CreateTemplateModal from "@/components/CreateTemplateModal";
 import DeleteTemplateModal from "@/components/DeleteTemplateModal";
+import { PageHeader } from "@/components/PageHeader";
 import type { Exercise, WorkoutExercise, Set as WorkoutSet, WorkoutTemplate, RestTimerState } from "@/types";
 import { detectExerciseType, REST_DURATIONS } from "@/lib/gamification";
 import { Zap, Plus, Pencil } from "lucide-react";
@@ -752,18 +753,15 @@ export default function WorkoutPage() {
                         {errorMessages.general && (
                             <div className="mb-4 text-[var(--color-destructive)]">{errorMessages.general}</div>
                         )}
-                        <div className="page-header mb-6 flex items-center justify-between gap-3">
-                          <div>
-                            <h1 className="hidden md:block text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight">Workout</h1>
-                            <p className="text-sm text-[var(--muted-foreground)] mt-0.5">
-                              {workoutStarted ? (
-                                <span className="font-mono font-semibold text-[var(--primary-600)] dark:text-[var(--primary-500)]">
-                                    {formatElapsed(elapsedSeconds)}
-                                </span>
-                              ) : "Ready when you are"}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-2 flex-shrink-0">
+                        <PageHeader
+                          title="Workout"
+                          description={workoutStarted ? (
+                            <span className="font-mono font-semibold text-[var(--primary-600)] dark:text-[var(--primary-500)]">
+                              {formatElapsed(elapsedSeconds)}
+                            </span>
+                          ) : "Ready when you are."}
+                          actions={
+                            <>
                             {!workoutStarted ? (
                                 <Button onClick={startWorkout} className="px-5 py-2.5 text-sm sm:text-base">Start Workout</Button>
                             ) : (
@@ -772,8 +770,9 @@ export default function WorkoutPage() {
                                     <Button onClick={handleFinishClick} className="px-5 py-2.5 text-sm sm:text-base">Finish</Button>
                                 </>
                             )}
-                          </div>
-                        </div>
+                            </>
+                          }
+                        />
                         <CancelWorkoutModal
                             isOpen={showCancelModal}
                             onClose={() => setShowCancelModal(false)}

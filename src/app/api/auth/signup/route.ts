@@ -1,10 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { createSupabaseServerClient } from "@/helper/supabaseServer";
 
+const signupRequestSchema = z.object({
+  email: z.string().trim().email(),
+  password: z.string().min(6).max(128),
+  display_name: z.string().trim().min(1).max(80),
+});
+
 export async function POST(req: NextRequest) {
-  const { email, password, display_name } = await req.json();
+  const body = await req.json().catch(() => null);
+  const parsed = signupRequestSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid account details." }, { status: 400 });
+  }
+
+  const { email, password, display_name } = parsed.data;
   const supabase = await createSupabaseServerClient();
-  const displayName = typeof display_name === "string" ? display_name.trim() : "";
+  const displayName = display_name.trim();
 
   // Sign up the user
   const { data, error } = await supabase.auth.signUp({
@@ -16,7 +29,7 @@ export async function POST(req: NextRequest) {
       },
     },
   });
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  if (error) return NextResponse.json({ error: "Unable to create account." }, { status: 400 });
 
   // If signup succeeded and we have a session (no email confirmation required),
   // create the user_stats row with the display_name

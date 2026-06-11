@@ -8,6 +8,7 @@ import CoachSidebar from "@/components/ai/CoachSidebar";
 import CoachTextWindow from "@/components/ai/CoachTextWindow";
 import CoachTextArea from "@/components/ai/CoachTextArea";
 import { apiFetch } from "@/services/api/apiFetch";
+import { PageHeader } from "@/components/PageHeader";
 
 const SUGGESTIONS = [
   { icon: TrendingUp, label: "How's my bench press progressing?", message: "How's my bench press progressing?" },
@@ -65,17 +66,15 @@ export default function AICoachPage() {
   };
 
   return (
-    <div className="w-full">
+    <div className="flex min-h-0 w-full flex-col">
       {/* Page header — matches all other pages */}
-      <div className="page-header mb-6">
-        <h1 className="hidden md:block text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight">AI Coach</h1>
-        <p className="text-sm text-[var(--muted-foreground)] mt-0.5">
-          {conversationId ? "Loaded conversation" : "Powered by your workout data"}
-        </p>
-      </div>
+      <PageHeader
+        title="AI Coach"
+        description={conversationId ? "Continue your selected conversation." : "Get guidance based on your workout data."}
+      />
 
       {/* Layout: chat panel (left) + sidebar (right, desktop only) */}
-      <div className="flex gap-4 h-[calc(100vh-14rem)] flex-row-reverse">
+      <div className="flex h-[calc(100dvh-13rem)] min-h-[32rem] max-h-[52rem] min-w-0 flex-row-reverse gap-4">
         {/* Sidebar — right side, desktop only */}
         <CoachSidebar
           conversations={conversations}
@@ -88,7 +87,7 @@ export default function AICoachPage() {
         />
 
         {/* Chat panel */}
-        <div className="flex-1 flex min-w-0 flex-col overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
           <CoachTextWindow
             messages={messages}
             isStreaming={isStreaming}

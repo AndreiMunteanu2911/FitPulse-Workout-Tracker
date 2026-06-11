@@ -1,58 +1,54 @@
 import Link from "next/link";
-import Image from "next/image";
-import AuthAutoLogin from "@/components/AuthAutoLogin";
+import { AppLogo } from "@/components/AppLogo";
+
+const features = ["Workout history", "Personal records", "Weight tracking", "Progress photos"];
 
 export default function LandingPage() {
-    return (
-        <div className="w-full text-white min-h-screen flex flex-col">
-            <AuthAutoLogin />
+  return (
+    <div className="flex min-h-screen w-full flex-col text-white">
+      <div className="pb-2 pt-6">
+        <AppLogo href="/" inverted />
+      </div>
 
-            {/* Logo */}
-            <div className="flex items-center gap-2.5 pt-6 pb-2">
-                <div className="w-9 h-9 rounded-[12px] overflow-hidden bg-white flex items-center justify-center">
-                    <Image src="/assets/logo.png" alt="FitPulse" width={22} height={22} className="object-contain" />
-                </div>
-                <span className="text-lg tracking-tight" style={{ fontFamily: "var(--font-poppins)" }}>
-                    <span className="font-extrabold text-white">Fit</span><span className="font-bold text-[var(--lime-green)]">Pulse</span>
-                </span>
-            </div>
-
-            {/* Hero */}
-            <div className="flex-1 flex flex-col justify-center py-10">
-                <div className="mb-2">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs font-semibold text-white/80 mb-6">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--lime-green)] animate-pulse" />
-                        Your fitness journey starts here
-                    </span>
-                </div>
-                <h1 className="text-4xl sm:text-5xl font-extrabold leading-tight tracking-tight mb-4" style={{ fontFamily: "var(--font-poppins)" }}>
-                    Track workouts.<br />
-                    <span className="text-[var(--lime-green)]">Crush goals.</span>
-                </h1>
-                <p className="text-white/60 text-base mb-10 max-w-xs">
-                    Log every rep, monitor your progress, and build unstoppable habits with FitPulse.
-                </p>
-
-                <div className="flex flex-col gap-3">
-                    <Link href="/signup">
-                        <button className="w-full py-3.5 rounded-full bg-[var(--lime-green)] text-[#232323] font-bold text-base shadow-[0_2px_12px_rgba(226,241,99,0.35)] hover:shadow-[0_4px_18px_rgba(226,241,99,0.45)] transition active:scale-[0.98]" style={{ fontFamily: "var(--font-poppins)" }}>
-                            Get Started — It&apos;s Free
-                        </button>
-                    </Link>
-                    <Link href="/login">
-                        <button className="w-full py-3.5 rounded-full bg-white/10 border border-white/15 text-white font-semibold text-base hover:bg-white/15 transition active:scale-[0.98]">
-                            Log In
-                        </button>
-                    </Link>
-                </div>
-            </div>
-
-            {/* Feature pills */}
-            <div className="pb-8 flex flex-wrap gap-2">
-                {["Workout history", "Personal records", "Weight tracking", "Progress photos"].map((f) => (
-                    <span key={f} className="px-3 py-1 rounded-full bg-white/8 border border-white/10 text-xs font-medium text-white/60">{f}</span>
-                ))}
-            </div>
+      <div className="flex flex-1 flex-col justify-center py-10">
+        <div className="mb-6">
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white/75">
+            <span className="size-1.5 rounded-full bg-[var(--lime-green)]" />
+            Training, progress, and coaching
+          </span>
         </div>
-    );
+        <h1 className="mb-4 text-4xl font-bold leading-[1.08] tracking-[-0.05em] sm:text-5xl">
+          Train with clarity.
+          <br />
+          <span className="text-[var(--lime-green)]">Measure what matters.</span>
+        </h1>
+        <p className="mb-10 max-w-sm text-base leading-7 text-white/60">
+          Log workouts, follow your progress, and keep your training history organized in one place.
+        </p>
+
+        <div className="flex flex-col gap-3">
+          <Link
+            href="/signup"
+            className="flex min-h-12 w-full items-center justify-center rounded-full bg-[var(--lime-green)] px-5 py-3.5 text-base font-bold text-[#232323] shadow-[0_2px_12px_rgba(226,241,99,0.35)] transition hover:brightness-105 hover:shadow-[0_4px_18px_rgba(226,241,99,0.45)] active:scale-[0.98]"
+          >
+            Get Started - It&apos;s Free
+          </Link>
+          <Link
+            href="/login"
+            className="flex min-h-12 w-full items-center justify-center rounded-full border border-white/15 bg-white/10 px-5 py-3.5 text-base font-semibold text-white transition hover:bg-white/15 active:scale-[0.98]"
+          >
+            Log In
+          </Link>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2 pb-8">
+        {features.map((feature) => (
+          <span key={feature} className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-xs font-medium text-white/55">
+            {feature}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
 }

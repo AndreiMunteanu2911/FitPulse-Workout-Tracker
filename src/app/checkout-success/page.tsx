@@ -8,8 +8,8 @@ import { Package, ShoppingBag } from "lucide-react";
 
 type ConfirmResponse = {
   paymentStatus?: string | null;
-  metadata?: Record<string, string> | null;
-  shippingDetails?: unknown;
+  orderStatus?: string | null;
+  purchaseType?: string | null;
   error?: string;
 };
 
@@ -61,7 +61,7 @@ export default function CheckoutSuccessPage() {
   }, [router, sessionId]);
 
   const summary = useMemo(() => {
-    if (result?.metadata?.type === "product-order") {
+    if (result?.purchaseType === "product-order") {
       return {
         title: "Order complete",
         description: "Your product purchase was successful.",
@@ -74,7 +74,7 @@ export default function CheckoutSuccessPage() {
       description: "Your checkout finished successfully.",
       icon: <ShoppingBag className="h-6 w-6 text-[var(--primary-600)]" />,
     };
-  }, [result?.metadata]);
+  }, [result?.purchaseType]);
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-2xl items-center px-4 py-10">

@@ -41,27 +41,26 @@ export default function CoachTextWindow({
   })();
 
   return (
-    <div className="flex-1 overflow-y-auto px-5 py-6">
+    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-6">
       {messages.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-full text-center max-w-md mx-auto">
+        <div className="mx-auto flex min-h-full max-w-2xl flex-col items-center justify-center py-4 text-center">
           <h2 className="text-xl font-bold text-[var(--foreground)] mb-2">Your AI Fitness Coach</h2>
           <p className="text-base text-[var(--muted-foreground)] mb-6 leading-relaxed">
             Ask about your training progress, get recommendations, or request a custom workout.
           </p>
-          {/* Suggestions */}
-          <div className="flex flex-wrap gap-2.5 justify-center">
+          <div className="grid w-full grid-cols-1 gap-2.5 sm:grid-cols-2">
             {suggestions.map((s, i) => (
               <button
                 key={i}
                 onClick={() => onSuggestionClick(s.message)}
-                className="flex items-center gap-2.5 px-4 py-3 rounded-[var(--radius-md)] text-sm font-medium
+                className="flex min-w-0 items-center gap-2.5 rounded-[var(--radius-md)] px-4 py-3 text-left text-sm font-medium
                   bg-[var(--surface-raised)] text-[var(--foreground)]
                   border border-[var(--border)]
                   hover:border-[var(--primary-500)] hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-950)]
                   transition-colors"
               >
                 <s.icon className="w-4 h-4 flex-shrink-0" />
-                <span className="truncate max-w-[200px]">{s.label}</span>
+                <span className="min-w-0 leading-snug">{s.label}</span>
               </button>
             ))}
           </div>

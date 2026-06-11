@@ -24,7 +24,7 @@ export default function CoachTextArea({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="px-5 py-4 border-t border-[var(--border)]">
+    <form onSubmit={handleSubmit} className="shrink-0 border-t border-[var(--border)] bg-[var(--surface)] px-5 py-4">
       <div className="flex items-center gap-3">
         <input
           ref={inputRef}

@@ -1,13 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { PageHeader } from "@/components/PageHeader";
 import type { Achievement } from "@/types";
 import {
   Activity,
-  ArrowLeft,
   Award,
   BarChart2,
   Check,
@@ -255,27 +254,16 @@ export default function AchievementsPage() {
   return (
     <ProtectedWrapper>
       <div className="w-full space-y-5">
-        <div className="page-header">
-          <div className="flex items-start gap-3">
-            <Link
-              href="/dashboard"
-              aria-label="Back to dashboard"
-              className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--surface)] text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-            <div className="min-w-0 flex-1">
-              <h1 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight text-[var(--foreground)] sm:text-3xl" style={{ fontFamily: "var(--font-poppins)" }}>
-                <Trophy className="h-6 w-6 text-[var(--primary-500)]" />
-                Achievements
-              </h1>
-              <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+        <PageHeader
+          title="Achievements"
+          backHref="/dashboard"
+          description={
+            <>
                 {loading ? "Loading your progress..." : `${totalClaimed} of ${totalAchievements} claimed`}
                 {!loading && claimableCount > 0 && <span className="font-semibold text-[var(--primary-600)]"> · {claimableCount} ready</span>}
-              </p>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        />
 
         {loading && (
           <div className="flex min-h-[18rem] items-center justify-center">

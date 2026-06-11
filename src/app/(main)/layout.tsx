@@ -29,11 +29,10 @@ export default async function MainLayout({
     <AuthSessionProvider initialUser={user}>
       <div className="flex min-h-dvh w-full bg-[var(--background)] text-[var(--foreground)]">
         <Navbar />
-        <div className="flex h-dvh min-w-0 flex-1 flex-col overflow-y-auto overscroll-contain">
+        <div className="flex min-h-dvh min-w-0 flex-1 flex-col">
           <TopBar />
-          {/* Spacer matching the fixed TopBar height so content is never hidden beneath it */}
           <div className="h-[var(--ph-top)] flex-shrink-0 md:hidden" aria-hidden="true" />
-          <main className="mx-auto w-full max-w-5xl flex-1 min-w-0 px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-4 sm:px-5 sm:pt-5 md:px-8 md:pb-8 md:pt-6">
+          <main className="page-shell min-w-0 flex-1 px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 md:px-8 md:pb-10 md:pt-8 lg:px-10">
             {children}
           </main>
         </div>

@@ -9,6 +9,7 @@ import { Product } from "@/types";
 import { ShoppingBag, CheckCircle2, XCircle } from "lucide-react";
 import ProductCard from "@/components/shop/ProductCard";
 import ProductPurchaseModal from "@/components/shop/ProductPurchaseModal";
+import { PageHeader } from "@/components/PageHeader";
 
 
 export default function ShopPage() {
@@ -89,19 +90,10 @@ export default function ShopPage() {
   return (
       <ProtectedWrapper>
         <div className="w-full">
-          <div className="page-header mb-6">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight" style={{ fontFamily: "var(--font-poppins)" }}>
-                  Shop
-                </h1>
-                <p className="text-sm text-[var(--muted-foreground)] mt-1">
-                    Everything you need for your workout.
-                </p>
-              </div>
-
-            </div>
-          </div>
+          <PageHeader
+            title="Shop"
+            description="Everything you need for your workout."
+          />
 
           {message && (
               <div className={`mb-6 flex items-center gap-3 rounded-[var(--radius-xl)] border px-5 py-4 shadow-[var(--shadow-xs)] ${

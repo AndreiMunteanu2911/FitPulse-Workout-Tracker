@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe } from "@/helper/stripe";
+import { getStripeClient } from "@/helper/stripe";
 import { getSupabaseAdminClient } from "@/helper/supabaseAdmin";
 import { fulfillStripeProductOrder } from "@/helper/shopFulfillment";
-
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 type CheckoutSessionLike = {
   id?: string;
@@ -37,14 +35,22 @@ type PaymentIntentLike = {
 };
 
 export async function POST(req: NextRequest) {
-  const supabaseAdmin = getSupabaseAdminClient();
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!endpointSecret) {
+    return NextResponse.json({ error: "Webhook is not configured." }, { status: 503 });
+  }
+
+  const stripe = getStripeClient();
   const body = await req.text();
-  const sig = req.headers.get("stripe-signature") as string;
+  const signature = req.headers.get("stripe-signature");
+  if (!signature) {
+    return NextResponse.json({ error: "Missing Stripe signature." }, { status: 400 });
+  }
 
   let event;
 
   try {
-    event = stripe.webhooks.constructEvent(body, sig, endpointSecret || "");
+    event = stripe.webhooks.constructEvent(body, signature, endpointSecret);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Webhook Error";
     console.error(`Webhook Error: ${message}`);
@@ -63,8 +69,12 @@ export async function POST(req: NextRequest) {
         ? ((await stripe.paymentIntents.retrieve(checkoutSession.payment_intent, { expand: ["latest_charge"] })) as unknown as PaymentIntentLike)
         : (checkoutSession.payment_intent as PaymentIntentLike | null) ?? null;
 
-    if (checkoutSession.metadata?.type === "product-order") {
+    if (
+      checkoutSession.metadata?.type === "product-order" &&
+      (checkoutSession.payment_status === "paid" || checkoutSession.payment_status === "no_payment_required")
+    ) {
       try {
+        const supabaseAdmin = getSupabaseAdminClient();
         await fulfillStripeProductOrder(supabaseAdmin, checkoutSession as never, paymentIntent as never);
       } catch (error) {
         console.error("[shop-webhook] product fulfillment failed", error);

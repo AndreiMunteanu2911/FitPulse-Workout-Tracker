@@ -2,42 +2,41 @@ import ProtectedWrapper from "@/components/ProtectedWrapper";
 import DashboardStats from "@/components/DashboardStats";
 import DashboardShortcuts from "@/components/DashboardShortcuts";
 import Link from "next/link";
-import { Dumbbell, History, Library, User } from "lucide-react";
+import { ArrowRight, Dumbbell, History, Library, User } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 
 const quickActions = [
-  { name: "Workout", href: "/workout", Icon: Dumbbell, color: "from-[var(--primary-500)] to-[var(--primary-600)]" },
-  { name: "History", href: "/history", Icon: History, color: "from-[var(--primary-400)] to-[var(--primary-500)]" },
-  { name: "Exercises", href: "/exercises", Icon: Library, color: "from-[var(--primary-600)] to-[var(--primary-700)]" },
-  { name: "Profile", href: "/profile", Icon: User, color: "from-[var(--primary-300)] to-[var(--primary-500)]" },
+  { name: "Start workout", description: "Log sets and track your session", href: "/workout", Icon: Dumbbell },
+  { name: "Workout history", description: "Review completed sessions", href: "/history", Icon: History },
+  { name: "Exercise library", description: "Browse movements and stats", href: "/exercises", Icon: Library },
+  { name: "Your profile", description: "Progress, weight, and records", href: "/profile", Icon: User },
 ];
 
 export default function DashboardPage() {
   return (
     <ProtectedWrapper>
       <div className="w-full">
-        <div className="page-header mb-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] tracking-tight" style={{ fontFamily: "var(--font-poppins)" }}>
-                Dashboard
-              </h1>
-              <p className="text-sm text-[var(--muted-foreground)] mt-1">It&apos;s time to challenge your limits.</p>
-            </div>
-          </div>
-        </div>
+        <PageHeader
+          title="Dashboard"
+          description="Your training activity, progress, and shortcuts in one place."
+        />
 
         <div className="mb-6">
-          <div className="grid grid-cols-4 gap-3">
-            {quickActions.map(({ name, href, Icon, color }) => (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {quickActions.map(({ name, description, href, Icon }) => (
               <Link
                 key={name}
                 href={href}
-                className="flex flex-col items-center gap-2 p-4 bg-[var(--surface)] rounded-[var(--radius-lg)] transition-all duration-200 group"
+                className="card-interactive group flex items-center gap-4 p-4"
               >
-                <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${color} flex items-center justify-center transition-shadow`}>
-                  <Icon className="w-5 h-5 text-white" />
+                <div className="flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--primary-50)] text-[var(--primary-600)] dark:bg-[var(--primary-100)] dark:text-[var(--primary-700)]">
+                  <Icon className="size-5" />
                 </div>
-                <span className="text-xs font-semibold text-[var(--foreground)]">{name}</span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-[var(--foreground)]">{name}</p>
+                  <p className="mt-0.5 text-xs leading-5 text-[var(--muted-foreground)]">{description}</p>
+                </div>
+                <ArrowRight className="size-4 shrink-0 text-[var(--muted-foreground)] transition-transform group-hover:translate-x-0.5" />
               </Link>
             ))}
           </div>
@@ -47,7 +46,7 @@ export default function DashboardPage() {
 
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-bold text-[var(--foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>Your Stats</h2>
+            <h2 className="text-lg font-semibold tracking-tight text-[var(--foreground)]">Training overview</h2>
           </div>
           <DashboardStats />
         </div>

@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
-import Link from "next/link";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useExercises } from "@/hooks/useExercises";
 import { usePersonalRecords } from "@/hooks/usePersonalRecords";
@@ -12,8 +11,9 @@ import ExerciseStatsTab from "@/components/ExerciseStatsTab";
 import FormChecker from "@/components/FormChecker";
 import FormHistoryPanel from "@/components/FormHistoryPanel";
 import Button from "@/components/Button";
+import { PageHeader } from "@/components/PageHeader";
 import type { Exercise, PersonalRecord, ExerciseFormRules } from "@/types";
-import { ChevronLeft, Sparkles, Camera } from "lucide-react";
+import { Sparkles, Camera } from "lucide-react";
 
 function ExerciseThumbnail({ src }: { src: string }) {
     const [loaded, setLoaded] = useState(false);
@@ -83,16 +83,11 @@ export default function ExerciseDetailsPage() {
     return (
         <ProtectedWrapper>
             <div className="w-full">
-                {/* Back header */}
-                <div className="page-header mb-4 flex items-center gap-3" style={{ top: 0 }}>
-                    <Link
-                        href="/exercises"
-                        className="w-9 h-9 rounded-[var(--radius-sm)] flex items-center justify-center bg-[var(--surface)] transition-shadow flex-shrink-0"
-                    >
-                        <ChevronLeft className="w-4 h-4 text-[var(--foreground)]" />
-                    </Link>
-                    <h1 className="text-xl sm:text-2xl font-extrabold text-[var(--foreground)] truncate">{capitalize(exercise.name)}</h1>
-                </div>
+                <PageHeader
+                    title={capitalize(exercise.name)}
+                    description="Exercise details, technique guidance, and performance history."
+                    backHref="/exercises"
+                />
 
                 {/* Tabs */}
                 <div className="flex gap-1 p-1 bg-[var(--surface-raised)] rounded-[var(--radius-md)] mb-5 w-fit">

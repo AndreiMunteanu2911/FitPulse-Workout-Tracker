@@ -4,9 +4,9 @@ import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import Link from "next/link";
 import ModalWrapper from "@/components/ModalWrapper";
 import Button from "@/components/Button";
+import { PageHeader } from "@/components/PageHeader";
 import WorkoutHistoryExerciseCard from "@/components/WorkoutHistoryExerciseCard";
 import WorkoutExerciseCard from "@/components/WorkoutExerciseCard";
 import ExerciseSearchModal from "@/components/ExerciseSearchModal";
@@ -15,7 +15,7 @@ import { useHistory } from "@/hooks/useHistory";
 import { useWorkout } from "@/hooks/useWorkout";
 import { useExercises } from "@/hooks/useExercises";
 import type { Workout, WorkoutExercise, Exercise, Set as WorkoutSet } from "@/types";
-import { ChevronLeft, Pencil, PenSquare, Trash2 } from "lucide-react";
+import { Pencil, PenSquare, Trash2 } from "lucide-react";
 
 export default function WorkoutDetailPage() {
     const params = useParams();
@@ -364,9 +364,11 @@ export default function WorkoutDetailPage() {
         return (
             <ProtectedWrapper>
                 <div className="w-full">
-                    <div className="page-header mb-6" style={{ top: 0 }}>
-                        <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--foreground)]">Workout Details</h1>
-                    </div>
+                    <PageHeader
+                        title="Workout details"
+                        description="Review this workout session."
+                        backHref="/history"
+                    />
                     <div className="p-6 rounded-[var(--radius-md)] bg-[var(--color-destructive-bg)] text-[var(--color-destructive)] text-center font-medium">
                         {error || "Workout not found."}
                     </div>
@@ -392,20 +394,11 @@ export default function WorkoutDetailPage() {
     return (
         <ProtectedWrapper>
             <div className="w-full">
-                {/* Header */}
-                <div className="page-header mb-4 flex items-center gap-3" style={{ top: 0 }}>
-                    <Link
-                        href="/history"
-                        className="w-9 h-9 rounded-[var(--radius-sm)] flex items-center justify-center bg-[var(--surface)] transition-shadow flex-shrink-0"
-                    >
-                        <ChevronLeft className="w-4 h-4 text-[var(--foreground)]" />
-                    </Link>
-                    <div className="min-w-0 flex-1">
-                        <h1 className="text-xl sm:text-2xl font-extrabold text-[var(--foreground)] truncate">{workout.name}</h1>
-                        <p className="text-xs text-[var(--muted-foreground)] mt-0.5">{formatDate(workout.workout_date)}</p>
-                    </div>
-
-                    {isEditing ? (
+                <PageHeader
+                    title={workout.name}
+                    description={formatDate(workout.workout_date)}
+                    backHref="/history"
+                    actions={isEditing ? (
                         <Button
                             onClick={doneEditing}
                             className="px-3 py-2 text-sm flex-shrink-0"
@@ -438,7 +431,7 @@ export default function WorkoutDetailPage() {
                             </button>
                         </>
                     )}
-                </div>
+                />
 
                 {/* Summary stats */}
                 <div className="grid grid-cols-3 gap-3 mb-6">

@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, ChevronLeft, Edit3, Eye, Loader2, Plus, Save, Search, Sparkles, Trash2, X } from "lucide-react";
+import { AlertTriangle, Edit3, Eye, Loader2, Plus, Save, Search, Sparkles, Trash2, X } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import Button from "@/components/Button";
 import ModalWrapper from "@/components/ModalWrapper";
 import BulkAiGeneratedConfirmModal from "@/components/admin/BulkAiGeneratedConfirmModal";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import { useAuthSession } from "@/components/AuthSessionProvider";
 import {
   FORM_PATTERNS,
@@ -302,20 +303,11 @@ export default function AdminFormRulesPage() {
 
   return (
     <div className="w-full">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center mb-6">
-        <div className="flex items-center gap-3 min-w-0">
-          <button
-            onClick={() => router.push("/admin/exercises")}
-            className="w-9 h-9 rounded-lg bg-[var(--surface-raised)] hover:bg-[var(--surface-overlay)] flex items-center justify-center transition-colors"
-          >
-            <ChevronLeft className="w-5 h-5 text-[var(--muted-foreground)]" />
-          </button>
-          <div>
-            <h1 className="text-xl font-bold text-[var(--foreground)]">Pattern Form Rules</h1>
-            <p className="text-sm text-[var(--muted-foreground)]">Review exercise pattern mapping and overrides</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 sm:ml-auto">
+      <AdminPageHeader
+        title="Pattern Form Rules"
+        subtitle="Review exercise pattern mapping and overrides."
+        backHref="/admin/exercises"
+        action={
           <Button
             variant="secondary"
             onClick={() => setShowBulkConfirmModal(true)}
@@ -325,8 +317,8 @@ export default function AdminFormRulesPage() {
             {bulkSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
             Mark All AI Generated
           </Button>
-        </div>
-      </div>
+        }
+      />
 
       <BulkAiGeneratedConfirmModal
         isOpen={showBulkConfirmModal}
