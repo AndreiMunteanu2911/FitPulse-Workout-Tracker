@@ -24,7 +24,7 @@ export default function TemplateCard({ template, onEdit, onDelete, onStart }: Te
     <article className="card group relative overflow-hidden">
       <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[var(--primary-500)] to-[var(--lime-green)]" />
       <div className="p-5 sm:p-6">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-3">
           <div className="min-w-0 flex-1">
             <p className="eyebrow !mb-1">Workout template</p>
             <h3 className="truncate text-lg font-bold tracking-[-0.025em] text-[var(--foreground)]">{template.name}</h3>
@@ -34,14 +34,14 @@ export default function TemplateCard({ template, onEdit, onDelete, onStart }: Te
               </p>
             )}
           </div>
-          <div className="flex shrink-0 gap-1">
+          <div className="flex flex-wrap justify-end gap-1 self-stretch">
             <button
               onClick={onEdit}
               className="inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-xs font-semibold text-[var(--muted-foreground)] transition-colors hover:bg-[var(--surface-raised)] hover:text-[var(--foreground)]"
               aria-label="Edit template"
             >
               <PenSquare className="size-3.5" />
-              <span className="hidden sm:inline">Edit</span>
+              <span>Edit</span>
             </button>
             <button
               onClick={onDelete}
@@ -49,7 +49,7 @@ export default function TemplateCard({ template, onEdit, onDelete, onStart }: Te
               aria-label="Delete template"
             >
               <Trash2 className="size-3.5" />
-              <span className="hidden sm:inline">Delete</span>
+              <span>Delete</span>
             </button>
           </div>
         </div>

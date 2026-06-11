@@ -19,7 +19,7 @@ export async function GET(
   // Load messages
   const { data: messages, error: msgError } = await supabase
     .from("ai_messages")
-    .select("id, role, content, created_at")
+    .select("id, client_id, role, content, created_at")
     .eq("conversation_id", id)
     .order("created_at", { ascending: true });
 

@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/helper/supabaseServer";
+import { z } from "zod";
+
+const weightLogSchema = z.object({
+  log_date: z.string().date(),
+  weight: z.coerce.number().positive().max(1000),
+});
 
 export async function GET() {
   const supabase = await createSupabaseServerClient();
@@ -21,10 +27,12 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { log_date, weight } = await req.json();
+  const parsed = weightLogSchema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) return NextResponse.json({ error: "Invalid weight log" }, { status: 400 });
+  const { log_date, weight } = parsed.data;
   const { error } = await supabase
     .from("weight_logs")
-    .insert([{ user_id: user.id, log_date, weight: parseFloat(weight) }]);
+    .insert([{ user_id: user.id, log_date, weight }]);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ success: true });

@@ -3,54 +3,24 @@ import { createSupabaseServerClient } from "@/helper/supabaseServer";
 import {
   ACHIEVEMENT_DEFINITIONS,
   checkUnlockCondition,
-  levelFromXP,
   xpForLevel,
   xpProgress,
 } from "@/lib/gamification";
+import { calculateWorkoutSummary } from "@/lib/workout-stats";
 
 interface SetRow { weight: number; reps: number }
 interface WorkoutExerciseRow { exercise_id?: string; sets?: SetRow[] }
 interface WorkoutRow { workout_date: string; workout_exercises?: WorkoutExerciseRow[] }
 interface UserAchievementRow { achievement_id: string; unlocked_at: string }
-interface UserStatsRow { total_xp: number; level: number }
 
 function buildWorkoutSummary(rows: WorkoutRow[]) {
-  let totalVolume = 0;
-  const exerciseMaxWeights = new Map<string, number>();
-  const MS_PER_DAY = 86_400_000;
-
-  rows.forEach((w) => {
-    (w.workout_exercises ?? []).forEach((we) => {
-      (we.sets ?? []).forEach((s) => {
-        totalVolume += s.weight * s.reps;
-        if (we.exercise_id) {
-          const prev = exerciseMaxWeights.get(we.exercise_id) ?? 0;
-          if (s.weight > prev) exerciseMaxWeights.set(we.exercise_id, s.weight);
-        }
-      });
-    });
-  });
-
-  const uniqueDates = [...new Set(rows.map((w) => w.workout_date))].sort(
-    (a, b) => new Date(b).getTime() - new Date(a).getTime(),
-  );
-
-  let longestStreak = 0;
-  if (uniqueDates.length > 0) {
-    let temp = 1;
-    for (let i = 1; i < uniqueDates.length; i++) {
-      const diff = (new Date(uniqueDates[i - 1]).getTime() - new Date(uniqueDates[i]).getTime()) / MS_PER_DAY;
-      if (diff === 1) {
-        temp++;
-      } else {
-        longestStreak = Math.max(longestStreak, temp);
-        temp = 1;
-      }
-    }
-    longestStreak = Math.max(longestStreak, temp);
-  }
-
-  return { totalWorkouts: rows.length, prCount: exerciseMaxWeights.size, longestStreak, totalVolume };
+  const summary = calculateWorkoutSummary(rows);
+  return {
+    totalWorkouts: summary.totalWorkouts,
+    prCount: summary.prCount,
+    longestStreak: summary.longestStreak,
+    totalVolume: summary.totalVolume,
+  };
 }
 
 export async function GET() {
@@ -132,38 +102,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Achievement conditions not yet met" }, { status: 403 });
   }
 
-  const unlockedAt = new Date().toISOString();
-  const { error: insertError } = await supabase
-    .from("user_achievements")
-    .insert({ user_id: user.id, achievement_id: achievementId, unlocked_at: unlockedAt });
+  const { data: claimRows, error: claimError } = await supabase.rpc("claim_achievement", {
+    p_achievement_id: achievementId,
+    p_xp_reward: definition.xpReward,
+  });
 
-  if (insertError) {
-    if (insertError.code === "23505") {
+  if (claimError) {
+    if (claimError.code === "23505") {
       return NextResponse.json({ error: "Achievement already claimed" }, { status: 409 });
     }
-    return NextResponse.json({ error: insertError.message }, { status: 500 });
+    return NextResponse.json({ error: claimError.message }, { status: 500 });
   }
 
-  const { data: statsRow } = await supabase
-    .from("user_stats")
-    .select("total_xp, level")
-    .eq("user_id", user.id)
-    .single();
-
-  const currentXP = (statsRow as UserStatsRow | null)?.total_xp ?? 0;
-  const newTotalXP = currentXP + definition.xpReward;
-  const newLevel = levelFromXP(newTotalXP);
-
-  const { error: upsertError } = await supabase
-    .from("user_stats")
-    .upsert(
-      { user_id: user.id, total_xp: newTotalXP, level: newLevel },
-      { onConflict: "user_id" },
-    );
-
-  if (upsertError) {
-    return NextResponse.json({ error: upsertError.message }, { status: 500 });
-  }
+  const claim = Array.isArray(claimRows) ? claimRows[0] : claimRows;
+  if (!claim) return NextResponse.json({ error: "Achievement claim returned no result" }, { status: 500 });
+  const unlockedAt = claim.claimed_at as string;
+  const newTotalXP = Number(claim.total_xp);
+  const newLevel = Number(claim.level);
 
   return NextResponse.json({
     success: true,

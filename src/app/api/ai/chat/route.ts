@@ -12,8 +12,17 @@ import { buildContextPrompt, SYSTEM_PROMPT } from "@/lib/ai-prompts";
 import { streamOpenRouter, generateEmbedding, type ChatMessage } from "@/lib/ai";
 import { generateSmartWorkout } from "@/lib/workout-generator";
 import { buildExerciseIndex } from "@/lib/exercise-index";
+import { z } from "zod";
 
 export const maxDuration = 60;
+
+const chatRequestSchema = z.object({
+  message: z.string().trim().min(1).max(4000),
+  conversationHistory: z.array(z.object({
+    role: z.enum(["user", "assistant"]),
+    content: z.string().max(12000),
+  })).max(20).default([]),
+});
 
 export async function POST(req: NextRequest) {
   const supabase = await createSupabaseServerClient();
@@ -23,17 +32,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await req.json();
-  const message: string = body.message;
-  const conversationHistory: { role: string; content: string }[] =
-    body.conversationHistory ?? [];
-
-  if (!message || typeof message !== "string") {
-    return NextResponse.json(
-      { error: "Message is required" },
-      { status: 400 },
-    );
-  }
+  const parsed = chatRequestSchema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) return NextResponse.json({ error: "Invalid message" }, { status: 400 });
+  const { message, conversationHistory } = parsed.data;
 
   // 1. Classify intent
   const intent = classifyIntent(message);

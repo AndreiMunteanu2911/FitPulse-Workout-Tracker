@@ -377,10 +377,7 @@ export async function buildMuscleGapAnalysis(
         const exercises =
           (w.workout_exercises as Record<string, unknown>[]) ?? [];
         const hasMuscle = exercises.some(
-          (we) =>
-            exerciseIds.includes(we.exercise_id as string) ||
-            // Also check custom exercises
-            (we.exercise_id as string)?.startsWith("custom_"),
+          (we) => exerciseIds.includes(we.exercise_id as string),
         );
         if (hasMuscle) {
           const dateStr = w.workout_date as string;

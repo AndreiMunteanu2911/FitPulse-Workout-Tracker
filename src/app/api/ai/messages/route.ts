@@ -4,24 +4,16 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/helper/supabaseServer";
+import { aiMessagesSchema } from "@/lib/validations";
 
 export async function POST(req: NextRequest) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await req.json();
-  const { conversationId, messages } = body as {
-    conversationId: string;
-    messages: { role: "user" | "assistant"; content: string }[];
-  };
-
-  if (!conversationId || !messages?.length) {
-    return NextResponse.json(
-      { error: "conversationId and messages are required" },
-      { status: 400 },
-    );
-  }
+  const parsed = aiMessagesSchema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) return NextResponse.json({ error: "Invalid messages" }, { status: 400 });
+  const { conversationId, messages } = parsed.data;
 
   // Verify conversation belongs to user
   const { data: conv, error: convError } = await supabase
@@ -38,13 +30,14 @@ export async function POST(req: NextRequest) {
   // Insert messages
   const rows = messages.map((m) => ({
     conversation_id: conversationId,
+    client_id: m.clientId,
     role: m.role,
     content: m.content,
   }));
 
   const { error: insertError } = await supabase
     .from("ai_messages")
-    .insert(rows);
+    .upsert(rows, { onConflict: "conversation_id,client_id", ignoreDuplicates: true });
 
   if (insertError) {
     return NextResponse.json({ error: insertError.message }, { status: 500 });

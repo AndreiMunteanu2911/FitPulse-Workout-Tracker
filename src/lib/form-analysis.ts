@@ -15,6 +15,7 @@ import type { FormPatternDefinition } from "@/lib/form-rules";
 import type { PrimaryMetricPhaseLogic } from "@/types";
 
 export const FORM_DETECTOR_VERSION = "mediapipe-pose-landmarker-0.10.34";
+export const FORM_RULES_VERSION = "form-rules-v1";
 const LANDMARK_SAMPLE_INTERVAL_MS = 100;
 const MAX_LANDMARK_SAMPLES = 900;
 const MAX_FEEDBACK_ITEMS = 8;
@@ -424,6 +425,7 @@ export function buildSessionAnalysis(params: {
     reps,
     duration_ms: durationMs,
     detector_version: FORM_DETECTOR_VERSION,
+    rules_version: FORM_RULES_VERSION,
     rules_confidence: rulesConfidence,
     analysis_status: coaching ? "cloud_complete" : (usedCloudCoach ? "cloud_failed" : "local_only"),
     feedback_summary: feedbackSummary,

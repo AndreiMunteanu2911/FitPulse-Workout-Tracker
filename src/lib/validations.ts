@@ -24,6 +24,36 @@ export const setSchema = z.object({
   weight: z.number().min(0, "Weight cannot be negative"),
 });
 
+export const setMutationSchema = z.object({
+  reps: z.number().int().min(0).max(1000).optional(),
+  weight: z.number().min(0).max(100000).optional(),
+  is_confirmed: z.boolean().optional(),
+}).refine((value) => Object.keys(value).length > 0, "At least one field is required");
+
+export const profileSchema = z.object({
+  display_name: z.string().trim().min(1).max(80).optional(),
+  birthday: z.string().date().nullable().optional(),
+  gender: z.enum(["male", "female", "other"]).nullable().optional(),
+  height_cm: z.number().min(50).max(300).nullable().optional(),
+  onboarding_done: z.boolean().optional(),
+});
+
+export const templateMutationSchema = z.object({
+  id: z.string().uuid().optional(),
+  name: z.string().trim().min(1).max(100),
+  description: z.string().trim().max(500).nullish(),
+  exercises: z.array(z.object({ exercise_id: z.string().min(1).max(160) })).max(50).default([]),
+});
+
+export const aiMessagesSchema = z.object({
+  conversationId: z.string().uuid(),
+  messages: z.array(z.object({
+    clientId: z.string().uuid(),
+    role: z.enum(["user", "assistant"]),
+    content: z.string().min(1).max(20000),
+  })).min(1).max(10),
+});
+
 const patternIds = FORM_PATTERNS.map((pattern) => pattern.id) as [string, ...string[]];
 
 export const primaryMetricSchema = z.object({
@@ -134,6 +164,7 @@ export const formSessionAnalysisSchema = z.object({
   reps: z.number().int().min(0),
   duration_ms: z.number().int().min(0),
   detector_version: z.string().min(1).max(80),
+  rules_version: z.string().min(1).max(80),
   rules_confidence: z.number().min(0).max(1),
   analysis_status: z.enum(["local_only", "cloud_pending", "cloud_complete", "cloud_failed"]),
   feedback_summary: z.string().max(500),
@@ -164,6 +195,7 @@ export const formCoachingAnalysisSchema = z.object({
   reps: z.number().int().min(0),
   duration_ms: z.number().int().min(0),
   detector_version: z.string().min(1).max(80),
+  rules_version: z.string().min(1).max(80),
   rules_confidence: z.number().min(0).max(1),
   analysis_status: z.enum(["local_only", "cloud_pending", "cloud_complete", "cloud_failed"]),
   feedback_summary: z.string().max(500),

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/helper/supabaseServer";
 import { resolveExercises } from "@/helper/resolveExercises";
+import { templateMutationSchema } from "@/lib/validations";
 
 interface TemplateExercise {
   exercise_id: string;
@@ -90,35 +91,16 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { name, description, exercises } = await req.json();
-
-  if (!name) {
-    return NextResponse.json({ error: "Template name is required" }, { status: 400 });
-  }
-
-  const { data: template, error: templateError } = await supabase
-    .from("workout_templates")
-    .insert({ user_id: user.id, name, description })
-    .select()
-    .single();
-
-  if (templateError) return NextResponse.json({ error: templateError.message }, { status: 500 });
-
-  if (exercises && exercises.length > 0) {
-    const templateExercises = exercises.map((ex: { exercise_id: string }, index: number) => ({
-      template_id: template.id,
-      exercise_id: ex.exercise_id,
-      order_index: index,
-    }));
-    const { error: exercisesError } = await supabase.from("template_exercises").insert(templateExercises);
-    if (exercisesError) {
-      // Rollback: delete the template if exercises fail
-      await supabase.from("workout_templates").delete().eq("id", template.id);
-      return NextResponse.json({ error: exercisesError.message }, { status: 500 });
-    }
-  }
-
-  return NextResponse.json({ template });
+  const parsed = templateMutationSchema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) return NextResponse.json({ error: "Invalid template" }, { status: 400 });
+  const { data: id, error } = await supabase.rpc("save_workout_template", {
+    p_id: null,
+    p_name: parsed.data.name,
+    p_description: parsed.data.description ?? null,
+    p_exercise_ids: parsed.data.exercises.map((exercise) => exercise.exercise_id),
+  });
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ template: { id, ...parsed.data, user_id: user.id } });
 }
 
 export async function PUT(req: NextRequest) {
@@ -126,39 +108,16 @@ export async function PUT(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { id, name, description, exercises } = await req.json();
-
-  if (!id) return NextResponse.json({ error: "Template ID is required" }, { status: 400 });
-
-  // Update template
-  const { data: template, error: templateError } = await supabase
-    .from("workout_templates")
-    .update({ name, description, updated_at: new Date().toISOString() })
-    .eq("id", id)
-    .eq("user_id", user.id)
-    .select()
-    .single();
-
-  if (templateError) return NextResponse.json({ error: templateError.message }, { status: 500 });
-
-  // Update exercises if provided
-  if (exercises) {
-    // Delete existing exercises
-    await supabase.from("template_exercises").delete().eq("template_id", id);
-
-    // Insert new exercises
-    if (exercises.length > 0) {
-      const templateExercises = exercises.map((ex: { exercise_id: string }, index: number) => ({
-        template_id: id,
-        exercise_id: ex.exercise_id,
-        order_index: index,
-      }));
-      const { error: exercisesError } = await supabase.from("template_exercises").insert(templateExercises);
-      if (exercisesError) return NextResponse.json({ error: exercisesError.message }, { status: 500 });
-    }
-  }
-
-  return NextResponse.json({ template });
+  const parsed = templateMutationSchema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success || !parsed.data.id) return NextResponse.json({ error: "Invalid template" }, { status: 400 });
+  const { data: id, error } = await supabase.rpc("save_workout_template", {
+    p_id: parsed.data.id,
+    p_name: parsed.data.name,
+    p_description: parsed.data.description ?? null,
+    p_exercise_ids: parsed.data.exercises.map((exercise) => exercise.exercise_id),
+  });
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ template: { id, ...parsed.data, user_id: user.id } });
 }
 
 export async function DELETE(req: NextRequest) {

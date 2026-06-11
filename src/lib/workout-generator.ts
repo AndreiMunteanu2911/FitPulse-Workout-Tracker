@@ -196,68 +196,17 @@ export async function createDraftWorkoutInDB(
   userId: string,
   workout: DraftWorkout,
 ): Promise<CreatedWorkoutResult> {
-  // 1. Create the workout
-  const { data: workoutData, error: workoutError } = await supabase
-    .from("workouts")
-    .insert({
-      user_id: userId,
-      name: workout.name,
-      status: "draft",
-    })
-    .select("id")
-    .single();
-
-  if (workoutError || !workoutData) {
-    throw new Error(
-      `Failed to create workout: ${workoutError?.message ?? "Unknown error"}`,
-    );
-  }
-
-  const workoutId = workoutData.id as string;
-
-  // 2. Add exercises and sets
-  for (let i = 0; i < workout.exercises.length; i++) {
-    const ex = workout.exercises[i];
-
-    const { data: exData, error: exError } = await supabase
-      .from("workout_exercises")
-      .insert({
-        workout_id: workoutId,
-        exercise_id: ex.exercise_id,
-        order_index: i,
-      })
-      .select("id")
-      .single();
-
-    if (exError || !exData) {
-      throw new Error(
-        `Failed to add exercise ${ex.exercise_id}: ${exError?.message ?? "Unknown error"}`,
-      );
-    }
-
-    const workoutExerciseId = exData.id as string;
-
-    // 3. Add sets
-    for (let j = 0; j < ex.sets.length; j++) {
-      const set = ex.sets[j];
-      const { error: setError } = await supabase.from("sets").insert({
-        workout_exercise_id: workoutExerciseId,
-        set_number: j + 1,
-        reps: set.reps,
-        weight: set.weight,
-        is_confirmed: set.is_confirmed ?? false,
-      });
-
-      if (setError) {
-        throw new Error(
-          `Failed to add set for ${ex.exercise_id}: ${setError.message}`,
-        );
-      }
-    }
+  void userId;
+  const { data: workoutId, error } = await supabase.rpc("replace_workout_draft", {
+    p_name: workout.name,
+    p_exercises: workout.exercises,
+  });
+  if (error || !workoutId) {
+    throw new Error(`Failed to create workout: ${error?.message ?? "Unknown error"}`);
   }
 
   return {
-    workoutId,
+    workoutId: workoutId as string,
     name: workout.name,
     exerciseCount: workout.exercises.length,
     exercises: workout.exercises,

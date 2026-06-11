@@ -168,6 +168,7 @@ export interface FormSessionAnalysis {
   reps: number;
   duration_ms: number;
   detector_version: string;
+  rules_version: string;
   rules_confidence: number;
   analysis_status: FormAnalysisStatus;
   feedback_summary: string;
@@ -211,6 +212,7 @@ export interface Set {
 
 export interface WorkoutExercise {
   id: string;
+  client_key?: string;
   workout_id?: string;
   exercise_id: string;
   order_index: number;

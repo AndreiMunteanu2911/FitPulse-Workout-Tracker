@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/helper/supabaseServer";
+import { profileSchema } from "@/lib/validations";
 
 export async function GET() {
   const supabase = await createSupabaseServerClient();
@@ -18,7 +19,14 @@ export async function GET() {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ profile: data });
+  return NextResponse.json({
+    profile: {
+      ...data,
+      display_name:
+        (typeof user.user_metadata?.display_name === "string" ? user.user_metadata.display_name : null) ??
+        data.display_name,
+    },
+  });
 }
 
 export async function PUT(req: NextRequest) {
@@ -26,8 +34,9 @@ export async function PUT(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await req.json();
-  const { display_name, birthday, gender, height_cm, onboarding_done } = body;
+  const parsed = profileSchema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) return NextResponse.json({ error: "Invalid profile details" }, { status: 400 });
+  const { display_name, birthday, gender, height_cm, onboarding_done } = parsed.data;
 
   const updates: Record<string, unknown> = {};
   if (display_name !== undefined) updates.display_name = display_name;
@@ -35,6 +44,13 @@ export async function PUT(req: NextRequest) {
   if (gender !== undefined) updates.gender = gender;
   if (height_cm !== undefined) updates.height_cm = height_cm;
   if (onboarding_done !== undefined) updates.onboarding_done = onboarding_done;
+
+  if (display_name !== undefined) {
+    const { error: authError } = await supabase.auth.updateUser({
+      data: { ...user.user_metadata, display_name },
+    });
+    if (authError) return NextResponse.json({ error: "Unable to update display name" }, { status: 500 });
+  }
 
   // First try to update existing row
   let { data, error } = await supabase

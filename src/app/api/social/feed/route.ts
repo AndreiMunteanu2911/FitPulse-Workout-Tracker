@@ -1,25 +1,43 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/helper/supabaseServer";
 import { resolveExercises } from "@/helper/resolveExercises";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: postsData, error } = await supabase
+  const limit = Math.min(50, Math.max(1, Number(req.nextUrl.searchParams.get("limit") ?? 20)));
+  const cursor = req.nextUrl.searchParams.get("cursor");
+  const { data: friendships } = await supabase
+    .from("friendships")
+    .select("user_id, friend_id")
+    .eq("status", "accepted")
+    .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`);
+  const feedUserIds = [
+    user.id,
+    ...(friendships ?? []).map((friendship) =>
+      friendship.user_id === user.id ? friendship.friend_id : friendship.user_id
+    ),
+  ];
+
+  let postsQuery = supabase
     .from("posts")
     .select(`
       *,
       post_likes(id, user_id),
       post_comments(id, user_id, content, created_at)
     `)
+    .in("user_id", feedUserIds)
     .order("created_at", { ascending: false })
-    .limit(50);
+    .limit(limit + 1);
+  if (cursor) postsQuery = postsQuery.lt("created_at", cursor);
+  const { data: postsData, error } = await postsQuery;
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const posts = postsData || [];
+  const hasMore = (postsData?.length ?? 0) > limit;
+  const posts = (postsData || []).slice(0, limit);
 
   const userIds = [...new Set(posts.map((p) => p.user_id))] as string[];
   const userStatsMap = new Map<string, { display_name: string | null }>();
@@ -33,7 +51,7 @@ export async function GET() {
 
   const commentUserIds = [
     ...new Set(
-      (postsData ?? []).flatMap((p) => (p.post_comments ?? []).map((c: { user_id: string }) => c.user_id))
+      posts.flatMap((p) => (p.post_comments ?? []).map((c: { user_id: string }) => c.user_id))
     ),
   ] as string[];
   if (commentUserIds.length > 0) {
@@ -95,5 +113,8 @@ export async function GET() {
     workout: post.workout_id ? workoutMap.get(post.workout_id) ?? null : null,
   }));
 
-  return NextResponse.json({ posts: enriched });
+  return NextResponse.json({
+    posts: enriched,
+    nextCursor: hasMore ? enriched[enriched.length - 1]?.created_at ?? null : null,
+  });
 }

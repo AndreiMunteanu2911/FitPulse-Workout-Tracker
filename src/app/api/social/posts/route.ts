@@ -55,6 +55,7 @@ export async function POST(req: NextRequest) {
   let content: string | null = null;
   let workout_id: string | null = null;
   let image_url: string | null = null;
+  let uploadedPath: string | null = null;
 
   if (contentType.includes("multipart/form-data")) {
     const formData = await req.formData();
@@ -79,6 +80,7 @@ export async function POST(req: NextRequest) {
         .getPublicUrl(uploadData.path);
 
       image_url = urlData.publicUrl;
+      uploadedPath = uploadData.path;
     }
   } else {
     const body = await req.json();
@@ -101,7 +103,10 @@ export async function POST(req: NextRequest) {
     .select("*")
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    if (uploadedPath) await supabase.storage.from("post-images").remove([uploadedPath]);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 
   const { data: userStats } = await supabase
     .from("user_stats")

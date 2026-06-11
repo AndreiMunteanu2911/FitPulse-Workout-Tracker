@@ -82,16 +82,6 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { error: deleteError } = await supabase
-      .from("workouts")
-      .delete()
-      .eq("user_id", user.id)
-      .eq("status", "draft");
-
-    if (deleteError) {
-      return NextResponse.json({ error: deleteError.message }, { status: 500 });
-    }
-
     const result = await createDraftWorkoutInDB(supabase, user.id, draft);
     return NextResponse.json({ workout: { id: result.workoutId, name: result.name } });
   } catch (error) {

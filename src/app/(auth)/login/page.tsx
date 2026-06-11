@@ -18,7 +18,6 @@ export default function LoginPage() {
   const [errors, setErrors] = useState<Partial<Record<keyof LoginInput, string>>>({});
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -28,7 +27,7 @@ export default function LoginPage() {
 
     try {
       loginSchema.parse({ email, password });
-      await login(email, password, rememberMe);
+      await login(email, password);
       router.push("/dashboard");
     } catch (error: unknown) {
       if (error instanceof ZodError) {
@@ -97,16 +96,6 @@ export default function LoginPage() {
             />
             {errors.password ? <p className="mt-1.5 text-xs font-medium text-red-200">{errors.password}</p> : null}
           </div>
-
-          <label className="flex items-center gap-3 text-sm font-medium text-white/70">
-            <input
-              type="checkbox"
-              checked={rememberMe}
-              onChange={(event) => setRememberMe(event.target.checked)}
-              className="size-4 rounded border-white/30 bg-white/10 accent-[var(--lime-green)]"
-            />
-            Keep me signed in on this device
-          </label>
 
           {message ? (
             <div role="alert" className="rounded-[var(--radius-md)] border border-red-300/20 bg-red-300/10 p-3 text-sm text-red-100">

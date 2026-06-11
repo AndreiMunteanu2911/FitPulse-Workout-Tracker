@@ -14,7 +14,7 @@ export function PageHeader({ title, description, actions, backHref }: PageHeader
 
   return (
     <header className={`page-header ${hasMobileControls ? "" : "hidden md:block"}`}>
-      <div className="flex items-start gap-3">
+      <div className="flex flex-wrap items-start gap-3">
         {backHref ? (
           <Link
             href={backHref}
@@ -24,11 +24,11 @@ export function PageHeader({ title, description, actions, backHref }: PageHeader
             <ChevronLeft className="size-4" />
           </Link>
         ) : null}
-        <div className="hidden min-w-0 flex-1 md:block">
+        <div className="hidden min-w-56 flex-1 md:block">
           <h1 className="page-title">{title}</h1>
           {description ? <div className="page-description">{description}</div> : null}
         </div>
-        {actions ? <div className="ml-auto flex shrink-0 items-center gap-2">{actions}</div> : null}
+        {actions ? <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-2">{actions}</div> : null}
       </div>
     </header>
   );

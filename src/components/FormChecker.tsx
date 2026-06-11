@@ -779,10 +779,10 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
     }
   }, [exerciseName, formRules]);
 
-  const persistSession = useCallback(async (analysis: FormSessionAnalysis): Promise<boolean> => {
+  const persistSession = useCallback(async (analysis: FormSessionAnalysis): Promise<string | null> => {
     setIsSaving(true);
     try {
-      await apiFetch("/api/form-logs", {
+      const payload = await apiFetch<{ log: { id: string } }>("/api/form-logs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -791,14 +791,22 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
         }),
       });
       setSessionSaved(true);
-      return true;
+      return payload.log.id;
     } catch (error) {
       console.error("Failed to save form session:", error);
       setSessionSaved(false);
-      return false;
+      return null;
     } finally {
       setIsSaving(false);
     }
+  }, [exerciseId]);
+
+  const updatePersistedSession = useCallback(async (id: string, analysis: FormSessionAnalysis) => {
+    await apiFetch("/api/form-logs", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, analysis: { exercise_id: exerciseId, ...analysis } }),
+    });
   }, [exerciseId]);
 
   const finalizeSession = useCallback(async () => {
@@ -824,6 +832,17 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
         cloudModel: null,
       });
 
+      const logId = await persistSession(localAnalysis);
+      if (!logId) {
+        setSessionAnalysis(null);
+        if (!reviewModeRef.current) void startCamera();
+        return;
+      }
+
+      reviewModeRef.current = true;
+      setSessionAnalysis(localAnalysis);
+      stopCamera();
+
       let finalAnalysis = localAnalysis;
       const { coaching, cloudModel } = await maybeRequestCoaching(localAnalysis);
       if (coaching) {
@@ -848,23 +867,18 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
         };
       }
 
-      const didSave = await persistSession(finalAnalysis);
-      if (didSave) {
-        reviewModeRef.current = true;
-        setSessionAnalysis(finalAnalysis);
-        stopCamera();
-      } else {
-        setSessionAnalysis(null);
-        if (!reviewModeRef.current) {
-          void startCamera();
-        }
+      setSessionAnalysis(finalAnalysis);
+      try {
+        await updatePersistedSession(logId, finalAnalysis);
+      } catch (error) {
+        console.error("Failed to enrich saved form session:", error);
       }
       sessionStartedRef.current = false;
     } finally {
       finalizingRef.current = false;
       setStartingDetection(false);
     }
-  }, [formRules, getRequiredLandmarks, maybeRequestCoaching, persistSession, resolvedRules, startCamera, stopCamera]);
+  }, [formRules, getRequiredLandmarks, maybeRequestCoaching, persistSession, resolvedRules, startCamera, stopCamera, updatePersistedSession]);
 
   const commitStableFeedback = useCallback((items: FormFeedback[], timestampMs: number, trackingLost = false) => {
     const now = performance.now();

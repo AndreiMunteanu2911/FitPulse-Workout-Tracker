@@ -95,7 +95,10 @@ export async function POST(req: NextRequest) {
       .select()
       .single();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      if (payload.image && image_url) await deleteStoredProductImage(supabase, image_url);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
     return NextResponse.json({ product: data });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to create product.";
@@ -144,7 +147,10 @@ export async function PUT(req: NextRequest) {
       .select()
       .single();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      if (payload.image && image_url !== previousImageUrl) await deleteStoredProductImage(supabase, image_url);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     if (previousImageUrl !== image_url) {
       await deleteStoredProductImage(supabase, previousImageUrl);

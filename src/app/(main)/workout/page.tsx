@@ -22,11 +22,13 @@ import DeleteTemplateModal from "@/components/DeleteTemplateModal";
 import { PageHeader } from "@/components/PageHeader";
 import type { Exercise, WorkoutExercise, Set as WorkoutSet, WorkoutTemplate, RestTimerState } from "@/types";
 import { detectExerciseType, REST_DURATIONS } from "@/lib/gamification";
+import { saveWorkoutState } from "@/lib/workout-persistence";
 import { Layers3, Pencil, Plus, Sparkles } from "lucide-react";
 function formatElapsed(seconds: number): string {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
+    const safeSeconds = Math.max(0, Math.floor(seconds));
+    const h = Math.floor(safeSeconds / 3600);
+    const m = Math.floor((safeSeconds % 3600) / 60);
+    const s = safeSeconds % 60;
     if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
     return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
@@ -155,21 +157,12 @@ export default function WorkoutPage() {
         if (!workoutId) return;
 
         try {
-            await updateWorkout(workoutId, { name: workoutName });
-
-            for (const exercise of workoutExercises) {
-                for (const set of exercise.sets) {
-                    // Skip saving sets that have no reps or weight entered
-                    if (set.reps === 0 && set.weight === 0) continue;
-                    
-                    await updateSetApi(set.id, { reps: set.reps, weight: set.weight });
-                }
-            }
+            await saveWorkoutState(workoutId, workoutName, workoutExercises);
         } catch (error) {
             console.error("Error auto-saving workout:", error);
             setErrorMessages((prev) => ({ ...prev, general: "Failed to auto-save workout." }));
         }
-    }, [workoutId, workoutName, workoutExercises, updateWorkout, updateSetApi]);
+    }, [workoutId, workoutName, workoutExercises]);
 
     useEffect(() => {
         if (!workoutStarted || !workoutId) return;
@@ -185,7 +178,7 @@ export default function WorkoutPage() {
     useEffect(() => {
         if (!workoutStarted || !workoutCreatedAt) return;
         const start = new Date(workoutCreatedAt).getTime();
-        const tick = () => setElapsedSeconds(Math.floor((Date.now() - start) / 1000));
+        const tick = () => setElapsedSeconds(Math.max(0, Math.floor((Date.now() - start) / 1000)));
         tick();
         const interval = setInterval(tick, 1000);
         return () => clearInterval(interval);
@@ -237,10 +230,19 @@ export default function WorkoutPage() {
                 .filter((te) => te.exercise_id)
                 .map((te) => ({
                     id: crypto.randomUUID(),
+                    client_key: crypto.randomUUID(),
                     exercise_id: te.exercise_id,
                     exercise: te.exercise as Exercise,
                     order_index: te.order_index,
-                    sets: [{ id: crypto.randomUUID(), workout_exercise_id: "", set_number: 1, reps: 0, weight: 0, is_confirmed: false }],
+                    sets: [{
+                        id: crypto.randomUUID(),
+                        client_key: `${te.exercise_id}-${crypto.randomUUID()}`,
+                        workout_exercise_id: "",
+                        set_number: 1,
+                        reps: 0,
+                        weight: 0,
+                        is_confirmed: false,
+                    }],
                     previousSets: [],
                     previousSetsLoaded: false, // will load in parallel below
                 }));
@@ -271,12 +273,12 @@ export default function WorkoutPage() {
 
                     let sets: WorkoutSet[] = [];
                     if (prefillSets.length > 0) {
-                        sets.push({ ...firstSet, reps: prefillSets[0].reps, weight: prefillSets[0].weight, is_confirmed: false });
+                        sets.push({ ...firstSet, client_key: optEx.sets[0]?.client_key, reps: prefillSets[0].reps, weight: prefillSets[0].weight, is_confirmed: false });
                         for (let j = 1; j < prefillSets.length; j++) {
                             sets.push({ id: crypto.randomUUID(), workout_exercise_id: workoutExerciseData.id, set_number: j + 1, reps: prefillSets[j].reps, weight: prefillSets[j].weight, is_confirmed: false });
                         }
                     } else {
-                        sets = [firstSet];
+                        sets = [{ ...firstSet, client_key: optEx.sets[0]?.client_key }];
                     }
 
                     setWorkoutExercises((prev) => {
@@ -285,6 +287,7 @@ export default function WorkoutPage() {
                         const updated = [...prev];
                         updated[idx] = {
                             id: workoutExerciseData.id,
+                            client_key: optEx.client_key,
                             exercise_id: te.exercise_id,
                             exercise: te.exercise as Exercise,
                             order_index: workoutExerciseData.order_index,
@@ -518,22 +521,31 @@ export default function WorkoutPage() {
         }
     };
 
-    const addExerciseToWorkout = async (exercise: Exercise) => {
+    const addExerciseToWorkout = async (exercise: Exercise, existingTempId?: string) => {
         if (!workoutId) return;
 
         // Optimistic: show exercise card immediately with a blank set
-        const tempId = crypto.randomUUID();
-        const tempSet: WorkoutSet = { id: crypto.randomUUID(), workout_exercise_id: tempId, set_number: 1, reps: 0, weight: 0, is_confirmed: false };
-        const optimisticExercise: WorkoutExercise = {
-            id: tempId,
-            exercise_id: exercise.exercise_id,
-            exercise: exercise,
-            order_index: workoutExercises.length,
-            sets: [tempSet],
-            previousSets: [],
-            previousSetsLoaded: false, // loading
-        };
-        setWorkoutExercises([...workoutExercises, optimisticExercise]);
+        const tempId = existingTempId ?? crypto.randomUUID();
+        if (existingTempId) {
+            setWorkoutExercises((prev) => prev.map((item) =>
+                item.id === existingTempId
+                    ? { ...item, exercise_id: exercise.exercise_id, exercise, previousSetsLoaded: false }
+                    : item
+            ));
+        } else {
+            const tempSet: WorkoutSet = { id: crypto.randomUUID(), client_key: `${tempId}-set-1`, workout_exercise_id: tempId, set_number: 1, reps: 0, weight: 0, is_confirmed: false };
+            const optimisticExercise: WorkoutExercise = {
+                id: tempId,
+                client_key: tempId,
+                exercise_id: exercise.exercise_id,
+                exercise: exercise,
+                order_index: workoutExercises.length,
+                sets: [tempSet],
+                previousSets: [],
+                previousSetsLoaded: false,
+            };
+            setWorkoutExercises((prev) => [...prev, optimisticExercise]);
+        }
         setShowExerciseSearch(false);
         setSearchQuery("");
         setSearchResults([]);
@@ -553,13 +565,13 @@ export default function WorkoutPage() {
             // Build the sets locally from last session data
             let sets: WorkoutSet[] = [];
             if (prefillSets.length > 0) {
-                sets.push({ ...firstSet, reps: prefillSets[0].reps, weight: prefillSets[0].weight, is_confirmed: false });
+                sets.push({ ...firstSet, client_key: `${tempId}-set-1`, reps: prefillSets[0].reps, weight: prefillSets[0].weight, is_confirmed: false });
                 for (let i = 1; i < prefillSets.length; i++) {
                     // Create additional sets — we'll sync them with server in background
                     sets.push({ id: crypto.randomUUID(), workout_exercise_id: workoutExerciseData.id, set_number: i + 1, reps: prefillSets[i].reps, weight: prefillSets[i].weight, is_confirmed: false });
                 }
             } else {
-                sets = [firstSet];
+                sets = [{ ...firstSet, client_key: `${tempId}-set-1` }];
             }
 
             // Update the exercise with real data + pre-filled sets
@@ -569,6 +581,7 @@ export default function WorkoutPage() {
                 const updated = [...prev];
                 updated[idx] = {
                     id: workoutExerciseData.id,
+                    client_key: tempId,
                     exercise_id: exercise.exercise_id,
                     exercise: exercise,
                     order_index: workoutExerciseData.order_index,
@@ -602,9 +615,10 @@ export default function WorkoutPage() {
         // Optimistic: create a temp exercise and add to workout immediately
         const tempExerciseId = `custom_${crypto.randomUUID()}`;
         const tempId = crypto.randomUUID();
-        const tempSet: WorkoutSet = { id: crypto.randomUUID(), workout_exercise_id: tempId, set_number: 1, reps: 0, weight: 0, is_confirmed: false };
+        const tempSet: WorkoutSet = { id: crypto.randomUUID(), client_key: `${tempId}-set-1`, workout_exercise_id: tempId, set_number: 1, reps: 0, weight: 0, is_confirmed: false };
         const optimisticExercise: WorkoutExercise = {
             id: tempId,
+            client_key: tempId,
             exercise_id: tempExerciseId,
             exercise: { exercise_id: tempExerciseId, name, body_parts: bodyPart ? [bodyPart] : null, is_custom: true },
             order_index: workoutExercises.length,
@@ -631,10 +645,7 @@ export default function WorkoutPage() {
                 name: data.exercise.name,
                 body_parts: data.exercise.body_part ? [data.exercise.body_part] : null,
                 is_custom: true,
-            });
-
-            // Remove the optimistic placeholder (addExerciseToWorkout will create the real one)
-            setWorkoutExercises((prev) => prev.filter((e) => e.id !== tempId));
+            }, tempId);
         } catch (error) {
             console.error("Error creating custom exercise:", error);
             // Rollback
@@ -870,10 +881,10 @@ export default function WorkoutPage() {
                                         <AnimatePresence initial={false} mode="popLayout">
                                         {workoutExercises.map((workoutExercise, exerciseIndex) => (
                                             <motion.div
-                                                layout
-                                                key={workoutExercise.id}
-                                                initial={{ opacity: 0, y: 8 }}
-                                                animate={{ opacity: 1, y: 0 }}
+                                                layout="position"
+                                                key={workoutExercise.client_key ?? workoutExercise.id}
+                                                initial={{ opacity: 0, scale: 0.99 }}
+                                                animate={{ opacity: 1, scale: 1 }}
                                                 exit={{ opacity: 0, scale: 0.985 }}
                                                 transition={{ duration: 0.16, ease: "easeOut" }}
                                             >
@@ -965,7 +976,7 @@ export default function WorkoutPage() {
                                     <p className="empty-state-description">Create one to quickly start workouts.</p>
                                 </div>
                             ) : (
-                                <motion.div layout className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <motion.div layout className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                                     <AnimatePresence initial={false} mode="popLayout">
                                     {templates.map((template) => (
                                         <motion.div

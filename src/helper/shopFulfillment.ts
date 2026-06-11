@@ -75,27 +75,7 @@ export async function fulfillStripeProductOrder(
     return { status: "ignored", reason: "missing_order_id" as const };
   }
 
-  const { data: existingOrder, error: existingError } = await supabaseAdmin
-    .from("orders")
-    .select("id, product_id, stripe_session_id, status")
-    .eq("id", orderId)
-    .maybeSingle();
-
-  if (existingError) throw existingError;
-  if (!existingOrder) return { status: "ignored", reason: "order_not_found" as const };
-  if (existingOrder.stripe_session_id === session.id && existingOrder.status === "completed") {
-    return { status: "already_processed" as const };
-  }
-
   const quantity = Math.max(1, Number(session.metadata?.quantity || 1));
-  const { data: productRow, error: productError } = await supabaseAdmin
-    .from("products")
-    .select("price_usd")
-    .eq("id", existingOrder.product_id)
-    .maybeSingle();
-
-  if (productError) throw productError;
-
   const shippingDetails = extractShippingDetails(session, paymentIntent);
   const shippingAddress = shippingDetails?.address ?? null;
 
@@ -111,46 +91,23 @@ export async function fulfillStripeProductOrder(
     });
   }
 
-  const amountUsd = productRow?.price_usd == null ? null : Number(productRow.price_usd) * quantity;
-
-  const { data: updatedOrder, error: updateError } = await supabaseAdmin
-    .from("orders")
-    .update({
-      status: "completed",
-      amount_usd: amountUsd,
-      shipping_address: shippingAddress,
-      payment_method: "stripe",
-      stripe_session_id: session.id,
-    })
-    .eq("id", orderId)
-    .select("id, product_id")
-    .maybeSingle();
-
-  if (updateError) throw updateError;
-  if (!updatedOrder?.product_id) return { status: "ignored", reason: "missing_product_id" as const };
-
-  const { data: stockProduct, error: stockProductError } = await supabaseAdmin
-    .from("products")
-    .select("stock_quantity")
-    .eq("id", updatedOrder.product_id)
-    .maybeSingle();
-
-  if (stockProductError) throw stockProductError;
-
-  if (stockProduct) {
-    const { error: stockError } = await supabaseAdmin
-      .from("products")
-      .update({ stock_quantity: Math.max(0, Number(stockProduct.stock_quantity || 0) - quantity) })
-      .eq("id", updatedOrder.product_id);
-
-    if (stockError) throw stockError;
+  const { data, error } = await supabaseAdmin.rpc("fulfill_product_order", {
+    p_order_id: orderId,
+    p_session_id: session.id,
+    p_quantity: quantity,
+    p_shipping_address: shippingAddress,
+  });
+  if (error) throw error;
+  const result = Array.isArray(data) ? data[0] : data;
+  if (!result || result.status !== "processed") {
+    return { status: result?.status ?? "ignored" };
   }
 
   return {
     status: "processed" as const,
     paymentMethod: "stripe" as const,
     orderId,
-    productId: updatedOrder.product_id as string,
+    productId: result.product_id as string,
     shippingAddress,
     stripeSessionId: session.id,
   };

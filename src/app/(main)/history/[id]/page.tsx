@@ -16,6 +16,7 @@ import { useHistory } from "@/hooks/useHistory";
 import { useWorkout } from "@/hooks/useWorkout";
 import { useExercises } from "@/hooks/useExercises";
 import type { Workout, WorkoutExercise, Exercise, Set as WorkoutSet } from "@/types";
+import { saveWorkoutState } from "@/lib/workout-persistence";
 import { Pencil, PenSquare, Plus, Trash2 } from "lucide-react";
 
 export default function WorkoutDetailPage() {
@@ -134,17 +135,14 @@ export default function WorkoutDetailPage() {
     const saveEditChanges = useCallback(async () => {
         setIsSaving(true);
         try {
-            for (const exercise of workoutExercises) {
-                for (const set of exercise.sets) {
-                    await updateSetApi(set.id, { reps: set.reps, weight: set.weight });
-                }
-            }
+            if (!workout) return;
+            await saveWorkoutState(workout.id, workout.name, workoutExercises);
         } catch {
             // silently ignore
         } finally {
             setIsSaving(false);
         }
-    }, [workoutExercises, updateSetApi]);
+    }, [workout, workoutExercises]);
 
     // Auto-save debounce while editing
     useEffect(() => {
@@ -420,7 +418,7 @@ export default function WorkoutDetailPage() {
                             </Button>
                             <Button
                                 onClick={() => { setRenameValue(workout.name); setShowRenameModal(true); }}
-                                variant="textOnly"
+                                variant="secondary"
                                 className="px-3 py-2 text-sm"
                             >
                                 <Pencil className="w-4 h-4" />
@@ -428,7 +426,7 @@ export default function WorkoutDetailPage() {
                             </Button>
                             <Button
                                 onClick={() => setShowDeleteModal(true)}
-                                variant="danger"
+                                variant="secondary"
                                 className="px-3 py-2 text-sm"
                             >
                                 <Trash2 className="w-4 h-4" />

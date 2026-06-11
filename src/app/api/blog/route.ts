@@ -1,26 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient, requireAdmin } from "@/helper/supabaseServer";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: posts, error } = await supabase
+  const limit = Math.min(50, Math.max(1, Number(req.nextUrl.searchParams.get("limit") ?? 20)));
+  const cursor = req.nextUrl.searchParams.get("cursor");
+  let postsQuery = supabase
     .from("blog_posts")
     .select("*")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(limit + 1);
+  if (cursor) postsQuery = postsQuery.lt("created_at", cursor);
+  const { data: postRows, error } = await postsQuery;
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  const hasMore = (postRows?.length ?? 0) > limit;
+  const posts = (postRows ?? []).slice(0, limit);
 
   const postIds = (posts ?? []).map((p) => p.id);
 
-  const { data: likes } = await supabase
-    .from("blog_likes")
-    .select("blog_post_id, user_id");
-
-  const { data: comments } = await supabase
-    .from("blog_comments")
-    .select("blog_post_id");
+  const [{ data: likes }, { data: comments }] = postIds.length
+    ? await Promise.all([
+        supabase.from("blog_likes").select("blog_post_id, user_id").in("blog_post_id", postIds),
+        supabase.from("blog_comments").select("blog_post_id").in("blog_post_id", postIds),
+      ])
+    : [{ data: [] }, { data: [] }];
 
   const likesMap = new Map();
   (likes ?? []).forEach((like) => {
@@ -41,7 +47,10 @@ export async function GET() {
     liked_by_me: user ? (likes ?? []).some((l) => l.blog_post_id === post.id && l.user_id === user.id) : false,
   }));
 
-  return NextResponse.json({ data: enrichedPosts });
+  return NextResponse.json({
+    data: enrichedPosts,
+    nextCursor: hasMore ? enrichedPosts[enrichedPosts.length - 1]?.created_at ?? null : null,
+  });
 }
 
 export async function POST(req: NextRequest) {
@@ -55,6 +64,7 @@ export async function POST(req: NextRequest) {
     const content = formData.get("content") as string;
     const image = formData.get("image") as File | null;
     let image_url = formData.get("image_url") as string | null;
+    let uploadedPath: string | null = null;
 
     if (!title || !content) {
       return NextResponse.json({ error: "Title and content are required" }, { status: 400 });
@@ -75,6 +85,7 @@ export async function POST(req: NextRequest) {
         .getPublicUrl(uploadData.path);
       
       image_url = urlData.publicUrl;
+      uploadedPath = uploadData.path;
     }
 
     const { data, error } = await supabase
@@ -83,7 +94,10 @@ export async function POST(req: NextRequest) {
       .select()
       .single();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      if (uploadedPath) await supabase.storage.from("blog-images").remove([uploadedPath]);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
     return NextResponse.json({ data });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });

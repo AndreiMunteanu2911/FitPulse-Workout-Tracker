@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/helper/supabaseServer";
+import { setMutationSchema } from "@/lib/validations";
 
 // Verify that a set belongs to the authenticated user's workout.
 // Uses three sequential queries (no nested joins) to avoid PostgREST join limitations.
@@ -45,7 +46,9 @@ export async function PATCH(
   const owned = await verifySetOwnership(supabase, user.id, id);
   if (!owned) return NextResponse.json({ error: "Set not found or unauthorized" }, { status: 404 });
 
-  const body = await req.json();
+  const parsed = setMutationSchema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) return NextResponse.json({ error: "Invalid set values" }, { status: 400 });
+  const body = parsed.data;
   const updates: { reps?: number; weight?: number; is_confirmed?: boolean } = {};
   if (body.reps !== undefined) updates.reps = body.reps;
   if (body.weight !== undefined) updates.weight = body.weight;

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/helper/supabaseServer";
+import { calculateWorkoutSummary } from "@/lib/workout-stats";
 
 interface Set {
   weight: number;
@@ -103,6 +104,7 @@ export async function GET() {
     });
   });
   const prCount = exerciseMaxWeights.size;
+  const sharedSummary = calculateWorkoutSummary(workouts as Workout[]);
 
   // Build weekly histogram (last 12 weeks)
   const weeklyHistogram: { weekLabel: string; count: number }[] = [];
@@ -123,11 +125,11 @@ export async function GET() {
       totalWorkouts,
       workoutsThisWeek,
       workoutsThisMonth,
-      totalVolume: Math.round(totalVolume),
+      totalVolume: Math.round(sharedSummary.totalVolume),
       weekVolume: Math.round(weekVolume),
-      currentStreak,
-      longestStreak,
-      prCount,
+      currentStreak: sharedSummary.currentStreak,
+      longestStreak: sharedSummary.longestStreak,
+      prCount: sharedSummary.prCount,
       weeklyHistogram,
     }
   });

@@ -23,6 +23,7 @@ export async function POST(req: NextRequest) {
   const notes = formData.get("notes") as string | null;
 
   let photo_url = "";
+  let uploadedPath: string | null = null;
 
   // If a photo file is provided, upload to Supabase Storage
   if (photo) {
@@ -42,6 +43,7 @@ export async function POST(req: NextRequest) {
       .getPublicUrl(uploadData.path);
 
     photo_url = urlData.publicUrl;
+    uploadedPath = uploadData.path;
   } else {
     // Allow providing a URL directly
     photo_url = formData.get("photo_url") as string || "";
@@ -62,7 +64,10 @@ export async function POST(req: NextRequest) {
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    if (uploadedPath) await supabase.storage.from("progress-photos").remove([uploadedPath]);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
   return NextResponse.json({ photo: data });
 }
 

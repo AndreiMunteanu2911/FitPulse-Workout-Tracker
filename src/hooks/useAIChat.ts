@@ -6,6 +6,7 @@
 import { useState, useCallback, useRef } from "react";
 
 export interface ChatMessage {
+  clientId: string;
   role: "user" | "assistant";
   content: string;
   createdAt?: string;
@@ -136,7 +137,7 @@ export function useAIChat(): UseAIChatReturn {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           conversationId: convId,
-          messages: unsaved.map((m) => ({ role: m.role, content: m.content })),
+          messages: unsaved.map((m) => ({ clientId: m.clientId, role: m.role, content: m.content })),
         }),
       });
       savedCountRef.current = msgs.length;
@@ -211,6 +212,7 @@ export function useAIChat(): UseAIChatReturn {
         }
 
         return {
+          clientId: typeof m.client_id === "string" ? m.client_id : crypto.randomUUID(),
           role,
           content: extracted.content,
           createdAt: m.created_at as string,
@@ -270,12 +272,12 @@ export function useAIChat(): UseAIChatReturn {
     }
 
     const currentLength = messages.length;
-    const userMsg: ChatMessage = { role: "user", content: message.trim() };
+    const userMsg: ChatMessage = { clientId: crypto.randomUUID(), role: "user", content: message.trim() };
     setMessages((prev) => [...prev, userMsg]);
 
     const assistantIdx = currentLength + 1;
     assistantIdxRef.current = assistantIdx;
-    setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+    setMessages((prev) => [...prev, { clientId: crypto.randomUUID(), role: "assistant", content: "" }]);
     setIsStreaming(true);
     setError(null);
     setLastWorkoutAction(null);

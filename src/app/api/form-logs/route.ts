@@ -31,6 +31,31 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ log: data });
 }
 
+export async function PATCH(req: NextRequest) {
+  const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const body = await req.json().catch(() => null);
+  const id = body && typeof body.id === "string" ? body.id : null;
+  const parsed = formSessionAnalysisSchema.safeParse(body?.analysis);
+  if (!id || !parsed.success) {
+    return NextResponse.json({ error: "Invalid form session update" }, { status: 400 });
+  }
+
+  const { exercise_id: _exerciseId, ...analysis } = parsed.data;
+  const { data, error } = await supabase
+    .from("form_logs")
+    .update(analysis)
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .select("*")
+    .single();
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ log: data });
+}
+
 export async function GET(req: NextRequest) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();

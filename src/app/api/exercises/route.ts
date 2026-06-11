@@ -45,15 +45,11 @@ export async function GET(req: NextRequest) {
     data = res.data ?? [];
     error = res.error;
   } else {
-    const words = search.trim().toLowerCase().split(/\s+/);
-    const res = await query;
+    const words = search.trim().split(/\s+/).filter(Boolean);
+    for (const word of words) query = query.ilike("name", `%${word}%`);
+    const res = await query.range(page * BATCH_SIZE, (page + 1) * BATCH_SIZE - 1);
     data = res.data ?? [];
     error = res.error;
-    data = data.filter((e: { name?: string }) => {
-      const name = (e.name || "").toLowerCase();
-      return words.every((word) => name.includes(word));
-    });
-    data = data.slice(page * BATCH_SIZE, (page + 1) * BATCH_SIZE);
   }
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

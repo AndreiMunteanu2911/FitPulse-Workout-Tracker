@@ -21,7 +21,10 @@ export async function loadSessionUser(): Promise<User | null> {
     email: user.email ?? "",
     role: profileData?.role ?? "client",
     onboarding_done: profileData?.onboarding_done ?? false,
-    display_name: profileData?.display_name ?? null,
+    display_name:
+      (typeof user.user_metadata?.display_name === "string" ? user.user_metadata.display_name : null) ??
+      profileData?.display_name ??
+      null,
     birthday: profileData?.birthday ?? null,
     gender: profileData?.gender ?? null,
     height_cm: profileData?.height_cm ?? null,

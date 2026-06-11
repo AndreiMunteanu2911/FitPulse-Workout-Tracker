@@ -7,6 +7,7 @@ import {
   xpForLevel,
   xpProgress,
 } from "@/lib/gamification";
+import { calculateWorkoutSummary } from "@/lib/workout-stats";
 
 interface SetRow { weight: number; reps: number }
 interface WorkoutExerciseRow { exercise_id?: string; sets?: SetRow[] }
@@ -76,7 +77,13 @@ export async function GET() {
     longestStreak = Math.max(longestStreak, temp);
   }
 
-  const summary = { totalWorkouts: rows.length, prCount, longestStreak, totalVolume };
+  const calculated = calculateWorkoutSummary(rows);
+  const summary = {
+    totalWorkouts: calculated.totalWorkouts,
+    prCount: calculated.prCount,
+    longestStreak: calculated.longestStreak,
+    totalVolume: calculated.totalVolume,
+  };
 
   // ── 2. Read user_stats from DB (total_xp is the authoritative source of truth)
   const { data: statsRow } = await supabase
@@ -119,7 +126,7 @@ export async function GET() {
       xpForNextLevel:    xpForLevel(level + 1),
       xpProgress:        xpProgress(totalXP),
       achievements,
-      currentStreak,
+      currentStreak: calculated.currentStreak,
     },
   });
 }

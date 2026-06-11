@@ -50,13 +50,15 @@ export async function PATCH(
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
+  if (body.status === "completed") {
+    const { error } = await supabase.rpc("finish_workout", { p_workout_id: id });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
   const updates: { name?: string; status?: string; finished_at?: string } = {};
   if (body.name !== undefined) updates.name = body.name;
   if (body.status !== undefined) {
     updates.status = body.status;
-    if (body.status === "completed") {
-      updates.finished_at = new Date().toISOString();
-    }
   }
 
   const { error } = await supabase

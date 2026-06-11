@@ -1,5 +1,6 @@
 import { Check, X } from "lucide-react";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 
 interface SetRowProps {
   set: { id: string; set_number: number; reps: number; weight: number };
@@ -13,6 +14,49 @@ interface SetRowProps {
   onConfirmSet: (setId: string, exercise: { exercise_id: string; name: string }, workoutExerciseId: string) => void;
   exercise: { exercise_id: string; name: string };
   workoutExerciseId: string;
+}
+
+function NumericSetInput({
+  value,
+  kind,
+  onChange,
+}: {
+  value: number;
+  kind: "reps" | "weight";
+  onChange: (value: number) => void;
+}) {
+  const [text, setText] = useState(value > 0 ? String(value) : "");
+
+  useEffect(() => {
+    setText(value > 0 ? String(value) : "");
+  }, [value]);
+
+  const isValid = (next: string) => {
+    if (kind === "reps") {
+      return /^\d{0,4}$/.test(next) && (next === "" || Number(next) <= 1000);
+    }
+    return /^\d{0,6}(?:\.\d{0,2})?$/.test(next) &&
+      (next === "" || next === "." || Number(next) <= 100000);
+  };
+
+  return (
+    <input
+      type="text"
+      inputMode={kind === "reps" ? "numeric" : "decimal"}
+      pattern={kind === "reps" ? "[0-9]*" : "[0-9]*[.]?[0-9]*"}
+      aria-label={kind === "reps" ? "Repetitions" : "Weight"}
+      placeholder="0"
+      value={text}
+      onChange={(event) => {
+        const next = event.target.value.replace(",", ".");
+        if (!isValid(next)) return;
+        setText(next);
+        onChange(next === "" || next === "." ? 0 : Number(next));
+      }}
+      onBlur={() => setText(value > 0 ? String(value) : "")}
+      className="w-full rounded-[var(--radius-sm)] bg-[var(--surface-raised)] px-2 py-1.5 text-center text-sm font-semibold text-[var(--foreground)] placeholder-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
+    />
+  );
 }
 
 export default function SetRow({
@@ -55,28 +99,17 @@ export default function SetRow({
       </span>
 
       {/* Reps input */}
-      <input
-        type="number"
-        placeholder="0"
-        value={set.reps || ""}
-        onChange={(e) => {
-          onUpdateSet(exerciseIndex, setIndex, "reps", parseInt(e.target.value) || 0);
-        }}
-        min="0"
-        className="w-full px-2 py-1.5 text-center bg-[var(--surface-raised)] rounded-[var(--radius-sm)] text-[var(--foreground)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] placeholder-[var(--muted-foreground)]"
+      <NumericSetInput
+        value={set.reps}
+        kind="reps"
+        onChange={(value) => onUpdateSet(exerciseIndex, setIndex, "reps", value)}
       />
 
       {/* Weight input */}
-      <input
-        type="number"
-        placeholder="0"
-        value={set.weight || ""}
-        onChange={(e) => {
-          onUpdateSet(exerciseIndex, setIndex, "weight", parseFloat(e.target.value) || 0);
-        }}
-        min="0"
-        step="0.5"
-        className="w-full px-2 py-1.5 text-center bg-[var(--surface-raised)] rounded-[var(--radius-sm)] text-[var(--foreground)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] placeholder-[var(--muted-foreground)]"
+      <NumericSetInput
+        value={set.weight}
+        kind="weight"
+        onChange={(value) => onUpdateSet(exerciseIndex, setIndex, "weight", value)}
       />
 
       {/* Action buttons */}
