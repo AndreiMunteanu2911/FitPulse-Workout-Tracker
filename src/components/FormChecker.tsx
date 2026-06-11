@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState, useCallback, useMemo } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import type { NormalizedLandmark, PoseLandmarker } from "@mediapipe/tasks-vision";
 import {
   X,
@@ -1592,16 +1593,32 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
         </div>
       </div>
 
+      <AnimatePresence mode="wait" initial={false}>
       {showFullHeightReview ? (
-        <div className="flex-1 min-h-0 overflow-y-auto bg-[var(--background)]">
+        <motion.div
+          key="review"
+          className="flex-1 min-h-0 overflow-y-auto bg-[var(--background)]"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.16 }}
+        >
           <div className="min-h-full flex flex-col">
             <div className="flex-1 min-h-0">
               <SessionSummaryCard analysis={sessionAnalysis} coachingLoading={coachingLoading} coachingError={coachingError} />
             </div>
           </div>
-        </div>
+        </motion.div>
       ) : (
-        <div ref={canvasContainerRef} className="flex-1 min-h-0 relative bg-black overflow-hidden">
+        <motion.div
+          key="live"
+          ref={canvasContainerRef}
+          className="flex-1 min-h-0 relative bg-black overflow-hidden"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.14 }}
+        >
           <video
             ref={videoRef as React.RefObject<HTMLVideoElement>}
             className="absolute inset-0 h-full w-full bg-black object-cover"
@@ -1644,20 +1661,33 @@ export default function FormChecker({ exerciseId, exerciseName, formRules, onClo
             />
           )}
 
+          <AnimatePresence initial={false}>
           {(isLoading || (!detectorReady && !camError && !isRunning)) && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 z-20 gap-3">
+            <motion.div
+              className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-black/70"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.14 }}
+            >
               <Loader2 className="w-8 h-8 text-white animate-spin" />
               <p className="text-sm text-white/60">
                 {isLoading ? "Starting camera..." : "Loading AI model..."}
               </p>
-            </div>
+            </motion.div>
           )}
+          </AnimatePresence>
 
-          {camError && (
-            <CameraErrorOverlay error={camError} onRetry={startCamera} />
-          )}
-        </div>
+          <AnimatePresence initial={false}>
+            {camError && (
+              <motion.div className="absolute inset-0 z-20" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.14 }}>
+                <CameraErrorOverlay error={camError} onRetry={startCamera} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
       )}
+      </AnimatePresence>
 
       <StartupOverlay visible={showStartupOverlay} />
       <ReviewOverlay visible={isReviewing} />

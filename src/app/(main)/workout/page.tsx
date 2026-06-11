@@ -764,18 +764,12 @@ export default function WorkoutPage() {
                         <PageHeader
                           title="Workout"
                           description={workoutStarted ? "Log each set and keep your session moving." : "Start from scratch or launch a saved routine."}
-                          actions={
+                          actions={workoutStarted ? (
                             <>
-                            {!workoutStarted ? (
-                                <Button onClick={startWorkout} className="px-5 py-2.5 text-sm sm:text-base">Start Workout</Button>
-                            ) : (
-                                <>
-                                     <Button onClick={handleCancelWorkout} variant="secondary" className="px-3 py-2 text-sm">Cancel</Button>
-                                    <Button onClick={handleFinishClick} className="px-5 py-2.5 text-sm sm:text-base">Finish</Button>
-                                </>
-                            )}
+                                <Button onClick={handleCancelWorkout} variant="secondary" className="px-3 py-2 text-sm">Cancel</Button>
+                                <Button onClick={handleFinishClick} className="px-5 py-2.5 text-sm sm:text-base">Finish</Button>
                             </>
-                          }
+                          ) : undefined}
                         />
                         <CancelWorkoutModal
                             isOpen={showCancelModal}
@@ -970,20 +964,30 @@ export default function WorkoutPage() {
                                     <p className="empty-state-description">Create one to quickly start workouts.</p>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <motion.div layout className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    <AnimatePresence initial={false} mode="popLayout">
                                     {templates.map((template) => (
-                                        <TemplateCard
+                                        <motion.div
+                                            layout
                                             key={template.id}
-                                            template={template}
-                                            onEdit={() => {
-                                                setEditingTemplate(template);
-                                                setIsTemplateModalOpen(true);
-                                            }}
-                                            onDelete={() => setTemplateToDelete(template)}
-                                            onStart={() => startWorkoutFromTemplate(template)}
-                                        />
+                                            initial={{ opacity: 0, y: 8 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, scale: 0.985 }}
+                                            transition={{ duration: 0.16, ease: "easeOut" }}
+                                        >
+                                            <TemplateCard
+                                                template={template}
+                                                onEdit={() => {
+                                                    setEditingTemplate(template);
+                                                    setIsTemplateModalOpen(true);
+                                                }}
+                                                onDelete={() => setTemplateToDelete(template)}
+                                                onStart={() => startWorkoutFromTemplate(template)}
+                                            />
+                                        </motion.div>
                                     ))}
-                                </div>
+                                    </AnimatePresence>
+                                </motion.div>
                             )}
                         </section>}
 

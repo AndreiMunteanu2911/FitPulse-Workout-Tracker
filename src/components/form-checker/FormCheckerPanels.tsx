@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import type { NormalizedLandmark } from "@mediapipe/tasks-vision";
 import { AlertTriangle, Camera, CheckCircle, Info, Loader2 } from "lucide-react";
 import Button from "@/components/Button";
@@ -45,8 +46,7 @@ export function CameraGuideOverlay({
   calibrationMessage: string;
   showCalibration: boolean;
 }) {
-  if (status === "good") return null;
-  if (status === "calibrating" && !showCalibration) return null;
+  const visible = status !== "good" && !(status === "calibrating" && !showCalibration);
 
   const messages: Record<string, { title: string; desc: string }> = {
     calibrating: {
@@ -74,13 +74,29 @@ export function CameraGuideOverlay({
   const msg = messages[status] ?? messages["not-detected"];
 
   return (
-    <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/45 px-4 backdrop-blur-sm">
-      <div className="w-full max-w-sm rounded-xl border border-[var(--border)] bg-[var(--surface)] px-6 py-5 text-center shadow-[var(--shadow-md)]">
+    <AnimatePresence initial={false}>
+    {visible && (
+    <motion.div
+      className="absolute inset-0 z-20 flex items-center justify-center bg-black/45 px-4 backdrop-blur-sm"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.14 }}
+    >
+      <motion.div
+        className="w-full max-w-sm rounded-xl border border-[var(--border)] bg-[var(--surface)] px-6 py-5 text-center shadow-[var(--shadow-md)]"
+        initial={{ opacity: 0, y: 8, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 4, scale: 0.98 }}
+        transition={{ duration: 0.16, ease: "easeOut" }}
+      >
         <AlertTriangle className="mx-auto mb-3 h-8 w-8 text-amber-400" />
         <p className="text-sm font-semibold text-[var(--foreground)]">{msg.title}</p>
         <p className="mt-1 text-xs text-[var(--muted-foreground)]">{msg.desc}</p>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
+    )}
+    </AnimatePresence>
   );
 }
 
@@ -259,16 +275,30 @@ function BlockingOverlay({
   description: string;
   solid?: boolean;
 }) {
-  if (!visible) return null;
-
   return (
-    <div className={`absolute inset-0 z-30 flex items-center justify-center px-4 ${solid ? "bg-[var(--surface)]" : "bg-black/45 backdrop-blur-sm"}`}>
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-6 py-5 text-center shadow-[var(--shadow-md)]">
+    <AnimatePresence initial={false}>
+    {visible && (
+    <motion.div
+      className={`absolute inset-0 z-30 flex items-center justify-center px-4 ${solid ? "bg-[var(--surface)]" : "bg-black/45 backdrop-blur-sm"}`}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.14 }}
+    >
+      <motion.div
+        className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-6 py-5 text-center shadow-[var(--shadow-md)]"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 4 }}
+        transition={{ duration: 0.16, ease: "easeOut" }}
+      >
         <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-[var(--primary-500)]" />
         <p className="text-sm font-semibold text-[var(--foreground)]">{title}</p>
         <p className="mt-1 text-xs text-[var(--muted-foreground)]">{description}</p>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
+    )}
+    </AnimatePresence>
   );
 }
 

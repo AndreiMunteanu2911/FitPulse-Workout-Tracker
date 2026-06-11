@@ -84,17 +84,6 @@ export default function BlogPage() {
         <PageHeader
           title="Blog"
           description="Practical training ideas, product updates, and stories from FitPulse."
-          actions={isAdmin ? (
-            <Button
-              onClick={() => {
-                setEditingPost(null);
-                setIsModalOpen(true);
-              }}
-            >
-              <Plus className="w-4.5 h-4.5" />
-              New Post
-            </Button>
-          ) : undefined}
         />
 
         <div className="toolbar">
@@ -114,6 +103,19 @@ export default function BlogPage() {
               <span className="hidden whitespace-nowrap px-3 text-sm font-semibold text-[var(--muted-foreground)] sm:block">
                 {filteredPosts.length} {filteredPosts.length === 1 ? "article" : "articles"}
               </span>
+              {isAdmin && (
+                <Button
+                  onClick={() => {
+                    setEditingPost(null);
+                    setIsModalOpen(true);
+                  }}
+                  className="shrink-0"
+                >
+                  <Plus className="size-4" />
+                  <span className="hidden sm:inline">New Post</span>
+                  <span className="sm:hidden">New</span>
+                </Button>
+              )}
         </div>
 
         {loading ? (

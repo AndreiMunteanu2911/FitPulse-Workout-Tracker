@@ -92,7 +92,7 @@ export default function BlogCard({ post, featured = false, isAdmin, onEdit, onDe
               <span>{post.comments_count ?? 0}</span>
             </Link>
           </div>
-          <Button asChild variant="textOnly" className="min-h-9 px-3 py-2 text-sm sm:min-h-9 sm:px-3 sm:py-2 sm:text-sm">
+          <Button asChild variant="secondary" className="min-h-9 px-3 py-2 text-sm sm:min-h-9 sm:px-3 sm:py-2 sm:text-sm">
             <Link href={`/blog/${post.id}`}>
               Read article
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />

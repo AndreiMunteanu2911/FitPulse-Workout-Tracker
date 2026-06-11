@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Product } from "@/types";
 import ModalWrapper from "@/components/ModalWrapper";
 import Button from "@/components/Button";
@@ -19,7 +20,13 @@ export default function ProductPurchaseModal({
                                                  loading,
                                                  onClose,
                                                  onPurchase,
-                                             }: ProductPurchaseModalProps) {
+}: ProductPurchaseModalProps) {
+    const [imageLoaded, setImageLoaded] = useState(false);
+
+    useEffect(() => {
+        setImageLoaded(false);
+    }, [product?.image_url]);
+
     if (!product) return null;
 
     return (
@@ -37,7 +44,12 @@ export default function ProductPurchaseModal({
                 <div className="relative min-h-64 bg-[var(--surface-raised)] md:min-h-[28rem]">
                     {product.image_url ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" />
+                        <img
+                            src={product.image_url}
+                            alt={product.name}
+                            className={`h-full w-full object-cover transition-opacity duration-200 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
+                            onLoad={() => setImageLoaded(true)}
+                        />
                     ) : (
                         <div className="flex h-full min-h-72 items-center justify-center text-[var(--muted-foreground)]">
                             <ShoppingBag className="h-16 w-16 opacity-20" />

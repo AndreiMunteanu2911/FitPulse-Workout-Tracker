@@ -4,6 +4,7 @@ import LoadingSpinner from "./LoadingSpinner";
 import ModalWrapper from "./ModalWrapper";
 import type { Exercise } from "@/types";
 import { Search, Plus } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface ExerciseSearchModalProps {
     isOpen: boolean;
@@ -56,20 +57,41 @@ export default function ExerciseSearchModal({
                 />
             </div>
             
-            {isSearching && (
-                <div className="my-4 flex items-center justify-center py-6">
-                    <LoadingSpinner size={6} />
-                </div>
-            )}
-            
             <div className="space-y-2 overflow-y-auto max-h-[60vh] -mx-2 px-2">
+                <AnimatePresence mode="popLayout" initial={false}>
+                {isSearching && (
+                    <motion.div
+                        key="loading"
+                        className="my-4 flex items-center justify-center py-6"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.14 }}
+                    >
+                        <LoadingSpinner size={6} />
+                    </motion.div>
+                )}
                 {showEmptyState && !showCreateButton && (
-                    <div className="text-center text-[var(--muted-foreground)] py-8">
+                    <motion.div
+                        key="empty"
+                        className="py-8 text-center text-[var(--muted-foreground)]"
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.15, ease: "easeOut" }}
+                    >
                         No exercises found for &quot;{searchQuery}&quot;
-                    </div>
+                    </motion.div>
                 )}
                 {showCreateButton && (
-                    <div className="text-center py-4">
+                    <motion.div
+                        key="create"
+                        className="py-4 text-center"
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.15, ease: "easeOut" }}
+                    >
                         <p className="text-sm text-[var(--muted-foreground)] mb-3">
                             No exercises found for &quot;{searchQuery}&quot;
                         </p>
@@ -81,17 +103,27 @@ export default function ExerciseSearchModal({
                             <Plus className="w-4 h-4 mr-1.5" />
                             Create Custom Exercise
                         </Button>
-                    </div>
+                    </motion.div>
                 )}
                 {searchResults.map((exercise) => (
-                    <div key={exercise.exercise_id} onClick={() => onSelectExercise(exercise)} className="cursor-pointer">
+                    <motion.div
+                        layout
+                        key={exercise.exercise_id}
+                        onClick={() => onSelectExercise(exercise)}
+                        className="cursor-pointer"
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.985 }}
+                        transition={{ duration: 0.14, ease: "easeOut" }}
+                    >
                         <ExerciseCard 
                             exercise={{ ...exercise, name: exercise.name.charAt(0).toUpperCase() + exercise.name.slice(1) }} 
                             showDetailsButton={false}
                             showAnimation={false}
                         />
-                    </div>
+                    </motion.div>
                 ))}
+                </AnimatePresence>
             </div>
             
             <Button onClick={onClose} className="mt-4 w-full" variant="secondary">

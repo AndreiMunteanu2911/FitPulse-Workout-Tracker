@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { PageHeader } from "@/components/PageHeader";
@@ -70,7 +71,8 @@ function AchievementBadge({
   const isClaimable = isUnlocked && !isClaimed;
 
   return (
-    <div
+    <motion.div
+      layout
       title={achievement.description}
       className={`relative rounded-[var(--radius-md)] border p-3 transition-all duration-200 ${
         isClaimed
@@ -80,11 +82,19 @@ function AchievementBadge({
             : "border-[var(--border)] bg-[var(--surface)] opacity-60"
       }`}
     >
+      <AnimatePresence initial={false}>
       {claiming && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-[var(--radius-md)] bg-[var(--surface)]/85">
+        <motion.div
+          className="absolute inset-0 z-10 flex items-center justify-center rounded-[var(--radius-md)] bg-[var(--surface)]/85"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.12 }}
+        >
           <LoadingSpinner size={5} variant="image" />
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
 
       <div className="flex items-start gap-3">
         <div
@@ -96,7 +106,17 @@ function AchievementBadge({
                 : "bg-[var(--surface-raised)] text-[var(--muted-foreground)]"
           }`}
         >
-          {isClaimed ? <Check className="h-5 w-5" /> : <AchievementIcon name={achievement.icon} className="h-5 w-5" />}
+          <AnimatePresence mode="wait" initial={false}>
+            {isClaimed ? (
+              <motion.span key="claimed" initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.7 }} transition={{ duration: 0.16 }}>
+                <Check className="h-5 w-5" />
+              </motion.span>
+            ) : (
+              <motion.span key="icon" initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.85 }} transition={{ duration: 0.14 }}>
+                <AchievementIcon name={achievement.icon} className="h-5 w-5" />
+              </motion.span>
+            )}
+          </AnimatePresence>
         </div>
 
         <div className="min-w-0 flex-1">
@@ -124,17 +144,23 @@ function AchievementBadge({
           {isClaimed ? "Claimed" : isClaimable ? "Ready to claim" : "Locked"}
         </span>
 
+        <AnimatePresence initial={false}>
         {isClaimable && (
-          <button
+          <motion.button
             onClick={() => onClaim(achievement.id)}
             disabled={claiming}
             className="rounded-full bg-[var(--lime-green)] px-3 py-1.5 text-xs font-bold text-[#232323] transition hover:brightness-105 disabled:cursor-wait disabled:opacity-70"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.14 }}
           >
             Claim
-          </button>
+          </motion.button>
         )}
+        </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -156,7 +182,13 @@ function CategorySection({
   const progress = achievements.length > 0 ? (claimed / achievements.length) * 100 : 0;
 
   return (
-    <section className="rounded-[var(--radius-lg)] bg-[var(--surface)] p-4 sm:p-5">
+    <motion.section
+      layout
+      className="rounded-[var(--radius-lg)] bg-[var(--surface)] p-4 sm:p-5"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.18, ease: "easeOut" }}
+    >
       <div className="mb-4 flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--primary-50)] text-[var(--primary-600)]">
           <Icon className="h-5 w-5" />
@@ -183,6 +215,7 @@ function CategorySection({
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <AnimatePresence initial={false} mode="popLayout">
         {achievements.map((achievement) => (
           <AchievementBadge
             key={achievement.id}
@@ -191,8 +224,9 @@ function CategorySection({
             claiming={claimingId === achievement.id}
           />
         ))}
+        </AnimatePresence>
       </div>
-    </section>
+    </motion.section>
   );
 }
 
@@ -309,11 +343,19 @@ export default function AchievementsPage() {
               </div>
             </section>
 
+            <AnimatePresence initial={false}>
             {claimError && (
-              <div className="rounded-[var(--radius-md)] bg-[var(--color-destructive-bg)] p-3 text-center text-sm font-semibold text-[var(--color-destructive)]">
+              <motion.div
+                className="rounded-[var(--radius-md)] bg-[var(--color-destructive-bg)] p-3 text-center text-sm font-semibold text-[var(--color-destructive)]"
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.14 }}
+              >
                 {claimError}
-              </div>
+              </motion.div>
             )}
+            </AnimatePresence>
 
             {categories.map((category) => {
               const items = achievements.filter((achievement) => achievement.category === category);

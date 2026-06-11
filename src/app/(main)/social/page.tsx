@@ -114,15 +114,6 @@ export default function SocialPage() {
         <PageHeader
           title="Social"
           description="Connect and share with friends."
-          actions={activeTab === "feed" ? (
-            <Button
-              onClick={() => setShowCreatePost(true)}
-              className="px-4 py-2 text-sm"
-            >
-              <Plus className="w-4 h-4" />
-              Post
-            </Button>
-          ) : null}
         />
 
         <div className="segmented-control">
@@ -178,15 +169,17 @@ export default function SocialPage() {
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.16, ease: "easeOut" }}
           >
-            <button
-              type="button"
-              onClick={() => setShowCreatePost(true)}
-              className="card flex w-full items-center gap-3 p-4 text-left transition-colors hover:border-[var(--primary-200)] sm:p-5"
-            >
+            <div className="card mb-5 flex w-full items-center gap-3 p-4 sm:p-5">
               <div className="icon-tile"><MessageCircle className="size-5" /></div>
               <span className="flex-1 text-sm font-medium text-[var(--muted-foreground)]">Share a workout, photo, or update...</span>
-              <span className="hidden rounded-full bg-[var(--primary-500)] px-4 py-2 text-xs font-semibold text-white sm:inline">Create post</span>
-            </button>
+              <Button
+                variant="secondary"
+                onClick={() => setShowCreatePost(true)}
+                className="shrink-0"
+              >
+                Create post
+              </Button>
+            </div>
             {loadingFeed ? (
               <div className="flex min-h-[16rem] items-center justify-center">
                 <LoadingSpinner />

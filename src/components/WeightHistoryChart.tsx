@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import WeightLogCard from "@/components/WeightLogCard";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface WeightHistoryChartProps {
     weights: { log_date: string; weight: number; id?: string }[];
@@ -165,17 +166,22 @@ const WeightHistoryChart: React.FC<WeightHistoryChartProps> = ({ weights, loadin
                         </ResponsiveContainer>
                     </div>
 
-                    <div className="mt-4 bg-[var(--surface-raised)] rounded-[var(--radius-sm)] overflow-hidden max-h-72 overflow-y-auto">
+                    <motion.div layout className="mt-4 max-h-72 overflow-y-auto rounded-[var(--radius-sm)] bg-[var(--surface-raised)]">
+                        <AnimatePresence initial={false} mode="popLayout">
                         {sortedWeights.slice().reverse().map((log, idx) => (
-                            <WeightLogCard
+                            <motion.div
+                                layout
                                 key={log.id || `${log.log_date}-${log.weight}-${idx}`}
-                                date={log.log_date}
-                                weight={log.weight}
-                                id={log.id}
-                                onDelete={onDelete}
-                            />
+                                initial={{ opacity: 0, y: 6 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, x: 10 }}
+                                transition={{ duration: 0.15, ease: "easeOut" }}
+                            >
+                                <WeightLogCard date={log.log_date} weight={log.weight} id={log.id} onDelete={onDelete} />
+                            </motion.div>
                         ))}
-                    </div>
+                        </AnimatePresence>
+                    </motion.div>
                 </>
             )}
         </div>

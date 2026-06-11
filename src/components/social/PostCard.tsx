@@ -214,8 +214,16 @@ export default function PostCard({ post, onLike, onDelete, currentUserId }: Post
           </button>
         </div>
 
+        <AnimatePresence mode="wait" initial={false}>
         {showCommentInput ? (
-          <div className="flex items-center gap-2 rounded-[var(--radius-lg)] bg-[var(--surface-raised)] p-2">
+          <motion.div
+            key="input"
+            className="flex items-center gap-2 rounded-[var(--radius-lg)] bg-[var(--surface-raised)] p-2"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 4 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+          >
             <input
               type="text"
               value={commentText}
@@ -241,15 +249,21 @@ export default function PostCard({ post, onLike, onDelete, currentUserId }: Post
             >
               Cancel
             </button>
-          </div>
+          </motion.div>
         ) : (
-          <button
+          <motion.button
+            key="trigger"
             onClick={() => setShowCommentInput(true)}
             className="w-full rounded-[var(--radius-lg)] bg-[var(--surface-raised)] px-4 py-3 text-left text-sm font-medium text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.12 }}
           >
             Add a comment...
-          </button>
+          </motion.button>
         )}
+        </AnimatePresence>
       </div>
 
       <ImageModal

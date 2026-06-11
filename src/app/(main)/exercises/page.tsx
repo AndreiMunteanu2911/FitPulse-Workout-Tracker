@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import ExerciseCard from "@/components/ExerciseCard";
 import type { Exercise } from "@/types";
@@ -101,11 +102,22 @@ export default function ExercisesPage() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <motion.div layout className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <AnimatePresence initial={false} mode="popLayout">
                     {exercises.map((exercise) => (
-                        <ExerciseCard key={exercise.exercise_id} exercise={exercise} />
+                        <motion.div
+                            layout
+                            key={exercise.exercise_id}
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.985 }}
+                            transition={{ duration: 0.15, ease: "easeOut" }}
+                        >
+                            <ExerciseCard exercise={exercise} />
+                        </motion.div>
                     ))}
-                </div>
+                    </AnimatePresence>
+                </motion.div>
 
                 <div ref={loaderRef} className="h-10" />
                 {loading && (

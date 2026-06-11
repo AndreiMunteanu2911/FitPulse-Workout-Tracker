@@ -17,7 +17,7 @@ export default function Navbar() {
     <>
       <nav className="sticky top-0 z-20 hidden h-dvh w-64 shrink-0 flex-col bg-gradient-to-b from-[#5E3FDE] via-[#7457F5] to-[#896CFE] text-white shadow-[18px_0_45px_rgba(94,63,222,0.18)] md:flex">
         <div className="px-5 pb-7 pt-6">
-          <AppLogo inverted />
+          <AppLogo inverted prominent />
         </div>
 
         <ul className="flex flex-1 flex-col overflow-y-auto">

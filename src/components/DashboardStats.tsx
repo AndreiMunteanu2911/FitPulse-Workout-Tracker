@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { AnimatePresence, motion } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import {
   ArrowRight,
@@ -232,7 +233,9 @@ export default function DashboardStats() {
           )}
         </div>
 
+        <AnimatePresence mode="wait" initial={false}>
         {recentWorkout ? (
+          <motion.div key={recentWorkout.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.16 }}>
           <Link href={`/history/${recentWorkout.id}`} className="card-interactive group block p-5 sm:p-6">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
               <div className="icon-tile !size-12"><CalendarDays className="size-5" /></div>
@@ -259,17 +262,20 @@ export default function DashboardStats() {
               <ArrowRight className="hidden size-5 text-[var(--muted-foreground)] sm:block" />
             </div>
           </Link>
+          </motion.div>
         ) : (
-          <div className="empty-state !min-h-48">
+          <motion.div key="empty" className="empty-state !min-h-48" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.14 }}>
             <div className="empty-state-icon"><Dumbbell className="size-6" /></div>
             <h3 className="empty-state-title">No completed workout yet</h3>
             <p className="empty-state-description">Your latest session will appear here after you finish it.</p>
-          </div>
+          </motion.div>
         )}
+        </AnimatePresence>
       </section>
 
+      <AnimatePresence initial={false}>
       {gamification && (
-        <section className="section">
+        <motion.section className="section" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
           <div className="section-header">
             <div>
               <p className="eyebrow">Progress</p>
@@ -281,11 +287,13 @@ export default function DashboardStats() {
             <XPLevelCard gamification={gamification} />
             <AchievementsTeaserCard achievements={gamification.achievements} />
           </div>
-        </section>
+        </motion.section>
       )}
+      </AnimatePresence>
 
+      <AnimatePresence initial={false}>
       {stats.weeklyHistogram.length > 0 && (
-        <section className="section">
+        <motion.section className="section" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
           <div className="section-header">
             <div>
               <p className="eyebrow">Long-term activity</p>
@@ -333,8 +341,9 @@ export default function DashboardStats() {
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </section>
+        </motion.section>
       )}
+      </AnimatePresence>
     </div>
   );
 }

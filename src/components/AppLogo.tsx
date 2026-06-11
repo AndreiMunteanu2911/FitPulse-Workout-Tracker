@@ -5,12 +5,14 @@ interface AppLogoProps {
   compact?: boolean;
   href?: string;
   inverted?: boolean;
+  prominent?: boolean;
 }
 
 export function AppLogo({
   compact = false,
   href = "/dashboard",
   inverted = false,
+  prominent = false,
 }: AppLogoProps) {
   return (
     <Link
@@ -22,7 +24,7 @@ export function AppLogo({
         <Image src="/assets/logo.png" alt="" width={23} height={23} className="object-contain" />
       </span>
       {!compact && (
-        <span className={`text-lg font-bold tracking-[-0.03em] ${inverted ? "text-white" : "text-[var(--foreground)]"}`}>
+        <span className={`${prominent ? "text-xl font-extrabold drop-shadow-sm" : "text-lg font-bold"} tracking-[-0.03em] ${inverted ? "text-white" : "text-[var(--foreground)]"}`}>
           Fit<span className={inverted ? "text-[var(--lime-green)]" : "text-[var(--primary-600)]"}>Pulse</span>
         </span>
       )}

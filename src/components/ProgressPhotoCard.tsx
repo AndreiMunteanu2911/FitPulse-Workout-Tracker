@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { ProgressPhoto } from "@/types";
 import { Trash2 } from "lucide-react";
 
@@ -7,6 +8,7 @@ interface ProgressPhotoCardProps {
 }
 
 export default function ProgressPhotoCard({ photo, onDelete }: ProgressPhotoCardProps) {
+  const [loaded, setLoaded] = useState(false);
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
@@ -17,11 +19,12 @@ export default function ProgressPhotoCard({ photo, onDelete }: ProgressPhotoCard
 
   return (
     <div className="group overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)]">
-      <div className="relative aspect-square">
+      <div className="relative aspect-square bg-[var(--surface-raised)]">
         <img
           src={photo.photo_url}
           alt="Progress photo"
-          className="w-full h-full object-cover"
+          className={`h-full w-full object-cover transition-[opacity,transform] duration-300 ${loaded ? "scale-100 opacity-100" : "scale-[1.015] opacity-0"}`}
+          onLoad={() => setLoaded(true)}
         />
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
