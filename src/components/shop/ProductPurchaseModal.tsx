@@ -30,7 +30,7 @@ export default function ProductPurchaseModal({
     if (!product) return null;
 
     return (
-        <ModalWrapper isOpen={isOpen} onClose={() => !loading && onClose()} containerClassName="max-w-2xl max-h-[calc(100vh-1.5rem)] overflow-y-auto p-0">
+        <ModalWrapper isOpen={isOpen} onClose={() => !loading && onClose()} containerClassName="max-w-2xl max-h-[calc(100dvh-1rem)] overflow-y-auto p-0">
             <button
                 type="button"
                 onClick={onClose}
@@ -41,7 +41,7 @@ export default function ProductPurchaseModal({
                 <X className="h-4 w-4" />
             </button>
             <div className="grid md:grid-cols-[0.9fr_1.1fr]">
-                <div className="relative min-h-64 bg-[var(--surface-raised)] md:min-h-[28rem]">
+                <div className="relative h-44 bg-[var(--surface-raised)] sm:h-56 md:h-auto md:min-h-[28rem]">
                     {product.image_url ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -51,7 +51,7 @@ export default function ProductPurchaseModal({
                             onLoad={() => setImageLoaded(true)}
                         />
                     ) : (
-                        <div className="flex h-full min-h-72 items-center justify-center text-[var(--muted-foreground)]">
+                        <div className="flex h-full items-center justify-center text-[var(--muted-foreground)]">
                             <ShoppingBag className="h-16 w-16 opacity-20" />
                         </div>
                     )}
@@ -64,7 +64,7 @@ export default function ProductPurchaseModal({
                     </div>
                 </div>
 
-                <div className="flex flex-col bg-[var(--surface)] p-6 sm:p-7">
+                <div className="flex flex-col bg-[var(--surface)] p-5 sm:p-7">
                     <div>
                         <p className="eyebrow">Confirm purchase</p>
                         <h2 className="text-2xl font-extrabold tracking-[-0.03em] text-[var(--foreground)]">{product.name}</h2>

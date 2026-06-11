@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { Achievement } from "@/types";
+import Button from "@/components/Button";
 import {
   Activity,
   ArrowRight,
@@ -52,74 +53,79 @@ export default function AchievementsTeaserCard({ achievements }: AchievementsTea
   const hasClaimable = claimable.length > 0;
 
   return (
-    <div className="card p-5 sm:p-6">
-      <div className="flex items-start gap-4">
-        <div className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--primary-50)] dark:bg-[var(--primary-100)] text-[var(--primary-600)]">
-          <Trophy className="h-6 w-6" />
-          {hasClaimable && (
-            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--lime-green)] px-1 text-[10px] font-extrabold text-[#232323]">
-              {claimable.length}
-            </span>
-          )}
-        </div>
+    <div className="relative overflow-hidden rounded-[var(--radius-xl)] bg-[var(--surface)] p-5 shadow-[var(--shadow-sm)] ring-1 ring-[var(--border)] sm:p-6">
+      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[var(--primary-500)] via-[var(--primary-400)] to-[var(--lime-green)]" />
+      <div className="absolute -right-16 -top-16 size-40 rounded-full bg-[var(--primary-100)]/60 blur-3xl" />
 
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-sm font-bold text-[var(--foreground)]">
-                Achievements
-              </p>
-              <p className="mt-1 text-xs text-[var(--muted-foreground)]">
-                {claimed.length} of {total} claimed
-                {hasClaimable && <span className="font-semibold text-[var(--primary-600)]"> · {claimable.length} ready</span>}
-              </p>
+      <div className="relative">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="relative flex size-12 shrink-0 items-center justify-center rounded-[var(--radius-lg)] bg-[var(--primary-50)] text-[var(--primary-600)] dark:bg-[var(--primary-100)]">
+              <Trophy className="size-5" />
+              {hasClaimable && (
+                <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--lime-green)] px-1 text-[10px] font-extrabold text-[#232323] ring-2 ring-[var(--surface)]">
+                  {claimable.length}
+                </span>
+              )}
             </div>
-            <Link
-              href="/achievements"
-              aria-label="View all achievements"
-              className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--surface-raised)] text-[var(--foreground)] transition-colors hover:bg-[var(--primary-50)] hover:text-[var(--primary-600)]"
-            >
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-
-          <div className="mt-4">
-            <div className="mb-1.5 flex items-center justify-between text-[11px] font-semibold text-[var(--muted-foreground)]">
-              <span>Progress</span>
-              <span>{progress}%</span>
-            </div>
-            <div className="h-2 overflow-hidden rounded-full bg-[var(--surface-raised)]">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-[var(--primary-500)] to-[var(--lime-green)] transition-all duration-700 ease-out"
-                style={{ width: `${progress}%` }}
-              />
+            <div>
+              <p className="eyebrow !mb-1">Milestones</p>
+              <h3 className="text-xl font-extrabold tracking-[-0.03em] text-[var(--foreground)]">Achievements</h3>
             </div>
           </div>
-
-          {previewBadges.length > 0 ? (
-            <div className="mt-4 flex items-center gap-2 overflow-hidden">
-              {previewBadges.map((achievement) => {
-                const Icon = ICON_MAP[achievement.icon] ?? Trophy;
-                const isReady = !!achievement.unlockedAt && !achievement.claimedAt;
-                return (
-                  <span
-                    key={achievement.id}
-                    title={achievement.name}
-                    className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border ${
-                      isReady
-                        ? "border-[var(--lime-green)] bg-[var(--lime-green)] text-[#232323]"
-                        : "border-[var(--border)] bg-[var(--surface-raised)] text-[var(--primary-600)]"
-                    }`}
-                  >
-                    {achievement.claimedAt ? <CheckCircle2 className="h-4 w-4" /> : <Icon className="h-4 w-4" aria-hidden="true" />}
-                  </span>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="mt-4 text-xs text-[var(--muted-foreground)]">Log workouts to unlock your first badges.</p>
-          )}
+          <span className="rounded-full bg-[var(--surface-raised)] px-3 py-1.5 text-xs font-bold text-[var(--muted-foreground)]">
+            {progress}%
+          </span>
         </div>
+
+        <p className="mt-4 text-sm leading-6 text-[var(--muted-foreground)]">
+          {hasClaimable
+            ? `${claimable.length} milestone${claimable.length === 1 ? " is" : "s are"} ready to claim.`
+            : `${claimed.length} of ${total} milestones claimed.`}
+        </p>
+
+        <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-[var(--surface-raised)]">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-[var(--primary-500)] to-[var(--lime-green)] transition-all duration-700 ease-out"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+
+        {previewBadges.length > 0 ? (
+          <div className="mt-5 grid grid-cols-5 gap-2">
+            {previewBadges.map((achievement) => {
+              const Icon = ICON_MAP[achievement.icon] ?? Trophy;
+              const isReady = !!achievement.unlockedAt && !achievement.claimedAt;
+
+              return (
+                <span
+                  key={achievement.id}
+                  title={achievement.name}
+                  className={`flex aspect-square min-w-0 items-center justify-center rounded-[var(--radius-md)] ${
+                    isReady
+                      ? "bg-[var(--lime-green)] text-[#232323] shadow-[0_8px_20px_rgba(197,212,74,0.18)]"
+                      : "bg-[var(--primary-50)] text-[var(--primary-600)] dark:bg-[var(--primary-100)]"
+                  }`}
+                >
+                  {achievement.claimedAt
+                    ? <CheckCircle2 className="size-4" />
+                    : <Icon className="size-4" aria-hidden="true" />}
+                </span>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="mt-5 rounded-[var(--radius-lg)] bg-[var(--surface-raised)] p-3 text-xs text-[var(--muted-foreground)]">
+            Log workouts to unlock your first milestones.
+          </p>
+        )}
+
+        <Button asChild variant={hasClaimable ? "lime" : "secondary"} block className="mt-5">
+          <Link href="/achievements">
+            {hasClaimable ? "Claim achievements" : "View achievements"}
+            <ArrowRight className="size-4" />
+          </Link>
+        </Button>
       </div>
     </div>
   );

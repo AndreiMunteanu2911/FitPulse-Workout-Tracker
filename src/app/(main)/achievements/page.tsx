@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import LoadReveal from "@/components/LoadReveal";
+import Button from "@/components/Button";
 import { PageHeader } from "@/components/PageHeader";
 import type { Achievement } from "@/types";
 import {
@@ -12,7 +13,6 @@ import {
   Award,
   BarChart2,
   Check,
-  CheckCircle2,
   Crown,
   Dumbbell,
   Flame,
@@ -46,11 +46,11 @@ const ICON_MAP: Record<string, LucideIcon> = {
 
 type CategoryKey = Achievement["category"];
 
-const CATEGORY_META: Record<CategoryKey, { label: string; icon: LucideIcon }> = {
-  workouts: { label: "Workouts", icon: Dumbbell },
-  streaks: { label: "Streaks", icon: Flame },
-  records: { label: "Records", icon: Trophy },
-  volume: { label: "Volume", icon: BarChart2 },
+const CATEGORY_META: Record<CategoryKey, { label: string; description: string; icon: LucideIcon }> = {
+  workouts: { label: "Workouts", description: "Consistency across completed training sessions.", icon: Dumbbell },
+  streaks: { label: "Streaks", description: "Momentum earned by showing up regularly.", icon: Flame },
+  records: { label: "Records", description: "Personal bests and standout performances.", icon: Trophy },
+  volume: { label: "Volume", description: "Milestones based on the work you have moved.", icon: BarChart2 },
 };
 
 function AchievementIcon({ name, className }: { name: string; className?: string }) {
@@ -75,18 +75,25 @@ function AchievementBadge({
     <motion.div
       layout
       title={achievement.description}
-      className={`relative rounded-[var(--radius-md)] border p-3 transition-all duration-200 ${
+      className={`relative overflow-hidden rounded-[var(--radius-xl)] p-4 shadow-[var(--shadow-xs)] ring-1 transition-all duration-200 ${
         isClaimed
-          ? "border-[var(--border)] bg-[var(--surface)]"
+          ? "bg-[var(--surface)] ring-[var(--border)]"
           : isClaimable
-            ? "border-[var(--lime-green)] bg-[var(--surface)] shadow-[0_8px_22px_rgba(226,241,99,0.12)]"
-            : "border-[var(--border)] bg-[var(--surface)] opacity-60"
+            ? "bg-gradient-to-br from-[var(--surface)] to-[var(--primary-50)] ring-[var(--lime-green)] shadow-[0_12px_30px_rgba(116,87,245,0.10)]"
+            : "bg-[var(--surface-raised)] ring-transparent"
       }`}
     >
+      <div className={`absolute inset-x-0 top-0 h-1 ${
+        isClaimable
+          ? "bg-[var(--lime-green)]"
+          : isClaimed
+            ? "bg-[var(--primary-500)]"
+            : "bg-[var(--border)]"
+      }`} />
       <AnimatePresence initial={false}>
       {claiming && (
         <motion.div
-          className="absolute inset-0 z-10 flex items-center justify-center rounded-[var(--radius-md)] bg-[var(--surface)]/85"
+          className="absolute inset-0 z-10 flex items-center justify-center rounded-[var(--radius-xl)] bg-[var(--surface)]/85"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -99,25 +106,15 @@ function AchievementBadge({
 
       <div className="flex items-start gap-3">
         <div
-          className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[var(--radius-sm)] ${
+          className={`flex size-11 flex-shrink-0 items-center justify-center rounded-[var(--radius-lg)] ${
             isClaimable
               ? "bg-[var(--lime-green)] text-[#232323]"
               : isClaimed
                 ? "bg-[var(--primary-50)] text-[var(--primary-600)]"
-                : "bg-[var(--surface-raised)] text-[var(--muted-foreground)]"
+                : "bg-[var(--surface)] text-[var(--muted-foreground)]"
           }`}
         >
-          <AnimatePresence mode="wait" initial={false}>
-            {isClaimed ? (
-              <motion.span key="claimed" initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.7 }} transition={{ duration: 0.16 }}>
-                <Check className="h-5 w-5" />
-              </motion.span>
-            ) : (
-              <motion.span key="icon" initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.85 }} transition={{ duration: 0.14 }}>
-                <AchievementIcon name={achievement.icon} className="h-5 w-5" />
-              </motion.span>
-            )}
-          </AnimatePresence>
+          <AchievementIcon name={achievement.icon} className="h-5 w-5" />
         </div>
 
         <div className="min-w-0 flex-1">
@@ -125,42 +122,61 @@ function AchievementBadge({
             <h3 className="text-sm font-bold leading-snug text-[var(--foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>
               {achievement.name}
             </h3>
-            <span className="flex-shrink-0 rounded-full bg-[var(--surface-raised)] px-2 py-0.5 text-[10px] font-bold text-[var(--muted-foreground)]">
-              {achievement.xpReward} XP
-            </span>
+            <AnimatePresence initial={false}>
+              {isClaimed && (
+                <motion.span
+                  className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-full bg-[var(--primary-50)] px-2.5 py-1.5 text-xs font-bold text-[var(--primary-600)] dark:bg-[var(--primary-100)]"
+                  initial={{ opacity: 0, scale: 0.7 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.7 }}
+                  transition={{ duration: 0.16 }}
+                >
+                  <Check className="size-3.5" />
+                  Claimed
+                </motion.span>
+              )}
+            </AnimatePresence>
+            {!isClaimed && (
+              <span className="flex-shrink-0 rounded-full bg-[var(--primary-50)] px-2.5 py-1 text-[10px] font-bold text-[var(--primary-600)] dark:bg-[var(--primary-100)]">
+                {achievement.xpReward} XP
+              </span>
+            )}
           </div>
-          <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-[var(--muted-foreground)]">
+          <p className="mt-1.5 text-xs leading-relaxed text-[var(--muted-foreground)]">
             {achievement.description}
           </p>
         </div>
       </div>
 
-      <div className="mt-3 flex items-center justify-between gap-3">
-        <span
-          className={`inline-flex items-center gap-1.5 text-xs font-semibold ${
-            isClaimed ? "text-[var(--color-success)]" : isClaimable ? "text-[var(--foreground)]" : "text-[var(--muted-foreground)]"
-          }`}
-        >
-          {isClaimed && <CheckCircle2 className="h-3.5 w-3.5" />}
-          {isClaimed ? "Claimed" : isClaimable ? "Ready to claim" : "Locked"}
-        </span>
+      {!isClaimed && (
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${
+            isClaimable ? "text-[var(--foreground)]" : "text-[var(--muted-foreground)]"
+          }`}>
+            {isClaimable ? "Ready to claim" : "Locked"}
+          </span>
 
-        <AnimatePresence initial={false}>
-        {isClaimable && (
-          <motion.button
-            onClick={() => onClaim(achievement.id)}
-            disabled={claiming}
-            className="rounded-full bg-[var(--lime-green)] px-3 py-1.5 text-xs font-bold text-[#232323] transition hover:brightness-105 disabled:cursor-wait disabled:opacity-70"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ duration: 0.14 }}
-          >
-            Claim
-          </motion.button>
-        )}
-        </AnimatePresence>
-      </div>
+          <AnimatePresence initial={false}>
+          {isClaimable && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.14 }}
+            >
+              <Button
+                variant="lime"
+                onClick={() => onClaim(achievement.id)}
+                disabled={claiming}
+                className="!min-h-8 !px-3 !py-2 !text-xs sm:!min-h-8 sm:!px-3 sm:!py-2 sm:!text-xs"
+              >
+                Claim
+              </Button>
+            </motion.div>
+          )}
+          </AnimatePresence>
+        </div>
+      )}
     </motion.div>
   );
 }
@@ -185,13 +201,14 @@ function CategorySection({
   return (
     <motion.section
       layout
-      className="rounded-[var(--radius-lg)] bg-[var(--surface)] p-4 sm:p-5"
+      className="relative overflow-hidden rounded-[var(--radius-xl)] bg-[var(--surface)] p-5 shadow-[var(--shadow-sm)] ring-1 ring-[var(--border)] sm:p-6"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.18, ease: "easeOut" }}
     >
-      <div className="mb-4 flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--primary-50)] text-[var(--primary-600)]">
+      <div className="absolute -right-20 -top-20 size-48 rounded-full bg-[var(--primary-50)] blur-3xl dark:bg-[var(--primary-100)]/50" />
+      <div className="relative mb-5 flex items-start gap-3">
+        <div className="flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-lg)] bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)] text-white shadow-[0_10px_24px_rgba(116,87,245,0.20)]">
           <Icon className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
@@ -199,10 +216,11 @@ function CategorySection({
             <h2 className="text-base font-extrabold text-[var(--foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>
               {meta.label}
             </h2>
-            <span className="text-xs font-semibold text-[var(--muted-foreground)]">
+            <span className="rounded-full bg-[var(--surface-raised)] px-2.5 py-1 text-xs font-bold text-[var(--muted-foreground)]">
               {claimed}/{achievements.length}
             </span>
           </div>
+          <p className="mt-1 text-xs leading-relaxed text-[var(--muted-foreground)]">{meta.description}</p>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--surface-raised)]">
             <div
               className="h-full rounded-full bg-gradient-to-r from-[var(--primary-500)] to-[var(--lime-green)] transition-all duration-700 ease-out"
@@ -215,7 +233,7 @@ function CategorySection({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="relative grid grid-cols-1 gap-3 lg:grid-cols-2">
         <AnimatePresence initial={false} mode="popLayout">
         {achievements.map((achievement) => (
           <AchievementBadge
@@ -314,31 +332,46 @@ export default function AchievementsPage() {
 
         {!loading && !error && (
           <LoadReveal className="page-stack">
-            <section className="card p-5 sm:p-6">
-              <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-center">
+            <section className="relative overflow-hidden rounded-[var(--radius-2xl)] bg-gradient-to-br from-[var(--primary-700)] via-[var(--primary-600)] to-[var(--primary-500)] p-6 text-white shadow-[0_20px_50px_rgba(116,87,245,0.25)] sm:p-8">
+              <div className="absolute -right-16 -top-24 size-64 rounded-full bg-white/10 blur-3xl" />
+              <div className="absolute -bottom-24 left-1/3 size-56 rounded-full bg-[var(--lime-green)]/15 blur-3xl" />
+
+              <div className="relative grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>
-                    Overall progress
-                  </p>
-                  <div className="mt-3 h-3 overflow-hidden rounded-full bg-[var(--surface-raised)]">
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-11 items-center justify-center rounded-[var(--radius-lg)] bg-white/10 ring-1 ring-white/15">
+                      <Award className="size-5 text-[var(--lime-green)]" />
+                    </span>
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/55">Milestone collection</p>
+                      <h2 className="mt-1 text-2xl font-extrabold tracking-[-0.04em] sm:text-3xl">Your achievement progress</h2>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 flex items-end justify-between gap-4">
+                    <p className="text-sm font-medium text-white/65">Keep training to unlock and claim every milestone.</p>
+                    <p className="text-3xl font-black tabular-nums text-[var(--lime-green)]">{progress}%</p>
+                  </div>
+                  <div className="mt-3 h-3 overflow-hidden rounded-full bg-black/15 ring-1 ring-white/10">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-[var(--primary-500)] to-[var(--lime-green)] transition-all duration-700 ease-out"
+                      className="h-full rounded-full bg-[var(--lime-green)] shadow-[0_0_20px_rgba(226,241,99,0.35)] transition-all duration-700 ease-out"
                       style={{ width: `${progress}%` }}
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-3 text-center sm:min-w-[18rem]">
-                  <div className="rounded-[var(--radius-md)] bg-[var(--surface-raised)] px-3 py-3">
-                    <p className="text-xl font-extrabold text-[var(--foreground)]">{progress}%</p>
-                    <p className="mt-1 text-[11px] font-semibold text-[var(--muted-foreground)]">Complete</p>
+
+                <div className="grid grid-cols-3 gap-2 text-center sm:min-w-[19rem] sm:gap-3">
+                  <div className="rounded-[var(--radius-lg)] bg-white/10 px-3 py-3 ring-1 ring-white/10">
+                    <p className="text-xl font-extrabold">{totalAchievements}</p>
+                    <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-white/55">Total</p>
                   </div>
-                  <div className="rounded-[var(--radius-md)] bg-[var(--surface-raised)] px-3 py-3">
-                    <p className="text-xl font-extrabold text-[var(--foreground)]">{totalClaimed}</p>
-                    <p className="mt-1 text-[11px] font-semibold text-[var(--muted-foreground)]">Claimed</p>
+                  <div className="rounded-[var(--radius-lg)] bg-white/10 px-3 py-3 ring-1 ring-white/10">
+                    <p className="text-xl font-extrabold">{totalClaimed}</p>
+                    <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-white/55">Claimed</p>
                   </div>
-                  <div className="rounded-[var(--radius-md)] bg-[var(--surface-raised)] px-3 py-3">
-                    <p className="text-xl font-extrabold text-[var(--foreground)]">{claimableCount}</p>
-                    <p className="mt-1 text-[11px] font-semibold text-[var(--muted-foreground)]">Ready</p>
+                  <div className="rounded-[var(--radius-lg)] bg-[var(--lime-green)] px-3 py-3 text-[#232323]">
+                    <p className="text-xl font-extrabold">{claimableCount}</p>
+                    <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-[#232323]/60">Ready</p>
                   </div>
                 </div>
               </div>

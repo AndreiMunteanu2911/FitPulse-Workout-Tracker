@@ -13,7 +13,7 @@ import Button from "@/components/Button";
 import { PageHeader } from "@/components/PageHeader";
 import { useHistory } from "@/hooks/useHistory";
 import type { Workout } from "@/types";
-import { Clock, Plus } from "lucide-react";
+import { Clock } from "lucide-react";
 
 function computePrCountsPerWorkout(workouts: Workout[]): Map<string, number> {
     const sorted = [...workouts].sort(
@@ -144,12 +144,6 @@ export default function HistoryPage() {
                 <PageHeader
                     title="History"
                     description="Review completed workouts and personal records."
-                    actions={
-                        <Button onClick={() => router.push("/workout")} className="px-4 py-2 text-xs">
-                            <Plus className="w-4 h-4" />
-                            New workout
-                        </Button>
-                    }
                 />
                 <div className="metric-strip grid-cols-3">
                     <div className="metric-item">
