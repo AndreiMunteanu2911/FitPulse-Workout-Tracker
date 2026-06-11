@@ -1,9 +1,9 @@
-import React from "react";
 import RestTimer from "@/components/RestTimer";
 import SetRow from "@/components/SetRow";
 import { useState } from "react";
 import type { WorkoutExercise, RestTimerState } from "@/types";
-import { Trash2, Plus } from "lucide-react";
+import { Dumbbell, Plus, Trash2 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface ExerciseCardProps {
     workoutExercise: WorkoutExercise;
@@ -65,16 +65,22 @@ export default function WorkoutExerciseCard({
         onRestTimerDismiss;
 
     return (
-        <div className="card">
-            <div className="p-5 sm:p-6">
+        <div className="card shadow-[var(--shadow-sm)]">
+            <div className="border-b border-[var(--border)] bg-gradient-to-r from-[var(--primary-50)]/75 to-transparent p-5 sm:p-6">
                 {/* Header */}
-                <div className="flex items-center gap-3 mb-5">
+                <div className="flex items-center gap-3">
                     {workoutExercise.exercise.gif_url && (
                         <div className="flex-shrink-0 w-16 h-16 rounded-[var(--radius-lg)] overflow-hidden bg-[var(--surface-raised)]">
                             <ExerciseThumbnail src={workoutExercise.exercise.gif_url} />
                         </div>
                     )}
+                    {!workoutExercise.exercise.gif_url && (
+                        <div className="icon-tile !size-16">
+                            <Dumbbell className="size-6" />
+                        </div>
+                    )}
                     <div className="flex-1 min-w-0">
+                        <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--primary-600)]">Exercise {exerciseIndex + 1}</p>
                         <h3 className="truncate text-lg font-bold text-[var(--foreground)]">
                             {capitalizeFirstLetter(workoutExercise.exercise.name)}
                         </h3>
@@ -92,7 +98,9 @@ export default function WorkoutExerciseCard({
                         <Trash2 className="w-4 h-4" />
                     </button>
                 </div>
+            </div>
 
+            <div className="p-5 sm:p-6">
                 {errorMessage && (
                     <div className="mb-3 rounded-[var(--radius-lg)] bg-[var(--color-destructive-bg)] p-4 text-sm font-bold text-[var(--color-destructive)]">
                         {errorMessage}
@@ -109,14 +117,23 @@ export default function WorkoutExerciseCard({
                 </div>
 
                 {/* Sets */}
-                <div className="space-y-2 mb-4">
+                <motion.div layout className="space-y-2 mb-4">
+                    <AnimatePresence initial={false} mode="popLayout">
                     {workoutExercise.sets.map((set, setIndex) => {
                         const isConfirmed = confirmedSetIds.has(set.id);
                         const showTimerHere = showTimer && restTimer?.setId === set.id;
                         const previous = workoutExercise.previousSets?.[setIndex] ?? null;
                         const previousLoading = !workoutExercise.previousSetsLoaded && set.set_number <= (workoutExercise.previousSets?.length ?? 0) + 1;
                         return (
-                            <React.Fragment key={set.id}>
+                            <motion.div
+                                key={set.client_key ?? set.id}
+                                layout
+                                initial={{ opacity: 0, height: 0, y: -8 }}
+                                animate={{ opacity: 1, height: "auto", y: 0 }}
+                                exit={{ opacity: 0, height: 0, x: 18 }}
+                                transition={{ duration: 0.18, ease: "easeOut" }}
+                                className="overflow-hidden"
+                            >
                                 <SetRow
                                     set={set}
                                     setIndex={setIndex}
@@ -132,17 +149,20 @@ export default function WorkoutExerciseCard({
                                 />
                                 {/* Inline rest timer — renders directly under the confirmed set row */}
                                 {showTimerHere && (
-                                    <RestTimer
-                                        timer={restTimer!}
-                                        onTick={onRestTimerTick!}
-                                        onSkip={onRestTimerSkip!}
-                                        onDismiss={onRestTimerDismiss!}
-                                    />
+                                    <motion.div className="mt-2" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}>
+                                        <RestTimer
+                                            timer={restTimer!}
+                                            onTick={onRestTimerTick!}
+                                            onSkip={onRestTimerSkip!}
+                                            onDismiss={onRestTimerDismiss!}
+                                        />
+                                    </motion.div>
                                 )}
-                            </React.Fragment>
+                            </motion.div>
                         );
                     })}
-                </div>
+                    </AnimatePresence>
+                </motion.div>
 
                 {/* Add Set */}
                 <button

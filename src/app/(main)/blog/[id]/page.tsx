@@ -7,7 +7,7 @@ import ProtectedWrapper from "@/components/ProtectedWrapper";
 import { useAuthSession } from "@/components/AuthSessionProvider";
 import Button from "@/components/Button";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { ArrowLeft, Calendar, Heart, MessageCircle, Send, Trash2 } from "lucide-react";
+import { ArrowLeft, Calendar, Heart, MessageCircle, Send, Sparkles, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { PageHeader } from "@/components/PageHeader";
 
@@ -155,14 +155,14 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
     <ProtectedWrapper>
       <div className="page-stack mx-auto max-w-4xl">
         <PageHeader
-          title={post.title}
-          description="FitPulse training article"
+          title="Article"
+          description="FitPulse training journal"
           backHref="/blog"
         />
 
-        <article>
+        <article className="overflow-hidden rounded-[var(--radius-2xl)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
           {post.image_url && (
-            <div className="card relative mb-8 h-[300px] w-full sm:h-[450px]">
+            <div className="relative h-[280px] w-full sm:h-[420px]">
               <Image
                 src={post.image_url}
                 alt={post.title}
@@ -170,73 +170,90 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
                 className="object-cover"
                 priority
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/5 to-transparent" />
             </div>
           )}
 
-          <div className="flex items-center justify-between flex-wrap gap-4 text-sm text-[var(--muted-foreground)] mb-6">
-            <div className="flex items-center gap-2 bg-[var(--surface-raised)] px-3 py-1 rounded-full">
-              <Calendar className="w-3.5 h-3.5" />
-              <span>
-                {post.created_at 
-                  ? new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", year: "numeric" }).format(new Date(post.created_at)) 
-                  : "Recently"}
-              </span>
+          <div className="p-5 sm:p-8 lg:p-10">
+            <div className="mb-5 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-[var(--primary-600)]">
+              <Sparkles className="size-4" />
+              FitPulse journal
             </div>
+            <h1 className="max-w-3xl text-3xl font-extrabold leading-tight tracking-[-0.045em] text-[var(--foreground)] sm:text-4xl lg:text-5xl">
+              {post.title}
+            </h1>
+
+            <div className="my-7 flex flex-wrap items-center justify-between gap-4 border-y border-[var(--border)] py-4 text-sm text-[var(--muted-foreground)]">
+              <div className="flex items-center gap-2 rounded-full bg-[var(--surface-raised)] px-3 py-1">
+                <Calendar className="w-3.5 h-3.5" />
+                <span>
+                  {post.created_at
+                    ? new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", year: "numeric" }).format(new Date(post.created_at))
+                    : "Recently"}
+                </span>
+              </div>
             
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleLike}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors ${
-                  liked 
-                    ? "bg-[var(--color-destructive-bg)] text-[var(--color-destructive)]" 
-                    : "bg-[var(--surface-raised)] text-[var(--muted-foreground)] hover:text-[var(--color-destructive)] hover:bg-[var(--color-destructive-bg)]"
-                }`}
-              >
-                <Heart className={`w-4 h-4 ${liked ? "fill-current" : ""}`} />
-                <span className="font-medium">{likesCount}</span>
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleLike}
+                  aria-label={liked ? "Unlike article" : "Like article"}
+                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-colors ${
+                    liked
+                      ? "bg-[var(--color-destructive-bg)] text-[var(--color-destructive)]"
+                      : "bg-[var(--surface-raised)] text-[var(--muted-foreground)] hover:bg-[var(--color-destructive-bg)] hover:text-[var(--color-destructive)]"
+                  }`}
+                >
+                  <Heart className={`w-4 h-4 ${liked ? "fill-current" : ""}`} />
+                  <span className="font-medium">{likesCount}</span>
+                </button>
               
-              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--surface-raised)] text-[var(--muted-foreground)] rounded-full">
-                <MessageCircle className="w-4 h-4" />
-                <span className="font-medium">{post.comments_count ?? 0}</span>
+                <div className="flex items-center gap-1.5 rounded-full bg-[var(--surface-raised)] px-3 py-1.5 text-[var(--muted-foreground)]">
+                  <MessageCircle className="w-4 h-4" />
+                  <span className="font-medium">{post.comments_count ?? 0}</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="prose prose-lg dark:prose-invert max-w-none mb-16">
-            {post.content.split("\n").map((para, i) => (
-              para.trim() ? (
-                <p key={i} className="mb-6 text-[var(--foreground)] text-lg leading-relaxed opacity-90">
-                  {para}
-                </p>
-              ) : <br key={i} />
-            ))}
+            <div className="mx-auto max-w-3xl">
+              {post.content.split("\n").map((para, i) => (
+                para.trim() ? (
+                  <p key={i} className="mb-6 text-base leading-8 text-[var(--foreground)]/90 sm:text-lg">
+                    {para}
+                  </p>
+                ) : <br key={i} />
+              ))}
+            </div>
           </div>
         </article>
 
-        <section className="border-t border-[var(--border)] pt-8">
-          <h3 className="text-xl font-bold text-[var(--foreground)] mb-6">Comments ({post.comments_count ?? 0})</h3>
+        <section className="card p-5 sm:p-8">
+          <div className="mb-6 flex items-center justify-between gap-3">
+            <div>
+              <p className="eyebrow">Discussion</p>
+              <h3 className="section-heading">Comments ({post.comments_count ?? 0})</h3>
+            </div>
+            <MessageCircle className="size-5 text-[var(--primary-500)]" />
+          </div>
           
-          <form onSubmit={handleCommentSubmit} className="flex gap-3 mb-8">
+          <form onSubmit={handleCommentSubmit} className="mb-8 flex gap-3 rounded-[var(--radius-lg)] bg-[var(--surface-raised)] p-2">
             <input
               type="text"
               placeholder="Write a comment..."
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
-              className="input flex-1"
+              className="min-w-0 flex-1 bg-transparent px-3 text-sm text-[var(--foreground)] outline-none"
             />
             <Button type="submit" variant="primary" disabled={submitting || !newComment.trim()}>
               <Send className="w-4 h-4" />
             </Button>
           </form>
 
-          <div className="space-y-6">
+          <div className="divide-y divide-[var(--border)]">
             {comments.length === 0 ? (
               <p className="text-[var(--muted-foreground)] text-center py-8">No comments yet. Be the first to comment!</p>
             ) : (
               comments.map((comment) => (
-                <div key={comment.id} className="flex gap-3">
+                <div key={comment.id} className="flex gap-3 py-5 first:pt-0 last:pb-0">
                   {comment.user?.avatar_url ? (
                     <Image
                       src={comment.user.avatar_url}

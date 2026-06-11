@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Clock, Search, UserCheck, UserPlus, Users, UserX, X } from "lucide-react";
 import type { Friendship, UserSearchResult } from "@/types";
 import { useSocial } from "@/hooks/useSocial";
-import { Search, UserPlus, UserCheck, UserX, Clock, Users } from "lucide-react";
+import Button from "@/components/Button";
 
 interface FriendManagementProps {
   friendships: Friendship[];
@@ -11,247 +12,224 @@ interface FriendManagementProps {
   onFriendshipsChange: () => void;
 }
 
+function initials(name: string) {
+  return name.split(" ").map((part) => part[0]).join("").toUpperCase().slice(0, 2) || "?";
+}
+
+function Avatar({ name }: { name: string }) {
+  return (
+    <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)] text-xs font-bold text-white">
+      {initials(name)}
+    </div>
+  );
+}
+
 export default function FriendManagement({ friendships, currentUserId, onFriendshipsChange }: FriendManagementProps) {
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const { searchUsers, sendFriendRequest, respondToFriendRequest } = useSocial();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { searchUsers, sendFriendRequest, respondToFriendRequest } = useSocial();
 
-  const acceptedFriends = friendships.filter((f) => f.status === "accepted");
-  const pendingReceived = friendships.filter((f) => f.status === "pending" && f.friend_id === currentUserId);
-  const pendingSent = friendships.filter((f) => f.status === "pending" && f.user_id === currentUserId);
+  const accepted = friendships.filter((friendship) => friendship.status === "accepted");
+  const received = friendships.filter(
+    (friendship) => friendship.status === "pending" && friendship.friend_id === currentUserId,
+  );
+  const sent = friendships.filter(
+    (friendship) => friendship.status === "pending" && friendship.user_id === currentUserId,
+  );
+
+  const friendName = (friendship: Friendship) =>
+    friendship.user_id === currentUserId
+      ? friendship.friend_stats?.display_name || "Unknown"
+      : friendship.user_stats?.display_name || "Unknown";
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (!query.trim() || query.length < 2) {
+    if (query.trim().length < 2) {
       setSearchResults([]);
+      setSearching(false);
       return;
     }
+
     setSearching(true);
     debounceRef.current = setTimeout(async () => {
       try {
-        const results = await searchUsers(query);
-        setSearchResults(results);
+        setSearchResults(await searchUsers(query));
       } catch {
         setSearchResults([]);
       } finally {
         setSearching(false);
       }
     }, 400);
+
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
-  const handleSendRequest = async (userId: string) => {
+  const sendRequest = async (userId: string) => {
     setActionLoading(userId);
     try {
       await sendFriendRequest(userId);
-      setSearchResults((prev) =>
-        prev.map((u) => u.user_id === userId ? { ...u, friendship_status: "pending_sent" } : u)
+      setSearchResults((results) =>
+        results.map((user) =>
+          user.user_id === userId ? { ...user, friendship_status: "pending_sent" } : user,
+        ),
       );
       onFriendshipsChange();
     } catch {
-      // ignore
+      // Keep the current result state when the request fails.
     } finally {
       setActionLoading(null);
     }
   };
 
-  const handleRespond = async (friendshipId: string, action: "accept" | "decline" | "remove") => {
+  const respond = async (friendshipId: string, action: "accept" | "decline" | "remove") => {
     setActionLoading(friendshipId);
     try {
       await respondToFriendRequest(friendshipId, action);
       onFriendshipsChange();
     } catch {
-      // ignore
+      // Keep the current friendship state when the action fails.
     } finally {
       setActionLoading(null);
     }
   };
 
-  const getFriendName = (friendship: Friendship): string => {
-    if (friendship.user_id === currentUserId) {
-      return friendship.friend_stats?.display_name || "Unknown";
-    }
-    return friendship.user_stats?.display_name || "Unknown";
-  };
-
-  const getInitials = (name: string) =>
-    name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?";
-
   return (
-    <div className="space-y-6">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" />
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by display name…"
-          className="w-full pl-10 pr-4 py-2.5 rounded-[var(--radius-sm)] bg-[var(--surface-raised)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
-        />
-      </div>
+    <div className="space-y-5">
+      <section className="card p-5 sm:p-6">
+        <p className="eyebrow">Find people</p>
+        <h2 className="section-heading">Grow your training circle</h2>
+        <div className="relative mt-4">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--muted-foreground)]" />
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search by display name..."
+            className="input !pl-10"
+          />
+        </div>
+      </section>
 
-      {query.length >= 2 && (
-        <div>
-          <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wide mb-2">Search Results</h3>
+      {query.trim().length >= 2 && (
+        <section className="card p-5">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Search results</h3>
           {searching ? (
-            <p className="text-sm text-[var(--muted-foreground)] py-4 text-center">Searching…</p>
+            <p className="py-6 text-center text-sm text-[var(--muted-foreground)]">Searching...</p>
           ) : searchResults.length === 0 ? (
-            <p className="text-sm text-[var(--muted-foreground)] py-4 text-center">No users found.</p>
+            <p className="py-6 text-center text-sm text-[var(--muted-foreground)]">No users found.</p>
           ) : (
             <div className="space-y-2">
-              {searchResults.map((u) => (
-                <div key={u.user_id} className="flex items-center gap-3 p-3 bg-[var(--surface-raised)] rounded-[var(--radius-md)]">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                    {getInitials(u.display_name || "?")}
+              {searchResults.map((user) => {
+                const name = user.display_name || "Unknown";
+                return (
+                  <div key={user.user_id} className="flex items-center gap-3 rounded-[var(--radius-lg)] bg-[var(--surface-raised)] p-3">
+                    <Avatar name={name} />
+                    <span className="min-w-0 flex-1 truncate text-sm font-semibold text-[var(--foreground)]">{name}</span>
+                    {user.friendship_status === "none" && (
+                      <Button onClick={() => sendRequest(user.user_id)} disabled={actionLoading === user.user_id} className="min-h-9 px-3 py-2 text-xs sm:min-h-9 sm:px-3 sm:py-2 sm:text-xs">
+                        <UserPlus className="size-3.5" />Add
+                      </Button>
+                    )}
+                    {user.friendship_status === "accepted" && (
+                      <span className="badge bg-[var(--color-success-bg)] text-[var(--color-success)]"><UserCheck className="size-3.5" />Friends</span>
+                    )}
+                    {(user.friendship_status === "pending_sent" || user.friendship_status === "pending_received") && (
+                      <span className="badge bg-[var(--surface)] text-[var(--muted-foreground)]"><Clock className="size-3.5" />Pending</span>
+                    )}
                   </div>
-                  <span className="flex-1 text-sm font-medium text-[var(--foreground)] truncate">
-                    {u.display_name || "Unknown"}
-                  </span>
-                  {u.friendship_status === "none" && (
-                    <button
-                      onClick={() => handleSendRequest(u.user_id)}
-                      disabled={actionLoading === u.user_id}
-                      className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-[var(--primary-500)] text-white hover:brightness-105 disabled:opacity-50 transition-all"
-                    >
-                      <UserPlus className="w-3.5 h-3.5" />
-                      Add
-                    </button>
-                  )}
-                  {u.friendship_status === "pending_sent" && (
-                    <span className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold text-[var(--muted-foreground)] bg-[var(--surface)]">
-                      <Clock className="w-3.5 h-3.5" />
-                      Pending
-                    </span>
-                  )}
-                  {u.friendship_status === "pending_received" && (
-                    <span className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold text-[var(--muted-foreground)] bg-[var(--surface)]">
-                      <Clock className="w-3.5 h-3.5" />
-                      Incoming
-                    </span>
-                  )}
-                  {u.friendship_status === "accepted" && (
-                    <span className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold text-[var(--color-success)] bg-[var(--color-success-bg)]">
-                      <UserCheck className="w-3.5 h-3.5" />
-                      Friends
-                    </span>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
-        </div>
+        </section>
       )}
 
-      {pendingReceived.length > 0 && (
-        <div>
-          <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wide mb-2">
-            Friend Requests ({pendingReceived.length})
-          </h3>
-          <div className="space-y-2">
-            {pendingReceived.map((f) => (
-              <div key={f.id} className="flex items-center gap-3 p-3 bg-[var(--surface-raised)] rounded-[var(--radius-md)]">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                  {getInitials(getFriendName(f))}
+      {received.length > 0 && (
+        <section className="card p-5">
+          <p className="eyebrow">Requests</p>
+          <h2 className="section-heading">Waiting for your response</h2>
+          <div className="mt-4 space-y-2">
+            {received.map((friendship) => {
+              const name = friendName(friendship);
+              return (
+                <div key={friendship.id} className="flex flex-wrap items-center gap-3 rounded-[var(--radius-lg)] bg-[var(--surface-raised)] p-3">
+                  <Avatar name={name} />
+                  <span className="min-w-0 flex-1 truncate text-sm font-semibold">{name}</span>
+                  <Button onClick={() => respond(friendship.id, "accept")} disabled={actionLoading === friendship.id} className="min-h-9 px-3 py-2 text-xs sm:min-h-9 sm:px-3 sm:py-2 sm:text-xs">
+                    <UserCheck className="size-3.5" />Accept
+                  </Button>
+                  <Button onClick={() => respond(friendship.id, "decline")} disabled={actionLoading === friendship.id} variant="danger" className="min-h-9 px-3 py-2 text-xs sm:min-h-9 sm:px-3 sm:py-2 sm:text-xs">
+                    <UserX className="size-3.5" />Decline
+                  </Button>
                 </div>
-                <span className="flex-1 text-sm font-medium text-[var(--foreground)] truncate">{getFriendName(f)}</span>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleRespond(f.id, "accept")}
-                    disabled={actionLoading === f.id}
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-[var(--primary-500)] text-white hover:brightness-105 disabled:opacity-50 transition-all"
-                  >
-                    <UserCheck className="w-3.5 h-3.5" />
-                    Accept
-                  </button>
-                  <button
-                    onClick={() => handleRespond(f.id, "decline")}
-                    disabled={actionLoading === f.id}
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-semibold text-[var(--color-destructive)] bg-[var(--color-destructive-bg)] hover:opacity-90 disabled:opacity-50 transition-all"
-                  >
-                    <UserX className="w-3.5 h-3.5" />
-                    Decline
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
-        </div>
+        </section>
       )}
 
-      {pendingSent.length > 0 && (
-        <div>
-          <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wide mb-2">
-            Sent Requests ({pendingSent.length})
-          </h3>
-          <div className="space-y-2">
-            {pendingSent.map((f) => (
-              <div key={f.id} className="flex items-center gap-3 p-3 bg-[var(--surface-raised)] rounded-[var(--radius-md)]">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--primary-400)] to-[var(--primary-600)] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                  {getInitials(getFriendName(f))}
+      {sent.length > 0 && (
+        <section className="card p-5">
+          <p className="eyebrow">Pending</p>
+          <h2 className="section-heading">Sent requests</h2>
+          <div className="mt-4 space-y-2">
+            {sent.map((friendship) => {
+              const name = friendName(friendship);
+              return (
+                <div key={friendship.id} className="flex items-center gap-3 rounded-[var(--radius-lg)] bg-[var(--surface-raised)] p-3">
+                  <Avatar name={name} />
+                  <span className="min-w-0 flex-1 truncate text-sm font-semibold">{name}</span>
+                  <Button onClick={() => respond(friendship.id, "remove")} disabled={actionLoading === friendship.id} variant="textOnly" className="min-h-9 px-3 py-2 text-xs sm:min-h-9 sm:px-3 sm:py-2 sm:text-xs">
+                    <X className="size-3.5" />Cancel
+                  </Button>
                 </div>
-                <span className="flex-1 text-sm font-medium text-[var(--foreground)] truncate">{getFriendName(f)}</span>
-                <button
-                  onClick={() => handleRespond(f.id, "remove")}
-                  disabled={actionLoading === f.id}
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-semibold text-[var(--muted-foreground)] bg-[var(--surface)] hover:bg-[var(--surface-raised)] disabled:opacity-50 transition-all"
-                >
-                  <X className="w-3.5 h-3.5" />
-                  Cancel
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
-        </div>
+        </section>
       )}
 
-      <div>
-        <h3 className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wide mb-2">
-          Friends ({acceptedFriends.length})
-        </h3>
-        {acceptedFriends.length === 0 ? (
-          <div className="text-center py-10 bg-[var(--surface-raised)] rounded-[var(--radius-md)]">
-            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
-              <Users className="w-6 h-6 text-[var(--primary-600)] dark:text-[var(--primary-700)]" />
-            </div>
-            <p className="text-sm font-semibold text-[var(--foreground)] mb-1">No friends yet</p>
-            <p className="text-xs text-[var(--muted-foreground)]">Search for users above to connect.</p>
+      <section className="card p-5 sm:p-6">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="eyebrow">Connections</p>
+            <h2 className="section-heading">Friends ({accepted.length})</h2>
+          </div>
+          <Users className="size-5 text-[var(--primary-500)]" />
+        </div>
+        {accepted.length === 0 ? (
+          <div className="mt-4 rounded-[var(--radius-lg)] bg-[var(--surface-raised)] py-10 text-center">
+            <p className="font-semibold text-[var(--foreground)]">No friends yet</p>
+            <p className="mt-1 text-xs text-[var(--muted-foreground)]">Search above to connect with other users.</p>
           </div>
         ) : (
-          <div className="space-y-2">
-            {acceptedFriends.map((f) => (
-              <div key={f.id} className="flex items-center gap-3 p-3 bg-[var(--surface-raised)] rounded-[var(--radius-md)]">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                  {getInitials(getFriendName(f))}
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            {accepted.map((friendship) => {
+              const name = friendName(friendship);
+              return (
+                <div key={friendship.id} className="flex items-center gap-3 rounded-[var(--radius-lg)] bg-[var(--surface-raised)] p-3">
+                  <Avatar name={name} />
+                  <span className="min-w-0 flex-1 truncate text-sm font-semibold">{name}</span>
+                  <button
+                    onClick={() => respond(friendship.id, "remove")}
+                    disabled={actionLoading === friendship.id}
+                    aria-label={`Remove ${name}`}
+                    className="inline-flex min-h-9 items-center gap-2 rounded-full px-3 text-xs font-semibold text-[var(--muted-foreground)] transition-colors hover:bg-[var(--color-destructive-bg)] hover:text-[var(--color-destructive)]"
+                  >
+                    <UserX className="size-4" />
+                    Remove
+                  </button>
                 </div>
-                <span className="flex-1 text-sm font-medium text-[var(--foreground)] truncate">{getFriendName(f)}</span>
-                <button
-                  onClick={() => handleRespond(f.id, "remove")}
-                  disabled={actionLoading === f.id}
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-semibold text-[var(--color-destructive)] bg-[var(--color-destructive-bg)] hover:opacity-90 disabled:opacity-50 transition-all"
-                >
-                  <UserX className="w-3.5 h-3.5" />
-                  Remove
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
-      </div>
+      </section>
     </div>
-  );
-}
-
-function X({ className }: { className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <line x1="18" y1="6" x2="6" y2="18" />
-      <line x1="6" y1="6" x2="18" y2="18" />
-    </svg>
   );
 }

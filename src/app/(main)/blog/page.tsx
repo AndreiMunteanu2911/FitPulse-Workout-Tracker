@@ -8,7 +8,7 @@ import ProtectedWrapper from "@/components/ProtectedWrapper";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useAuthSession } from "@/components/AuthSessionProvider";
 import { BlogPost } from "@/types";
-import { Plus, Search } from "lucide-react";
+import { BookOpen, Plus, Search } from "lucide-react";
 import ConfirmDeleteModal from "@/components/admin/ConfirmDeleteModal";
 import { PageHeader } from "@/components/PageHeader";
 
@@ -83,10 +83,25 @@ export default function BlogPage() {
       <div className="page-stack">
         <PageHeader
           title="Blog"
-          description="Training tips, product news, and updates from FitPulse."
-          actions={
-            <div className="flex items-center gap-3">
-              <div className="relative w-full lg:w-72">
+          description="Practical training ideas, product updates, and stories from FitPulse."
+          actions={isAdmin ? (
+            <Button
+              onClick={() => {
+                setEditingPost(null);
+                setIsModalOpen(true);
+              }}
+            >
+              <Plus className="w-4.5 h-4.5" />
+              New Post
+            </Button>
+          ) : undefined}
+        />
+
+        <div className="toolbar">
+              <div className="icon-tile hidden sm:flex">
+                <BookOpen className="size-5" />
+              </div>
+              <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-[var(--muted-foreground)] pointer-events-none z-10" />
                 <input
                   type="text"
@@ -96,21 +111,10 @@ export default function BlogPage() {
                   className="input !pl-11 !pr-10"
                 />
               </div>
-              {isAdmin && (
-                <Button
-                  onClick={() => {
-                    setEditingPost(null);
-                    setIsModalOpen(true);
-                  }}
-                  className="flex items-center justify-center gap-2 whitespace-nowrap w-full lg:w-auto"
-                >
-                  <Plus className="w-4.5 h-4.5" />
-                  New Post
-                </Button>
-              )}
-            </div>
-          }
-        />
+              <span className="hidden whitespace-nowrap px-3 text-sm font-semibold text-[var(--muted-foreground)] sm:block">
+                {filteredPosts.length} {filteredPosts.length === 1 ? "article" : "articles"}
+              </span>
+        </div>
 
         {loading ? (
           <div className="flex min-h-[18rem] items-center justify-center">

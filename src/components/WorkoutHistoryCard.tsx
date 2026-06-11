@@ -1,135 +1,108 @@
 import type { Workout } from "@/types";
-import { ChevronRight, Zap, Clock, Sparkles, Calendar } from "lucide-react";
+import { ArrowRight, Clock, Pencil, Share2, Sparkles, Trash2, Zap } from "lucide-react";
+import Button from "@/components/Button";
 
 interface WorkoutHistoryCardProps {
     workout: Workout;
     prCount?: number;
+    onOpen: () => void;
+    onShare: () => void;
+    onRename: () => void;
+    onDelete: () => void;
 }
 
-function capitalize(str: string) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
+function capitalize(value: string) {
+    return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-export default function WorkoutHistoryCard({ workout, prCount }: WorkoutHistoryCardProps) {
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString("en-US", {
-            weekday: "short",
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-        });
-    };
+export default function WorkoutHistoryCard({
+    workout,
+    prCount,
+    onOpen,
+    onShare,
+    onRename,
+    onDelete,
+}: WorkoutHistoryCardProps) {
+    const date = new Date(workout.workout_date).toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+    });
 
-    const calculateTotalVolume = (w: Workout) => {
-        let totalVolume = 0;
-        w.workout_exercises.forEach((we) => {
-            we.sets.forEach((set) => {
-                totalVolume += set.reps * set.weight;
-            });
-        });
-        if (totalVolume >= 1000) return (totalVolume / 1000).toFixed(1) + "k";
-        return totalVolume.toFixed(0);
-    };
+    const totalVolume = workout.workout_exercises.reduce(
+        (total, exercise) => total + exercise.sets.reduce((sum, set) => sum + set.reps * set.weight, 0),
+        0,
+    );
+    const volumeLabel = totalVolume >= 1000 ? `${(totalVolume / 1000).toFixed(1)}k` : totalVolume.toFixed(0);
 
-    const getDuration = (w: Workout): string | null => {
-        if (!w.finished_at || !w.created_at) return null;
-        const diff = new Date(w.finished_at).getTime() - new Date(w.created_at).getTime();
-        const minutes = Math.round(diff / 60000);
-        if (minutes < 1) return null;
-        if (minutes < 60) return `${minutes} min`;
-        const h = Math.floor(minutes / 60);
-        const m = minutes % 60;
-        return m > 0 ? `${h}h ${m}m` : `${h}h`;
-    };
+    let duration: string | null = null;
+    if (workout.finished_at && workout.created_at) {
+        const minutes = Math.round(
+            (new Date(workout.finished_at).getTime() - new Date(workout.created_at).getTime()) / 60000,
+        );
+        if (minutes >= 1) {
+            duration = minutes < 60
+                ? `${minutes} min`
+                : `${Math.floor(minutes / 60)}h${minutes % 60 ? ` ${minutes % 60}m` : ""}`;
+        }
+    }
 
-    const duration = getDuration(workout);
-
-    // Best set per exercise (highest volume = weight × reps)
-    const getBestSet = (sets: Workout["workout_exercises"][number]["sets"]) => {
-        if (sets.length === 0) return null;
-        return sets.reduce((best, s) => {
-            const vol = s.reps * s.weight;
-            const bestVol = best.reps * best.weight;
-            return vol > bestVol ? s : best;
-        }, sets[0]);
-    };
-
-    const maxExercisesToShow = 4;
-    const exercises = workout.workout_exercises.slice(0, maxExercisesToShow);
-    const extraCount = workout.workout_exercises.length - maxExercisesToShow;
+    const exerciseNames = workout.workout_exercises
+        .slice(0, 4)
+        .map((exercise) => capitalize(exercise.exercise.name));
+    const extraExercises = workout.workout_exercises.length - exerciseNames.length;
 
     return (
-        <div className="card-interactive group">
-            <div className="flex min-h-[5rem]">
-                {/* Left date circle */}
-                <div className="flex-shrink-0 w-14 h-14 rounded-[var(--radius-lg)] bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)] flex items-center justify-center text-white mt-4 ml-4 shadow-[0_12px_26px_rgba(116,87,245,0.22)]">
-                    <Calendar className="w-5 h-5" />
+        <article className="card group">
+            <div className="p-5 sm:p-6">
+                <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                        <p className="eyebrow !mb-1">{date}</p>
+                        <h3 className="text-lg font-bold tracking-[-0.025em] text-[var(--foreground)] transition-colors group-hover:text-[var(--primary-600)] sm:text-xl">
+                            {workout.name}
+                        </h3>
+                    </div>
+                    <Button
+                        onClick={onOpen}
+                        variant="textOnly"
+                        className="min-h-9 shrink-0 px-3 py-2 text-xs sm:min-h-9 sm:px-3 sm:py-2 sm:text-xs"
+                    >
+                        View details
+                        <ArrowRight className="size-3.5" />
+                    </Button>
                 </div>
 
-                <div className="flex-1 p-4 sm:p-5">
-                    {/* Title row */}
-                    <div className="flex items-start justify-between gap-2 mb-1">
-                        <div className="flex-1 min-w-0 pr-2">
-                            <h3 className="text-base font-bold leading-snug text-[var(--foreground)] group-hover:text-[var(--primary-600)] sm:text-lg">{workout.name}</h3>
-                        </div>
-                        <ChevronRight className="w-4 h-4 flex-shrink-0 mt-0.5 text-[var(--muted-foreground)]" />
-                    </div>
-
-                    {/* Date – plain subtitle */}
-                    <p className="mb-3 text-sm font-semibold text-[var(--muted-foreground)]">{formatDate(workout.workout_date)}</p>
-
-                    {/* Stats badges: volume · duration · PRs */}
-                    <div className="flex flex-wrap gap-2 mb-3">
-                        {/* Volume */}
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--primary-50)] px-3 py-1.5 text-xs font-bold text-[var(--primary-700)] dark:bg-[var(--primary-100)] dark:text-[var(--primary-700)]">
-                            <Zap className="w-3 h-3" />
-                            {calculateTotalVolume(workout)} kg
+                <div className="mt-4 flex flex-wrap gap-2">
+                    <span className="badge badge-soft"><Zap className="size-3.5" />{volumeLabel} kg</span>
+                    <span className="badge badge-soft">{workout.workout_exercises.length} exercises</span>
+                    {duration && <span className="badge badge-soft"><Clock className="size-3.5" />{duration}</span>}
+                    {!!prCount && prCount > 0 && (
+                        <span className="badge bg-[var(--color-success-bg)] text-[var(--color-success)]">
+                            <Sparkles className="size-3.5" />{prCount} PR{prCount === 1 ? "" : "s"}
                         </span>
-
-                        {/* Duration badge */}
-                        {duration && (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--primary-50)] px-3 py-1.5 text-xs font-bold text-[var(--primary-700)] dark:bg-[var(--primary-100)] dark:text-[var(--primary-700)]">
-                                <Clock className="w-3 h-3" />
-                                {duration}
-                            </span>
-                        )}
-
-                        {/* PR count badge */}
-                        {typeof prCount === "number" && prCount > 0 && (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-success-bg)] px-3 py-1.5 text-xs font-bold text-[var(--color-success)]">
-                                <Sparkles className="w-3 h-3" />
-                                {prCount} PR{prCount !== 1 ? "s" : ""}
-                            </span>
-                        )}
-                    </div>
-
-                    {/* Exercise list */}
-                    {workout.workout_exercises.length > 0 && (
-                        <div className="mt-3 space-y-1.5 rounded-[var(--radius-lg)] bg-[var(--surface-raised)] p-3">
-                            {exercises.map((we) => {
-                                const best = getBestSet(we.sets);
-                                return (
-                                    <div key={we.id} className="flex items-baseline gap-1.5 text-xs">
-                                        <span className="font-semibold text-[var(--foreground)] tabular-nums w-5 text-right flex-shrink-0">
-                                            {we.sets.length}×
-                                        </span>
-                                        <span className="text-[var(--muted-foreground)] truncate flex-1">{capitalize(we.exercise.name)}</span>
-                                        {best && best.weight > 0 && (
-                                            <span className="flex-shrink-0 text-[var(--primary-600)] dark:text-[var(--primary-500)] font-semibold">
-                                                {best.weight} kg × {best.reps}
-                                            </span>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                            {extraCount > 0 && (
-                                <p className="text-xs text-[var(--muted-foreground)] pl-6">+{extraCount} more exercise{extraCount !== 1 ? "s" : ""}</p>
-                            )}
-                        </div>
                     )}
                 </div>
+
+                {exerciseNames.length > 0 && (
+                    <p className="mt-4 line-clamp-2 text-sm leading-6 text-[var(--muted-foreground)]">
+                        {exerciseNames.join(" / ")}
+                        {extraExercises > 0 ? ` / +${extraExercises} more` : ""}
+                    </p>
+                )}
             </div>
-        </div>
+
+            <div className="flex flex-wrap items-center gap-2 border-t border-[var(--border)] px-5 py-3 sm:px-6">
+                <button onClick={onShare} className="inline-flex min-h-9 items-center gap-2 rounded-full bg-[var(--surface-raised)] px-3.5 text-xs font-semibold text-[var(--muted-foreground)] transition-colors hover:text-[var(--primary-600)]">
+                    <Share2 className="size-3.5" />Share
+                </button>
+                <button onClick={onRename} className="inline-flex min-h-9 items-center gap-2 rounded-full bg-[var(--surface-raised)] px-3.5 text-xs font-semibold text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]">
+                    <Pencil className="size-3.5" />Rename
+                </button>
+                <button onClick={onDelete} className="ml-auto inline-flex min-h-9 items-center gap-2 rounded-full px-3.5 text-xs font-semibold text-[var(--muted-foreground)] transition-colors hover:bg-[var(--color-destructive-bg)] hover:text-[var(--color-destructive)]">
+                    <Trash2 className="size-3.5" />Delete
+                </button>
+            </div>
+        </article>
     );
 }

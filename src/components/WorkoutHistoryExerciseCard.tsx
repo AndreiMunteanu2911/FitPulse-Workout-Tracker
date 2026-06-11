@@ -1,30 +1,23 @@
 import { useState } from "react";
 import type { WorkoutExercise } from "@/types";
 
-/** Epley formula: weight × (1 + reps/30). Returns null for invalid inputs (zero/negative weight or reps). */
-function calcEpley1RM(weight: number, reps: number): number | null {
-    if (weight <= 0 || reps <= 0) return null;
-    if (reps === 1) return weight;
-    return weight * (1 + reps / 30);
-}
-
 interface WorkoutHistoryExerciseCardProps {
     workoutExercise: WorkoutExercise;
 }
 
-function capitalize(str: string) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
+function capitalize(value: string) {
+    return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 function ExerciseThumbnail({ src }: { src: string }) {
     const [loaded, setLoaded] = useState(false);
     return (
-        <div className="relative w-full h-full bg-[var(--surface-raised)] overflow-hidden">
+        <div className="relative size-12 shrink-0 overflow-hidden rounded-[var(--radius-md)] bg-[var(--surface-raised)]">
             {!loaded && <div className="absolute inset-0 bg-[var(--surface-raised)]" />}
             <img
                 src={src}
                 alt=""
-                className={`w-full h-full object-cover transition-opacity duration-200 ${loaded ? "opacity-100" : "opacity-0"}`}
+                className={`h-full w-full object-cover transition-opacity ${loaded ? "opacity-100" : "opacity-0"}`}
                 onLoad={() => setLoaded(true)}
             />
         </div>
@@ -33,57 +26,27 @@ function ExerciseThumbnail({ src }: { src: string }) {
 
 export default function WorkoutHistoryExerciseCard({ workoutExercise }: WorkoutHistoryExerciseCardProps) {
     return (
-        <div className="card">
-            {/* Header */}
-            <div className="flex items-center gap-3 p-5 pb-3">
-                {workoutExercise.exercise.gif_url && (
-                    <div className="flex-shrink-0 w-14 h-14 rounded-[var(--radius-sm)] overflow-hidden bg-[var(--surface-raised)]">
-                        <ExerciseThumbnail src={workoutExercise.exercise.gif_url} />
-                    </div>
-                )}
-                <div className="flex-1 min-w-0">
-                    <h3 className="text-base sm:text-lg font-bold text-[var(--foreground)] truncate">
+        <div className="p-5 sm:p-6">
+            <div className="flex items-center gap-3">
+                {workoutExercise.exercise.gif_url && <ExerciseThumbnail src={workoutExercise.exercise.gif_url} />}
+                <div className="min-w-0 flex-1">
+                    <h3 className="truncate text-base font-bold text-[var(--foreground)]">
                         {capitalize(workoutExercise.exercise.name)}
                     </h3>
-                    <div className="flex flex-wrap gap-1.5 mt-1.5">
-                        {workoutExercise.exercise.target_muscles?.slice(0, 2).map((muscle, idx) => (
-                            <span key={idx} className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[var(--primary-50)] dark:bg-[var(--primary-100)] text-[var(--primary-700)] dark:text-[var(--primary-700)] capitalize">
-                                {capitalize(muscle)}
-                            </span>
-                        ))}
-                    </div>
+                    <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+                        {workoutExercise.sets.length} {workoutExercise.sets.length === 1 ? "set" : "sets"}
+                        {workoutExercise.exercise.target_muscles?.[0] ? ` / ${capitalize(workoutExercise.exercise.target_muscles[0])}` : ""}
+                    </p>
                 </div>
             </div>
 
-            {/* Sets table */}
-            <div className="px-5 pb-5">
-                <div className="bg-[var(--surface-raised)] rounded-[var(--radius-sm)] overflow-hidden overflow-x-auto">
-                    {/* Column headers */}
-                    <div className="grid grid-cols-5 gap-2 px-4 py-2 border-b border-[var(--border)] min-w-[300px]">
-                        <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Set</span>
-                        <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] text-right">Reps</span>
-                        <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] text-right">Weight</span>
-                        <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] text-right">Vol.</span>
-                        <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] text-right">1RM</span>
+            <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {workoutExercise.sets.map((set) => (
+                    <div key={set.id} className="flex items-center justify-between rounded-[var(--radius-md)] bg-[var(--surface-raised)] px-3 py-2.5">
+                        <span className="text-xs font-bold uppercase tracking-wider text-[var(--muted-foreground)]">Set {set.set_number}</span>
+                        <span className="text-sm font-semibold text-[var(--foreground)]">{set.weight} kg x {set.reps}</span>
                     </div>
-                    {workoutExercise.sets.map((set, idx) => {
-                        const orm = calcEpley1RM(set.weight, set.reps);
-                        return (
-                            <div
-                                key={set.id}
-                                className={`grid grid-cols-5 gap-2 px-4 py-2.5 min-w-[300px] ${idx < workoutExercise.sets.length - 1 ? "border-b border-[var(--border)]" : ""}`}
-                            >
-                                <span className="text-sm font-semibold text-[var(--foreground)]">{set.set_number}</span>
-                                <span className="text-sm font-semibold text-[var(--primary-600)] dark:text-[var(--primary-500)] text-right">{set.reps}</span>
-                                <span className="text-sm font-semibold text-[var(--primary-600)] dark:text-[var(--primary-500)] text-right">{set.weight} kg</span>
-                                <span className="text-xs text-[var(--muted-foreground)] text-right self-center">{(set.reps * set.weight).toFixed(0)}</span>
-                                <span className="text-xs text-[var(--muted-foreground)] text-right self-center tabular-nums">
-                                    {orm !== null ? `${Math.round(orm)} kg` : "—"}
-                                </span>
-                            </div>
-                        );
-                    })}
-                </div>
+                ))}
             </div>
         </div>
     );

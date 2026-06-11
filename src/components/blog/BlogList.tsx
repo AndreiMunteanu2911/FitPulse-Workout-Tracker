@@ -20,8 +20,16 @@ export default function BlogList({ posts, isAdmin, onEdit, onDelete }: BlogListP
   }
 
 return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {posts.map((post) => (
+    <div className="space-y-6">
+      <BlogCard
+        post={posts[0]}
+        featured
+        isAdmin={isAdmin}
+        onEdit={onEdit}
+        onDelete={onDelete}
+      />
+      {posts.length > 1 && <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      {posts.slice(1).map((post) => (
         <BlogCard
           key={post.id}
           post={post}
@@ -30,6 +38,7 @@ return (
           onDelete={onDelete}
         />
       ))}
+      </div>}
     </div>
   );
 }

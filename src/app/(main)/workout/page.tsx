@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import ExerciseCard from "@/components/WorkoutExerciseCard";
@@ -20,7 +20,7 @@ import DeleteTemplateModal from "@/components/DeleteTemplateModal";
 import { PageHeader } from "@/components/PageHeader";
 import type { Exercise, WorkoutExercise, Set as WorkoutSet, WorkoutTemplate, RestTimerState } from "@/types";
 import { detectExerciseType, REST_DURATIONS } from "@/lib/gamification";
-import { Zap, Plus, Pencil } from "lucide-react";
+import { Layers3, Pencil, Plus, Sparkles } from "lucide-react";
 function formatElapsed(seconds: number): string {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
@@ -37,6 +37,7 @@ export default function WorkoutPage() {
     const [workoutCreatedAt, setWorkoutCreatedAt] = useState<string | null>(null);
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const [workoutExercises, setWorkoutExercises] = useState<WorkoutExercise[]>([]);
+    const workoutNameInputRef = useRef<HTMLInputElement>(null);
     const [errorMessages, setErrorMessages] = useState<{ [key: string]: string }>({});
     const [confirmedSetIds, setConfirmedSetIds] = useState<Set<string>>(new Set());
 
@@ -92,6 +93,11 @@ export default function WorkoutPage() {
         deleteSet: deleteSetApi,
     } = useWorkout();
     const { searchExercises } = useExercises();
+    const totalSets = workoutExercises.reduce((total, exercise) => total + exercise.sets.length, 0);
+    const completedSets = workoutExercises.reduce(
+        (total, exercise) => total + exercise.sets.filter((set) => confirmedSetIds.has(set.id)).length,
+        0,
+    );
 
     useEffect(() => {
         const checkForDraftWorkout = async () => {
@@ -647,7 +653,8 @@ export default function WorkoutPage() {
 
         // Optimistic: add set to UI immediately
         const setNumber = workoutExercise.sets.length + 1;
-        const tempSet: WorkoutSet = { id: crypto.randomUUID(), workout_exercise_id: workoutExercise.id, set_number: setNumber, reps: 0, weight: 0, is_confirmed: false };
+        const tempId = crypto.randomUUID();
+        const tempSet: WorkoutSet = { id: tempId, client_key: tempId, workout_exercise_id: workoutExercise.id, set_number: setNumber, reps: 0, weight: 0, is_confirmed: false };
         const updatedExercises = [...workoutExercises];
         updatedExercises[exerciseIndex] = { ...workoutExercise, sets: [...workoutExercise.sets, tempSet] };
         setWorkoutExercises(updatedExercises);
@@ -659,7 +666,7 @@ export default function WorkoutPage() {
             setWorkoutExercises((prev) => {
                 const next = [...prev];
                 const ex = { ...next[exerciseIndex] };
-                ex.sets = ex.sets.map((s) => s.id === tempSet.id ? { ...s, id: data.id } : s);
+                ex.sets = ex.sets.map((s) => s.id === tempSet.id ? { ...s, id: data.id, client_key: tempSet.client_key } : s);
                 next[exerciseIndex] = ex;
                 return next;
             });
@@ -755,11 +762,7 @@ export default function WorkoutPage() {
                         )}
                         <PageHeader
                           title="Workout"
-                          description={workoutStarted ? (
-                            <span className="font-mono font-semibold text-[var(--primary-600)] dark:text-[var(--primary-500)]">
-                              {formatElapsed(elapsedSeconds)}
-                            </span>
-                          ) : "Ready when you are."}
+                          description={workoutStarted ? "Log each set and keep your session moving." : "Start from scratch or launch a saved routine."}
                           actions={
                             <>
                             {!workoutStarted ? (
@@ -795,25 +798,67 @@ export default function WorkoutPage() {
                             emptyExerciseCount={discardInfo.emptyExerciseCount}
                         />
                         {noDraftFound && !workoutStarted && (
-                            <div className="empty-state">
-                                <div className="flex size-16 items-center justify-center rounded-[var(--radius-lg)] bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)]">
-                                    <Zap className="w-10 h-10 text-white" />
+                            <section className="relative overflow-hidden rounded-[var(--radius-2xl)] bg-gradient-to-br from-[var(--primary-700)] via-[var(--primary-600)] to-[var(--primary-500)] p-6 text-white shadow-[var(--shadow-md)] sm:p-8">
+                                <div className="absolute -right-12 -top-16 size-52 rounded-full bg-white/10 blur-2xl" />
+                                <div className="absolute -bottom-20 left-1/3 size-44 rounded-full bg-[var(--lime-green)]/15 blur-3xl" />
+                                <div className="relative max-w-2xl">
+                                    <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-white/65">Your next session</p>
+                                    <h2 className="text-2xl font-extrabold tracking-[-0.04em] sm:text-3xl">Build momentum one set at a time.</h2>
+                                    <p className="mt-3 max-w-xl text-sm leading-6 text-white/72 sm:text-base">
+                                        Create a flexible workout now, or use a template to load your usual exercises instantly.
+                                    </p>
+                                    <div className="mt-6 flex flex-wrap gap-3">
+                                        <Button onClick={startWorkout} variant="lime">
+                                            <Plus className="size-4" />
+                                            Start empty workout
+                                        </Button>
+                                        <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white/80">
+                                            <Layers3 className="size-4" />
+                                            {templates.length} saved {templates.length === 1 ? "template" : "templates"}
+                                        </span>
+                                    </div>
                                 </div>
-                                <h3 className="empty-state-title">Ready to train?</h3>
-                                <p className="empty-state-description">Start a new workout or use a template.</p>
-                            </div>
+                            </section>
                         )}
                         {workoutStarted && (
-                            <div className="space-y-6 sm:space-y-8 mt-4">
-                                <div className="pb-4 mb-2 flex items-center gap-2">
+                            <div className="space-y-6">
+                                <div className="metric-strip grid-cols-3">
+                                    <div className="metric-item">
+                                        <p className="metric-value font-mono">{formatElapsed(elapsedSeconds)}</p>
+                                        <p className="metric-label">Duration</p>
+                                    </div>
+                                    <div className="metric-item">
+                                        <p className="metric-value">{workoutExercises.length}</p>
+                                        <p className="metric-label">Exercises</p>
+                                    </div>
+                                    <div className="metric-item">
+                                        <p className="metric-value">{completedSets}/{totalSets}</p>
+                                        <p className="metric-label">Sets done</p>
+                                    </div>
+                                </div>
+
+                                <div className="card flex items-center gap-3 p-4 sm:p-5">
                                     <input
+                                        ref={workoutNameInputRef}
                                         type="text"
                                         value={workoutName}
                                         onChange={(e) => setWorkoutName(e.target.value)}
-                                        className="rounded-sm w-full px-2 py-2 text-[var(--foreground)] text-xl sm:text-2xl font-extrabold border-none focus:outline-none bg-transparent placeholder-[var(--muted-foreground)] tracking-tight"
+                                        aria-label="Workout name"
+                                        className="min-w-0 flex-1 bg-transparent text-lg font-bold tracking-[-0.025em] text-[var(--foreground)] outline-none placeholder:text-[var(--muted-foreground)] sm:text-xl"
                                         placeholder="Workout Name"
                                     />
-                                    <Pencil className="w-5 h-5 text-[var(--muted-foreground)] flex-shrink-0 mt-1" />
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            workoutNameInputRef.current?.focus();
+                                            workoutNameInputRef.current?.select();
+                                        }}
+                                        className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full bg-[var(--surface-raised)] px-3.5 text-xs font-semibold text-[var(--muted-foreground)] transition-colors hover:text-[var(--primary-600)]"
+                                        aria-label="Edit workout title"
+                                    >
+                                        <Pencil className="size-3.5" />
+                                        <span className="hidden sm:inline">Edit title</span>
+                                    </button>
                                 </div>
 
                                 {workoutExercises.length === 0 ? (
@@ -859,8 +904,9 @@ export default function WorkoutPage() {
                                     </div>
                                 )}
 
-                                <div className="flex justify-center pt-2">
-                                    <Button onClick={() => setShowExerciseSearch(true)} className="py-2.5 px-8 text-base">
+                                <div className="flex justify-center">
+                                    <Button onClick={() => setShowExerciseSearch(true)} className="min-w-48">
+                                        <Plus className="size-4" />
                                         Add Exercise
                                     </Button>
                                 </div>
@@ -894,14 +940,22 @@ export default function WorkoutPage() {
                         )}
 
                         {/* Templates Section – only shown when no workout is active */}
-                        {!workoutStarted && <div className="mt-8">
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-base sm:text-lg font-bold text-[var(--foreground)]" style={{ fontFamily: "var(--font-poppins)" }}>Templates</h2>
-                                <Button onClick={() => { setEditingTemplate(null); setIsTemplateModalOpen(true); }} variant="secondary" className="px-3 py-1.5 text-xs sm:text-sm">+ Create</Button>
+                        {!workoutStarted && <section className="section">
+                            <div className="section-header">
+                                <div>
+                                    <p className="eyebrow">Saved routines</p>
+                                    <h2 className="section-heading">Workout templates</h2>
+                                    <p className="section-description">Launch a repeatable session with exercises already in place.</p>
+                                </div>
+                                <Button onClick={() => { setEditingTemplate(null); setIsTemplateModalOpen(true); }} variant="secondary" className="px-4 py-2 text-sm">
+                                    <Plus className="size-4" />
+                                    Create
+                                </Button>
                             </div>
                             {templates.length === 0 ? (
                                 <div className="empty-state !min-h-48">
-                                    <h3 className="empty-state-title !mt-0">No templates yet</h3>
+                                    <div className="empty-state-icon"><Sparkles className="size-6" /></div>
+                                    <h3 className="empty-state-title">No templates yet</h3>
                                     <p className="empty-state-description">Create one to quickly start workouts.</p>
                                 </div>
                             ) : (
@@ -920,7 +974,7 @@ export default function WorkoutPage() {
                                     ))}
                                 </div>
                             )}
-                        </div>}
+                        </section>}
 
                         <CreateTemplateModal
                             isOpen={isTemplateModalOpen}

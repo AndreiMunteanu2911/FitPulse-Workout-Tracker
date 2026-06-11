@@ -72,7 +72,7 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, recentWorko
   };
 
   return (
-    <ModalWrapper isOpen={isOpen} onClose={handleClose} containerClassName="max-w-lg p-5">
+    <ModalWrapper isOpen={isOpen} onClose={handleClose} containerClassName="max-w-lg p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-base font-bold text-[var(--foreground)]">New Post</h3>
         <button onClick={handleClose} className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors">
@@ -85,7 +85,7 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, recentWorko
         onChange={(e) => setContent(e.target.value)}
         placeholder="Share your progress, thoughts, or achievements..."
         rows={4}
-        className="w-full px-4 py-3 rounded-[var(--radius-sm)] bg-[var(--surface-raised)] text-[var(--foreground)] text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] mb-3"
+        className="input mb-3 min-h-32 resize-none"
       />
 
       {imagePreview && (
@@ -142,7 +142,7 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, recentWorko
         <p className="text-xs text-[var(--color-destructive)] mb-3">{error}</p>
       )}
 
-      <div className="flex items-center gap-2 mb-4">
+      <div className="mb-5 flex items-center gap-2 rounded-[var(--radius-lg)] bg-[var(--surface-raised)] p-2">
         <input
           ref={fileInputRef}
           type="file"

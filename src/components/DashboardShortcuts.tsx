@@ -36,7 +36,7 @@ export default function DashboardShortcuts() {
   const shortcuts = getDashboardShortcutItems(isAdmin);
 
   return (
-    <div className="card mb-6 p-5 sm:p-6">
+    <div className="card p-5 sm:p-6">
       <div className="mb-4 flex items-center justify-between gap-4">
         <div>
           <p className="eyebrow">Explore</p>

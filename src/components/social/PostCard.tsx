@@ -103,28 +103,30 @@ export default function PostCard({ post, onLike, onDelete, currentUserId }: Post
   const hasMore = visibleCount < totalComments;
 
   return (
-    <div className="card">
-      <div className="p-5">
+    <article className="card shadow-[var(--shadow-sm)]">
+      <div className="p-5 sm:p-6">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)] flex items-center justify-center text-white text-sm font-extrabold flex-shrink-0 shadow-[0_10px_24px_rgba(116,87,245,0.22)]">
             {initials || <User className="w-4 h-4" />}
           </div>
           <div className="flex-1 min-w-0">
             <p className="truncate text-base font-bold text-[var(--foreground)]">{displayName}</p>
-            <p className="text-sm font-semibold text-[var(--muted-foreground)]">{timeAgo(post.created_at!)}</p>
+            <p className="text-xs font-semibold text-[var(--muted-foreground)]">{timeAgo(post.created_at!)}</p>
           </div>
           {isPostOwner && (
             <button
               onClick={() => onDelete(post.id)}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--surface-raised)] text-[var(--muted-foreground)] transition-colors hover:bg-[var(--color-destructive-bg)] hover:text-[var(--color-destructive)]"
+              aria-label="Delete post"
+              className="inline-flex min-h-10 items-center gap-2 rounded-full bg-[var(--surface-raised)] px-3.5 text-xs font-semibold text-[var(--muted-foreground)] transition-colors hover:bg-[var(--color-destructive-bg)] hover:text-[var(--color-destructive)]"
             >
               <Trash2 className="w-4 h-4" />
+              Delete
             </button>
           )}
         </div>
 
         {post.content && (
-          <p className="mb-4 text-base leading-relaxed text-[var(--foreground)]">{post.content}</p>
+          <p className="mb-5 whitespace-pre-wrap text-[15px] leading-7 text-[var(--foreground)]">{post.content}</p>
         )}
 
         {post.image_url && (
@@ -148,9 +150,9 @@ export default function PostCard({ post, onLike, onDelete, currentUserId }: Post
         )}
 
         {showComments && visibleComments.length > 0 && (
-          <div className="mt-4 space-y-3 rounded-[var(--radius-xl)] bg-[var(--surface-raised)] p-4">
+          <div className="mt-5 divide-y divide-[var(--border)] rounded-[var(--radius-xl)] bg-[var(--surface-raised)] px-4">
             {visibleComments.map((comment) => (
-              <div key={comment.id} className="flex items-start gap-3 group">
+              <div key={comment.id} className="group flex items-start gap-3 py-4">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--primary-400)] to-[var(--primary-600)] flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0">
                   {getInitials(comment.user_stats?.display_name || "?")}
                 </div>
@@ -171,9 +173,10 @@ export default function PostCard({ post, onLike, onDelete, currentUserId }: Post
                   <button
                     onClick={() => handleDeleteComment(comment.id)}
                     disabled={deletingComment === comment.id}
-                    className="p-1 text-[var(--muted-foreground)] hover:text-[var(--color-destructive)] transition-colors"
+                    className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold text-[var(--muted-foreground)] transition-colors hover:bg-[var(--color-destructive-bg)] hover:text-[var(--color-destructive)]"
                   >
                     <Trash2 className="w-3 h-3" />
+                    Delete
                   </button>
                 )}
               </div>
@@ -190,12 +193,12 @@ export default function PostCard({ post, onLike, onDelete, currentUserId }: Post
         )}
       </div>
 
-      <div className="border-t border-[var(--border)] px-5 py-4">
-        <div className="flex items-center gap-3 mb-3">
+      <div className="border-t border-[var(--border)] px-5 py-4 sm:px-6">
+        <div className="flex flex-wrap items-center gap-2 mb-3">
           <button
             onClick={handleLike}
             disabled={liking}
-            className={`flex min-h-10 items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition-colors ${
+            className={`flex min-h-10 items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
               post.liked_by_me
                 ? "bg-[var(--color-destructive-bg)] text-red-500"
                 : "bg-[var(--surface-raised)] text-[var(--muted-foreground)] hover:text-red-500"
@@ -206,7 +209,7 @@ export default function PostCard({ post, onLike, onDelete, currentUserId }: Post
           </button>
           <button
             onClick={() => setShowComments(!showComments)}
-            className="flex min-h-10 items-center gap-2 rounded-full bg-[var(--surface-raised)] px-4 py-2 text-sm font-bold text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]"
+            className="flex min-h-10 items-center gap-2 rounded-full bg-[var(--surface-raised)] px-4 py-2 text-sm font-semibold text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]"
           >
             <MessageCircle className="w-4 h-4" />
             <span>{totalComments} Comments</span>
@@ -214,14 +217,14 @@ export default function PostCard({ post, onLike, onDelete, currentUserId }: Post
         </div>
 
         {showCommentInput ? (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 rounded-[var(--radius-lg)] bg-[var(--surface-raised)] p-2">
             <input
               type="text"
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
               placeholder="Write a comment..."
-              className="input flex-1 py-2 text-sm"
+              className="min-w-0 flex-1 bg-transparent px-2 text-sm text-[var(--foreground)] outline-none"
             />
             <button
               onClick={handleAddComment}
@@ -235,7 +238,8 @@ export default function PostCard({ post, onLike, onDelete, currentUserId }: Post
                 setShowCommentInput(false);
                 setCommentText("");
               }}
-              className="p-1.5 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+              aria-label="Cancel comment"
+              className="rounded-full px-2 py-1.5 text-xs font-semibold text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
             >
               Cancel
             </button>
@@ -243,7 +247,7 @@ export default function PostCard({ post, onLike, onDelete, currentUserId }: Post
         ) : (
           <button
             onClick={() => setShowCommentInput(true)}
-            className="rounded-full bg-[var(--surface-raised)] px-4 py-2 text-sm font-semibold text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]"
+            className="w-full rounded-[var(--radius-lg)] bg-[var(--surface-raised)] px-4 py-3 text-left text-sm font-medium text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]"
           >
             Add a comment...
           </button>
@@ -255,6 +259,6 @@ export default function PostCard({ post, onLike, onDelete, currentUserId }: Post
         imageUrl={expandedImage || ""}
         onClose={() => setExpandedImage(null)}
       />
-    </div>
+    </article>
   );
 }

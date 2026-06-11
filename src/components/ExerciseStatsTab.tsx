@@ -1,17 +1,17 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
-    LineChart,
-    Line,
     CartesianGrid,
+    Line,
+    LineChart,
+    ResponsiveContainer,
+    Tooltip,
     XAxis,
     YAxis,
-    Tooltip,
-    ResponsiveContainer,
 } from "recharts";
+import { BarChart3, CalendarDays, Repeat2, Trophy, Weight, Zap } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { BarChart2 } from "lucide-react";
 
 interface ExerciseStat {
     workout_date: string;
@@ -24,35 +24,28 @@ interface ExerciseStatsTabProps {
     exerciseId: string;
 }
 
-const TICK_FORMATTER = (val: number) => {
-    const d = new Date(val);
-    if (isNaN(d.getTime())) return "";
-    return `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
-};
-
-function StatsChart({
-    data,
-    dataKey,
-    label,
-    color,
-    unit,
-}: {
+interface StatsChartProps {
     data: (ExerciseStat & { date_ms: number })[];
     dataKey: keyof ExerciseStat;
     label: string;
     color: string;
     unit: string;
-}) {
+}
+
+const TICK_FORMATTER = (value: number) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    return `${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")}`;
+};
+
+function StatsChart({ data, dataKey, label, color, unit }: StatsChartProps) {
     return (
-        <div className="bg-[var(--surface)] rounded-[var(--radius-md)] p-4 sm:p-5">
-            <h3 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-3">
-                {label}
-            </h3>
-            <ResponsiveContainer width="100%" height={180}>
+        <section className="card p-4 sm:p-6">
+            <h3 className="eyebrow !mb-4">{label}</h3>
+            <ResponsiveContainer width="100%" height={220}>
                 <LineChart data={data} margin={{ left: 0, right: 10, top: 8, bottom: 8 }}>
                     <CartesianGrid stroke="var(--border)" strokeDasharray="4 4" />
                     <XAxis
-                        key={`xaxis-${label}`}
                         dataKey="date_ms"
                         scale="time"
                         type="number"
@@ -64,13 +57,12 @@ function StatsChart({
                         allowDuplicatedCategory={false}
                     />
                     <YAxis
-                        key={`yaxis-${label}`}
                         dataKey={dataKey as string}
                         tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
                         axisLine={{ stroke: "var(--border)" }}
                         tickLine={false}
                         width={42}
-                        tickFormatter={(v) => `${v}`}
+                        tickFormatter={(value) => `${value}`}
                     />
                     <Tooltip
                         contentStyle={{
@@ -80,14 +72,11 @@ function StatsChart({
                             fontSize: 12,
                             color: "var(--foreground)",
                         }}
-                        labelFormatter={(val) => {
-                            const d = new Date(val as number);
-                            return d.toLocaleDateString("en-US", {
-                                year: "numeric",
-                                month: "short",
-                                day: "numeric",
-                            });
-                        }}
+                        labelFormatter={(value) => new Date(value as number).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                        })}
                         formatter={(value) => [`${value} ${unit}`, label]}
                     />
                     <Line
@@ -100,7 +89,7 @@ function StatsChart({
                     />
                 </LineChart>
             </ResponsiveContainer>
-        </div>
+        </section>
     );
 }
 
@@ -112,15 +101,16 @@ export default function ExerciseStatsTab({ exerciseId }: ExerciseStatsTabProps) 
         const load = async () => {
             setLoading(true);
             try {
-                const res = await fetch(`/api/exercises/${exerciseId}/stats`);
-                const data = await res.json();
-                if (res.ok) setStats(data.history || []);
+                const response = await fetch(`/api/exercises/${exerciseId}/stats`);
+                const data = await response.json();
+                if (response.ok) setStats(data.history || []);
             } catch {
-                // silently fail — empty state shown
+                // The empty state communicates an unavailable or empty history.
             } finally {
                 setLoading(false);
             }
         };
+
         load();
     }, [exerciseId]);
 
@@ -134,110 +124,102 @@ export default function ExerciseStatsTab({ exerciseId }: ExerciseStatsTabProps) 
 
     if (stats.length === 0) {
         return (
-            <div className="text-center py-14 bg-[var(--surface)] rounded-[var(--radius-md)]">
-                <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
-                    <BarChart2 className="w-7 h-7 text-[var(--primary-600)] dark:text-[var(--primary-700)]" />
-                </div>
-                <p className="text-sm text-[var(--muted-foreground)]">
-                    No workout data yet. Log this exercise to see your progress!
+            <div className="rounded-[var(--radius-xl)] bg-[var(--surface)] px-6 py-14 text-center shadow-[var(--shadow-xs)]">
+                <span className="icon-tile mx-auto mb-4 !size-14">
+                    <BarChart3 className="size-6" />
+                </span>
+                <h2 className="text-lg font-bold text-[var(--foreground)]">No progress data yet</h2>
+                <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+                    Log this exercise in a workout to build your performance history.
                 </p>
             </div>
         );
     }
 
-    const chartData = stats.map((s) => ({
-        ...s,
-        date_ms: new Date(s.workout_date).getTime(),
+    const chartData = stats.map((stat) => ({
+        ...stat,
+        date_ms: new Date(stat.workout_date).getTime(),
     }));
+    const latest = stats[stats.length - 1];
+    const allTimeWeight = Math.max(...stats.map((stat) => stat.max_weight));
+    const allTimeReps = Math.max(...stats.map((stat) => stat.max_reps));
+    const allTimeVolume = Math.max(...stats.map((stat) => stat.volume));
+    const bestWeightDate = stats.find((stat) => stat.max_weight === allTimeWeight)?.workout_date;
+    const bestRepsDate = stats.find((stat) => stat.max_reps === allTimeReps)?.workout_date;
+    const bestVolumeDate = stats.find((stat) => stat.volume === allTimeVolume)?.workout_date;
 
-    // Summary cards
-    const latestWeight = stats[stats.length - 1]?.max_weight ?? 0;
-    const latestVolume = stats[stats.length - 1]?.volume ?? 0;
-    const latestReps = stats[stats.length - 1]?.max_reps ?? 0;
-    const allTimeWeight = Math.max(...stats.map((s) => s.max_weight));
-    const allTimeReps = Math.max(...stats.map((s) => s.max_reps));
-    const allTimeVolume = Math.max(...stats.map((s) => s.volume));
+    const formatDate = (date?: string) => date
+        ? new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+        : "";
 
-    const bestWeightDate = stats.find((s) => s.max_weight === allTimeWeight)?.workout_date;
-    const bestRepsDate = stats.find((s) => s.max_reps === allTimeReps)?.workout_date;
-    const bestVolumeDate = stats.find((s) => s.volume === allTimeVolume)?.workout_date;
-
-    const fmtShortDate = (d?: string) => {
-        if (!d) return "";
-        return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-    };
+    const metrics = [
+        { label: "Best weight", value: allTimeWeight, unit: "kg", date: bestWeightDate, icon: Weight },
+        { label: "Best reps", value: allTimeReps, unit: "reps", date: bestRepsDate, icon: Repeat2 },
+        { label: "Best volume", value: allTimeVolume, unit: "kg x reps", date: bestVolumeDate, icon: Zap },
+    ];
 
     return (
         <div className="space-y-4">
-            {/* Summary row */}
-            <div className="grid grid-cols-3 gap-3">
-                <div className="bg-[var(--surface)] rounded-[var(--radius-md)] p-3 text-center">
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-1">
-                        Best Weight
-                    </p>
-                    <p className="text-xl font-extrabold text-[var(--primary-600)] dark:text-[var(--primary-500)] leading-none">
-                        {allTimeWeight}
-                    </p>
-                    <p className="text-[10px] text-[var(--muted-foreground)] mt-0.5">kg</p>
-                    {bestWeightDate && (
-                        <p className="text-[9px] text-[var(--muted-foreground)] mt-1 leading-none">{fmtShortDate(bestWeightDate)}</p>
-                    )}
+            <div className="grid gap-3 sm:grid-cols-3">
+                {metrics.map((metric) => {
+                    const Icon = metric.icon;
+                    return (
+                        <div key={metric.label} className="card relative overflow-hidden p-4 sm:p-5">
+                            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[var(--primary-500)] to-[var(--lime-green)]" />
+                            <div className="flex items-start justify-between gap-3">
+                                <div>
+                                    <p className="eyebrow !mb-2">{metric.label}</p>
+                                    <p className="text-2xl font-extrabold tracking-tight text-[var(--foreground)]">
+                                        {metric.value}{" "}
+                                        <span className="text-xs font-semibold text-[var(--muted-foreground)]">{metric.unit}</span>
+                                    </p>
+                                </div>
+                                <span className="icon-tile !size-9"><Icon className="size-4" /></span>
+                            </div>
+                            {metric.date && (
+                                <p className="mt-3 flex items-center gap-1.5 text-xs text-[var(--muted-foreground)]">
+                                    <CalendarDays className="size-3.5" />
+                                    {formatDate(metric.date)}
+                                </p>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+
+            <div className="card flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+                <div className="flex items-center gap-3">
+                    <span className="icon-tile !size-10"><Trophy className="size-4" /></span>
+                    <div>
+                        <p className="eyebrow !mb-0.5">Latest session</p>
+                        <p className="text-sm font-semibold text-[var(--foreground)]">Your most recent logged performance</p>
+                    </div>
                 </div>
-                <div className="bg-[var(--surface)] rounded-[var(--radius-md)] p-3 text-center">
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-1">
-                        Best Reps
-                    </p>
-                    <p className="text-xl font-extrabold text-[var(--primary-600)] dark:text-[var(--primary-500)] leading-none">
-                        {allTimeReps}
-                    </p>
-                    <p className="text-[10px] text-[var(--muted-foreground)] mt-0.5">reps</p>
-                    {bestRepsDate && (
-                        <p className="text-[9px] text-[var(--muted-foreground)] mt-1 leading-none">{fmtShortDate(bestRepsDate)}</p>
-                    )}
-                </div>
-                <div className="bg-[var(--surface)] rounded-[var(--radius-md)] p-3 text-center">
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-1">
-                        Best Volume
-                    </p>
-                    <p className="text-xl font-extrabold text-[var(--primary-600)] dark:text-[var(--primary-500)] leading-none">
-                        {allTimeVolume}
-                    </p>
-                    <p className="text-[10px] text-[var(--muted-foreground)] mt-0.5">kg·reps</p>
-                    {bestVolumeDate && (
-                        <p className="text-[9px] text-[var(--muted-foreground)] mt-1 leading-none">{fmtShortDate(bestVolumeDate)}</p>
-                    )}
+                <div className="grid grid-cols-3 gap-2 sm:flex">
+                    <span className="badge badge-soft justify-center">{latest.max_weight} kg</span>
+                    <span className="badge badge-soft justify-center">{latest.max_reps} reps</span>
+                    <span className="badge badge-soft justify-center">{latest.volume} vol</span>
                 </div>
             </div>
 
-            {/* Last session summary */}
-            <div className="bg-[var(--surface-raised)] rounded-[var(--radius-sm)] px-4 py-3 flex items-center justify-between gap-2 text-sm">
-                <span className="text-[var(--muted-foreground)] text-xs">Last session</span>
-                <div className="flex gap-4">
-                    <span className="font-semibold text-[var(--foreground)]">{latestWeight} kg</span>
-                    <span className="font-semibold text-[var(--foreground)]">{latestReps} reps</span>
-                    <span className="font-semibold text-[var(--foreground)]">{latestVolume} vol</span>
-                </div>
-            </div>
-
-            {/* Charts */}
             <StatsChart
                 data={chartData}
                 dataKey="max_weight"
-                label="Max Weight (kg)"
+                label="Max weight (kg)"
                 color="var(--primary-500)"
                 unit="kg"
             />
             <StatsChart
                 data={chartData}
                 dataKey="volume"
-                label="Volume (kg·reps)"
+                label="Volume (kg x reps)"
                 color="var(--color-success)"
-                unit="kg·reps"
+                unit="kg x reps"
             />
             <StatsChart
                 data={chartData}
                 dataKey="max_reps"
-                label="Max Reps"
+                label="Max reps"
                 color="var(--color-warning)"
                 unit="reps"
             />

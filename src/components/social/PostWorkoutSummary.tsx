@@ -1,94 +1,42 @@
 import type { Workout } from "@/types";
-import { Zap, Clock, Calendar } from "lucide-react";
+import { Clock, Dumbbell, Zap } from "lucide-react";
 
 interface PostWorkoutSummaryProps {
   workout: Workout;
 }
 
-function capitalize(str: string) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
 export default function PostWorkoutSummary({ workout }: PostWorkoutSummaryProps) {
-  const totalVolume = workout.workout_exercises.reduce((sum, we) =>
-    sum + we.sets.reduce((s, set) => s + set.reps * set.weight, 0), 0
+  const totalVolume = workout.workout_exercises.reduce(
+    (sum, exercise) => sum + exercise.sets.reduce((setSum, set) => setSum + set.reps * set.weight, 0),
+    0,
   );
-  const volumeLabel = totalVolume >= 1000 ? (totalVolume / 1000).toFixed(1) + "k" : totalVolume.toFixed(0);
+  const volume = totalVolume >= 1000 ? `${(totalVolume / 1000).toFixed(1)}k` : totalVolume.toFixed(0);
 
-  const getDuration = (): string | null => {
-    if (!workout.finished_at || !workout.created_at) return null;
-    const diff = new Date(workout.finished_at).getTime() - new Date(workout.created_at).getTime();
-    const minutes = Math.round(diff / 60000);
-    if (minutes < 1) return null;
-    if (minutes < 60) return `${minutes} min`;
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    return m > 0 ? `${h}h ${m}m` : `${h}h`;
-  };
-
-  const duration = getDuration();
-  const maxToShow = 3;
-  const exercises = workout.workout_exercises.slice(0, maxToShow);
-  const extraCount = workout.workout_exercises.length - maxToShow;
-
-  const formatDate = (d: string) =>
-    new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-
-  const getBestSet = (sets: Workout["workout_exercises"][number]["sets"]) => {
-    if (sets.length === 0) return null;
-    return sets.reduce((best, s) => s.reps * s.weight > best.reps * best.weight ? s : best, sets[0]);
-  };
+  let duration: string | null = null;
+  if (workout.finished_at && workout.created_at) {
+    const minutes = Math.round(
+      (new Date(workout.finished_at).getTime() - new Date(workout.created_at).getTime()) / 60000,
+    );
+    if (minutes >= 1) duration = minutes < 60 ? `${minutes} min` : `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+  }
 
   return (
-    <div className="mt-3 border border-[var(--border)] rounded-[var(--radius-md)] bg-[var(--surface-raised)] overflow-hidden">
-      <div className="px-4 py-3 bg-gradient-to-r from-[var(--primary-500)]/10 to-[var(--primary-400)]/5 border-b border-[var(--border)]">
-        <div className="flex items-center gap-2 mb-1">
-          <Calendar className="w-4 h-4 text-[var(--primary-600)]" />
-          <span className="text-sm font-bold text-[var(--foreground)]">{workout.name}</span>
+    <div className="relative mt-4 overflow-hidden rounded-[var(--radius-xl)] border border-[var(--primary-200)]/60 bg-[var(--surface-raised)] p-4">
+      <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-[var(--primary-500)] to-[var(--lime-green)]" />
+      <div className="flex items-center gap-3">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-600)] text-white shadow-[0_8px_20px_rgba(116,87,245,0.2)]">
+          <Dumbbell className="size-4" />
         </div>
-        <p className="text-xs text-[var(--muted-foreground)]">{formatDate(workout.workout_date)}</p>
-      </div>
-
-      <div className="px-4 py-2 flex flex-wrap gap-2 border-b border-[var(--border)]">
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-[var(--primary-50)] dark:bg-[var(--primary-100)] text-[var(--primary-700)]">
-          <Zap className="w-3 h-3" />
-          {volumeLabel} kg
-        </span>
-        {duration && (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-[var(--primary-50)] dark:bg-[var(--primary-100)] text-[var(--primary-700)]">
-            <Clock className="w-3 h-3" />
-            {duration}
-          </span>
-        )}
-      </div>
-
-      {workout.workout_exercises.length > 0 && (
-        <div className="px-4 py-2.5 space-y-1">
-          {exercises.map((we) => {
-            const best = getBestSet(we.sets);
-            return (
-              <div key={we.id} className="flex items-baseline gap-1.5 text-xs">
-                <span className="font-semibold text-[var(--foreground)] tabular-nums w-5 text-right flex-shrink-0">
-                  {we.sets.length}×
-                </span>
-                <span className="text-[var(--muted-foreground)] truncate flex-1">
-                  {capitalize(we.exercise.name)}
-                </span>
-                {best && best.weight > 0 && (
-                  <span className="flex-shrink-0 text-[var(--primary-600)] dark:text-[var(--primary-500)] font-semibold">
-                    {best.weight} kg × {best.reps}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-          {extraCount > 0 && (
-            <p className="text-xs text-[var(--muted-foreground)] pl-6">
-              +{extraCount} more exercise{extraCount !== 1 ? "s" : ""}
-            </p>
-          )}
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--primary-600)]">Workout</p>
+          <p className="truncate text-sm font-bold text-[var(--foreground)]">{workout.name}</p>
         </div>
-      )}
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2 border-t border-[var(--border)] pt-3">
+        <span className="badge badge-soft">{workout.workout_exercises.length} exercises</span>
+        <span className="badge badge-soft"><Zap className="size-3.5" />{volume} kg</span>
+        {duration && <span className="badge badge-soft"><Clock className="size-3.5" />{duration}</span>}
+      </div>
     </div>
   );
 }

@@ -9,7 +9,7 @@ import FriendManagement from "@/components/social/FriendManagement";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useSocial } from "@/hooks/useSocial";
 import type { Post, Friendship, Workout } from "@/types";
-import { Plus, Users, Rss } from "lucide-react";
+import { MessageCircle, Plus, Users, Rss } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import Button from "@/components/Button";
 
@@ -162,6 +162,15 @@ export default function SocialPage() {
 
         {activeTab === "feed" && (
           <>
+            <button
+              type="button"
+              onClick={() => setShowCreatePost(true)}
+              className="card flex w-full items-center gap-3 p-4 text-left transition-colors hover:border-[var(--primary-200)] sm:p-5"
+            >
+              <div className="icon-tile"><MessageCircle className="size-5" /></div>
+              <span className="flex-1 text-sm font-medium text-[var(--muted-foreground)]">Share a workout, photo, or update...</span>
+              <span className="hidden rounded-full bg-[var(--primary-500)] px-4 py-2 text-xs font-semibold text-white sm:inline">Create post</span>
+            </button>
             {loadingFeed ? (
               <div className="flex min-h-[16rem] items-center justify-center">
                 <LoadingSpinner />
@@ -183,7 +192,7 @@ export default function SocialPage() {
                 </div>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="mx-auto w-full max-w-3xl space-y-5">
                 {posts.map((post) => (
                   <PostCard key={post.id} post={post} onLike={handleLike} onDelete={handleDeletePost} currentUserId={currentUserId} />
                 ))}

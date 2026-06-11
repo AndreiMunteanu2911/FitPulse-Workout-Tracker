@@ -200,6 +200,7 @@ export interface FormLog extends FormSessionAnalysis {
 
 export interface Set {
   id: string;
+  client_key?: string;
   workout_exercise_id?: string;
   set_number: number;
   reps: number;

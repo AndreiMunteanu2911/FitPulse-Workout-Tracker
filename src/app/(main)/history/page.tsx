@@ -11,7 +11,7 @@ import Button from "@/components/Button";
 import { PageHeader } from "@/components/PageHeader";
 import { useHistory } from "@/hooks/useHistory";
 import type { Workout } from "@/types";
-import { Clock, PenSquare, Trash2, Plus, Share2 } from "lucide-react";
+import { Clock, Plus } from "lucide-react";
 
 function computePrCountsPerWorkout(workouts: Workout[]): Map<string, number> {
     const sorted = [...workouts].sort(
@@ -177,39 +177,17 @@ export default function HistoryPage() {
                         <p className="empty-state-description">Complete your first workout to see it here.</p>
                     </div>
                 ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                         {workouts.map((workout) => (
-                            <div key={workout.id} className="flex items-stretch gap-2">
-                                <button
-                                    className="flex-1 text-left min-w-0"
-                                    onClick={() => router.push(`/history/${workout.id}`)}
-                                >
-                                    <WorkoutHistoryCard workout={workout} prCount={prCounts.get(workout.id)} />
-                                </button>
-                                <div className="flex flex-col gap-1.5 justify-center flex-shrink-0">
-                                    <button
-                                        aria-label="Share workout"
-                                        onClick={() => setShareTarget(workout)}
-                                        className="w-9 h-9 rounded-[var(--radius-sm)] flex items-center justify-center bg-[var(--surface)] text-[var(--muted-foreground)] hover:text-[var(--lime-green)] transition-all"
-                                    >
-                                        <Share2 className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                        aria-label="Rename workout"
-                                        onClick={() => { setRenameTarget(workout); setRenameValue(workout.name); }}
-                                        className="w-9 h-9 rounded-[var(--radius-sm)] flex items-center justify-center bg-[var(--surface)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-all"
-                                    >
-                                        <PenSquare className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                        aria-label="Delete workout"
-                                        onClick={() => setDeleteTarget(workout)}
-                                        className="w-9 h-9 rounded-[var(--radius-sm)] flex items-center justify-center bg-[var(--surface)] text-[var(--muted-foreground)] hover:text-[var(--color-destructive)] transition-all"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            </div>
+                            <WorkoutHistoryCard
+                                key={workout.id}
+                                workout={workout}
+                                prCount={prCounts.get(workout.id)}
+                                onOpen={() => router.push(`/history/${workout.id}`)}
+                                onShare={() => setShareTarget(workout)}
+                                onRename={() => { setRenameTarget(workout); setRenameValue(workout.name); }}
+                                onDelete={() => setDeleteTarget(workout)}
+                            />
                         ))}
                     </div>
                 )}
@@ -243,7 +221,7 @@ export default function HistoryPage() {
                 </p>
                 <div className="flex gap-2">
                     <Button onClick={() => setDeleteTarget(null)} variant="primary" block>Cancel</Button>
-                    <Button onClick={handleDelete} variant="secondary" block disabled={deleting}>
+                    <Button onClick={handleDelete} variant="danger" block disabled={deleting}>
                         {deleting ? "Deleting…" : "Delete"}
                     </Button>
                 </div>

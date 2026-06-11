@@ -15,7 +15,7 @@ import { useHistory } from "@/hooks/useHistory";
 import { useWorkout } from "@/hooks/useWorkout";
 import { useExercises } from "@/hooks/useExercises";
 import type { Workout, WorkoutExercise, Exercise, Set as WorkoutSet } from "@/types";
-import { Pencil, PenSquare, Trash2 } from "lucide-react";
+import { Pencil, PenSquare, Plus, Trash2 } from "lucide-react";
 
 export default function WorkoutDetailPage() {
     const params = useParams();
@@ -265,7 +265,8 @@ export default function WorkoutDetailPage() {
         }
 
         // Optimistic: add immediately
-        const tempSet: WorkoutSet = { id: crypto.randomUUID(), workout_exercise_id: we.id, set_number: we.sets.length + 1, reps: 0, weight: 0, is_confirmed: false };
+        const tempId = crypto.randomUUID();
+        const tempSet: WorkoutSet = { id: tempId, client_key: tempId, workout_exercise_id: we.id, set_number: we.sets.length + 1, reps: 0, weight: 0, is_confirmed: false };
         setWorkoutExercises((prev) => {
             const updated = [...prev];
             updated[exerciseIndex] = { ...updated[exerciseIndex], sets: [...updated[exerciseIndex].sets, tempSet] };
@@ -278,7 +279,7 @@ export default function WorkoutDetailPage() {
             setWorkoutExercises((prev) => {
                 const updated = [...prev];
                 const ex = updated[exerciseIndex];
-                ex.sets = ex.sets.map((s) => s.id === tempSet.id ? { ...s, id: data.id } : s);
+                ex.sets = ex.sets.map((s) => s.id === tempSet.id ? { ...s, id: data.id, client_key: tempSet.client_key } : s);
                 updated[exerciseIndex] = ex;
                 return updated;
             });
@@ -395,8 +396,8 @@ export default function WorkoutDetailPage() {
         <ProtectedWrapper>
             <div className="page-stack">
                 <PageHeader
-                    title={workout.name}
-                    description={formatDate(workout.workout_date)}
+                    title="Workout details"
+                    description={`${workout.name} / ${formatDate(workout.workout_date)}`}
                     backHref="/history"
                     actions={isEditing ? (
                         <Button
@@ -408,52 +409,61 @@ export default function WorkoutDetailPage() {
                         </Button>
                     ) : (
                         <>
-                            <button
-                                aria-label="Edit workout"
+                            <Button
                                 onClick={enterEditMode}
-                                className="w-9 h-9 rounded-[var(--radius-sm)] flex items-center justify-center bg-[var(--surface)] text-[var(--primary-600)] dark:text-[var(--primary-500)] transition-all flex-shrink-0"
+                                variant="secondary"
+                                className="px-3 py-2 text-sm"
                             >
                                 <PenSquare className="w-4 h-4" />
-                            </button>
-                            <button
-                                aria-label="Rename workout"
+                                Edit
+                            </Button>
+                            <Button
                                 onClick={() => { setRenameValue(workout.name); setShowRenameModal(true); }}
-                                className="w-9 h-9 rounded-[var(--radius-sm)] flex items-center justify-center bg-[var(--surface)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-all flex-shrink-0"
+                                variant="textOnly"
+                                className="px-3 py-2 text-sm"
                             >
                                 <Pencil className="w-4 h-4" />
-                            </button>
-                            <button
-                                aria-label="Delete workout"
+                                Rename
+                            </Button>
+                            <Button
                                 onClick={() => setShowDeleteModal(true)}
-                                className="w-9 h-9 rounded-[var(--radius-sm)] flex items-center justify-center bg-[var(--surface)] text-[var(--muted-foreground)] hover:text-[var(--color-destructive)] transition-all flex-shrink-0"
+                                variant="danger"
+                                className="px-3 py-2 text-sm"
                             >
                                 <Trash2 className="w-4 h-4" />
-                            </button>
+                                Delete
+                            </Button>
                         </>
                     )}
                 />
 
                 {/* Summary stats */}
-                <div className="grid grid-cols-3 gap-3 mb-6">
+                <div className="metric-strip grid-cols-3">
                     {[
                         { label: "Exercises", value: isEditing ? workoutExercises.length : workout.workout_exercises.length },
                         { label: "Sets", value: isEditing ? workoutExercises.reduce((n, we) => n + we.sets.length, 0) : totalSets },
                         { label: "Volume", value: `${isEditing ? workoutExercises.reduce((n, we) => n + we.sets.reduce((s, set) => s + set.reps * set.weight, 0), 0).toFixed(0) : totalVolume.toFixed(0)} kg` },
                     ].map(({ label, value }) => (
-                        <div key={label} className="bg-[var(--surface)] rounded-[var(--radius-md)] p-3 sm:p-4 text-center">
-                            <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] mb-1">{label}</p>
-                            <p className="text-xl sm:text-2xl font-extrabold text-[var(--foreground)] leading-none">{value}</p>
+                        <div key={label} className="metric-item">
+                            <p className="metric-value">{value}</p>
+                            <p className="metric-label">{label}</p>
                         </div>
                     ))}
                 </div>
 
                 {/* View mode */}
                 {!isEditing && (
-                    <div className="space-y-4">
-                        {workout.workout_exercises.map((we) => (
-                            <WorkoutHistoryExerciseCard key={we.id} workoutExercise={we} />
-                        ))}
-                    </div>
+                    <section className="card">
+                        <div className="border-b border-[var(--border)] px-5 py-4 sm:px-6">
+                            <p className="eyebrow">Session log</p>
+                            <h2 className="section-heading">Exercises</h2>
+                        </div>
+                        <div className="divide-y divide-[var(--border)]">
+                            {workout.workout_exercises.map((we) => (
+                                <WorkoutHistoryExerciseCard key={we.id} workoutExercise={we} />
+                            ))}
+                        </div>
+                    </section>
                 )}
 
                 {/* Edit mode */}
@@ -490,7 +500,8 @@ export default function WorkoutDetailPage() {
                         )}
 
                         <div className="flex justify-center pt-2">
-                            <Button onClick={() => setShowExerciseSearch(true)} className="py-2.5 px-8 text-base">
+                            <Button onClick={() => setShowExerciseSearch(true)}>
+                                <Plus className="size-4" />
                                 Add Exercise
                             </Button>
                         </div>
@@ -551,7 +562,7 @@ export default function WorkoutDetailPage() {
                 </p>
                 <div className="flex gap-2">
                     <Button onClick={() => setShowDeleteModal(false)} variant="primary" block>Cancel</Button>
-                    <Button onClick={handleDelete} variant="secondary" block disabled={deleting}>
+                    <Button onClick={handleDelete} variant="danger" block disabled={deleting}>
                         {deleting ? "Deleting…" : "Delete"}
                     </Button>
                 </div>

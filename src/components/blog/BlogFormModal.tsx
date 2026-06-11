@@ -92,11 +92,11 @@ export default function BlogFormModal({
           </label>
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="relative max-h-[30vh] rounded-[var(--radius-lg)] overflow-hidden cursor-pointer border-2 border-dashed border-[var(--border)] hover:border-[var(--primary-400)] transition-all group bg-[var(--surface-raised)]"
+            className="group relative aspect-[16/8] max-h-[30vh] cursor-pointer overflow-hidden rounded-[var(--radius-lg)] border-2 border-dashed border-[var(--border)] bg-[var(--surface-raised)] transition-all hover:border-[var(--primary-400)]"
           >
             {preview ? (
               <>
-                <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                <img src={preview} alt="Selected cover preview" className="h-full w-full object-cover" />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                   <p className="text-white text-sm font-semibold bg-black/20 px-4 py-2 rounded-full backdrop-blur-sm">Change Image</p>
                 </div>
