@@ -7,15 +7,38 @@ interface SupabaseServerClientOptions {
   rememberSession?: boolean;
 }
 
+const AUTH_PERSISTENCE_COOKIE = "fitpulse-auth-persistence";
+const AUTH_COOKIE_MAX_AGE = 30 * 24 * 60 * 60;
+
 function toSessionCookieOptions<T extends Record<string, unknown>>(options?: T): Omit<T, "maxAge" | "expires"> {
   if (!options) return {} as Omit<T, "maxAge" | "expires">;
   const { maxAge: _maxAge, expires: _expires, ...sessionOptions } = options;
   return sessionOptions;
 }
 
+function toPersistentCookieOptions<T extends Record<string, unknown>>(options?: T): T & { maxAge: number } {
+  return {
+    ...((options ?? {}) as T),
+    maxAge: AUTH_COOKIE_MAX_AGE,
+  };
+}
+
 export async function createSupabaseServerClient(options: SupabaseServerClientOptions = {}) {
   const cookieStore = await cookies();
-  const rememberSession = options.rememberSession ?? true;
+  const storedPreference = cookieStore.get(AUTH_PERSISTENCE_COOKIE)?.value;
+  const rememberSession =
+    options.rememberSession ??
+    (storedPreference === "session" ? false : true);
+
+  if (options.rememberSession !== undefined) {
+    cookieStore.set(AUTH_PERSISTENCE_COOKIE, rememberSession ? "persistent" : "session", {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      ...(rememberSession ? { maxAge: AUTH_COOKIE_MAX_AGE } : {}),
+    });
+  }
 
   return createServerClient(
     process.env.SUPABASE_URL!,
@@ -27,16 +50,26 @@ export async function createSupabaseServerClient(options: SupabaseServerClientOp
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options: cookieOptions }) => {
+            const isRemoval = cookieOptions?.maxAge === 0;
             cookieStore.set(
               name,
               value,
-              rememberSession ? cookieOptions : toSessionCookieOptions(cookieOptions),
+              isRemoval
+                ? cookieOptions
+                : rememberSession
+                  ? toPersistentCookieOptions(cookieOptions)
+                  : toSessionCookieOptions(cookieOptions),
             );
           });
         },
       },
     }
   );
+}
+
+export async function clearAuthPersistencePreference() {
+  const cookieStore = await cookies();
+  cookieStore.delete(AUTH_PERSISTENCE_COOKIE);
 }
 
 export interface AdminContext {
