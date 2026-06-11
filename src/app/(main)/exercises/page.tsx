@@ -88,7 +88,7 @@ export default function ExercisesPage() {
                             placeholder="Search exercises..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="input border-0 bg-[var(--surface-raised)] pl-12 pr-12 font-medium"
+                            className="input border-0 bg-[var(--surface-raised)] !pl-12 !pr-12 font-medium"
                         />
                         {searchQuery && (
                             <button

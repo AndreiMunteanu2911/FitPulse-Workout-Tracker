@@ -93,7 +93,7 @@ export default function BlogPage() {
                   placeholder="Search posts..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="input pl-11 pr-10"
+                  className="input !pl-11 !pr-10"
                 />
               </div>
               {isAdmin && (

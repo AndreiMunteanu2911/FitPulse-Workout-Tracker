@@ -14,7 +14,7 @@ export default function SearchInput({ value, onChange, placeholder = "Search..."
       <input
         type="text"
         placeholder={placeholder}
-        className="input pl-10"
+        className="input !pl-10"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
