@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import Button from "@/components/Button";
 import ConfirmDeleteModal from "@/components/admin/ConfirmDeleteModal";
 import { useRouter } from "next/navigation";
@@ -26,7 +27,6 @@ import {
   Calendar as CalendarIcon,
   Camera,
   LogOut,
-  ChevronRight,
   ImageIcon,
   Moon,
   Sun,
@@ -36,6 +36,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
+import UserAvatar from "@/components/UserAvatar";
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return "N/A";
@@ -111,15 +112,25 @@ function EditProfileModal({
   };
 
   return (
-    <ModalWrapper isOpen={isOpen} onClose={onClose} containerClassName="max-w-md p-6 max-h-[90vh] overflow-y-auto">
-      <button className="absolute top-3 right-3 w-8 h-8 rounded-full hover:bg-[var(--surface-raised)] flex items-center justify-center" onClick={onClose}>
-        <X className="w-4 h-4" />
+    <ModalWrapper isOpen={isOpen} onClose={onClose} containerClassName="max-w-md max-h-[90vh] overflow-y-auto p-0">
+      <div className="relative overflow-hidden border-b border-[var(--border)] p-6">
+        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[var(--primary-500)] to-[var(--lime-green)]" />
+        <p className="eyebrow">Account details</p>
+        <h2 className="text-xl font-bold text-[var(--foreground)]">Edit profile</h2>
+        <p className="mt-1 text-sm text-[var(--muted-foreground)]">Keep your training profile accurate.</p>
+      </div>
+      <button
+        type="button"
+        aria-label="Close edit profile"
+        className="absolute right-4 top-4 flex size-9 items-center justify-center rounded-full bg-[var(--surface-raised)] text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]"
+        onClick={onClose}
+      >
+        <X className="size-4" />
       </button>
-      <h2 className="text-lg font-bold text-[var(--foreground)] mb-5">Edit Profile</h2>
 
-      <div className="space-y-4">
+      <div className="space-y-5 p-6">
         <div>
-          <label className="block mb-1.5 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Full Name</label>
+          <label className="eyebrow block">Display name</label>
           <input
             className="input"
             value={name}
@@ -129,16 +140,17 @@ function EditProfileModal({
         </div>
 
         <div>
-          <label className="block mb-1.5 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Gender</label>
-          <div className="flex gap-2">
+          <label className="eyebrow block">Gender</label>
+          <div className="grid grid-cols-3 gap-2 rounded-[var(--radius-lg)] bg-[var(--surface-raised)] p-1">
             {(["male", "female", "other"] as const).map((g) => (
               <button
                 key={g}
+                type="button"
                 onClick={() => setGender(g)}
-                className={`flex-1 py-2 rounded-lg text-sm font-semibold capitalize transition-colors ${
+                className={`min-h-10 rounded-[var(--radius-md)] text-sm font-semibold capitalize transition-colors ${
                   gender === g
-                    ? "bg-[var(--primary-500)] text-white"
-                    : "bg-[var(--surface-raised)] text-[var(--muted-foreground)]"
+                    ? "bg-[var(--surface)] text-[var(--primary-600)] shadow-[var(--shadow-xs)]"
+                    : "text-[var(--muted-foreground)]"
                 }`}
               >
                 {g}
@@ -148,7 +160,7 @@ function EditProfileModal({
         </div>
 
         <div>
-          <label className="block mb-1.5 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Birthday</label>
+          <label className="eyebrow block">Birthday</label>
           <DatePicker
             value={birthday}
             onChange={setBirthday}
@@ -157,17 +169,20 @@ function EditProfileModal({
         </div>
 
         <div>
-          <label className="block mb-1.5 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">
+          <label className="eyebrow block">
             Height (cm) — {height} cm
           </label>
-          <div className="bg-[var(--surface-raised)] rounded-lg p-2">
+          <div className="rounded-[var(--radius-lg)] bg-[var(--surface-raised)] p-2">
             <NumberPicker value={height} onChange={setHeight} min={120} max={220} height={160} />
           </div>
         </div>
 
-        <Button onClick={handleSave} disabled={saving || !name.trim()} block>
-          {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : <><Save className="w-4 h-4 mr-2" /> Save</>}
-        </Button>
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <Button onClick={onClose} variant="secondary" block disabled={saving}>Cancel</Button>
+          <Button onClick={handleSave} disabled={saving || !name.trim()} block>
+            {saving ? <><Loader2 className="size-4 animate-spin" />Saving...</> : <><Save className="size-4" />Save</>}
+          </Button>
+        </div>
       </div>
     </ModalWrapper>
   );
@@ -312,7 +327,6 @@ export default function ProfilePage() {
     const age = calcAge(profile?.birthday ?? null);
     // Latest weight from weight_logs
     const latestWeight = weights.length > 0 ? weights[weights.length - 1].weight : null;
-    const userInitial = displayName[0]?.toUpperCase() ?? "?";
 
     if (loading) {
         return (
@@ -333,37 +347,39 @@ export default function ProfilePage() {
                 />
 
                 {/* ── User Info Card — purple gradient ── */}
-                <div className="bg-gradient-to-br from-[var(--primary-600)] to-[var(--primary-400)] rounded-[var(--radius-lg)] p-5 mb-5 relative">
+                <div className="relative overflow-hidden rounded-[var(--radius-xl)] bg-gradient-to-br from-[var(--primary-700)] via-[var(--primary-600)] to-[var(--primary-400)] p-5 text-white shadow-[0_18px_42px_rgba(116,87,245,0.26)] sm:p-7">
                     <button
                         onClick={() => setShowEditModal(true)}
-                        className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                        className="absolute right-4 top-4 z-10 inline-flex min-h-10 items-center gap-2 rounded-full bg-white/10 px-3.5 text-xs font-semibold text-white transition-colors hover:bg-white/20"
                         title="Edit profile"
                     >
-                        <Pencil className="w-4 h-4 text-white" />
+                        <Pencil className="size-3.5" />
+                        Edit
                     </button>
 
-                    <div className="flex flex-col items-center text-center">
-                        <div className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center text-white text-2xl font-extrabold mb-3 overflow-hidden">
-                            {userInitial}
-                        </div>
-                        <p className="text-lg font-bold text-white">{displayName}</p>
-                        <p className="text-xs text-white/60">{displayEmail}</p>
+                    <div className="flex flex-col items-center text-center sm:flex-row sm:text-left">
+                        <UserAvatar name={displayName} size="xl" className="mb-3 ring-4 ring-white/15 shadow-none sm:mb-0 sm:mr-5" />
+                        <div className="min-w-0">
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/55">Training profile</p>
+                        <p className="mt-1 text-2xl font-extrabold tracking-[-0.03em] text-white">{displayName}</p>
+                        <p className="text-sm text-white/65">{displayEmail}</p>
                         {profile?.birthday && (
                             <p className="text-xs text-white/40 mt-0.5">Birthday: {formatDate(profile.birthday)}</p>
                         )}
+                        </div>
                     </div>
 
                     {/* Stats row */}
-                    <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-white/20">
-                        <div className="text-center">
+                    <div className="mt-6 grid grid-cols-3 gap-2 border-t border-white/15 pt-5">
+                        <div className="rounded-[var(--radius-lg)] bg-white/10 p-3 text-center">
                             <p className="text-sm font-bold text-white">{latestWeight ?? "—"} <span className="text-xs font-normal text-white/60">kg</span></p>
                             <p className="text-xs text-white/50">Weight</p>
                         </div>
-                        <div className="text-center border-x border-white/20">
+                        <div className="rounded-[var(--radius-lg)] bg-white/10 p-3 text-center">
                             <p className="text-sm font-bold text-white">{age ?? "—"} <span className="text-xs font-normal text-white/60">yrs</span></p>
                             <p className="text-xs text-white/50">Age</p>
                         </div>
-                        <div className="text-center">
+                        <div className="rounded-[var(--radius-lg)] bg-white/10 p-3 text-center">
                             <p className="text-sm font-bold text-white">{profile?.height_cm ?? "—"} <span className="text-xs font-normal text-white/60">cm</span></p>
                             <p className="text-xs text-white/50">Height</p>
                         </div>
@@ -371,17 +387,17 @@ export default function ProfilePage() {
                 </div>
 
                 {/* ── Settings Sections ── */}
-                <div className="space-y-5">
+                <div className="grid gap-5 xl:grid-cols-2">
                     {/* Dark Mode */}
-                    <div className="card p-5">
+                    <div className="card p-5 xl:col-span-2">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
+                                <div className="icon-tile !size-10">
                                     {darkMode ? <Sun className="w-4 h-4 text-[var(--primary-600)]" /> : <Moon className="w-4 h-4 text-[var(--primary-600)]" />}
                                 </div>
                                 <div>
-                                    <p className="text-sm font-semibold text-[var(--foreground)]">{"Dark Mode"}</p>
-                                    <p className="text-xs text-[var(--muted-foreground)]">Toggle dark mode</p>
+                                    <p className="font-bold text-[var(--foreground)]">Appearance</p>
+                                    <p className="text-xs text-[var(--muted-foreground)]">{darkMode ? "Dark theme is active" : "Light theme is active"}</p>
                                 </div>
                             </div>
                             <ToggleSwitch checked={darkMode} onChange={toggleDarkMode} size="sm" />
@@ -389,21 +405,21 @@ export default function ProfilePage() {
                     </div>
 
                     {/* Weight History */}
-                    <div className="card">
+                    <div className="card xl:col-span-2">
                         <div className="flex items-center justify-between px-5 py-4">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
+                                <div className="icon-tile !size-10">
                                     <Scale className="w-4 h-4 text-[var(--primary-600)]" />
                                 </div>
                                 <div className="text-left">
-                                    <p className="text-sm font-semibold text-[var(--foreground)]">Weight History</p>
+                                    <p className="font-bold text-[var(--foreground)]">Weight history</p>
                                     <p className="text-xs text-[var(--muted-foreground)]">{weights.length} entries</p>
                                 </div>
                             </div>
-                            <Button onClick={() => setShowWeightModal(true)} variant="primary" className="px-3 py-1.5 text-xs">+ Log</Button>
+                            <Button onClick={() => setShowWeightModal(true)} variant="primary" className="px-4 py-2 text-xs sm:px-4 sm:py-2 sm:text-xs">Log weight</Button>
                         </div>
                         <div className="px-5 pb-5 pt-1">
-                            <div className="bg-[var(--surface-raised)] rounded-[var(--radius-md)] p-3">
+                            <div className="rounded-[var(--radius-lg)] bg-[var(--surface-raised)] p-3 sm:p-4">
                                 <WeightHistoryChart weights={weights} loading={false} onDelete={handleDeleteWeight} />
                             </div>
                         </div>
@@ -413,11 +429,11 @@ export default function ProfilePage() {
                     <div className="card">
                         <div className="px-5 py-4">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
+                                <div className="icon-tile !size-10">
                                     <CalendarIcon className="w-4 h-4 text-[var(--primary-600)]" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-semibold text-[var(--foreground)]">Workout Calendar</p>
+                                    <p className="font-bold text-[var(--foreground)]">Workout calendar</p>
                                     <p className="text-xs text-[var(--muted-foreground)]">{workoutDates.length} days active</p>
                                 </div>
                             </div>
@@ -431,45 +447,62 @@ export default function ProfilePage() {
                     <div className="card">
                         <div className="flex items-center justify-between px-5 py-4">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
+                                <div className="icon-tile !size-10">
                                     <Camera className="w-4 h-4 text-[var(--primary-600)]" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-semibold text-[var(--foreground)]">Progress Photos</p>
+                                    <p className="font-bold text-[var(--foreground)]">Progress photos</p>
                                     <p className="text-xs text-[var(--muted-foreground)]">{photos.length} photos</p>
                                 </div>
                             </div>
-                            <Button onClick={() => setShowPhotoModal(true)} variant="primary" className="px-3 py-1.5 text-xs">+ Add</Button>
+                            <Button onClick={() => setShowPhotoModal(true)} variant="primary" className="px-4 py-2 text-xs sm:px-4 sm:py-2 sm:text-xs">Add photo</Button>
                         </div>
+                        <AnimatePresence mode="popLayout" initial={false}>
                         {photos.length === 0 ? (
-                            <div className="px-5 pb-5 pt-1 text-center py-6">
-                                <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-100)] flex items-center justify-center">
+                            <motion.div
+                                key="empty"
+                                className="px-5 pb-7 pt-3 text-center"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.14 }}
+                            >
+                                <div className="icon-tile mx-auto mb-2 !size-10">
                                     <ImageIcon className="w-5 h-5 text-[var(--primary-600)] dark:text-[var(--primary-700)]" />
                                 </div>
-                                <p className="text-xs text-[var(--muted-foreground)]">No photos yet.</p>
-                            </div>
+                                <p className="text-sm font-semibold text-[var(--foreground)]">No progress photos yet</p>
+                                <p className="mt-1 text-xs text-[var(--muted-foreground)]">Add your first photo to compare changes over time.</p>
+                            </motion.div>
                         ) : (
-                            <div className="px-5 pb-5 pt-1">
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            <motion.div key="photos" layout className="px-5 pb-5 pt-1">
+                                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                                    <AnimatePresence initial={false} mode="popLayout">
                                     {photos.map((photo) => (
-                                        <ProgressPhotoCard key={photo.id} photo={photo} onDelete={handleDeletePhoto} />
+                                        <motion.div
+                                            layout
+                                            key={photo.id}
+                                            initial={{ opacity: 0, scale: 0.98 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.96 }}
+                                            transition={{ duration: 0.16, ease: "easeOut" }}
+                                        >
+                                            <ProgressPhotoCard photo={photo} onDelete={handleDeletePhoto} />
+                                        </motion.div>
                                     ))}
+                                    </AnimatePresence>
                                 </div>
-                            </div>
+                            </motion.div>
                         )}
+                        </AnimatePresence>
                     </div>
 
                     {/* Sign Out */}
-                    <button
-                        onClick={signOut}
-                        className="card-interactive group flex w-full items-center gap-3 px-5 py-4"
-                    >
-                        <div className="w-10 h-10 rounded-full bg-[var(--color-destructive-bg)] flex items-center justify-center">
-                            <LogOut className="w-4 h-4 text-[var(--color-destructive)]" />
-                        </div>
-                        <span className="flex-1 text-left text-sm font-semibold text-[var(--color-destructive)]">Sign Out</span>
-                        <ChevronRight className="w-4 h-4 text-[var(--muted-foreground)] group-hover:text-[var(--foreground)] transition-colors" />
-                    </button>
+                    <div className="xl:col-span-2">
+                        <Button onClick={signOut} variant="secondary" block>
+                            <LogOut className="size-4" />
+                            Sign out
+                        </Button>
+                    </div>
                 </div>
 
                 {/* ── Modals ── */}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
 import {
     BarChart3,
     BookOpen,
@@ -129,8 +130,16 @@ export default function ExerciseDetailsPage() {
                     </button>
                 </div>
 
+                <AnimatePresence mode="wait" initial={false}>
                 {activeTab === "description" ? (
-                    <div className="space-y-5">
+                    <motion.div
+                        key="description"
+                        className="space-y-5"
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ duration: 0.16, ease: "easeOut" }}
+                    >
                         <section className="card relative overflow-hidden">
                             <div className="absolute inset-x-0 top-0 z-10 h-1 bg-gradient-to-r from-[var(--primary-500)] via-[var(--primary-400)] to-[var(--lime-green)]" />
                             <div className={`grid ${exercise.gif_url ? "lg:grid-cols-[minmax(15rem,0.7fr)_1.3fr]" : ""}`}>
@@ -267,10 +276,19 @@ export default function ExerciseDetailsPage() {
                                 <FormHistoryPanel key={formHistoryKey} exerciseId={id as string} />
                             </>
                         )}
-                    </div>
+                    </motion.div>
                 ) : (
-                    <ExerciseStatsTab exerciseId={id as string} />
+                    <motion.div
+                        key="stats"
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ duration: 0.16, ease: "easeOut" }}
+                    >
+                        <ExerciseStatsTab exerciseId={id as string} />
+                    </motion.div>
                 )}
+                </AnimatePresence>
             </div>
 
             {showFormChecker && (

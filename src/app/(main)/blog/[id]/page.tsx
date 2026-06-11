@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState, use, useCallback } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { BlogPost, BlogComment } from "@/types";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import { useAuthSession } from "@/components/AuthSessionProvider";
 import Button from "@/components/Button";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import UserAvatar from "@/components/UserAvatar";
 import { ArrowLeft, Calendar, Heart, MessageCircle, Send, Sparkles, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { PageHeader } from "@/components/PageHeader";
@@ -249,24 +251,30 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
           </form>
 
           <div className="divide-y divide-[var(--border)]">
+            <AnimatePresence initial={false} mode="popLayout">
             {comments.length === 0 ? (
-              <p className="text-[var(--muted-foreground)] text-center py-8">No comments yet. Be the first to comment!</p>
+              <motion.p
+                key="empty"
+                className="py-8 text-center text-[var(--muted-foreground)]"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.14 }}
+              >
+                No comments yet. Be the first to comment!
+              </motion.p>
             ) : (
               comments.map((comment) => (
-                <div key={comment.id} className="flex gap-3 py-5 first:pt-0 last:pb-0">
-                  {comment.user?.avatar_url ? (
-                    <Image
-                      src={comment.user.avatar_url}
-                      alt={comment.user.display_name || "User"}
-                      width={36}
-                      height={36}
-                      className="w-9 h-9 rounded-full object-cover flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="w-9 h-9 rounded-full bg-[var(--primary-500)] flex items-center justify-center text-[var(--primary-foreground)] font-bold text-sm flex-shrink-0">
-                      {(comment.user?.display_name || "U")[0].toUpperCase()}
-                    </div>
-                  )}
+                <motion.div
+                  layout
+                  key={comment.id}
+                  className="flex gap-3 py-5 first:pt-0 last:pb-0"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.985 }}
+                  transition={{ duration: 0.15, ease: "easeOut" }}
+                >
+                  <UserAvatar name={comment.user?.display_name} size="md" />
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-semibold text-[var(--foreground)] text-sm">
@@ -288,9 +296,10 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
                       {comment.content}
                     </p>
                   </div>
-                </div>
+                </motion.div>
               ))
             )}
+            </AnimatePresence>
           </div>
         </section>
       </div>

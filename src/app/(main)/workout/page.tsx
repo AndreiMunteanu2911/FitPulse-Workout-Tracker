@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import ExerciseCard from "@/components/WorkoutExerciseCard";
 import ExerciseSearchModal from "@/components/ExerciseSearchModal";
@@ -870,38 +871,48 @@ export default function WorkoutPage() {
                                         <p className="empty-state-description">Tap &quot;Add Exercise&quot; to begin.</p>
                                     </div>
                                 ) : (
-                                    <div className="space-y-4 sm:space-y-6">
+                                    <motion.div layout className="space-y-4 sm:space-y-6">
+                                        <AnimatePresence initial={false} mode="popLayout">
                                         {workoutExercises.map((workoutExercise, exerciseIndex) => (
-                                            <ExerciseCard
+                                            <motion.div
+                                                layout
                                                 key={workoutExercise.id}
-                                                workoutExercise={workoutExercise}
-                                                exerciseIndex={exerciseIndex}
-                                                onAddSet={addSetToExercise}
-                                                onUpdateSet={updateSet}
-                                                onDeleteSet={deleteSet}
-                                                onDeleteExercise={deleteExercise}
-                                                onConfirmSet={handleConfirmSet}
-                                                confirmedSetIds={confirmedSetIds}
-                                                errorMessage={errorMessages[`exercise-${exerciseIndex}`] || ""}
-                                                setErrorMessage={(message: string) =>
-                                                    setErrorMessages((prev) => ({
-                                                        ...prev,
-                                                        [`exercise-${exerciseIndex}`]: message,
-                                                    }))
-                                                }
-                                                restTimer={restTimer}
-                                                onRestTimerTick={(remaining) =>
-                                                    setRestTimer((prev) => ({ ...prev, remaining }))
-                                                }
-                                                onRestTimerSkip={() =>
-                                                    setRestTimer((prev) => ({ ...prev, active: false, remaining: 0 }))
-                                                }
-                                                onRestTimerDismiss={() =>
-                                                    setRestTimer((prev) => ({ ...prev, active: false }))
-                                                }
-                                            />
+                                                initial={{ opacity: 0, y: 8 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, scale: 0.985 }}
+                                                transition={{ duration: 0.16, ease: "easeOut" }}
+                                            >
+                                                <ExerciseCard
+                                                    workoutExercise={workoutExercise}
+                                                    exerciseIndex={exerciseIndex}
+                                                    onAddSet={addSetToExercise}
+                                                    onUpdateSet={updateSet}
+                                                    onDeleteSet={deleteSet}
+                                                    onDeleteExercise={deleteExercise}
+                                                    onConfirmSet={handleConfirmSet}
+                                                    confirmedSetIds={confirmedSetIds}
+                                                    errorMessage={errorMessages[`exercise-${exerciseIndex}`] || ""}
+                                                    setErrorMessage={(message: string) =>
+                                                        setErrorMessages((prev) => ({
+                                                            ...prev,
+                                                            [`exercise-${exerciseIndex}`]: message,
+                                                        }))
+                                                    }
+                                                    restTimer={restTimer}
+                                                    onRestTimerTick={(remaining) =>
+                                                        setRestTimer((prev) => ({ ...prev, remaining }))
+                                                    }
+                                                    onRestTimerSkip={() =>
+                                                        setRestTimer((prev) => ({ ...prev, active: false, remaining: 0 }))
+                                                    }
+                                                    onRestTimerDismiss={() =>
+                                                        setRestTimer((prev) => ({ ...prev, active: false }))
+                                                    }
+                                                />
+                                            </motion.div>
                                         ))}
-                                    </div>
+                                        </AnimatePresence>
+                                    </motion.div>
                                 )}
 
                                 <div className="flex justify-center">

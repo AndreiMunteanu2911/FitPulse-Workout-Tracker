@@ -1,27 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Clock, Search, UserCheck, UserPlus, Users, UserX, X } from "lucide-react";
 import type { Friendship, UserSearchResult } from "@/types";
 import { useSocial } from "@/hooks/useSocial";
 import Button from "@/components/Button";
+import UserAvatar from "@/components/UserAvatar";
 
 interface FriendManagementProps {
   friendships: Friendship[];
   currentUserId: string;
   onFriendshipsChange: () => void;
-}
-
-function initials(name: string) {
-  return name.split(" ").map((part) => part[0]).join("").toUpperCase().slice(0, 2) || "?";
-}
-
-function Avatar({ name }: { name: string }) {
-  return (
-    <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)] text-xs font-bold text-white">
-      {initials(name)}
-    </div>
-  );
 }
 
 export default function FriendManagement({ friendships, currentUserId, onFriendshipsChange }: FriendManagementProps) {
@@ -128,7 +118,7 @@ export default function FriendManagement({ friendships, currentUserId, onFriends
                 const name = user.display_name || "Unknown";
                 return (
                   <div key={user.user_id} className="flex items-center gap-3 rounded-[var(--radius-lg)] bg-[var(--surface-raised)] p-3">
-                    <Avatar name={name} />
+                    <UserAvatar name={name} />
                     <span className="min-w-0 flex-1 truncate text-sm font-semibold text-[var(--foreground)]">{name}</span>
                     {user.friendship_status === "none" && (
                       <Button onClick={() => sendRequest(user.user_id)} disabled={actionLoading === user.user_id} className="min-h-9 px-3 py-2 text-xs sm:min-h-9 sm:px-3 sm:py-2 sm:text-xs">
@@ -149,16 +139,30 @@ export default function FriendManagement({ friendships, currentUserId, onFriends
         </section>
       )}
 
+      <AnimatePresence initial={false}>
       {received.length > 0 && (
-        <section className="card p-5">
+        <motion.section
+          className="card p-5"
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.16, ease: "easeOut" }}
+        >
           <p className="eyebrow">Requests</p>
           <h2 className="section-heading">Waiting for your response</h2>
-          <div className="mt-4 space-y-2">
+          <motion.div layout className="mt-4 space-y-2">
+            <AnimatePresence initial={false} mode="popLayout">
             {received.map((friendship) => {
               const name = friendName(friendship);
               return (
-                <div key={friendship.id} className="flex flex-wrap items-center gap-3 rounded-[var(--radius-lg)] bg-[var(--surface-raised)] p-3">
-                  <Avatar name={name} />
+                <motion.div
+                  layout
+                  key={friendship.id}
+                  className="flex flex-wrap items-center gap-3 rounded-[var(--radius-lg)] bg-[var(--surface-raised)] p-3"
+                  exit={{ opacity: 0, scale: 0.985 }}
+                  transition={{ duration: 0.15, ease: "easeOut" }}
+                >
+                  <UserAvatar name={name} />
                   <span className="min-w-0 flex-1 truncate text-sm font-semibold">{name}</span>
                   <Button onClick={() => respond(friendship.id, "accept")} disabled={actionLoading === friendship.id} className="min-h-9 px-3 py-2 text-xs sm:min-h-9 sm:px-3 sm:py-2 sm:text-xs">
                     <UserCheck className="size-3.5" />Accept
@@ -166,33 +170,51 @@ export default function FriendManagement({ friendships, currentUserId, onFriends
                   <Button onClick={() => respond(friendship.id, "decline")} disabled={actionLoading === friendship.id} variant="danger" className="min-h-9 px-3 py-2 text-xs sm:min-h-9 sm:px-3 sm:py-2 sm:text-xs">
                     <UserX className="size-3.5" />Decline
                   </Button>
-                </div>
+                </motion.div>
               );
             })}
-          </div>
-        </section>
+            </AnimatePresence>
+          </motion.div>
+        </motion.section>
       )}
+      </AnimatePresence>
 
+      <AnimatePresence initial={false}>
       {sent.length > 0 && (
-        <section className="card p-5">
+        <motion.section
+          className="card p-5"
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.16, ease: "easeOut" }}
+        >
           <p className="eyebrow">Pending</p>
           <h2 className="section-heading">Sent requests</h2>
-          <div className="mt-4 space-y-2">
+          <motion.div layout className="mt-4 space-y-2">
+            <AnimatePresence initial={false} mode="popLayout">
             {sent.map((friendship) => {
               const name = friendName(friendship);
               return (
-                <div key={friendship.id} className="flex items-center gap-3 rounded-[var(--radius-lg)] bg-[var(--surface-raised)] p-3">
-                  <Avatar name={name} />
+                <motion.div
+                  layout
+                  key={friendship.id}
+                  className="flex items-center gap-3 rounded-[var(--radius-lg)] bg-[var(--surface-raised)] p-3"
+                  exit={{ opacity: 0, scale: 0.985 }}
+                  transition={{ duration: 0.15, ease: "easeOut" }}
+                >
+                  <UserAvatar name={name} />
                   <span className="min-w-0 flex-1 truncate text-sm font-semibold">{name}</span>
                   <Button onClick={() => respond(friendship.id, "remove")} disabled={actionLoading === friendship.id} variant="textOnly" className="min-h-9 px-3 py-2 text-xs sm:min-h-9 sm:px-3 sm:py-2 sm:text-xs">
                     <X className="size-3.5" />Cancel
                   </Button>
-                </div>
+                </motion.div>
               );
             })}
-          </div>
-        </section>
+            </AnimatePresence>
+          </motion.div>
+        </motion.section>
       )}
+      </AnimatePresence>
 
       <section className="card p-5 sm:p-6">
         <div className="flex items-center justify-between gap-3">
@@ -202,18 +224,33 @@ export default function FriendManagement({ friendships, currentUserId, onFriends
           </div>
           <Users className="size-5 text-[var(--primary-500)]" />
         </div>
+        <AnimatePresence mode="popLayout" initial={false}>
         {accepted.length === 0 ? (
-          <div className="mt-4 rounded-[var(--radius-lg)] bg-[var(--surface-raised)] py-10 text-center">
+          <motion.div
+            key="empty"
+            className="mt-4 rounded-[var(--radius-lg)] bg-[var(--surface-raised)] py-10 text-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.14 }}
+          >
             <p className="font-semibold text-[var(--foreground)]">No friends yet</p>
             <p className="mt-1 text-xs text-[var(--muted-foreground)]">Search above to connect with other users.</p>
-          </div>
+          </motion.div>
         ) : (
-          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          <motion.div key="friends" layout className="mt-4 grid gap-2 sm:grid-cols-2">
+            <AnimatePresence initial={false} mode="popLayout">
             {accepted.map((friendship) => {
               const name = friendName(friendship);
               return (
-                <div key={friendship.id} className="flex items-center gap-3 rounded-[var(--radius-lg)] bg-[var(--surface-raised)] p-3">
-                  <Avatar name={name} />
+                <motion.div
+                  layout
+                  key={friendship.id}
+                  className="flex items-center gap-3 rounded-[var(--radius-lg)] bg-[var(--surface-raised)] p-3"
+                  exit={{ opacity: 0, scale: 0.985 }}
+                  transition={{ duration: 0.15, ease: "easeOut" }}
+                >
+                  <UserAvatar name={name} />
                   <span className="min-w-0 flex-1 truncate text-sm font-semibold">{name}</span>
                   <button
                     onClick={() => respond(friendship.id, "remove")}
@@ -224,11 +261,13 @@ export default function FriendManagement({ friendships, currentUserId, onFriends
                     <UserX className="size-4" />
                     Remove
                   </button>
-                </div>
+                </motion.div>
               );
             })}
-          </div>
+            </AnimatePresence>
+          </motion.div>
         )}
+        </AnimatePresence>
       </section>
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import { useAuthSession } from "@/components/AuthSessionProvider";
 import PostCard from "@/components/social/PostCard";
@@ -154,14 +155,29 @@ export default function SocialPage() {
           </button>
         </div>
 
-        {actionError && (
-          <div className="mb-4 rounded-[var(--radius-md)] border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
-            {actionError}
-          </div>
-        )}
+        <AnimatePresence initial={false}>
+          {actionError && (
+            <motion.div
+              className="mb-4 rounded-[var(--radius-md)] border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600"
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
+            >
+              {actionError}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {activeTab === "feed" && (
-          <>
+        <AnimatePresence mode="wait" initial={false}>
+        {activeTab === "feed" ? (
+          <motion.div
+            key="feed"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.16, ease: "easeOut" }}
+          >
             <button
               type="button"
               onClick={() => setShowCreatePost(true)}
@@ -192,17 +208,32 @@ export default function SocialPage() {
                 </div>
               </div>
             ) : (
-              <div className="mx-auto w-full max-w-3xl space-y-5">
+              <motion.div layout className="mx-auto w-full max-w-3xl space-y-5">
+                <AnimatePresence initial={false} mode="popLayout">
                 {posts.map((post) => (
-                  <PostCard key={post.id} post={post} onLike={handleLike} onDelete={handleDeletePost} currentUserId={currentUserId} />
+                  <motion.div
+                    layout
+                    key={post.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.985 }}
+                    transition={{ duration: 0.16, ease: "easeOut" }}
+                  >
+                    <PostCard post={post} onLike={handleLike} onDelete={handleDeletePost} currentUserId={currentUserId} />
+                  </motion.div>
                 ))}
-              </div>
+                </AnimatePresence>
+              </motion.div>
             )}
-          </>
-        )}
-
-        {activeTab === "friends" && (
-          <>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="friends"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.16, ease: "easeOut" }}
+          >
             {loadingFriends ? (
               <div className="flex min-h-[16rem] items-center justify-center">
                 <LoadingSpinner />
@@ -214,8 +245,9 @@ export default function SocialPage() {
                 onFriendshipsChange={loadFriendships}
               />
             )}
-          </>
+          </motion.div>
         )}
+        </AnimatePresence>
 
         <CreatePostModal
           isOpen={showCreatePost}

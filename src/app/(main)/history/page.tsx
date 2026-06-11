@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import WorkoutHistoryCard from "@/components/WorkoutHistoryCard";
@@ -177,19 +178,29 @@ export default function HistoryPage() {
                         <p className="empty-state-description">Complete your first workout to see it here.</p>
                     </div>
                 ) : (
-                    <div className="space-y-4">
+                    <motion.div layout className="space-y-4">
+                        <AnimatePresence initial={false} mode="popLayout">
                         {workouts.map((workout) => (
-                            <WorkoutHistoryCard
+                            <motion.div
                                 key={workout.id}
-                                workout={workout}
-                                prCount={prCounts.get(workout.id)}
-                                onOpen={() => router.push(`/history/${workout.id}`)}
-                                onShare={() => setShareTarget(workout)}
-                                onRename={() => { setRenameTarget(workout); setRenameValue(workout.name); }}
-                                onDelete={() => setDeleteTarget(workout)}
-                            />
+                                layout
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.985 }}
+                                transition={{ duration: 0.16, ease: "easeOut" }}
+                            >
+                                <WorkoutHistoryCard
+                                    workout={workout}
+                                    prCount={prCounts.get(workout.id)}
+                                    onOpen={() => router.push(`/history/${workout.id}`)}
+                                    onShare={() => setShareTarget(workout)}
+                                    onRename={() => { setRenameTarget(workout); setRenameValue(workout.name); }}
+                                    onDelete={() => setDeleteTarget(workout)}
+                                />
+                            </motion.div>
                         ))}
-                    </div>
+                        </AnimatePresence>
+                    </motion.div>
                 )}
             </div>
 

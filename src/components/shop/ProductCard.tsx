@@ -2,7 +2,7 @@
 
 import { Product } from "@/types";
 import Button from "@/components/Button";
-import { ShoppingBag } from "lucide-react";
+import { ArrowRight, ShoppingBag } from "lucide-react";
 
 interface ProductCardProps {
   product: Product;
@@ -11,7 +11,7 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, onBuy }: ProductCardProps) {
   return (
-    <article className="card-interactive group">
+    <article className="card-interactive group flex h-full flex-col">
       <div className="relative aspect-[4/3] overflow-hidden bg-[var(--surface-raised)]">
         {product.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -44,24 +44,26 @@ export default function ProductCard({ product, onBuy }: ProductCardProps) {
         )}
       </div>
 
-      <div className="space-y-5 p-5">
+      <div className="flex flex-1 flex-col gap-5 p-5">
         <div>
-          <h3 className="line-clamp-1 text-xl font-bold text-[var(--foreground)]">{product.name}</h3>
-          <p className="mt-2 line-clamp-2 text-base leading-relaxed text-[var(--muted-foreground)]">{product.description}</p>
+          <h3 className="line-clamp-1 text-lg font-bold tracking-[-0.02em] text-[var(--foreground)]">{product.name}</h3>
+          <p className="mt-2 line-clamp-2 text-sm leading-6 text-[var(--muted-foreground)]">{product.description}</p>
         </div>
 
-        <div className="flex items-end justify-between gap-4">
-          <div className="space-y-1">
-            {product.price_usd && <p className="text-3xl font-black leading-none text-[var(--foreground)]">${product.price_usd}</p>}
+        <div className="mt-auto flex items-end justify-between gap-4 border-t border-[var(--border)] pt-4">
+          <div>
+            <p className="eyebrow !mb-1">Price</p>
+            {product.price_usd && <p className="text-2xl font-black leading-none text-[var(--foreground)]">${product.price_usd}</p>}
           </div>
 
           <Button
             onClick={() => onBuy(product)}
             disabled={product.stock_quantity === 0}
             variant={product.stock_quantity === 0 ? "secondary" : "primary"}
-            className="px-5"
+            className="px-4 text-sm sm:px-5 sm:text-sm"
           >
-            Buy
+            {product.stock_quantity === 0 ? "Unavailable" : "View"}
+            {product.stock_quantity > 0 && <ArrowRight className="size-4" />}
           </Button>
         </div>
       </div>

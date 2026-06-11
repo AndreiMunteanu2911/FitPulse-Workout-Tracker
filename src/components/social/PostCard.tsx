@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import type { Post, PostComment } from "@/types";
-import { Heart, MessageCircle, User, Send, Maximize2, Trash2 } from "lucide-react";
+import { Heart, MessageCircle, Send, Maximize2, Trash2 } from "lucide-react";
 import PostWorkoutCard from "./PostWorkoutCard";
 import ImageModal from "../ImageModal";
+import UserAvatar from "@/components/UserAvatar";
 import { useSocial } from "@/hooks/useSocial";
 
 interface PostCardProps {
@@ -26,15 +28,6 @@ function timeAgo(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-}
-
 export default function PostCard({ post, onLike, onDelete, currentUserId }: PostCardProps) {
   const { addComment, fetchComments, deleteComment } = useSocial();
   const [liking, setLiking] = useState(false);
@@ -50,7 +43,6 @@ export default function PostCard({ post, onLike, onDelete, currentUserId }: Post
 
   const isPostOwner = currentUserId === post.user_id;
   const displayName = post.user_stats?.display_name || "Unknown User";
-  const initials = getInitials(displayName);
 
   const handleLike = async () => {
     if (liking) return;
@@ -106,9 +98,7 @@ export default function PostCard({ post, onLike, onDelete, currentUserId }: Post
     <article className="card shadow-[var(--shadow-sm)]">
       <div className="p-5 sm:p-6">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)] flex items-center justify-center text-white text-sm font-extrabold flex-shrink-0 shadow-[0_10px_24px_rgba(116,87,245,0.22)]">
-            {initials || <User className="w-4 h-4" />}
-          </div>
+          <UserAvatar name={displayName} size="lg" />
           <div className="flex-1 min-w-0">
             <p className="truncate text-base font-bold text-[var(--foreground)]">{displayName}</p>
             <p className="text-xs font-semibold text-[var(--muted-foreground)]">{timeAgo(post.created_at!)}</p>
@@ -151,11 +141,18 @@ export default function PostCard({ post, onLike, onDelete, currentUserId }: Post
 
         {showComments && visibleComments.length > 0 && (
           <div className="mt-5 divide-y divide-[var(--border)] rounded-[var(--radius-xl)] bg-[var(--surface-raised)] px-4">
+            <AnimatePresence initial={false} mode="popLayout">
             {visibleComments.map((comment) => (
-              <div key={comment.id} className="group flex items-start gap-3 py-4">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--primary-400)] to-[var(--primary-600)] flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0">
-                  {getInitials(comment.user_stats?.display_name || "?")}
-                </div>
+              <motion.div
+                layout
+                key={comment.id}
+                className="group flex items-start gap-3 py-4"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.985 }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
+              >
+                <UserAvatar name={comment.user_stats?.display_name} size="sm" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-baseline gap-2">
                     <span className="text-xs font-semibold text-[var(--foreground)]">
@@ -179,8 +176,9 @@ export default function PostCard({ post, onLike, onDelete, currentUserId }: Post
                     Delete
                   </button>
                 )}
-              </div>
+              </motion.div>
             ))}
+            </AnimatePresence>
             {hasMore && (
               <button
                 onClick={loadMoreComments}

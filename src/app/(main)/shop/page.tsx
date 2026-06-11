@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { openCheckoutUrl, isNativePlatform, MOBILE_APP_SCHEME } from "@/lib/mobile";
 import { useSearchParams } from "next/navigation";
 import ProtectedWrapper from "@/components/ProtectedWrapper";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Product } from "@/types";
-import { ShoppingBag, CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, ShoppingBag, XCircle } from "lucide-react";
 import ProductCard from "@/components/shop/ProductCard";
 import ProductPurchaseModal from "@/components/shop/ProductPurchaseModal";
 import { PageHeader } from "@/components/PageHeader";
@@ -85,52 +86,74 @@ export default function ShopPage() {
           setPurchaseLoading(false);
       }
   };
-  if (loading) return <ProtectedWrapper><LoadingSpinner /></ProtectedWrapper>;
+  if (loading) {
+    return (
+      <ProtectedWrapper>
+        <div className="flex min-h-[18rem] items-center justify-center">
+          <LoadingSpinner />
+        </div>
+      </ProtectedWrapper>
+    );
+  }
 
   return (
       <ProtectedWrapper>
         <div className="page-stack">
           <PageHeader
             title="Shop"
-            description="Everything you need for your workout."
+            description="Training gear and digital tools selected for your next session."
           />
 
+          <AnimatePresence initial={false}>
           {message && (
-              <div className={`mb-6 flex items-center gap-3 rounded-[var(--radius-xl)] border px-5 py-4 shadow-[var(--shadow-xs)] ${
+              <motion.div
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.16, ease: "easeOut" }}
+                className={`flex items-center gap-3 rounded-[var(--radius-xl)] border px-5 py-4 shadow-[var(--shadow-xs)] ${
                   message.type === "success"
                       ? "border-[var(--color-success)]/20 bg-[var(--color-success-bg)] text-[var(--color-success)]"
                       : "border-[var(--color-destructive)]/20 bg-[var(--color-destructive-bg)] text-[var(--color-destructive)]"
-              }`}>
+                }`}
+              >
                 {message.type === "success" ? <CheckCircle2 className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
                 <span className="font-medium">{message.text}</span>
-                <button onClick={() => setMessage(null)} className="ml-auto text-sm font-semibold underline opacity-70 hover:opacity-100">
+                <button onClick={() => setMessage(null)} className="ml-auto rounded-full px-3 py-1 text-xs font-semibold transition-colors hover:bg-black/5">
                   Dismiss
                 </button>
-              </div>
+              </motion.div>
           )}
+          </AnimatePresence>
 
-
-
-          <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <motion.div layout className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            <AnimatePresence initial={false} mode="popLayout">
             {products.map((product) => (
+              <motion.div
+                layout
+                key={product.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.985 }}
+                transition={{ duration: 0.16, ease: "easeOut" }}
+              >
                 <ProductCard
-                    key={product.id}
                     product={product}
                     onBuy={(chosenProduct) => {
                       setSelectedProduct(chosenProduct);
                       setIsPurchaseModalOpen(true);
                     }}
                 />
+              </motion.div>
             ))}
-          </div>
+            </AnimatePresence>
+          </motion.div>
 
           {products.length === 0 && (
-              <div className="mt-6 rounded-[var(--radius-xl)] border border-dashed border-[var(--border)] bg-[var(--surface)] px-6 py-16 text-center shadow-[var(--shadow-xs)]">
-                <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-[var(--radius-xl)] bg-[var(--surface-raised)]">
-                  <ShoppingBag className="h-10 w-10 text-[var(--muted-foreground)] opacity-50" />
-                </div>
-                <h3 className="text-2xl font-black text-[var(--foreground)]">No products yet</h3>
-                <p className="mt-2 text-base text-[var(--muted-foreground)]">Check back later for new arrivals.</p>
+              <div className="empty-state">
+                <div className="empty-state-icon"><ShoppingBag className="size-7" /></div>
+                <h3 className="empty-state-title">No products yet</h3>
+                <p className="empty-state-description">Check back later for new training gear and tools.</p>
               </div>
           )}
         </div>

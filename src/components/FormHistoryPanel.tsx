@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Activity, ChevronDown, ChevronUp, Clock, Sparkles, Target, Zap } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import type { FormLog } from "@/types";
@@ -173,8 +174,15 @@ export default function FormHistoryPanel({ exerciseId }: FormHistoryPanelProps) 
                     {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                   </button>
 
+                  <AnimatePresence initial={false}>
                   {isExpanded && (
-                    <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                    <motion.div
+                      className="mt-4 grid gap-3 overflow-hidden lg:grid-cols-2"
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.18, ease: "easeOut" }}
+                    >
                       {coaching?.summary && (
                         <div className="rounded-[var(--radius-lg)] bg-[var(--surface-raised)] p-4 lg:col-span-2">
                           <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">Coach Summary</p>
@@ -230,8 +238,9 @@ export default function FormHistoryPanel({ exerciseId }: FormHistoryPanelProps) 
                           <p className="text-base leading-relaxed text-[var(--foreground)]">{log.feedback_summary}</p>
                         </div>
                       )}
-                    </div>
+                    </motion.div>
                   )}
+                  </AnimatePresence>
                 </div>
               )}
             </div>
