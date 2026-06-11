@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Product } from "@/types";
 import ModalWrapper from "@/components/ModalWrapper";
 import Button from "@/components/Button";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { ArrowRight, CreditCard, LockKeyhole, PackageCheck, ShoppingBag, X } from "lucide-react";
 
 interface ProductPurchaseModalProps {
@@ -21,10 +22,10 @@ export default function ProductPurchaseModal({
                                                  onClose,
                                                  onPurchase,
 }: ProductPurchaseModalProps) {
-    const [imageLoaded, setImageLoaded] = useState(false);
+    const [imageStatus, setImageStatus] = useState<"loading" | "loaded" | "error">("loading");
 
     useEffect(() => {
-        setImageLoaded(false);
+        setImageStatus("loading");
     }, [product?.image_url]);
 
     if (!product) return null;
@@ -42,26 +43,29 @@ export default function ProductPurchaseModal({
             </button>
             <div className="grid md:grid-cols-[0.9fr_1.1fr]">
                 <div className="relative h-44 bg-[var(--surface-raised)] sm:h-56 md:h-auto md:min-h-[28rem]">
-                    {product.image_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                            src={product.image_url}
-                            alt={product.name}
-                            className={`h-full w-full object-cover transition-opacity duration-200 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
-                            onLoad={() => setImageLoaded(true)}
-                        />
+                    {product.image_url && imageStatus !== "error" ? (
+                        <>
+                            {imageStatus === "loading" && (
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <LoadingSpinner size={8} variant="image" />
+                                </div>
+                            )}
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                                src={product.image_url}
+                                alt={product.name}
+                                className={`h-full w-full object-cover transition-opacity duration-200 ${
+                                    imageStatus === "loaded" ? "opacity-100" : "opacity-0"
+                                }`}
+                                onLoad={() => setImageStatus("loaded")}
+                                onError={() => setImageStatus("error")}
+                            />
+                        </>
                     ) : (
                         <div className="flex h-full items-center justify-center text-[var(--muted-foreground)]">
                             <ShoppingBag className="h-16 w-16 opacity-20" />
                         </div>
                     )}
-                    <div className="absolute left-4 top-4 flex gap-2">
-                        {product.is_physical ? (
-                            <span className="badge badge-accent text-[10px] uppercase tracking-[0.24em]">Physical</span>
-                        ) : (
-                            <span className="badge badge-soft text-[10px] uppercase tracking-[0.24em]">Digital</span>
-                        )}
-                    </div>
                 </div>
 
                 <div className="flex flex-col bg-[var(--surface)] p-5 sm:p-7">

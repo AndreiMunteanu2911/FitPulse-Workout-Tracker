@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Product } from "@/types";
 import Button from "@/components/Button";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { ArrowRight, ShoppingBag } from "lucide-react";
 
 interface ProductCardProps {
@@ -10,22 +12,38 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, onBuy }: ProductCardProps) {
+  const [imageStatus, setImageStatus] = useState<"loading" | "loaded" | "error">("loading");
+
+  useEffect(() => {
+    setImageStatus("loading");
+  }, [product.image_url]);
+
   return (
     <article className="card-interactive group flex h-full flex-col">
       <div className="relative aspect-[4/3] overflow-hidden bg-[var(--surface-raised)]">
-        {product.image_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={product.image_url} alt={product.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+        {product.image_url && imageStatus !== "error" ? (
+          <>
+            {imageStatus === "loading" && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <LoadingSpinner size={8} variant="image" />
+              </div>
+            )}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={product.image_url}
+              alt={product.name}
+              className={`h-full w-full object-cover transition-[opacity,transform] duration-500 group-hover:scale-105 ${
+                imageStatus === "loaded" ? "opacity-100" : "opacity-0"
+              }`}
+              onLoad={() => setImageStatus("loaded")}
+              onError={() => setImageStatus("error")}
+            />
+          </>
         ) : (
           <div className="flex h-full w-full items-center justify-center text-[var(--muted-foreground)]">
             <ShoppingBag className="h-14 w-14 opacity-20" />
           </div>
         )}
-
-        <div className="absolute left-4 top-4 flex gap-2">
-          {product.is_physical && <span className="badge badge-accent text-[10px] uppercase tracking-[0.24em]">Physical</span>}
-          {!product.is_physical && <span className="badge badge-soft text-[10px] uppercase tracking-[0.24em]">Digital</span>}
-        </div>
 
         {product.stock_quantity <= 5 && product.stock_quantity > 0 && (
           <div className="absolute right-4 top-4">
