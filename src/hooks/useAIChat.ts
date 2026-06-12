@@ -273,11 +273,12 @@ export function useAIChat(): UseAIChatReturn {
 
     const currentLength = messages.length;
     const userMsg: ChatMessage = { clientId: crypto.randomUUID(), role: "user", content: message.trim() };
+    const assistantClientId = crypto.randomUUID();
     setMessages((prev) => [...prev, userMsg]);
 
     const assistantIdx = currentLength + 1;
     assistantIdxRef.current = assistantIdx;
-    setMessages((prev) => [...prev, { clientId: crypto.randomUUID(), role: "assistant", content: "" }]);
+    setMessages((prev) => [...prev, { clientId: assistantClientId, role: "assistant", content: "" }]);
     setIsStreaming(true);
     setError(null);
     setLastWorkoutAction(null);
@@ -396,6 +397,7 @@ export function useAIChat(): UseAIChatReturn {
           setMessages((prev) => {
             const updated = [...prev];
             updated[idx] = {
+              ...updated[idx],
               role: "assistant",
               content: "I wasn't able to generate a response. Please try again.",
             };
@@ -413,7 +415,7 @@ export function useAIChat(): UseAIChatReturn {
         const finalMsgs = [
           ...messages,
           userMsg,
-          { role: "assistant" as const, content: assistantContent },
+          { clientId: assistantClientId, role: "assistant" as const, content: assistantContent },
         ];
         await saveMessagesToDB(convId, finalMsgs);
         await fetchConversations();

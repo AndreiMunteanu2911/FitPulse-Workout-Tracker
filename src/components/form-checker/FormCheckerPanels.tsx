@@ -338,10 +338,10 @@ export function PostSetModeNotice() {
 
 export function CameraErrorOverlay({
   error,
-  onRetry,
+  onRetryAction,
 }: {
   error: string;
-  onRetry: () => void;
+  onRetryAction: () => void;
 }) {
   return (
     <div className="absolute inset-0 z-20 flex items-center justify-center bg-black">
@@ -349,7 +349,7 @@ export function CameraErrorOverlay({
         <Camera className="mx-auto mb-3 h-12 w-12 text-red-400" />
         <p className="mb-1 font-bold text-white">Camera Error</p>
         <p className="mb-4 text-sm text-white/60">{error}</p>
-        <Button onClick={onRetry}>Try Again</Button>
+        <Button onClick={onRetryAction}>Try Again</Button>
       </div>
     </div>
   );

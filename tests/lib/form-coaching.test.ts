@@ -14,6 +14,7 @@ const analysis: FormCoachingRequestInput["analysis"] = {
   reps: 3,
   duration_ms: 10_000,
   detector_version: "test",
+  rules_version: "test",
   rules_confidence: 0.8,
   analysis_status: "local_only",
   feedback_summary: "Depth was inconsistent.",

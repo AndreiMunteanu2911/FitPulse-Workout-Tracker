@@ -14,6 +14,7 @@ import {
   shouldEvaluateRule,
   summarizeRepSamples,
 } from "@/lib/form-analysis";
+import type { NormalizedLandmark } from "@mediapipe/tasks-vision";
 import type { FormRepMetric, FormSessionFeedbackItem } from "@/types";
 
 describe("form analysis scoring helpers", () => {
@@ -45,9 +46,9 @@ describe("form analysis scoring helpers", () => {
 
 describe("form analysis samples and reps", () => {
   it("compresses landmarks and throttles recorded frames", () => {
-    const landmarks = [
+    const landmarks: NormalizedLandmark[] = [
       { x: 0.12345, y: 0.98765, z: 0.33333, visibility: 0.91234 },
-      { x: 0.2, y: 0.3 },
+      { x: 0.2, y: 0.3, z: 0, visibility: 1 },
     ];
     expect(compressLandmarks(landmarks, [0, 2], 15.7)).toEqual({
       timestampMs: 16,

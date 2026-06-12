@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { POST } from "@/app/api/shop/checkout/route";
 import { createSupabaseServerClient } from "@/helper/supabaseServer";
-import { stripe } from "@/helper/stripe";
+import { getStripeClient } from "@/helper/stripe";
 
 vi.mock("@/helper/supabaseServer", () => ({
   createSupabaseServerClient: vi.fn(),
@@ -12,14 +12,16 @@ vi.mock("@/config/app-env", () => ({
 }));
 
 vi.mock("@/helper/stripe", () => ({
-  stripe: {
+  getStripeClient: vi.fn(() => ({
     checkout: {
       sessions: {
         create: vi.fn(),
       },
     },
-  },
+  })),
 }));
+
+const stripe = getStripeClient();
 
 function request(body: unknown) {
   return new Request("http://localhost/api/shop/checkout", {
